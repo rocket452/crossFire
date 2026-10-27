@@ -12,8 +12,14 @@ Open http://localhost:8765. HTTP is required for ES modules and the GLB asset li
 
 Blender 4.3.2 is the tested authoring version. Outputs are under dist/city-assets/.
 
+## Rebuild the revised infantry
+`blender -b -t 4 --python source/build_soldier.py`
+
+The scene uses the revised soldier asset/animation palette; the original city kit retains its first-pass infantry proxies for compatibility.
+
 ## Runtime source
 - dist/battle.js: city rendering, armies, weapons, camera, effects, UI.
+- dist/infantry.js: shared crowd meshes, baked Blender animation sampling, transitions, and weapon timing.
 - dist/destruction.js: damage, support propagation, rigid bodies, activation budget.
 - dist/physics-grid.js: static spatial hashing for collision broadphase.
 - dist/city-assets/README.md: physics scope, limitations, import/download notes.
