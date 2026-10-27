@@ -1,22 +1,21 @@
-# Wizard Atelier / Moonkeeper
+# Crossfire — City in Conflict
 
-A Blender-authored skinned wizard in a mobile-friendly Three.js grove.
+An autonomous low-poly city battle with observer camera controls and live rigid-body destruction. Assets are built directly in Blender with Python; browser rendering uses Three.js and rigid-body simulation uses Cannon-es.
 
-- Main app: dist/index.html
-- Prior 2D style comparison: dist/styles.html
-- Blender generator: source/build_wizard.py
-- Character and source downloads: dist/assets/
-- Runtime dependencies are vendored locally in dist/vendor/.
-
-## Rebuild the wizard
-`blender -b -t 4 --python source/build_wizard.py`
-
-Requires Blender 4.3.2 or compatible bpy/glTF exporter. Uses CPU Cycles for the preview render. Does not require Blender MCP or downloaded character assets.
-
-## Preview
+## Run
 `python -m http.server 8765 --directory dist`
 
-Open http://localhost:8765. Module files require HTTP rather than file://.
+Open http://localhost:8765. HTTP is required for ES modules and the GLB asset library.
 
-## Scope
-A stylized animated prototype. See dist/assets/README.md for import guidance and known limitations. The original four-pipeline proposal remains a specification, not a claim that all four pipelines were completed.
+## Rebuild assets
+`blender -b -t 4 --python source/build_city.py`
+
+Blender 4.3.2 is the tested authoring version. Outputs are under dist/city-assets/.
+
+## Runtime source
+- dist/battle.js: city rendering, armies, weapons, camera, effects, UI.
+- dist/destruction.js: damage, support propagation, rigid bodies, activation budget.
+- dist/physics-grid.js: static spatial hashing for collision broadphase.
+- dist/city-assets/README.md: physics scope, limitations, import/download notes.
+
+Prior project assets remain in version history and their existing local files; the main page now opens the city battle.

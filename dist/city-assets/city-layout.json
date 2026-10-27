@@ -1,0 +1,194 @@
+{
+  "buildings": [
+    {
+      "id": "B01",
+      "x": -36,
+      "z": -36,
+      "floors": 5,
+      "tint": "#a5a99b",
+      "name": "Residences"
+    },
+    {
+      "id": "B02",
+      "x": -12,
+      "z": -36,
+      "floors": 6,
+      "tint": "#a5a99b",
+      "name": "Apartments"
+    },
+    {
+      "id": "B03",
+      "x": 12,
+      "z": -36,
+      "floors": 7,
+      "tint": "#bdbaa9",
+      "name": "Apartments"
+    },
+    {
+      "id": "B04",
+      "x": 36,
+      "z": -36,
+      "floors": 4,
+      "tint": "#a4acaa",
+      "name": "Commerce"
+    },
+    {
+      "id": "B05",
+      "x": -36,
+      "z": -12,
+      "floors": 8,
+      "tint": "#a5a99b",
+      "name": "Offices"
+    },
+    {
+      "id": "B06",
+      "x": -12,
+      "z": -12,
+      "floors": 5,
+      "tint": "#bdbaa9",
+      "name": "Apartments"
+    },
+    {
+      "id": "B07",
+      "x": 12,
+      "z": -12,
+      "floors": 4,
+      "tint": "#a5a99b",
+      "name": "Residences"
+    },
+    {
+      "id": "B08",
+      "x": 36,
+      "z": -12,
+      "floors": 8,
+      "tint": "#a5a99b",
+      "name": "Offices"
+    },
+    {
+      "id": "B09",
+      "x": -36,
+      "z": 12,
+      "floors": 6,
+      "tint": "#a5a99b",
+      "name": "Offices"
+    },
+    {
+      "id": "B10",
+      "x": -12,
+      "z": 12,
+      "floors": 6,
+      "tint": "#a4acaa",
+      "name": "Apartments"
+    },
+    {
+      "id": "B11",
+      "x": 12,
+      "z": 12,
+      "floors": 4,
+      "tint": "#a4acaa",
+      "name": "Offices"
+    },
+    {
+      "id": "B12",
+      "x": 36,
+      "z": 12,
+      "floors": 7,
+      "tint": "#bdbaa9",
+      "name": "Commerce"
+    },
+    {
+      "id": "B13",
+      "x": -36,
+      "z": 36,
+      "floors": 7,
+      "tint": "#a5a99b",
+      "name": "Apartments"
+    },
+    {
+      "id": "B14",
+      "x": -12,
+      "z": 36,
+      "floors": 5,
+      "tint": "#a4acaa",
+      "name": "Residences"
+    },
+    {
+      "id": "B15",
+      "x": 12,
+      "z": 36,
+      "floors": 5,
+      "tint": "#a4acaa",
+      "name": "Apartments"
+    },
+    {
+      "id": "B16",
+      "x": 36,
+      "z": 36,
+      "floors": 5,
+      "tint": "#a4acaa",
+      "name": "Offices"
+    }
+  ],
+  "moduleWidth": 2.5,
+  "floorHeight": 3.0,
+  "footprint": 10.0,
+  "prototypes": [
+    {
+      "name": "wall_module",
+      "triangles": 60
+    },
+    {
+      "name": "slab_module",
+      "triangles": 24
+    },
+    {
+      "name": "column_module",
+      "triangles": 44
+    },
+    {
+      "name": "rubble_module",
+      "triangles": 44
+    },
+    {
+      "name": "tank_hull",
+      "triangles": 704
+    },
+    {
+      "name": "tank_turret",
+      "triangles": 244
+    },
+    {
+      "name": "helicopter_body",
+      "triangles": 480
+    },
+    {
+      "name": "main_rotor",
+      "triangles": 52
+    },
+    {
+      "name": "tail_rotor",
+      "triangles": 24
+    },
+    {
+      "name": "infantry_torso",
+      "triangles": 184
+    },
+    {
+      "name": "infantry_leg_l",
+      "triangles": 132
+    },
+    {
+      "name": "infantry_leg_r",
+      "triangles": 132
+    },
+    {
+      "name": "infantry_arms",
+      "triangles": 196
+    },
+    {
+      "name": "parked_car",
+      "triangles": 232
+    }
+  ],
+  "notes": "Blender-authored low-poly kit. Runtime rigid-body fracture uses separable modules, not engineering structural analysis."
+}
