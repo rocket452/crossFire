@@ -1,6 +1,6 @@
 # Crossfire — City in Conflict
 
-An autonomous low-poly city battle with observer camera controls and live rigid-body destruction. Assets are built directly in Blender with Python; browser rendering uses Three.js and rigid-body simulation uses Cannon-es.
+An autonomous low-poly city battle with observer cameras, optional first-person helicopter control, and live rigid-body destruction. Assets are built directly in Blender with Python; browser rendering uses Three.js and rigid-body simulation uses Cannon-es.
 
 ## Run
 `python -m http.server 8765 --directory dist`
@@ -17,8 +17,15 @@ Blender 4.3.2 is the tested authoring version. Outputs are under dist/city-asset
 
 The scene uses the revised soldier asset/animation palette; the original city kit retains its first-pass infantry proxies for compatibility.
 
+## Rebuild the cockpit
+`blender -b -t 4 --python source/build_cockpit.py`
+
+Click an aircraft or its PILOT tag to enter. Desktop W/S move, A/D strafe, Q/E turn, R/F altitude, drag to aim, Space to fire, Escape to exit. Phone uses the joystick, altitude buttons, and hold/drag FIRE.
+
 ## Runtime source
 - dist/battle.js: city rendering, armies, weapons, camera, effects, UI.
+- dist/helicopter-pilot.js: selection, cockpit camera, input, HUD and launch integration.
+- dist/helicopter-flight.js: assisted flight, damping, clearance and bounds.
 - dist/infantry.js: shared crowd meshes, baked Blender animation sampling, transitions, and weapon timing.
 - dist/destruction.js: damage, support propagation, rigid bodies, activation budget.
 - dist/physics-grid.js: static spatial hashing for collision broadphase.

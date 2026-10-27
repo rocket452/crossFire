@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';
+import {HelicopterFlight} from '../dist/helicopter-flight.js';
+const advance=(f,input,seconds,sections=[])=>{for(let i=0;i<seconds*60;i++)f.step(input,1/60,sections)};
+const f=new HelicopterFlight({x:0,y:20,z:0},0);advance(f,{forward:1},2);assert(f.position.z>15);assert(Math.abs(f.position.y-20)<.001);advance(f,{},3);assert(Math.abs(f.velocity.z)<.02);console.log('PASS forward acceleration and release-to-hover');
+const s=new HelicopterFlight({x:0,y:20,z:0},0);advance(s,{strafe:1,lift:1},2);assert(s.position.x< -10&&s.position.y>28);advance(s,{turn:1,look:-1},1);assert(s.yaw>.9&&s.pitch<-.9);assert(Math.abs(Math.hypot(...Object.values(s.aim()))-1)<.00001);console.log('PASS strafe, climb, yaw and normalized aiming direction');
+const c=new HelicopterFlight({x:0,y:20,z:0},0),wall={state:'intact',bounds:{min:{x:-5,y:0,z:8},max:{x:5,y:40,z:9}}};advance(c,{forward:1},4,[wall]);assert(c.position.z<6.8&&c.collision);assert(Math.abs(c.velocity.z)<1);console.log('PASS building clearance blocks flight without tunneling');
+const b=new HelicopterFlight({x:54,y:2,z:54},Math.PI/4);advance(b,{forward:1,lift:-1},4);assert(b.position.x<=55&&b.position.z<=55&&b.position.y>=1.3);advance(b,{lift:1},20);assert(b.position.y<=72);console.log('PASS district, ground and altitude bounds');assert(b.launch());assert(!b.launch());advance(b,{},.6);assert(b.launch());console.log('PASS missile launch cooldown');
