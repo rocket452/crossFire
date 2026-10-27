@@ -1,0 +1,70 @@
+{
+  "name": "Moonkeeper",
+  "triangles": 11296,
+  "vertices": 5800,
+  "bones": 16,
+  "materials": 10,
+  "clips": [
+    {
+      "name": "Idle",
+      "frames": 60,
+      "fps": 30
+    },
+    {
+      "name": "Walk",
+      "frames": 30,
+      "fps": 30
+    },
+    {
+      "name": "Run",
+      "frames": 24,
+      "fps": 30
+    },
+    {
+      "name": "Jump",
+      "frames": 31,
+      "fps": 30
+    },
+    {
+      "name": "Attack1",
+      "frames": 25,
+      "fps": 30
+    },
+    {
+      "name": "Attack2",
+      "frames": 37,
+      "fps": 30
+    },
+    {
+      "name": "HitReact",
+      "frames": 16,
+      "fps": 30
+    },
+    {
+      "name": "Death",
+      "frames": 55,
+      "fps": 30
+    },
+    {
+      "name": "EmoteWave",
+      "frames": 61,
+      "fps": 30
+    },
+    {
+      "name": "EmoteCelebrate",
+      "frames": 73,
+      "fps": 30
+    },
+    {
+      "name": "EmotePonder",
+      "frames": 91,
+      "fps": 30
+    }
+  ],
+  "pipeline": "Stylized PBR prototype",
+  "limitations": [
+    "Procedural mesh construction, not sculpted production topology",
+    "No facial blendshapes, IK control rig, texture atlas, or LODs yet",
+    "Animations are authored prototype cycles, not motion capture"
+  ]
+}
