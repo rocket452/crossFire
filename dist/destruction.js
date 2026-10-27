@@ -4,23 +4,24 @@ import {CityBroadphase} from './physics-grid.js';
 export class DestructionWorld {
  constructor({onDetach=()=>{},onCollapse=()=>{},onFreeze=()=>{},maxDynamic=160}={}){
   this.world=new CANNON.World({gravity:new CANNON.Vec3(0,-9.81,0),allowSleep:true});this.world.broadphase=new CityBroadphase();this.world.collisionMatrix=new CANNON.ObjectCollisionMatrix();this.world.collisionMatrixPrevious=new CANNON.ObjectCollisionMatrix();this.world.solver.iterations=8;this.world.defaultContactMaterial.friction=.62;this.world.defaultContactMaterial.restitution=.07;
-  this.chunks=[];this.buildings=new Map();this.dynamic=[];this.queue=[];this.pending=new Set();this.clock=0;this.impacts=0;this.detached=0;this.collapses=0;this.maxDynamic=maxDynamic;this.onDetach=onDetach;this.onCollapse=onCollapse;this.onFreeze=onFreeze;
+  this.chunks=[];this.buildings=new Map();this.dynamic=[];this.wrecks=[];this.queue=[];this.pending=new Set();this.clock=0;this.impacts=0;this.detached=0;this.collapses=0;this.maxDynamic=maxDynamic;this.onDetach=onDetach;this.onCollapse=onCollapse;this.onFreeze=onFreeze;
   const ground=new CANNON.Body({mass:0,shape:new CANNON.Plane()});ground.quaternion.setFromEuler(-Math.PI/2,0,0);ground.position.y=.08;ground.aabbNeedsUpdate=true;this.world.addBody(ground);
  }
  addChunk(info){
   const half=new CANNON.Vec3(...info.size.map(v=>v/2)),body=new CANNON.Body({mass:0,shape:new CANNON.Box(half)});body.position.set(info.x,info.y,info.z);body.quaternion.setFromEuler(0,info.yaw||0,0);body.aabbNeedsUpdate=true;this.world.addBody(body);this.world.broadphase.markStaticsDirty();
-  const c={...info,body,state:'intact',hp:info.type==='column'?10:info.type==='slab'?6:4};this.chunks.push(c);if(!this.buildings.has(info.building))this.buildings.set(info.building,{chunks:[],failed:new Set()});this.buildings.get(info.building).chunks.push(c);return c;
+  const c={...info,body,state:'intact',hasDetached:false,hp:info.type==='column'?10:info.type==='slab'?6:4};this.chunks.push(c);if(!this.buildings.has(info.building))this.buildings.set(info.building,{chunks:[],failed:new Set()});this.buildings.get(info.building).chunks.push(c);return c;
  }
+ addWreck({position,quaternion,size,mass=2400}){const body=new CANNON.Body({mass,shape:new CANNON.Box(new CANNON.Vec3(size[0]/2,size[1]/2,size[2]/2))});body.position.copy(position);body.quaternion.copy(quaternion);body.updateMassProperties();body.aabbNeedsUpdate=true;body.angularVelocity.set(.35,.1,-.20);body.velocity.set(0,-1.5,0);body.linearDamping=.12;body.angularDamping=.3;body.allowSleep=true;this.world.addBody(body);this.wrecks.push(body);return body;}
  queueDetach(c,origin,strength=1){if(c.state!=='intact'||this.pending.has(c))return;this.pending.add(c);this.queue.push({c,origin:{...origin},strength});}
  detach(c,origin,strength){
   if(c.state!=='intact')return;
   if(this.dynamic.length>=this.maxDynamic){const resting=this.dynamic.find(d=>d.body.sleepState===CANNON.Body.SLEEPING||(this.clock-d.born>2&&d.body.velocity.length()<.3));if(resting)this.freeze(resting);else return false;}
   c.state='dynamic';c.born=this.clock;c.body.type=CANNON.Body.DYNAMIC;c.body.mass=c.size[0]*c.size[1]*c.size[2]*(c.type==='slab'?2200:1600);c.body.updateMassProperties();c.body.wakeUp();c.body.aabbNeedsUpdate=true;
-  const delta=new CANNON.Vec3(c.body.position.x-origin.x,c.body.position.y-origin.y,c.body.position.z-origin.z);if(delta.length()<.01)delta.set(.5,.4,.3);delta.normalize();const speed=Math.min(5,strength*2.0);c.body.applyImpulse(new CANNON.Vec3(delta.x*speed*c.body.mass,(Math.max(-.1,delta.y)*speed+1.3)*c.body.mass,delta.z*speed*c.body.mass));c.body.angularVelocity.set(delta.z*.7,.23,-delta.x*.7);c.body.linearDamping=.12;c.body.angularDamping=.3;c.body.sleepSpeedLimit=.25;c.body.sleepTimeLimit=1.5;this.dynamic.push(c);this.detached++;this.world.broadphase.markStaticsDirty();this.onDetach(c);return true;
+  const delta=new CANNON.Vec3(c.body.position.x-origin.x,c.body.position.y-origin.y,c.body.position.z-origin.z);if(delta.length()<.01)delta.set(.5,.4,.3);delta.normalize();const speed=Math.min(5,strength*2.0);c.body.applyImpulse(new CANNON.Vec3(delta.x*speed*c.body.mass,(Math.max(-.1,delta.y)*speed+1.3)*c.body.mass,delta.z*speed*c.body.mass));c.body.angularVelocity.set(delta.z*.7,.23,-delta.x*.7);c.body.linearDamping=.12;c.body.angularDamping=.3;c.body.sleepSpeedLimit=.25;c.body.sleepTimeLimit=1.5;this.dynamic.push(c);if(!c.hasDetached){this.detached++;c.hasDetached=true;}this.world.broadphase.markStaticsDirty();this.onDetach(c);return true;
  }
  freeze(c){const i=this.dynamic.indexOf(c);if(i>=0)this.dynamic.splice(i,1);c.state='settled';c.body.type=CANNON.Body.STATIC;c.body.mass=0;c.body.velocity.setZero();c.body.angularVelocity.setZero();c.body.updateMassProperties();this.world.broadphase.markStaticsDirty();this.onFreeze(c);}
- impact(point,power=8,radius=3.5){
-  this.impacts++;const affected=new Set();
+ impact(point,power=8,radius=3.5,direct=null){
+  this.impacts++;const affected=new Set();if(direct?.state==='settled')direct.state='intact';if(direct?.state==='intact'){direct.hp=0;this.queueDetach(direct,point,power*.14);const i=this.queue.findIndex(t=>t.c===direct);if(i>0)this.queue.unshift(...this.queue.splice(i,1));}
   for(const c of this.chunks){if(c.state!=='intact')continue;const p=c.body.position,dx=p.x-point.x,dy=p.y-point.y,dz=p.z-point.z,d=Math.hypot(dx,dy,dz);const reach=radius+Math.min(1.6,Math.max(...c.size)*.25);if(d>reach)continue;c.hp-=power*Math.max(.20,1-d/(reach+.1));affected.add(c.building);if(c.hp<=0)this.queueDetach(c,point,power*.14);}
   // Nearby already detached bodies also respond to the blast impulse.
   for(const c of this.dynamic){const d=c.body.position.vsub(new CANNON.Vec3(point.x,point.y,point.z));const length=d.length();if(length<radius*2&&length>.05){d.normalize();d.scale((1-length/(radius*2))*power*.18*c.body.mass,d);c.body.wakeUp();c.body.applyImpulse(d);}}
@@ -32,9 +33,10 @@ export class DestructionWorld {
  }
  step(dt){
   this.clock+=dt;for(let n=0;n<4&&this.queue.length;n++){const task=this.queue[0];if(this.detach(task.c,task.origin,task.strength)===false)break;this.queue.shift();this.pending.delete(task.c);}
-  if(this.dynamic.length)this.world.step(1/60,dt,4);
+  if(this.dynamic.length||this.wrecks.some(b=>b.type===CANNON.Body.DYNAMIC))this.world.step(1/60,dt,4);
+  for(const b of this.wrecks)if(b.type===CANNON.Body.DYNAMIC&&b.sleepState===CANNON.Body.SLEEPING){b.type=CANNON.Body.STATIC;b.mass=0;b.updateMassProperties();this.world.broadphase.markStaticsDirty();}
   for(const c of [...this.dynamic])if(c.body.sleepState===CANNON.Body.SLEEPING||(this.clock-c.born>18&&c.body.velocity.length()<.3))this.freeze(c);
  }
- reset(){for(const c of this.chunks){c.state='intact';c.hp=c.type==='column'?10:c.type==='slab'?6:4;c.body.type=CANNON.Body.STATIC;c.body.mass=0;c.body.position.set(c.x,c.y,c.z);c.body.quaternion.setFromEuler(0,c.yaw||0,0);c.body.velocity.setZero();c.body.angularVelocity.setZero();c.body.updateMassProperties();c.body.aabbNeedsUpdate=true;}this.dynamic=[];this.queue=[];this.pending.clear();this.clock=this.impacts=this.detached=this.collapses=0;for(const b of this.buildings.values())b.failed.clear();this.world.broadphase.markStaticsDirty();}
- stats(){return{impacts:this.impacts,detached:this.detached,collapses:this.collapses,activeBodies:this.dynamic.length,queued:this.queue.length,seconds:this.clock,totalChunks:this.chunks.length};}
+ reset(){for(const b of this.wrecks)this.world.removeBody(b);this.wrecks=[];for(const c of this.chunks){c.state='intact';c.hasDetached=false;c.hp=c.type==='column'?10:c.type==='slab'?6:4;c.body.type=CANNON.Body.STATIC;c.body.mass=0;c.body.position.set(c.x,c.y,c.z);c.body.quaternion.setFromEuler(0,c.yaw||0,0);c.body.velocity.setZero();c.body.angularVelocity.setZero();c.body.updateMassProperties();c.body.aabbNeedsUpdate=true;}this.dynamic=[];this.queue=[];this.pending.clear();this.clock=this.impacts=this.detached=this.collapses=0;for(const b of this.buildings.values())b.failed.clear();this.world.broadphase.markStaticsDirty();}
+ stats(){return{impacts:this.impacts,detached:this.detached,collapses:this.collapses,activeBodies:this.dynamic.length+this.wrecks.filter(b=>b.type===CANNON.Body.DYNAMIC).length,queued:this.queue.length,seconds:this.clock,totalChunks:this.chunks.length};}
 }

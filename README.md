@@ -24,6 +24,7 @@ Click an aircraft or its PILOT tag to enter. Desktop W/S move, A/D strafe, Q/E t
 
 ## Runtime source
 - dist/battle.js: city rendering, armies, weapons, camera, effects, UI.
+- dist/combat-collision.js: shared reticle/missile sweeps and unit durability.
 - dist/helicopter-pilot.js: selection, cockpit camera, input, HUD and launch integration.
 - dist/helicopter-flight.js: assisted flight, damping, clearance and bounds.
 - dist/infantry.js: shared crowd meshes, baked Blender animation sampling, transitions, and weapon timing.
