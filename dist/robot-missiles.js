@@ -3,13 +3,14 @@ import {segmentBoxFraction} from './combat-collision.js?v=robot-1';
 
 // Bounded, swept-collision missiles. An intercepted warhead has no damaging blast.
 export class RobotMissiles {
- constructor(scene,model,{getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst=()=>{},onTrail=()=>{},onLaunch=()=>{},onSalvo=()=>{}}){
-  Object.assign(this,{scene,getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst,onTrail,onLaunch,onSalvo});
+ constructor(scene,model,{getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst=()=>{},onTrail=()=>{},onLaunch=()=>{},onSalvo=()=>{},autoFire=true,canLaunch=()=>true}){
+  Object.assign(this,{scene,getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst,onTrail,onLaunch,onSalvo,autoFire,canLaunch});
   this.template=model.scene;this.forward=new THREE.Vector3(0,0,1);this.flameGeometry=new THREE.ConeGeometry(.24,1.3,6);this.flameGeometry.rotateX(-Math.PI/2);this.flameMaterial=new THREE.MeshBasicMaterial({color:'#ffaf39',toneMapped:false});this.reset();
  }
  reset(){for(const m of this.missiles||[])this.scene.remove(m.mesh);this.missiles=[];this.clock=0;this.cooldown=5.2;this.pending=0;this.launchClock=0;this.launched=0;this.salvos=0;this.intercepted=0;this.impacts=0;this.expired=0;this.byHero={violet:0,volt:0,other:0};this.sequence=0;this.targetIndex=0;}
- beginSalvo(){if(!this.isRobotAlive()||this.pending||this.missiles.filter(m=>m.alive).length>6||!this.getTargets().length)return false;this.pending=6;this.launchClock=0;this.salvos++;this.onSalvo();return true;}
+ beginSalvo(){if(!this.canLaunch()||!this.isRobotAlive()||this.pending||this.missiles.filter(m=>m.alive).length>6||!this.getTargets().length)return false;this.pending=6;this.launchClock=0;this.salvos++;this.onSalvo();return true;}
  launch(){
+  if(!this.canLaunch())return;
   const targets=this.getTargets().filter(u=>u.alive&&u.shapes?.length);if(!targets.length)return;
   const index=this.targetIndex++,target=targets[index%targets.length],rail=(6-this.pending)%6,muzzle=this.getMuzzles()[rail];if(!muzzle)return;
   const mesh=this.template.clone(true);mesh.position.copy(muzzle.position);const flame=new THREE.Mesh(this.flameGeometry,this.flameMaterial);flame.position.z=-1.35;mesh.add(flame);this.scene.add(mesh);
@@ -33,8 +34,8 @@ export class RobotMissiles {
  update(dt,time){
   this.clock+=dt;
   if(this.isRobotAlive()){
-   this.cooldown-=dt;if(this.cooldown<=0){if(this.beginSalvo())this.cooldown=19;else this.cooldown=.5;}
-   this.launchClock-=dt;while(this.pending&&this.launchClock<=0){this.launch();this.pending--;this.launchClock+=.43;}
+   if(this.autoFire)this.cooldown-=dt;if(this.autoFire&&this.cooldown<=0){if(this.beginSalvo())this.cooldown=19;else this.cooldown=.5;}
+   this.launchClock-=dt;while(this.pending&&this.canLaunch()&&this.launchClock<=0){this.launch();this.pending--;this.launchClock+=.43;}
   }else this.pending=0;
   for(const m of this.missiles){
    if(!m.alive)continue;m.previous.copy(m.position);m.age+=dt;m.life-=dt;

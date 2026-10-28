@@ -30,9 +30,10 @@ export class SiegeWalker {
  }
  reset(){
   for(const w of this.wrecks){w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
-  this.wrecks=[];this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;
+  this.wrecks=[];this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;this.beamAllowed=true;this.podWarning={active:false,progress:0,pulse:false};
   this.weapon.reset();this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
   for(const [name,n]of Object.entries(this.nodes)){n.rotation.set(0,0,0);n.position.copy(this.restPositions[name]);}
+  if(this.nodes.rocket_pod)this.nodes.rocket_pod.rotation.x=-Math.PI/4;
   this.walkPose=this.gait.reset();this.applyWalkPose(this.walkPose);
   for(const m of Object.values(this.meshes)){m.material.color.set('#ffffff');if(m.material.emissive)m.material.emissiveIntensity=m===this.meshes.reactor||m===this.meshes.visor?2:0;}
   this.root.updateMatrixWorld(true);
@@ -85,7 +86,7 @@ export class SiegeWalker {
    aligned=Math.abs(aimError)<.25;
   }else this.nodes.upperarm_r.rotation.x=-.10-swing*.18;
   this.trackHead(center,dt);
-  const state=this.weapon.step(dt,!!center&&aligned);
+  const state=this.weapon.step(dt,!!center&&aligned&&this.beamAllowed!==false);
   if(state.events.includes('charging')){this.beamAim={...center};this.beamSweepOrigin={x:this.root.position.x,y:this.root.position.y,z:this.root.position.z};}
   if(state.events.includes('firing')){this.returnShots++;this.onFire?.();}
   if(state.events.includes('cooling'))this.aiming=false;
@@ -103,6 +104,7 @@ export class SiegeWalker {
   if(hp<.4&&Math.floor(time*3)!==this.lastSmoke){this.lastSmoke=Math.floor(time*3);this.onEffect(this.root.localToWorld(new THREE.Vector3(1,15,1)),true);}
   this.root.updateMatrixWorld(true);
  }
+ updatePodWarning(state){this.podWarning={...state};const m=this.meshes.rocket_pod?.material;if(!m)return;m.emissive.set('#ff3b0c');m.emissiveIntensity=state.active?(state.pulse?4.2:.1):0;}
  trackHead(target,dt){
   const head=this.nodes.head;let yaw=0,pitch=0;
   this.gazeTarget=target?{x:target.x,y:target.y,z:target.z}:null;
@@ -172,5 +174,5 @@ export class SiegeWalker {
    result.push({center:{x:c.x,y:c.y,z:c.z},half:{x:b.size.x/2,y:b.size.y/2,z:b.size.z/2},rotation:{x:q.x,y:q.y,z:q.z,w:q.w}});
   }return result;
  }
- diagnostics(){return{health:this.combatUnit?.health,maxHealth:this.combatUnit?.maxHealth,alive:!this.dead,position:this.root.position.toArray(),triangles:this.spec.triangles,parts:this.spec.parts.length,hits:{...this.hits},damageByTeam:[...this.damageByTeam],heroDamage:this.heroDamage,returnShots:this.returnShots,broken:this.broken,wreckBodies:this.wrecks.length,target:this.target?.id,gait:this.gait.diagnostics(),weapon:this.weapon.diagnostics(),gaze:this.gazeDiagnostics()};}
+ diagnostics(){return{health:this.combatUnit?.health,maxHealth:this.combatUnit?.maxHealth,alive:!this.dead,position:this.root.position.toArray(),triangles:this.spec.triangles,parts:this.spec.parts.length,hits:{...this.hits},damageByTeam:[...this.damageByTeam],heroDamage:this.heroDamage,returnShots:this.returnShots,broken:this.broken,wreckBodies:this.wrecks.length,target:this.target?.id,gait:this.gait.diagnostics(),pod:{angleDegrees:45,warning:{...this.podWarning},emissive:this.meshes.rocket_pod?.material.emissiveIntensity},weapon:this.weapon.diagnostics(),gaze:this.gazeDiagnostics()};}
 }

@@ -31,6 +31,8 @@ Click an aircraft or its PILOT tag to enter. Desktop W/S move, A/D strafe, Q/E t
 - dist/destruction.js: damage, support propagation, rigid bodies, activation budget.
 - dist/violet-flight.js: bounded acceleration, persistent momentum and Violet combat tuning.
 - dist/runner-rooftops.js: CPU speedster roof selection, facade approaches, supported rooftop attacks and departure.
+- dist/robot-arsenal.js: alternating beam/pod attacks and pre-launch warning.
+- dist/shield-shake.js: shield forward offset and damage recoil.
 - dist/robot-missiles.js: shoulder salvos, swept missile flight, target claims and interception damage.
 - dist/physics-grid.js: static spatial hashing for collision broadphase.
 - dist/city-assets/README.md: physics scope, limitations, import/download notes.
