@@ -5,7 +5,7 @@ export class BeamTelegraph {
   this.root=new THREE.Group();scene.add(this.root);this.root.visible=false;this.plan=null;
   this.up=new THREE.Vector3(0,1,0);this.direction=new THREE.Vector3();this.position=new THREE.Vector3();this.dummy=new THREE.Object3D();
   const mat=(opacity)=>new THREE.MeshBasicMaterial({color:'#ff1738',transparent:true,opacity,depthTest:false,depthWrite:false,toneMapped:false,side:THREE.DoubleSide});
-  this.lineMaterial=mat(.90);this.haloMaterial=mat(.18);this.fanMaterial=mat(.085);
+  this.lineMaterial=mat(.36);this.haloMaterial=mat(.06);this.fanMaterial=mat(.025);
   this.rays=[];const tube=new THREE.CylinderGeometry(1,1,1,8,1,true);
   for(let i=0;i<3;i++){const mesh=new THREE.Mesh(tube,this.lineMaterial);mesh.renderOrder=51;mesh.frustumCulled=false;this.root.add(mesh);this.rays.push(mesh);}
   this.halo=new THREE.Mesh(tube,this.haloMaterial);this.halo.renderOrder=50;this.halo.frustumCulled=false;this.root.add(this.halo);
@@ -23,7 +23,7 @@ export class BeamTelegraph {
  }
  update(plan,charge,time){
   if(!plan){this.clear();return;}
-  this.root.visible=true;this.plan=plan;this.fanMaterial.opacity=.065+charge*.055;
+  this.root.visible=true;this.plan=plan;this.fanMaterial.opacity=.018+charge*.020;
   const center=plan.rays[1];
   const side=new THREE.Vector3(center.direction.x,0,center.direction.z).cross(this.up).normalize().multiplyScalar(plan.radius);
   const outer=(ray,sign)=>({...ray,from:{x:ray.from.x+side.x*sign,y:ray.from.y,z:ray.from.z+side.z*sign},end:{x:ray.end.x+side.x*sign,y:ray.end.y,z:ray.end.z+side.z*sign}});

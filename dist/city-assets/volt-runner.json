@@ -1,0 +1,124 @@
+{
+  "height": 2.59,
+  "triangles": 1760,
+  "parts": [
+    {
+      "name": "pelvis",
+      "parent": null,
+      "pivot": [
+        0,
+        1.18,
+        0
+      ]
+    },
+    {
+      "name": "chest",
+      "parent": "pelvis",
+      "pivot": [
+        0,
+        1.38,
+        0
+      ]
+    },
+    {
+      "name": "sigil",
+      "parent": "chest",
+      "pivot": [
+        0,
+        1.79,
+        0.315
+      ]
+    },
+    {
+      "name": "head",
+      "parent": "chest",
+      "pivot": [
+        0,
+        2.08,
+        0
+      ]
+    },
+    {
+      "name": "eyes",
+      "parent": "head",
+      "pivot": [
+        0,
+        2.34,
+        0.242
+      ]
+    },
+    {
+      "name": "upperarm_l",
+      "parent": "chest",
+      "pivot": [
+        -0.42,
+        1.93,
+        0
+      ]
+    },
+    {
+      "name": "forearm_l",
+      "parent": "upperarm_l",
+      "pivot": [
+        -0.42,
+        1.5,
+        0
+      ]
+    },
+    {
+      "name": "thigh_l",
+      "parent": "pelvis",
+      "pivot": [
+        -0.19,
+        1.14,
+        0
+      ]
+    },
+    {
+      "name": "shin_l",
+      "parent": "thigh_l",
+      "pivot": [
+        -0.19,
+        0.66,
+        0
+      ]
+    },
+    {
+      "name": "upperarm_r",
+      "parent": "chest",
+      "pivot": [
+        0.42,
+        1.93,
+        0
+      ]
+    },
+    {
+      "name": "forearm_r",
+      "parent": "upperarm_r",
+      "pivot": [
+        0.42,
+        1.5,
+        0
+      ]
+    },
+    {
+      "name": "thigh_r",
+      "parent": "pelvis",
+      "pivot": [
+        0.19,
+        1.14,
+        0
+      ]
+    },
+    {
+      "name": "shin_r",
+      "parent": "thigh_r",
+      "pivot": [
+        0.19,
+        0.66,
+        0
+      ]
+    }
+  ],
+  "authoring": "Blender 4.3 / articulated low-poly hero"
+}

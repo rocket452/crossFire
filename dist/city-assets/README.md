@@ -203,3 +203,41 @@ state, pending orbs, rescue counters, barrier energy and visual effects. Existin
 pilot protection and the removed hit popup are retained. Hero/field rendering
 adds bounded simple geometry, a generated glow texture and one unshadowed light;
 real phone GPU/thermal performance remains unbenchmarked.
+
+## Volt Rush — playable electric speedster
+
+Original Blender-built 1,760-triangle hero with 13 articulated parts, a blue/gold
+suit, luminous visor and lightning emblem. Files: `volt-runner.blend`,
+`volt-runner.glb`, `volt-runner.json`, reproducible `build_runner.py`.
+
+Choose **Play Volt Rush** in the scene toolbar or camera section. Third-person
+controls: WASD, Shift for boost, drag to aim, F or hold left mouse for electricity,
+Space for a ballistic jump, Escape/Exit hero to return to observation. On phones:
+movement stick, BOOST toggle, JUMP, and hold/drag FIRE to attack and aim. Observer
+and helicopter controls are mutually exclusive with hero control; entering runs
+at 1x. Pause freezes movement, attacks and VFX. Rebuild restores all runner state.
+
+Base run target 14 m/s, boost 46 m/s. Movement uses <=8 ms collision substeps against
+live static building-section oriented boxes. Running forward into a facade enters
+wall mode; forward climbs, backward descends, strafe moves along the wall. Body
+and camera orient to the surface; reaching the edge crests onto the roof. Idle
+wall grip lasts 0.45 s, after which gravity applies. Destroyed/moving support is
+not usable; losing it causes a fall. Jump starts at 9 m/s, gravity 25 m/s^2 and
+there is no vertical thrust or flight mode. The prototype does not implement
+automatic around-corner wall traversal or actor/vehicle collision/hero health.
+
+Small low-poly outer embankments share their height function with movement and
+weapon ray tests, with matching Cannon convex terrain so falling debris also
+contacts the hills. Sloped settled debris can support the runner; airborne debris
+cannot. Movement stays inside +/-56 m world bounds.
+
+Electricity range 110 m, direct damage 150 health/s in 80 ms ticks, 1.3 m splash.
+The hand beam respects nearest world/unit contact. Building strikes use the same
+immediate player-hit physics capacity as manually piloted rockets. The beam can
+damage units, including allies, as with existing player weapons. Cyan branching
+bolts, contact flashes, body arcs and short speed trails are bounded in two pooled
+instanced batches; speed trails begin above 18 m/s. No external VFX textures.
+
+Robot warning translucency: red line/rings/arrows reduced from 0.90 to 0.36 alpha,
+halo 0.18 to 0.06 and sweep fill from 0.065–0.12 to 0.018–0.038. Targeting and
+warning geometry are unchanged. Actual phone GPU performance remains unmeasured.

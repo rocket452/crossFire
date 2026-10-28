@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {BeamTelegraph} from './beam-telegraph.js?v=telegraph-4';
+import {BeamTelegraph} from './beam-telegraph.js?v=runner-6';
 
 // Layered geometry and soft additive halos create bloom without a full-screen post pass.
 export class EnergyBeamEffect {
