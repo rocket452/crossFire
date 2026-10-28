@@ -1,6 +1,6 @@
 import {segmentBoxFraction,traceImpact} from './combat-collision.js?v=robot-1';
 import {terrainHeight,terrainNormal} from './runner-motion.js?v=runner-6';
-import {findPortalRescue} from './portal-policy.js?v=portals-15';
+import {findPortalRescue} from './portal-policy.js?v=plasma-18';
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z),copy=p=>({x:p.x,y:p.y,z:p.z});
 export const DASH={range:10,radius:5,speed:60,cooldown:5};
 const foot=u=>u.kind==='tank'?copy(u.entity.root.position):{x:u.entity.x,y:u.entity.y,z:u.entity.z};
@@ -29,8 +29,14 @@ export class RunnerDash {
   if(this.cooldown>0||this.active||motion.mode!=='ground'||motion.normal.y<.65)return false;const direction={x:Math.sin(yaw),z:Math.cos(yaw)},p=plan||this.plan(motion,direction);if(p.distance<.75)return false;
   this.active={actors:p.actors,direction,distance:p.distance,traveled:0,cpu};for(const a of p.actors)if(a.unit)a.unit.dashCarried=true;this.cooldown=DASH.cooldown;this.dashes++;this.carried+=p.actors.length-1;if(cpu)this.cpuRescues++;this.last={allies:p.actors.filter(a=>a.unit).map(a=>a.unit.id),from:copy(motion.position),to:copy(motion.position),distance:0,blocked:p.distance<DASH.range,cpu};this.onEvent(p.actors.length>1?'Volt Rush rescue dash · '+(p.actors.length-1)+' allies carried.':'Volt Rush · lightning dash.');return true;
  }
+ rescueApproach(motion){
+  if(this.cooldown>0||this.active||motion.mode!=='ground')return null;const threats=this.getThreats().filter(t=>t.impactPoint);if(!threats.length)return null;
+  const rescue=findPortalRescue(threats,this.getUnits(),{impactHorizon:6.5,canRescue:u=>dist(foot(u),motion.position)<=24});if(!rescue)return null;const p=foot(rescue.unit),distance=dist(p,motion.position);if(distance<=DASH.radius)return{input:{},fire:false,yaw:motion.yaw,rescueWaiting:true};if(distance/35+.35>rescue.eta)return null;
+  const yaw=Math.atan2(p.x-motion.position.x,p.z-motion.position.z),plan=this.plan(motion,{x:Math.sin(yaw),z:Math.cos(yaw)});if(plan.distance<Math.min(3,distance-DASH.radius))return null;return{input:{forward:1,boost:distance>6},fire:false,yaw};
+ }
  tryCPU(motion,dt){
-  this.scan-=dt;if(this.scan>0||this.cooldown>0||this.active||motion.mode!=='ground')return false;this.scan=.15;const near=this.allies(motion);if(!near.length)return false;const rescue=findPortalRescue(this.getThreats(),near,{canRescue:u=>near.includes(u),trace:this.traceThreat});if(!rescue||rescue.eta>1.5)return false;
+  this.scan-=dt;if(this.scan>0||this.cooldown>0||this.active||motion.mode!=='ground')return false;this.scan=.15;const near=this.allies(motion);if(!near.length)return false;const rescue=findPortalRescue(this.getThreats(),near,{canRescue:u=>near.includes(u),trace:this.traceThreat});if(!rescue||rescue.eta>(rescue.threat.impactPoint?2:1.5))return false;
+  if(rescue.threat.impactPoint){let best=null;const zones=this.getThreats().filter(t=>t.impactPoint&&t.timeToImpact>=0);for(let i=0;i<16;i++){const yaw=i*Math.PI/8,direction={x:Math.sin(yaw),z:Math.cos(yaw)},plan=this.plan(motion,direction);if(plan.distance<4)continue;let score=Infinity;for(const a of plan.actors)for(const zone of zones)score=Math.min(score,Math.hypot(a.position.x+direction.x*plan.distance-zone.impactPoint.x,a.position.z+direction.z*plan.distance-zone.impactPoint.z)-zone.blastRadius-Math.max(a.half.x,a.half.z));if(score>.3&&(!best||score>best.score))best={yaw,plan,score};}if(!best)return false;motion.yaw=best.yaw;return this.start(motion,best.yaw,{cpu:true,plan:best.plan});}
   const threat=rescue.threat,v=threat.velocity||{x:0,y:0,z:0},l=Math.hypot(v.x,v.z)||1,n={x:-v.z/l,z:v.x/l};let best=null;
   for(const sign of [1,-1]){const direction={x:n.x*sign,z:n.z*sign},plan=this.plan(motion,direction);if(plan.distance<4)continue;let score=Infinity;for(let i=0;i<=75;i++){const t=i/60,travel=Math.min(plan.distance,DASH.speed*t),projectile={x:threat.position.x+v.x*t,y:threat.position.y+v.y*t,z:threat.position.z+v.z*t};for(const a of plan.actors){const center={x:a.position.x+direction.x*travel,y:a.position.y+a.half.y,z:a.position.z+direction.z*travel},clearance=Math.hypot(Math.max(0,Math.abs(projectile.x-center.x)-a.half.x),Math.max(0,Math.abs(projectile.y-center.y)-a.half.y),Math.max(0,Math.abs(projectile.z-center.z)-a.half.z));score=Math.min(score,clearance);}}if(score>.35&&(!best||score>best.score))best={direction,plan,score};}
   if(!best)return false;motion.yaw=Math.atan2(best.direction.x,best.direction.z);return this.start(motion,motion.yaw,{cpu:true,plan:best.plan});

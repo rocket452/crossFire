@@ -30,10 +30,10 @@ export class SiegeWalker {
  }
  reset(){
   for(const w of this.wrecks){w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
-  this.wrecks=[];this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;this.beamAllowed=true;this.podWarning={active:false,progress:0,pulse:false};
+  this.wrecks=[];this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;this.plasmaRecoil=0;this.plasmaCharging=false;this.plasmaAim=null;this.beamAllowed=true;this.podWarning={active:false,progress:0,pulse:false};
   this.weapon.reset();this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
   for(const [name,n]of Object.entries(this.nodes)){n.rotation.set(0,0,0);n.position.copy(this.restPositions[name]);}
-  if(this.nodes.rocket_pod)this.nodes.rocket_pod.rotation.x=-Math.PI/4;
+  if(this.nodes.rocket_pod)this.nodes.rocket_pod.rotation.x=-Math.PI/4;if(this.nodes.plasma_cannon)this.nodes.plasma_cannon.rotation.x=-Math.PI/4;
   this.walkPose=this.gait.reset();this.applyWalkPose(this.walkPose);
   for(const m of Object.values(this.meshes)){m.material.color.set('#ffffff');if(m.material.emissive)m.material.emissiveIntensity=m===this.meshes.reactor||m===this.meshes.visor?2:0;}
   this.root.updateMatrixWorld(true);
@@ -46,7 +46,7 @@ export class SiegeWalker {
  recordHit(kind,team,amount){if(amount<=0)return;this.hits[kind]=(this.hits[kind]||0)+1;if(team===0||team===1)this.damageByTeam[team]+=amount;else this.heroDamage+=amount;this.flash=.14;}
  destroy(){this.weapon.stop();this.onBeam(null);this.dead=true;this.deathTime=0;this.deathPose={y:this.root.position.y,chest:this.nodes.chest.rotation.x,head:this.nodes.head.rotation.x,thigh:this.nodes.thigh_l.rotation.x,shin:this.nodes.shin_l.rotation.x};this.onEffect(this.root.position.clone().add(new THREE.Vector3(0,14,0)),false);}
  update(dt,time,targets){
-  this.flash=Math.max(0,this.flash-dt);this.podRecoil=Math.max(0,this.podRecoil-dt*.8);if(this.nodes.rocket_pod)this.nodes.rocket_pod.position.z=this.restPositions.rocket_pod.z-this.podRecoil;
+  this.plasmaRecoil=Math.max(0,this.plasmaRecoil-dt*1.5);if(this.nodes.plasma_cannon)this.nodes.plasma_cannon.position.z=this.restPositions.plasma_cannon.z-this.plasmaRecoil;this.flash=Math.max(0,this.flash-dt);this.podRecoil=Math.max(0,this.podRecoil-dt*.8);if(this.nodes.rocket_pod)this.nodes.rocket_pod.position.z=this.restPositions.rocket_pod.z-this.podRecoil;
   if(this.dead){
    this.deathTime+=dt;
    if(!this.broken){
@@ -101,9 +101,12 @@ export class SiegeWalker {
    m.material.color.set(this.flash>0?'#ffd5a4':'#ffffff');
    if(name==='reactor'||name==='visor'){m.material.emissive.set(state.phase==='charging'||state.phase==='firing'?'#2eabff':'#ff6b17');m.material.emissiveIntensity=(1.5+Math.sin(time*4)*.4)*(hp<.3?1.8:1)+state.charge*3;}
   }
+  if(this.plasmaAim)this.aimPlasma(this.plasmaAim);
   if(hp<.4&&Math.floor(time*3)!==this.lastSmoke){this.lastSmoke=Math.floor(time*3);this.onEffect(this.root.localToWorld(new THREE.Vector3(1,15,1)),true);}
   this.root.updateMatrixWorld(true);
  }
+ aimPlasma(target){this.plasmaAim={...target};const node=this.nodes.plasma_cannon;node.parent.updateWorldMatrix(true,false);const p=node.getWorldPosition(new THREE.Vector3()),yaw=Math.atan2(target.x-p.x,target.z-p.z),world=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/4,yaw,0,'YXZ')),parent=node.parent.getWorldQuaternion(new THREE.Quaternion());node.quaternion.copy(parent.invert()).multiply(world);node.updateWorldMatrix(false,true);return{position:node.localToWorld(new THREE.Vector3(0,1.4,3.35)),direction:new THREE.Vector3(0,0,1).transformDirection(node.matrixWorld)};}
+ updatePlasmaWarning(active,time=0){this.plasmaCharging=active;const m=this.meshes.plasma_cannon?.material;if(m){m.emissive.set('#18f3a3');m.emissiveIntensity=active?(.45+.4*Math.sin(time*15)**2):0;}}
  updatePodWarning(state){this.podWarning={...state};const m=this.meshes.rocket_pod?.material;if(!m)return;m.emissive.set('#ff3b0c');m.emissiveIntensity=state.active?(state.pulse?4.2:.1):0;}
  trackHead(target,dt){
   const head=this.nodes.head;let yaw=0,pitch=0;
@@ -174,5 +177,5 @@ export class SiegeWalker {
    result.push({center:{x:c.x,y:c.y,z:c.z},half:{x:b.size.x/2,y:b.size.y/2,z:b.size.z/2},rotation:{x:q.x,y:q.y,z:q.z,w:q.w}});
   }return result;
  }
- diagnostics(){return{health:this.combatUnit?.health,maxHealth:this.combatUnit?.maxHealth,alive:!this.dead,position:this.root.position.toArray(),triangles:this.spec.triangles,parts:this.spec.parts.length,hits:{...this.hits},damageByTeam:[...this.damageByTeam],heroDamage:this.heroDamage,returnShots:this.returnShots,broken:this.broken,wreckBodies:this.wrecks.length,target:this.target?.id,gait:this.gait.diagnostics(),pod:{angleDegrees:45,warning:{...this.podWarning},emissive:this.meshes.rocket_pod?.material.emissiveIntensity},weapon:this.weapon.diagnostics(),gaze:this.gazeDiagnostics()};}
+ diagnostics(){return{health:this.combatUnit?.health,maxHealth:this.combatUnit?.maxHealth,alive:!this.dead,position:this.root.position.toArray(),triangles:this.spec.triangles,parts:this.spec.parts.length,hits:{...this.hits},damageByTeam:[...this.damageByTeam],heroDamage:this.heroDamage,returnShots:this.returnShots,broken:this.broken,wreckBodies:this.wrecks.length,target:this.target?.id,gait:this.gait.diagnostics(),pod:{angleDegrees:45,warning:{...this.podWarning},emissive:this.meshes.rocket_pod?.material.emissiveIntensity},plasmaCannon:{charging:this.plasmaCharging,angleDegrees:this.nodes.plasma_cannon?THREE.MathUtils.radToDeg(Math.asin(new THREE.Vector3(0,0,1).transformDirection(this.nodes.plasma_cannon.matrixWorld).y)):null},weapon:this.weapon.diagnostics(),gaze:this.gazeDiagnostics()};}
 }

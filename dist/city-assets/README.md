@@ -519,3 +519,62 @@ unit. Player input can dash without passengers. Pause freezes movement and
 cooldown; switching control/blur releases all passengers at their current
 position without resetting recharge. Rebuild resets the ability and allies.
 Diagnostics: `battleDiagnostics().runner.dash`.
+
+## Opposite-shoulder plasma artillery
+
+The current Siege Walker is **4,452 triangles / 18 rigid parts**. The new
+`plasma_cannon` sits above the right shoulder opposite the left rocket pod:
+wide ten-sided barrel, cooling collars, armored rails and a jade plasma bore.
+The Blender source and build script, GLB (428,276 bytes), metadata and native
+`.blend` have been regenerated. Existing articulation, hit boxes and death
+wreck generation include the new component. It is one added character draw.
+
+The cannon gimbal maintains an actual world-space **45° elevation**, compensating
+for walking/torso motion, and turns horizontally toward each locked target.
+Each artillery turn warns for 2.4 s before the first shot; a second shot follows
+1.6 s later where a separate target is available. A shared arsenal rotates
+**plasma → beam → rocket pod → plasma**, waiting for all live shells/missiles
+to clear between weapons. Plasma opens the first turn so it is visible early.
+The existing beam and pod never charge/fire together with the artillery.
+
+`plasma-artillery.js` solves a 45° ballistic trajectory from the actual muzzle
+with gravity 5 m/s², typically 3–6 s of flight and an apex 23–30 m above the
+street in this scene. It integrates swept collision in at most 1/90 s slices.
+Each plasma ball has a 0.65 m core radius, a pulsing green halo, two spinning
+plasma rings and a short instanced particle wake. Existing cover along an arc
+rejects that aim before warning. Newly moved units/debris/buildings can still
+intercept a live shell, causing an early burst and clearing its old marker.
+
+Each locked ground target has a **7 m blast radius / 14 m diameter** with
+crosshair ticks, a shrinking timing ring, translucent fill and a countdown.
+Its world position remains fixed even if the original target moves or is
+rescued; the shot never homes toward evacuated allies. Warnings remain visible
+through city occlusion. Launch recomputes flight time from the moving muzzle
+to the same fixed aim point. Use the **Plasma artillery** observer preset to
+frame the cannon, arc and threatened ground zones on desktop or phone.
+
+Actual impacts deal 160 nominal unit blast damage with the existing distance
+falloff, and 32 structural impact power over the same 7 m radius. Direct world
+hits use the shared scorch/destruction path and physical debris budget.
+The robot is excluded from its own blast. The ground marker matches the
+unit blast radius; unit footprints are included conservatively in rescue
+predictions. There is no immunity or automatic damage cancellation for heroes.
+
+Rift Warden reads the fixed predicted impact and begins attempting portal
+rescues inside 3.5 s of impact. Both safe-exit policies reject every active
+plasma blast area, including a footprint margin, even while the ball is still
+high above the city. Carried allies are left to Volt Rush. His CPU approaches
+reachable threatened allies within 24 m while there is enough time, holds
+near them, and at <=2 s tries sixteen outward dash directions. It requires
+the whole captured group to finish beyond every marked radius plus its body
+footprint, and retains the existing wall/terrain/ledge checks. E / phone DASH
+remains available to the player. Tight geometry or hero cooldowns can prevent
+some rescues; the attack can still hurt allies that remain inside the zone.
+
+No more than two shells/markers and 100 trail instances are active. Marker
+textures, labels, line buffers and transient blast-wave materials are disposed
+on expiry/reset. No extra lights, shadow maps, physics body per projectile or
+scene-render cameras are added. Pause freezes all timers. Robot defeat cancels
+unlaunched shots; already airborne balls remain dangerous and both rescue
+heroes can still respond. Rebuild clears artillery, warnings and damage counters.
+Diagnostics: `battleDiagnostics().plasmaArtillery` and `.robot.plasmaCannon`.

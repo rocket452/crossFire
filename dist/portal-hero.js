@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {findPortalRescue,choosePortalExit,roadPortalPositions} from './portal-policy.js?v=portals-15';
+import {findPortalRescue,choosePortalExit,roadPortalPositions} from './portal-policy.js?v=plasma-18';
 const UP=new THREE.Vector3(0,1,0),FORWARD=new THREE.Vector3(0,0,1);
 const SHOT_INTERVAL=.25,BOLT_SPEED=65,TRACE_LIMIT=8;
 export class PortalHero {
@@ -51,7 +51,7 @@ export class PortalHero {
  }
  update(dt,time){
   this.time=time;const robot=this.getRobot(),alive=!!robot?.combatUnit?.alive;this.travelCooldown-=dt;this.attackCooldown-=dt;this.rescueCooldown=Math.max(0,this.rescueCooldown-dt);this.rescueScan-=dt;
-  if(alive){if(this.rescueScan<=0&&this.rescueCooldown<=0){this.tryRescue();this.rescueScan=.04;}if(!this.travel&&this.travelCooldown<=0)this.startTravel();if(!this.travel&&this.attackCooldown<=0){if(!this.tryAttack())this.attackCooldown=.5;}}
+  if(alive||this.getThreats().some(t=>t.kind==='plasma')){if(this.rescueScan<=0&&this.rescueCooldown<=0){this.tryRescue();this.rescueScan=.04;}if(alive&&!this.travel&&this.travelCooldown<=0)this.startTravel();if(alive&&!this.travel&&this.attackCooldown<=0){if(!this.tryAttack())this.attackCooldown=.5;}}
   if(this.travel){const t=this.travel;t.age+=dt;if(!t.moved&&t.age>=.22){this.root.position.copy(t.destination);this.addTrace('hero',t.from,t.arrival);t.moved=true;this.teleports++;this.emit(t.destination.clone().addScaledVector(UP,1.2),18,2);}
    if(t.moved)this.root.position.lerpVectors(t.destination,t.arrival,Math.min(1,(t.age-.22)/.25));this.root.scale.setScalar(t.age<.22?Math.max(.04,1-t.age/.22):Math.min(1,(t.age-.22)/.25));if(t.age>=.5){this.root.scale.setScalar(1);this.travel=null;this.mode='watching';this.attackCooldown=Math.min(this.attackCooldown,.25);}
   }

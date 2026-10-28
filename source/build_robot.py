@@ -73,6 +73,25 @@ for row in range(2):
   cyl((x,-2.04,z),.11,.04,glow,axis=(0,-1,0),v=6)
 for x in [-5.25,-1.95]:cube((x,.1,18.7),(.14,2.8,1.9),light,.03)
 part('rocket_pod','chest',(-3.6,0,17.4))
+# Heavy plasma mortar on the opposite (right) shoulder. Runtime gimbal holds
+# the actual +Z barrel at 45 degrees above the world horizon.
+plasma=(.10,.95,.70,1)
+cube((3.6,.35,17.7),(1.8,2.0,.8),dark,.12)
+cyl((3.6,.1,18.25),1.0,1.85,light,axis=(1,0,0),v=10)
+cyl((3.6,-.65,18.8),1.25,3.9,armor,axis=(0,-1,0),v=10)
+for y in [.7,-.25,-1.35,-2.45]:
+ cyl((3.6,y,18.8),1.34,.24,light,axis=(0,-1,0),v=10)
+for x in [-1,1]:
+ cube((3.6+x*1.13,-.4,18.8),(.38,3.4,.5),trim,.06)
+ cube((3.6+x*.88,-.65,19.65),(.3,2.8,.18),plasma,.03)
+cyl((3.6,-2.77,18.8),1.18,.4,dark,axis=(0,-1,0),v=10)
+cyl((3.6,-3.0,18.8),1.29,.2,trim,axis=(0,-1,0),v=10)
+cyl((3.6,-3.12,18.8),.96,.08,dark,axis=(0,-1,0),v=10)
+cyl((3.6,-3.18,18.8),.67,.06,plasma,axis=(0,-1,0),v=10)
+for i in range(8):
+ a=i*math.tau/8
+ cyl((3.6+.94*math.cos(a),-3.21,18.8+.94*math.sin(a)),.11,.13,plasma,axis=(0,-1,0),v=5)
+part('plasma_cannon','chest',(3.6,0,17.4))
 # Save source and rigid parts, no texture downloads or runtime skeleton required.
 bpy.ops.object.select_all(action='DESELECT')
 for o in meshes:o.select_set(True)

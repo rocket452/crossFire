@@ -1,6 +1,6 @@
 {
   "height": 21,
-  "triangles": 3744,
+  "triangles": 4452,
   "parts": [
     {
       "name": "pelvis",
@@ -151,6 +151,15 @@
       "parent": "chest",
       "pivot": [
         -3.6,
+        17.4,
+        0
+      ]
+    },
+    {
+      "name": "plasma_cannon",
+      "parent": "chest",
+      "pivot": [
+        3.6,
         17.4,
         0
       ]

@@ -4,7 +4,7 @@ import {RunnerAnimator} from './runner-animation.js?v=runner-ai-7';
 import {RunnerAI} from './runner-ai.js?v=rooftops-10';
 import {RunnerElectric} from './runner-electric.js?v=rescue-dash-17';
 import {RunnerCharge} from './runner-charge.js?v=runner-cooldown-14';
-import {RunnerDash} from './runner-dash.js?v=rescue-dash-17';
+import {RunnerDash} from './runner-dash.js?v=plasma-18';
 export class Speedster {
  constructor({scene,camera,controls,canvas,model,spec,getSections,traceAim,onElectric,isPaused,onEnter,onExit,getRobot,getMissileTarget=()=>null,getBuildings=()=>[],getUnits=()=>[],getThreats=()=>[],traceThreat=()=>null,onMoveUnit=()=>{},onEvent=()=>{}}){
   Object.assign(this,{scene,camera,controls,canvas,spec,getSections,traceAim,onElectric,isPaused,onEnter,onExit,getRobot,getMissileTarget,getBuildings});this.root=new THREE.Group();scene.add(this.root);this.nodes={};model.scene.updateMatrixWorld(true);
@@ -40,6 +40,7 @@ export class Speedster {
    const canShootFrom=position=>{if(!target)return false;const hit=this.traceAim(new THREE.Vector3(position.x,position.y+1.65,position.z),target,{allied:true});return hit?.unit?.kind==='robot'&&hit.unit.alive;};
    cpu=this.ai.update(dt,{motion:this.motion,robotAlive:!!robot?.combatUnit?.alive,target,buildings:this.getBuildings(),sections:this.getSections(),canShootFrom,urgent:!!missile,canShoot:()=>canShootFrom(p)});
    if(missile){const clear=this.traceAim(from,missile.position,{allied:true})?.missile===missile;this.ai.mode='missile-defense';cpu={input:this.motion.mode==='wall'?{forward:1}:this.motion.mode==='air'||clear?{}:{forward:1,boost:true},fire:clear,yaw:this.motion.mode==='wall'?this.motion.yaw:Math.atan2(missile.position.x-p.x,missile.position.z-p.z),target:missile.position};}
+   const rescue=!missile?this.dash.rescueApproach(this.motion):null;if(rescue){cpu=rescue;this.ai.mode=rescue.rescueWaiting?'rescue-standby':'rescue-approach';this.ai.rooftops.cancel(2);}
    input=cpu.input;this.yaw=cpu.yaw;
   }
   let started=false;if(this.active&&this.dashPending&&!dialog)started=this.dash.start(this.motion,this.yaw);else if(!this.active)started=this.dash.tryCPU(this.motion,dt);this.dashPending=false;
