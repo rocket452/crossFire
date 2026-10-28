@@ -5,8 +5,8 @@ import {DestructionWorld} from './destruction.js?v=beam-3';
 import {InfantryCrowd} from './infantry.js?v=robot-1';
 import {HelicopterPilot} from './helicopter-pilot.js?v=visible-damage-3';
 import {traceImpact,UnitDamage} from './combat-collision.js?v=robot-1';
-import {SiegeWalker} from './siege-walker.js?v=beam-3';
-import {EnergyBeamEffect} from './energy-beam.js?v=beam-3';
+import {SiegeWalker} from './siege-walker.js?v=telegraph-4';
+import {EnergyBeamEffect} from './energy-beam.js?v=telegraph-4';
 import {BeamCombat} from './beam-combat.js?v=beam-3';
 const $=id=>document.getElementById(id),viewport=$('viewport');
 let renderer;
@@ -77,7 +77,7 @@ function updateCannonBeam(payload){
  if(beamCombat&&(state.phase==='firing'||state.damageSeconds>0)){
   const result=beamCombat.update(from,direction,state.damageSeconds,protectedUnit);end.set(result.end.x,result.end.y,result.end.z);
  }
- beamEffect?.update(state,from,direction,end,time);
+ beamEffect?.update(state,from,direction,end,time,payload.plan);
 }
 function fire(from,to,team,kind,isPlayer=false,owner=null){if(!to)return;if(isPlayer)playerMissiles++;const o=new THREE.Mesh(kind==='rocket'?rocketGeo:projectileGeo,kind==='pulse'?pulseMat:projectileMat);if(kind==='pulse')o.scale.setScalar(2.6);o.position.copy(from);scene.add(o);const dir=to.clone().sub(from).normalize();if(kind==='rocket')o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);projectiles.push({mesh:o,dir,player:isPlayer,owner,trail:0,speed:kind==='rocket'?55:62,life:6,kind,team,origin:from.clone()});shotsFired++;particles.push({kind:'flash',p:from.clone(),v:new THREE.Vector3(),life:.12,max:.12,size:kind==='rocket'?.6:1.1,scale:1});}
 const pulseMat=new THREE.MeshBasicMaterial({color:'#ff5a22'});

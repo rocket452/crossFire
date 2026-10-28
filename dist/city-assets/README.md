@@ -146,3 +146,22 @@ physics debris. Pilot protection and the removed hit-confirmation popup are
 preserved. The burst is much stronger than the former cannon, so encounter
 outcomes can differ. Effects remain pooled and bounded for the phone browser;
 actual device GPU performance is not benchmarked.
+
+### Head tracking and red beam telegraph
+
+The neck now tracks the intended firing point in both yaw and pitch, using
+chest-relative aiming, damped motion and a 2.5 rad/s speed limit. Yaw is limited
+to +/-1.15 rad, pitch -0.65 to +0.90 rad. It follows live targets while acquiring,
+the locked firing point during charge, and the swept aim during the burst.
+
+A harmless red warning is shown throughout the 3.2 s charge: center aim line,
+translucent sweep corridor, outer rails padded by the 1.05 m beam contact radius,
+moving arrows and target rings. `beam-aim.js` supplies both the actual firing
+sweep and the warning geometry. The sweep origin is locked with the target, so
+the planned target arc remains stable. Preview endpoints extend to beam range
+or ground contact, beyond cover that the weapon may breach. The warning is
+intentionally drawn through buildings to remain readable. It updates with the
+cannon's current pose; the robot continues to walk, so it is a live preview of
+the planned firing corridor rather than a frozen prediction of every future
+footstep. It disappears when the beam fires, on reset, or on robot destruction.
+No hit-confirmation popup is introduced. Pause freezes neck and warning motion.

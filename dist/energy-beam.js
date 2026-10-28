@@ -1,9 +1,10 @@
 import * as THREE from './vendor/three.module.js';
+import {BeamTelegraph} from './beam-telegraph.js?v=telegraph-4';
 
 // Layered geometry and soft additive halos create bloom without a full-screen post pass.
 export class EnergyBeamEffect {
  constructor(scene){
-  this.root=new THREE.Group();scene.add(this.root);this.root.visible=false;this.phase='off';this.time=0;
+  this.telegraph=new BeamTelegraph(scene);this.root=new THREE.Group();scene.add(this.root);this.root.visible=false;this.phase='off';this.time=0;
   this.up=new THREE.Vector3(0,1,0);this.dir=new THREE.Vector3();this.side=new THREE.Vector3();this.cross=new THREE.Vector3();this.point=new THREE.Vector3();this.dummy=new THREE.Object3D();
   const additive=(color,opacity=1)=>new THREE.MeshBasicMaterial({color,transparent:true,opacity,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false,side:THREE.DoubleSide});
   this.white=additive('#eeffff');this.blue=additive('#37cfff',.65);this.violet=additive('#8968ff',.32);
@@ -26,9 +27,10 @@ export class EnergyBeamEffect {
   this.arcArray=new Float32Array(600*3);const arcGeometry=new THREE.BufferGeometry();arcGeometry.setAttribute('position',new THREE.BufferAttribute(this.arcArray,3));this.arcs=new THREE.LineSegments(arcGeometry,new THREE.LineBasicMaterial({color:'#9deaff',transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));this.arcs.frustumCulled=false;this.root.add(this.arcs);
   this.muzzleLight=new THREE.PointLight('#4faaff',0,20,2);this.impactLight=new THREE.PointLight('#46baff',0,25,2);this.root.add(this.muzzleLight,this.impactLight);this.clear();
  }
- clear(){this.root.visible=false;this.phase='off';this.muzzleLight.intensity=this.impactLight.intensity=0;this.arcs.geometry.setDrawRange(0,0);}
- update(state,from,direction,end,time){
+ clear(){this.telegraph.clear();this.root.visible=false;this.phase='off';this.muzzleLight.intensity=this.impactLight.intensity=0;this.arcs.geometry.setDrawRange(0,0);}
+ update(state,from,direction,end,time,plan=null){
   if(!state||!['charging','firing'].includes(state.phase)){this.clear();return;}
+  if(state.phase==='charging')this.telegraph.update(plan,state.charge,time);else this.telegraph.clear();
   this.root.visible=true;this.phase=state.phase;this.time=time;this.dir.copy(direction).normalize();
   this.side.crossVectors(this.dir,Math.abs(this.dir.y)>.9?new THREE.Vector3(1,0,0):this.up).normalize();this.cross.crossVectors(this.side,this.dir).normalize();
   const firing=state.phase==='firing',charge=state.charge,pulse=1+.05*Math.sin(time*31);
@@ -68,5 +70,5 @@ export class EnergyBeamEffect {
   }
   this.arcs.geometry.attributes.position.needsUpdate=true;this.arcs.geometry.setDrawRange(0,count);
  }
- diagnostics(){return{phase:this.phase,visible:this.root.visible,beamVisible:this.tubes.visible&&this.root.visible,lights:this.muzzleLight.intensity>0?2:0};}
+ diagnostics(){return{phase:this.phase,visible:this.root.visible,beamVisible:this.tubes.visible&&this.root.visible,lights:this.muzzleLight.intensity>0?2:0,telegraph:this.telegraph.diagnostics()};}
 }
