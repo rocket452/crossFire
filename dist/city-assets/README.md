@@ -584,3 +584,30 @@ scene-render cameras are added. Pause freezes all timers. Robot defeat cancels
 unlaunched shots; already airborne balls remain dangerous and both rescue
 heroes can still respond. Rebuild clears artillery, warnings and damage counters.
 Diagnostics: `battleDiagnostics().plasmaArtillery` and `.robot.plasmaCannon`.
+
+## Building armor: 90% reduction except Siege Walker
+
+Building section health keeps its existing +30% increase (wall 5.2, slab 7.8,
+column 13). Every non-robot source now deals **10% of its previous health
+ damage** to those sections: army/player shells and missiles, infantry bullets,
+Violet force orbs, Volt electricity and Rift portal bolts. Robot beam, shoulder
+missiles and plasma artillery retain **100%** of their building damage.
+
+The shared `DestructionWorld.damageChunk` applies the multiplier exactly once,
+including direct, distance-falloff splash and detached-debris health paths.
+`impact` carries an explicit `source` ID. Only `source: 'siege-walker'` receives
+the full-damage exception; missing/unknown sources default to 10%. Player or
+beam activation-priority flags alone do not bypass armor. All live robot weapon
+callbacks explicitly pass the robot ID. Other weapons retain their own IDs.
+
+Examples of direct structural damage: tank shell 23 → 2.3, aircraft missile
+18 → 1.8, infantry bullet 0.35 → 0.035, Violet orb 26 → 2.6, electricity
+impact 12 → 1.2 and portal bolt 2 → 0.2. Robot beam stays 35, pod missile 18
+and plasma blast 32 before existing splash falloff.
+
+Scorch remains persistent and follows actual section health loss. Unit damage,
+blast radii, physical impulses, collision, support-loss rules and debris budgets
+are unchanged. Sufficient accumulated non-robot damage can still break panels;
+robot damage can still cause full physical structural collapse. Rebuild restores
+health/colors and retains the armor rule. Diagnostics expose
+`physics.nonRobotDamageMultiplier = 0.1` and `physics.robotDamageMultiplier = 1`.

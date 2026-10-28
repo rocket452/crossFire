@@ -13,7 +13,7 @@ export class BeamCombat {
   if(damageSeconds>0&&collision){
    this.ticks++;
    if(collision.kind==='shield'){const power=300*damageSeconds;this.shieldHits++;this.blockedDamage+=power;collision.barrier.onHit?.(end,power);this.onImpact(end,collision,[]);return{end,collision};}
-   this.physics.impact(end,35,3.4,collision.section||null,{beam:true});
+   this.physics.impact(end,35,3.4,collision.section||null,{beam:true,source:'siege-walker'});
    if(collision.section){this.buildingHits++;this.onSection(collision.section);}
    const damage=this.units.blast(end,{direct:collision.unit||null,power:300*damageSeconds,radius:3.8,exclude:protectedUnit,filter:u=>u.kind!=='robot'});
    for(const d of damage){this.unitDamage+=d.damage;if(d.disabled)this.unitKills++;}

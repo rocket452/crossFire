@@ -1,6 +1,7 @@
 import * as CANNON from './vendor/cannon-es.js';
 import {CityBroadphase} from './physics-grid.js';
 export const BUILDING_DURABILITY_MULTIPLIER=1.3;
+export const NON_ROBOT_BUILDING_DAMAGE_MULTIPLIER=.1;
 const sectionHealth=type=>({column:10,slab:6,wall:4}[type]??4)*BUILDING_DURABILITY_MULTIPLIER;
 // Physics-only module: real rigid bodies, support bookkeeping, and bounded activation.
 export class DestructionWorld {
@@ -26,16 +27,17 @@ export class DestructionWorld {
  }
  freeze(c){const i=this.dynamic.indexOf(c);if(i>=0)this.dynamic.splice(i,1);c.state='settled';c.body.type=CANNON.Body.STATIC;c.body.mass=0;c.body.velocity.setZero();c.body.angularVelocity.setZero();c.body.updateMassProperties();this.world.broadphase.markStaticsDirty();this.onFreeze(c);}
  // Every weapon shares health and persistent scorch, including nonlethal hits.
- damageChunk(c,amount){
+ damageChunk(c,amount,{source=null}={}){
+  amount*=source==='siege-walker'?1:NON_ROBOT_BUILDING_DAMAGE_MULTIPLIER;
   if(!(amount>0))return;
   c.hp=Math.max(0,c.hp-amount);
   const scorch=Math.min(.72,.24+.48*(1-c.hp/c.maxHp));
   if(scorch>c.scorch){c.scorch=scorch;this.onDamage(c);}
  }
- impact(point,power=8,radius=3.5,direct=null,{player=false,beam=false}={}){
+ impact(point,power=8,radius=3.5,direct=null,{player=false,beam=false,source=null}={}){
   this.impacts++;const affected=new Set(),priority=player?true:beam?'beam':false;
   if(direct){
-   this.damageChunk(direct,power);affected.add(direct.building);
+   this.damageChunk(direct,power,{source});affected.add(direct.building);
    if(direct.state==='settled')direct.state='intact';
    if(direct.state==='intact'&&direct.hp<=0){
     this.queueDetach(direct,point,power*.18,priority);
@@ -44,9 +46,9 @@ export class DestructionWorld {
    }
   }
   // The directly hit section receives full damage once; neighbors receive falloff.
-  for(const c of this.chunks){if(c===direct||c.state!=='intact')continue;const p=c.body.position,dx=p.x-point.x,dy=p.y-point.y,dz=p.z-point.z,d=Math.hypot(dx,dy,dz);const reach=radius+Math.min(1.6,Math.max(...c.size)*.25);if(d>reach)continue;this.damageChunk(c,power*Math.max(.20,1-d/(reach+.1)));affected.add(c.building);if(c.hp<=0)this.queueDetach(c,point,power*.14);}
+  for(const c of this.chunks){if(c===direct||c.state!=='intact')continue;const p=c.body.position,dx=p.x-point.x,dy=p.y-point.y,dz=p.z-point.z,d=Math.hypot(dx,dy,dz);const reach=radius+Math.min(1.6,Math.max(...c.size)*.25);if(d>reach)continue;this.damageChunk(c,power*Math.max(.20,1-d/(reach+.1)),{source});affected.add(c.building);if(c.hp<=0)this.queueDetach(c,point,power*.14);}
   // Nearby detached bodies retain their damage tint and respond to blast impulse.
-  for(const c of this.dynamic){const d=c.body.position.vsub(new CANNON.Vec3(point.x,point.y,point.z));const length=d.length();if(c!==direct&&length<radius)this.damageChunk(c,power*Math.max(.20,1-length/(radius+.1)));if(length<radius*2&&length>.05){d.normalize();d.scale((1-length/(radius*2))*power*.18*c.body.mass,d);c.body.wakeUp();c.body.applyImpulse(d);}}
+  for(const c of this.dynamic){const d=c.body.position.vsub(new CANNON.Vec3(point.x,point.y,point.z));const length=d.length();if(c!==direct&&length<radius)this.damageChunk(c,power*Math.max(.20,1-length/(radius+.1)),{source});if(length<radius*2&&length>.05){d.normalize();d.scale((1-length/(radius*2))*power*.18*c.body.mass,d);c.body.wakeUp();c.body.applyImpulse(d);}}
   for(const id of affected)this.checkSupports(id);
  }
  checkSupports(id){const b=this.buildings.get(id);const floors=[...new Set(b.chunks.map(c=>c.floor))].sort((a,b)=>a-b);for(const floor of floors){if(b.failed.has(floor))continue;const cols=b.chunks.filter(c=>c.floor===floor&&c.type==='column');if(cols.length&&cols.filter(c=>c.state==='intact'&&!this.pending.has(c)).length<=2){
@@ -60,5 +62,5 @@ export class DestructionWorld {
   for(const c of [...this.dynamic])if(c.body.sleepState===CANNON.Body.SLEEPING||(this.clock-c.born>18&&c.body.velocity.length()<.3))this.freeze(c);
  }
  reset(){for(const b of this.wrecks)this.world.removeBody(b);this.wrecks=[];for(const c of this.chunks){c.state='intact';c.hasDetached=false;c.hp=c.maxHp;c.scorch=0;c.body.type=CANNON.Body.STATIC;c.body.mass=0;c.body.position.set(c.x,c.y,c.z);c.body.quaternion.setFromEuler(0,c.yaw||0,0);c.body.velocity.setZero();c.body.angularVelocity.setZero();this.resizeCollider(c,.5);c.body.updateMassProperties();c.body.aabbNeedsUpdate=true;}this.dynamic=[];this.queue=[];this.pending.clear();this.clock=this.impacts=this.detached=this.collapses=0;for(const b of this.buildings.values())b.failed.clear();this.world.broadphase.markStaticsDirty();}
- stats(){return{impacts:this.impacts,detached:this.detached,collapses:this.collapses,activeBodies:this.dynamic.length+this.wrecks.filter(b=>b.type===CANNON.Body.DYNAMIC).length,queued:this.queue.length,seconds:this.clock,playerReserve:this.playerReserve,totalChunks:this.chunks.length};}
+ stats(){return{nonRobotDamageMultiplier:NON_ROBOT_BUILDING_DAMAGE_MULTIPLIER,robotDamageMultiplier:1,impacts:this.impacts,detached:this.detached,collapses:this.collapses,activeBodies:this.dynamic.length+this.wrecks.filter(b=>b.type===CANNON.Body.DYNAMIC).length,queued:this.queue.length,seconds:this.clock,playerReserve:this.playerReserve,totalChunks:this.chunks.length};}
 }

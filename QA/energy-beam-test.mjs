@@ -17,6 +17,6 @@ for(let i=0;i<4;i++)combat.update(from,dir,.1,'P');assert.equal(tank.alive,false
 // Beam activation is bounded, leaving half the player reservation for manual missiles.
 const budget=new DestructionWorld({maxDynamic:8,playerReserve:4});const pieces=[];for(let i=0;i<8;i++)pieces.push(budget.addChunk({type:'wall',building:'B',floor:0,x:i*8,y:8,z:0,size:[2,2,.3]}));
 for(let i=0;i<4;i++)budget.detach(pieces[i],{x:i*8,y:8,z:-1},2);
-for(let i=4;i<7;i++)budget.impact({x:i*8,y:8,z:0},35,.2,pieces[i],{beam:true});assert.equal(budget.dynamic.length,6);assert.equal(pieces[6].state,'intact');budget.impact({x:56,y:8,z:0},18,.2,pieces[7],{player:true});assert.equal(pieces[7].state,'dynamic');assert.equal(budget.dynamic.length,7);
+for(let i=4;i<7;i++)budget.impact({x:i*8,y:8,z:0},35,.2,pieces[i],{beam:true,source:'siege-walker'});assert.equal(budget.dynamic.length,6);assert.equal(pieces[6].state,'intact');for(let i=0;i<3;i++)budget.impact({x:56,y:8,z:0},18,.2,pieces[7],{player:true});assert.equal(pieces[7].state,'dynamic');assert.equal(budget.dynamic.length,7);
 combat.reset();physics.reset();assert.equal(combat.unitKills,0);assert.equal(wall.state,'intact');
 console.log('PASS charge isolation, exact seven-second damage at 30/60/120Hz and long frames, cover breach, high sustained unit damage, pilot protection, beam debris cap and reserved player capacity');
