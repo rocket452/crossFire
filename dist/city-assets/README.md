@@ -306,9 +306,8 @@ city/terrain collision uses swept segments, sharing existing cover handling.
 Unintercepted warheads use the rocket blast: building power 18 / radius 3.8 m,
 direct unit damage 68 with existing splash falloff and pilot protection.
 
-Violet Sentinel prioritizes missile defense using 0.48 s purple orb charges
-and 42 m/s homing orbs. Her right arm aims at the missile; her left/barrier
-continues a helicopter beam rescue when needed. Launched orbs reserve their
+Violet Sentinel prioritizes missile defense using 1.0 s purple orb charges and a 1.4 s recovery between shots
+and 42 m/s homing orbs. Her right arm aims at the missile. Shielding takes priority: she cannot charge or launch an orb while the barrier is up or fading. Launched orbs reserve their
 target briefly so Volt preferentially attacks other missiles. CPU Volt uses
 line of sight and normal 150 DPS electricity (0.08 s ticks, two hits to kill
 a missile). He moves toward threats hidden by cover and can keep climbing
@@ -347,3 +346,24 @@ Robot defeat cancels roof attacks. Rebuild resets visits, timers and damage.
 Choose **Volt Rush escort** to watch. Diagnostics expose phase, chosen building,
 completed/aborted visits, recovery count, firing time and real robot damage
 under `battleDiagnostics().runner.cpu.rooftop`.
+
+### Violet Sentinel inertia and slower attacks
+
+`violet-flight.js` keeps persistent world velocity instead of assigning a fixed
+step toward each goal. Patrol acceleration is capped at 14 m/s² and braking
+at 12 m/s²; rescue acceleration/braking are capped at 32/26 m/s² so she can
+still reach threatened aircraft. Patrol/rescue/missile pursuit speed targets
+are 12/40/24 m/s. Steering response and an arrival-speed curve produce visible
+acceleration, coasting, reversals and gradual braking, integrated at up to
+120 Hz. Switching modes retains velocity; reset clears it.
+
+Normal orbs charge for 2.4 s then recover for 5.4 s (about 7.8 s between
+launches, previously 4.8 s). Interception orbs charge for 1.0 s and recover
+for 1.4 s (about 2.4 s between launches, previously 0.48 s). Both attacks
+share the recovery timer so changing targets cannot bypass it.
+
+The barrier blocks charging and launching, including its visible fade.
+Raising it clears partial charges; lowering it requires 1.4 s recovery
+before a new charge. Existing airborne orbs continue their trajectories.
+Volt's missile interception remains independent during Violet's shield duty.
+Diagnostics now include velocity, speed, cooldown, shielding and tuning.

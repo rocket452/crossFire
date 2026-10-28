@@ -20,10 +20,10 @@ for(const node of gltf.nodes){if(node.mesh===undefined)continue;const a=gltf.acc
 const spec=JSON.parse(fs.readFileSync(new URL('../dist/city-assets/violet-sentinel.json',import.meta.url)));assert(spec.triangles<2500);assert.equal(spec.parts.length,16);
 const world=new THREE.Scene(),robotRoot=new THREE.Group(),damage=new UnitDamage(),r=damage.add('robot','robot',{},20000);r.shapes=[{center:{x:0,y:14,z:0},half:{x:3,y:2,z:2}}];const robot={root:robotRoot,combatUnit:r,aimPoint:()=>new THREE.Vector3(0,14,0)};
 const hero=new VioletHero(world,{scene:model},spec,{getRobot:()=>robot,traceOrb:(a,b)=>traceImpact(a,b,{targets:[r],ground:false,radius:.48}),onOrbHit:h=>damage.hurt(h.unit,220,h.point)});
-for(let i=1;i<=600;i++)hero.update(1/60,i/60);assert(hero.shots>=2);assert(hero.robotHits>=1);assert(hero.damage>=220);assert(hero.root.position.y>24);
+for(let i=1;i<=960;i++)hero.update(1/60,i/60);assert(hero.shots>=2);assert(hero.robotHits>=1);assert(hero.damage>=220);assert(hero.root.position.y>24);
 const rayFrom=new THREE.Vector3(0,16,0),rayDir=new THREE.Vector3(24,12,0).normalize(),target={kind:'helicopter',alive:true,id:'saved-heli'};
 const payload={state:{phase:'charging'},from:rayFrom,direction:rayDir,aimTarget:{x:24,y:28,z:0},targetUnit:target,attackId:1};hero.receiveThreat(payload);
-for(let i=1;i<=240;i++){hero.update(1/60,10+i/60);hero.receiveThreat(payload);}assert.equal(hero.mode,'blocking');assert(hero.shield.visible);assert(hero.barriers().length===1);
+for(let i=1;i<=240;i++){hero.update(1/60,16+i/60);hero.receiveThreat(payload);}assert.equal(hero.mode,'blocking');assert(hero.shield.visible);assert(hero.barriers().length===1);
 const shield=hero.barriers()[0],center=new THREE.Vector3().setFromMatrixPosition(hero.shield.matrixWorld);assert(center.distanceTo(shield.center)<.001);const normal=new THREE.Vector3(0,0,1).transformDirection(hero.shield.matrixWorld);assert(normal.dot(shield.normal)>1-1e-6);
 const hit=shieldBeamIntersection(rayFrom,rayFrom.clone().addScaledVector(rayDir,100),shield);assert(hit);assert(Math.abs(new THREE.Vector3(hit.point.x,hit.point.y,hit.point.z).sub(center).dot(normal))<.001);
 for(let i=0;i<70;i++)hero.absorb(hit.point,30);assert.equal(hero.rescues,1);assert.equal(hero.blockedDamage,2100);assert.equal(hero.shieldEnergy,900);
