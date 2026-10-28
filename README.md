@@ -22,6 +22,11 @@ The scene uses the revised soldier asset/animation palette; the original city ki
 
 Click an aircraft or its PILOT tag to enter. Desktop W/S move, A/D strafe, Q/E turn, R/F altitude, drag to aim, Space to fire, Escape to exit. Phone uses the joystick, altitude buttons, and hold/drag FIRE.
 
+## Rebuild Rift Warden
+`blender -b -t 4 --python source/build_portal_hero.py`
+
+Choose **Rift Warden escort** to watch the third CPU hero teleport, fire through stationary five-second portals, and evacuate threatened friendly armor/infantry.
+
 ## Runtime source
 - dist/battle.js: city rendering, armies, weapons, camera, effects, UI.
 - dist/combat-collision.js: shared reticle/missile sweeps and unit durability.
@@ -34,6 +39,8 @@ Click an aircraft or its PILOT tag to enter. Desktop W/S move, A/D strafe, Q/E t
 - dist/runner-rooftops.js: CPU speedster roof selection, facade approaches, supported rooftop attacks and departure.
 - dist/robot-arsenal.js: alternating beam/pod attacks and pre-launch warning.
 - dist/shield-shake.js: shield forward offset and damage recoil.
+- dist/portal-hero.js: portal hero articulation, teleport/attack/rescue effects and pooled projectiles.
+- dist/portal-policy.js: hostile-impact prediction and safe friendly evacuation destinations.
 - dist/robot-missiles.js: shoulder salvos, swept missile flight, target claims and interception damage.
 - dist/physics-grid.js: static spatial hashing for collision broadphase.
 - dist/city-assets/README.md: physics scope, limitations, import/download notes.

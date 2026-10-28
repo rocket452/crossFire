@@ -1,0 +1,151 @@
+{
+  "height": 2.55,
+  "triangles": 1852,
+  "parts": [
+    {
+      "name": "pelvis",
+      "parent": null,
+      "pivot": [
+        0,
+        1.17,
+        0
+      ]
+    },
+    {
+      "name": "chest",
+      "parent": "pelvis",
+      "pivot": [
+        0,
+        1.38,
+        0
+      ]
+    },
+    {
+      "name": "sigil",
+      "parent": "chest",
+      "pivot": [
+        0,
+        1.78,
+        0.31
+      ]
+    },
+    {
+      "name": "mantle",
+      "parent": "chest",
+      "pivot": [
+        0,
+        1.94,
+        0
+      ]
+    },
+    {
+      "name": "head",
+      "parent": "chest",
+      "pivot": [
+        0,
+        2.08,
+        0
+      ]
+    },
+    {
+      "name": "eyes",
+      "parent": "head",
+      "pivot": [
+        0,
+        2.35,
+        0.248
+      ]
+    },
+    {
+      "name": "upperarm_l",
+      "parent": "chest",
+      "pivot": [
+        -0.42,
+        1.93,
+        0
+      ]
+    },
+    {
+      "name": "forearm_l",
+      "parent": "upperarm_l",
+      "pivot": [
+        -0.42,
+        1.5,
+        0
+      ]
+    },
+    {
+      "name": "thigh_l",
+      "parent": "pelvis",
+      "pivot": [
+        -0.18,
+        1.14,
+        0
+      ]
+    },
+    {
+      "name": "shin_l",
+      "parent": "thigh_l",
+      "pivot": [
+        -0.18,
+        0.66,
+        0
+      ]
+    },
+    {
+      "name": "coat_l",
+      "parent": "pelvis",
+      "pivot": [
+        -0.3,
+        1.16,
+        -0.18
+      ]
+    },
+    {
+      "name": "upperarm_r",
+      "parent": "chest",
+      "pivot": [
+        0.42,
+        1.93,
+        0
+      ]
+    },
+    {
+      "name": "forearm_r",
+      "parent": "upperarm_r",
+      "pivot": [
+        0.42,
+        1.5,
+        0
+      ]
+    },
+    {
+      "name": "thigh_r",
+      "parent": "pelvis",
+      "pivot": [
+        0.18,
+        1.14,
+        0
+      ]
+    },
+    {
+      "name": "shin_r",
+      "parent": "thigh_r",
+      "pivot": [
+        0.18,
+        0.66,
+        0
+      ]
+    },
+    {
+      "name": "coat_r",
+      "parent": "pelvis",
+      "pivot": [
+        0.3,
+        1.16,
+        -0.18
+      ]
+    }
+  ],
+  "authoring": "Blender 4.3 / articulated low-poly portal hero"
+}

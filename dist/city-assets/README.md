@@ -425,3 +425,47 @@ rapidly, blur, or entering/exiting player control cannot reset the cooldown.
 Cancelling an unfinished charge remains allowed. Pause freezes recovery;
 Rebuild city resets it. The existing charge animation and long dash trail
 remain in use.
+
+## Rift Warden — third CPU hero
+
+Native Blender-authored original character: `rift-warden.blend`,
+`rift-warden.glb` (194,368 bytes), `rift-warden.json`, and reproducible
+`build_portal_hero.py`. 1,852 triangles / 16 rigid articulated parts, ivory
+mantle, jade suit, gold gauntlets and a luminous green portal emblem.
+No image textures. Choose **Rift Warden escort** for an observer camera.
+
+He opens paired upright portals and teleports between currently intact
+battlefield rooftop vantage points. Departure/arrival shrink and emergence
+poses make the transition visible. The portals are stationary world-space
+objects with immutable positions and exact five-second expiry, including
+opening/closing animation. They use animated energy-disc shaders, shared
+ring geometry and instanced runes rather than extra scene-render cameras.
+
+An attack portal aims at the robot, warms up for 0.35 s, then emits eight
+65 m/s projectiles per second while open (up to 37 shots). Each bolt uses
+real swept world collision, dealing 8 damage to the robot/missiles or
+2 building-section damage with the existing scorch path. Buildings block
+shots. Only one attack portal is active; bolts have a two-second lifespan.
+Existing bolts finish after a portal closes. Robot defeat stops new fire.
+
+Rescue policy examines actual hostile/player projectiles over the next
+1.25 s and locked homing missile targets within five seconds of arrival.
+It supports live tanks and infantry from both friendly divisions, never
+disabled units or aircraft. Source/destination portals appear underneath
+the rescued unit (tank radius 3.1 m, infantry 1.05 m), remain fixed for five
+seconds, and the real unit instantly relocates at unchanged health.
+Destinations are at least 16 m away, on the unit's own side, clear of city
+geometry, other units, debris and near-future hostile trajectories.
+Rescues are throttled to 0.6 s with a ten-second cooldown per unit.
+
+Unit transforms, crowd render matrices, muzzle transforms and collision
+shapes all move together. Previous collision centers reset to the destination
+so teleporting does not create a swept collider across the city. Homing
+missiles targeting an evacuated unit lose their lock and continue toward
+the old target point; no unit invulnerability or healing is added.
+
+Limits: twelve portal openings, 64 bolt instances and 120 effect instances.
+Shared geometry/materials are retained; per-opening rune instance buffers
+are disposed on expiry/reset. Pause freezes expiry, attacks and rescues.
+Rebuild removes portals/bolts and restores original army positions/health,
+hero state and counters. Diagnostics are in `battleDiagnostics().portalHero`.

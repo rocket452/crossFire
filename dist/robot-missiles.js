@@ -39,7 +39,7 @@ export class RobotMissiles {
   }else this.pending=0;
   for(const m of this.missiles){
    if(!m.alive)continue;m.previous.copy(m.position);m.age+=dt;m.life-=dt;
-   if(m.target.alive&&m.target.shapes[0])m.targetPoint.copy(m.target.shapes[0].center);
+   if(!m.lockLost&&m.target.alive&&m.target.shapes[0])m.targetPoint.copy(m.target.shapes[0].center);
    // Clear the shoulder and climb above most roofs before steering down at a target.
    const goal=m.age<2.25?m.origin.clone().lerp(m.targetPoint,.35).setY(Math.max(32,m.origin.y+12)):m.targetPoint;
    const desired=goal.clone().sub(m.position).normalize();m.direction.lerp(desired,1-Math.exp(-(m.age<.5?1.4:2.4)*dt)).normalize();m.velocity.copy(m.direction).multiplyScalar(m.speed);
@@ -51,5 +51,5 @@ export class RobotMissiles {
   }
   this.missiles=this.missiles.filter(m=>m.alive);
  }
- diagnostics(){return{salvos:this.salvos,launched:this.launched,pending:this.pending,active:this.missiles.filter(m=>m.alive).length,intercepted:this.intercepted,impacts:this.impacts,expired:this.expired,byHero:{...this.byHero},cooldown:this.cooldown,missiles:this.missiles.filter(m=>m.alive).map(m=>({id:m.id,position:m.position.toArray(),health:m.health,speed:m.speed,age:m.age,target:m.target.id,claim:m.claim}))};}
+ diagnostics(){return{salvos:this.salvos,launched:this.launched,pending:this.pending,active:this.missiles.filter(m=>m.alive).length,intercepted:this.intercepted,impacts:this.impacts,expired:this.expired,byHero:{...this.byHero},cooldown:this.cooldown,missiles:this.missiles.filter(m=>m.alive).map(m=>({id:m.id,position:m.position.toArray(),health:m.health,speed:m.speed,age:m.age,lockLost:!!m.lockLost,target:m.target.id,claim:m.claim}))};}
 }
