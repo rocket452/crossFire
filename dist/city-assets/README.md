@@ -107,3 +107,14 @@ A fixed armor bar replaces no existing controls; the removed hit popup stays abs
 Browser QA uses software WebGL; actual phone GPU, thermal behavior and frame
 rate remain device-dependent. The new model adds 16 draws, no texture memory and
 approximately 297 KB of GLB data. Wreck components add at most 16 physics bodies.
+
+### Walking update
+
+The Walker now uses a 3.2-second alternating gait with 1.0-second foot swings and
+periods of double support. World-space foot plants remain fixed while the pelvis
+moves and turns. An analytic two-bone IK solve drives each thigh/shin/ankle;
+0.8 m swing clearance, heel-to-toe contact, lateral weight transfer and a short
+landing compression replace the original sine-wave leg rotations. The lower body
+turns at up to 0.34 rad/s; the waist independently tracks cannon targets. Footfall
+dust reuses the existing particle pool. No mesh, texture or draw-call additions.
+Animation remains procedural and uses the existing Blender rigid articulation.
