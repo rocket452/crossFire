@@ -30,7 +30,7 @@ export class SiegeWalker {
  }
  reset(){
   for(const w of this.wrecks){w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
-  this.wrecks=[];this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;
+  this.wrecks=[];this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;
   this.weapon.reset();this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
   for(const [name,n]of Object.entries(this.nodes)){n.rotation.set(0,0,0);n.position.copy(this.restPositions[name]);}
   this.walkPose=this.gait.reset();this.applyWalkPose(this.walkPose);
@@ -42,7 +42,7 @@ export class SiegeWalker {
   // Broad torso targets, never tiny lights; both factions have the same enemy.
   return new THREE.Vector3(p.x+(variant%3-1)*.65,from.y>20?15:12.8,p.z);
  }
- recordHit(kind,team,amount){if(amount<=0)return;this.hits[kind]=(this.hits[kind]||0)+1;this.damageByTeam[team]+=amount;this.flash=.14;}
+ recordHit(kind,team,amount){if(amount<=0)return;this.hits[kind]=(this.hits[kind]||0)+1;if(team===0||team===1)this.damageByTeam[team]+=amount;else this.heroDamage+=amount;this.flash=.14;}
  destroy(){this.weapon.stop();this.onBeam(null);this.dead=true;this.deathTime=0;this.deathPose={y:this.root.position.y,chest:this.nodes.chest.rotation.x,head:this.nodes.head.rotation.x,thigh:this.nodes.thigh_l.rotation.x,shin:this.nodes.shin_l.rotation.x};this.onEffect(this.root.position.clone().add(new THREE.Vector3(0,14,0)),false);}
  update(dt,time,targets){
   this.flash=Math.max(0,this.flash-dt);
@@ -59,7 +59,8 @@ export class SiegeWalker {
   }
   const available=targets.filter(u=>u.alive&&u.kind!=='robot'&&u.id!==this.protectedUnit);
   const locked=['charging','firing'].includes(this.weapon.phase);
-  if(!locked&&available.length&&(!this.target?.alive||(this.weapon.phase==='ready'&&!this.aiming))){this.target=available[(this.targetIndex++*7+2)%available.length];this.aiming=true;}
+  if(!locked&&available.length&&(!this.target?.alive||(this.weapon.phase==='ready'&&!this.aiming))){const index=this.targetIndex++,air=available.filter(u=>u.kind==='helicopter'),ground=available.filter(u=>u.kind!=='helicopter');this.target=index%2===0&&air.length?air[Math.floor(index/2)%air.length]:ground.length?ground[(index*3)%ground.length]:available[index%available.length];this.aiming=true;}
+  if(locked&&this.target?.kind==='helicopter'&&this.target.alive&&this.target.shapes[0])this.beamAim={...this.target.shapes[0].center};
   let center=locked?this.beamAim:available.length?this.target?.shapes[0]?.center:null;
   if(center&&this.weapon.phase==='firing')center=sweptBeamTarget(center,this.beamSweepOrigin||this.root.position,Math.sin(this.weapon.elapsed/this.weapon.fireSeconds*Math.PI*2)*BEAM_SWEEP);
   const desiredYaw=center?Math.atan2(center.x-this.root.position.x,center.z-this.root.position.z):this.gait.yaw;
@@ -93,7 +94,7 @@ export class SiegeWalker {
   const direction=new THREE.Vector3(0,-1,0).transformDirection(this.nodes.forearm_r.matrixWorld);
   const shoulder=this.nodes.upperarm_r.getWorldPosition(new THREE.Vector3());
   const plan=state.phase==='charging'&&this.beamAim?beamWarningPlan(this.beamAim,this.beamSweepOrigin,shoulder):null;
-  this.onBeam({state,from:muzzle,direction,time,plan,protectedUnit:this.protectedUnit});
+  this.onBeam({state,from:muzzle,direction,time,plan,aimTarget:this.targetPoint,targetUnit:this.target,attackId:this.weapon.bursts+(state.phase==='charging'?1:0),protectedUnit:this.protectedUnit});
   const hp=this.combatUnit?this.combatUnit.health/this.combatUnit.maxHealth:1;
   for(const [name,m]of Object.entries(this.meshes)){
    m.material.color.set(this.flash>0?'#ffd5a4':'#ffffff');
@@ -171,5 +172,5 @@ export class SiegeWalker {
    result.push({center:{x:c.x,y:c.y,z:c.z},half:{x:b.size.x/2,y:b.size.y/2,z:b.size.z/2},rotation:{x:q.x,y:q.y,z:q.z,w:q.w}});
   }return result;
  }
- diagnostics(){return{health:this.combatUnit?.health,maxHealth:this.combatUnit?.maxHealth,alive:!this.dead,position:this.root.position.toArray(),triangles:this.spec.triangles,parts:this.spec.parts.length,hits:{...this.hits},damageByTeam:[...this.damageByTeam],returnShots:this.returnShots,broken:this.broken,wreckBodies:this.wrecks.length,target:this.target?.id,gait:this.gait.diagnostics(),weapon:this.weapon.diagnostics(),gaze:this.gazeDiagnostics()};}
+ diagnostics(){return{health:this.combatUnit?.health,maxHealth:this.combatUnit?.maxHealth,alive:!this.dead,position:this.root.position.toArray(),triangles:this.spec.triangles,parts:this.spec.parts.length,hits:{...this.hits},damageByTeam:[...this.damageByTeam],heroDamage:this.heroDamage,returnShots:this.returnShots,broken:this.broken,wreckBodies:this.wrecks.length,target:this.target?.id,gait:this.gait.diagnostics(),weapon:this.weapon.diagnostics(),gaze:this.gazeDiagnostics()};}
 }

@@ -165,3 +165,41 @@ cannon's current pose; the robot continues to walk, so it is a live preview of
 the planned firing corridor rather than a frozen prediction of every future
 footstep. It disappears when the beam fires, on reset, or on robot destruction.
 No hit-confirmation popup is introduced. Pause freezes neck and warning motion.
+
+## Violet Sentinel — flying force-energy superhero
+
+Original 2.59 m low-poly masked hero, built directly in Blender 4.3.2:
+`violet-sentinel.blend`, `violet-sentinel.glb`, `violet-sentinel.json`, and
+`build_hero.py`. 1,620 triangles, 16 rigid articulated components, vertex-color
+materials, glowing eyes/sigil and a three-panel animated cape. Hero escort is
+now the opening camera; the other observer and helicopter controls remain.
+
+The autonomous ally patrols above the city and builds a purple energy orb between
+his palms for 1.6 s, then launches it at 42 m/s. Direct robot hits apply 220 damage;
+solid city cover can intercept the swept orb. Purple trails, impact particles,
+charging glow and local lighting are bounded and reused. Offense pauses while
+he intercepts a helicopter attack, and stops when the robot is defeated.
+
+For helicopter-targeted robot bursts the rescue policy accepts four out of every
+five opportunities (stable across resets, not a roll every frame). The hero flies
+toward a point between the cannon and helicopter at up to 48 m/s, then raises an
+11.6 m diameter purple barrier. Deployment and actual arrival are required: no
+teleportation and no global helicopter immunity. Robot target priority alternates
+air and ground opportunities, beginning with a helicopter so the new rescue can
+be observed immediately. Aerial beam aim follows the selected helicopter; the
+red telegraph updates while charging. Ground firing points still lock as before.
+
+`hero-defense.js` computes beam/plane-disc collision. The barrier participates in
+the same nearest-hit ordering as world cover and units. When it is first, the
+rendered blue beam ends at its actual surface and damage/physics effects stop
+there. Off-path, depleted or absent shields do not protect anything. The field
+has 3,000 absorption energy, uses the real 300-health/s beam damage, and regenerates
+250 energy/s when not defending. An ordinary full burst costs 2,100 energy. Impact
+ripples and brightening display strain. The hero can miss an interception or
+skip one; his body currently has no separate health model.
+
+Pause freezes flight, charge, orbs, shields and damage. Rebuild restores all hero
+state, pending orbs, rescue counters, barrier energy and visual effects. Existing
+pilot protection and the removed hit popup are retained. Hero/field rendering
+adds bounded simple geometry, a generated glow texture and one unshadowed light;
+real phone GPU/thermal performance remains unbenchmarked.

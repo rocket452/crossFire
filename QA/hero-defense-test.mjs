@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import * as THREE from '../dist/vendor/three.module.js';
+import {VioletHero} from '../dist/violet-hero.js';
+import {BeamCombat} from '../dist/beam-combat.js';
+import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
+import {DestructionWorld} from '../dist/destruction.js';
+import {RescuePolicy,shieldBeamIntersection} from '../dist/hero-defense.js';
+const policy=new RescuePolicy();for(let i=1;i<=10;i++){policy.decide(i,'helicopter');policy.decide(i,'helicopter');}assert.equal(policy.opportunities,10);assert.equal(policy.responses,8);assert(!policy.decide(11,'tank'));
+const from={x:0,y:20,z:0},dir={x:0,y:0,z:1},barrier={center:{x:0,y:20,z:20},normal:{x:0,y:0,z:-1},radius:5.8,strength:3000,onHit:(p,power)=>barrier.strength-=power};
+const physics=new DestructionWorld(),units=new UnitDamage(),heli=units.add('heli','helicopter',{});heli.shapes=[{center:{x:0,y:20,z:45},half:{x:1,y:1,z:2}}];const combat=new BeamCombat({physics,units,getBarriers:()=>[barrier]});
+for(let i=0;i<70;i++)assert.equal(combat.update(from,dir,.1).collision.kind,'shield');assert.equal(heli.health,90);assert.equal(combat.blockedDamage,2100);assert.equal(physics.impacts,0);assert.equal(barrier.strength,900);
+barrier.center.x=12;combat.update(from,dir,.1);assert.equal(heli.health,60,'off-path barrier must not grant immunity');barrier.center.x=0;barrier.strength=30;combat.update(from,dir,.1);combat.update(from,dir,.1);assert.equal(heli.health,30,'depleted barrier must stop blocking');
+barrier.strength=3000;const wall=physics.addChunk({type:'wall',building:'cover',floor:0,x:0,y:20,z:10,size:[4,4,.3]});assert.equal(combat.update(from,dir,0).collision.section,wall,'world cover must be hit before a shield behind it');
+assert.equal(shieldBeamIntersection(from,{x:0,y:20,z:100},{...barrier,center:{x:0,y:20,z:-2}}),null);
+console.log('PASS 80% repeatable rescue policy, physical shield clipping, blocked DPS, off-path / exhausted vulnerability and nearer world occlusion');
+// Load the actual Blender-authored geometry and articulation metadata.
+const bytes=fs.readFileSync(new URL('../dist/city-assets/violet-sentinel.glb',import.meta.url)),n=bytes.readUInt32LE(12),gltf=JSON.parse(bytes.subarray(20,20+n).toString()),bin=bytes.subarray(28+n),model=new THREE.Group();
+for(const node of gltf.nodes){if(node.mesh===undefined)continue;const a=gltf.accessors[gltf.meshes[node.mesh].primitives[0].attributes.POSITION],v=gltf.bufferViews[a.bufferView],start=(a.byteOffset||0)+(v.byteOffset||0),stride=v.byteStride||12,p=new Float32Array(a.count*3);for(let i=0;i<a.count;i++)for(let k=0;k<3;k++)p[i*3+k]=bin.readFloatLE(start+i*stride+k*4);const geometry=new THREE.BufferGeometry().setAttribute('position',new THREE.BufferAttribute(p,3)),mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial());mesh.name=node.name;model.add(mesh);}
+const spec=JSON.parse(fs.readFileSync(new URL('../dist/city-assets/violet-sentinel.json',import.meta.url)));assert(spec.triangles<2500);assert.equal(spec.parts.length,16);
+const world=new THREE.Scene(),robotRoot=new THREE.Group(),damage=new UnitDamage(),r=damage.add('robot','robot',{},20000);r.shapes=[{center:{x:0,y:14,z:0},half:{x:3,y:2,z:2}}];const robot={root:robotRoot,combatUnit:r,aimPoint:()=>new THREE.Vector3(0,14,0)};
+const hero=new VioletHero(world,{scene:model},spec,{getRobot:()=>robot,traceOrb:(a,b)=>traceImpact(a,b,{targets:[r],ground:false,radius:.48}),onOrbHit:h=>damage.hurt(h.unit,220,h.point)});
+for(let i=1;i<=600;i++)hero.update(1/60,i/60);assert(hero.shots>=2);assert(hero.robotHits>=1);assert(hero.damage>=220);assert(hero.root.position.y>24);
+const rayFrom=new THREE.Vector3(0,16,0),rayDir=new THREE.Vector3(24,12,0).normalize(),target={kind:'helicopter',alive:true,id:'saved-heli'};
+const payload={state:{phase:'charging'},from:rayFrom,direction:rayDir,aimTarget:{x:24,y:28,z:0},targetUnit:target,attackId:1};hero.receiveThreat(payload);
+for(let i=1;i<=240;i++){hero.update(1/60,10+i/60);hero.receiveThreat(payload);}assert.equal(hero.mode,'blocking');assert(hero.shield.visible);assert(hero.barriers().length===1);
+const shield=hero.barriers()[0],center=new THREE.Vector3().setFromMatrixPosition(hero.shield.matrixWorld);assert(center.distanceTo(shield.center)<.001);const normal=new THREE.Vector3(0,0,1).transformDirection(hero.shield.matrixWorld);assert(normal.dot(shield.normal)>1-1e-6);
+const hit=shieldBeamIntersection(rayFrom,rayFrom.clone().addScaledVector(rayDir,100),shield);assert(hit);assert(Math.abs(new THREE.Vector3(hit.point.x,hit.point.y,hit.point.z).sub(center).dot(normal))<.001);
+for(let i=0;i<70;i++)hero.absorb(hit.point,30);assert.equal(hero.rescues,1);assert.equal(hero.blockedDamage,2100);assert.equal(hero.shieldEnergy,900);
+hero.reset();assert.equal(hero.shots,0);assert.equal(hero.rescues,0);assert.equal(hero.orbs.length,0);assert(!hero.shield.visible);assert.equal(hero.barriers().length,0);
+console.log('PASS actual low-poly hero asset, airborne charged orb damage, physical interception flight, rendered shield plane/normal, sustained absorption and reset');
