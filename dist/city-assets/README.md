@@ -397,12 +397,12 @@ Shielding still prevents attacks and preserves the slower flight/shot timing.
 
 ### Volt Rush charged lightning and extended dash streak
 
-`runner-charge.js` adds a 0.5 s wind-up to each continuous weapon activation
+`runner-charge.js` adds a 0.5 s wind-up to each weapon activation
 for both the player and CPU. Damage timing accounts only for the frame portion
 after charge completes; existing 0.08 s / 150 DPS beam ticks follow it.
 A growing white/cyan palm core, two spinning rings, spiral forearm arcs and
 light buildup accompany a pull-back/extend arm pose. Charge status appears
-in the player HUD. Holding fire sustains the beam; tapping FIRE queues the
+in the player HUD. Holding fire repeats charged, capped bursts after recovery; tapping FIRE queues the
 wind-up and a short 0.18 s beam pulse. Releasing keyboard fire before charge
 completes cancels it. Blur, takeover/exit and reset clear partial charge.
 
@@ -413,3 +413,15 @@ The 350-trail / 500-rendered-segment limits and two existing instance pools
 remain fixed. At 46 m/s, the straight-line test retains about 34.5 m of
 actual movement path. Charge uses four reusable visible meshes; no geometry
 is allocated per activation. Stationary trails fade and all effects reset.
+
+### Speedster firing-rate limit
+
+Volt's lightning is now capped at 0.4 s per burst. Every fired burst, including
+one released early, starts a 1.5 s cooldown before the next 0.5 s charge.
+Holding fire therefore produces at most one full burst every 2.4 s rather
+than an uninterrupted beam. During recovery, the HUD displays RECHARGING.
+CPU targeting and player input share this clock. Switching targets, tapping
+rapidly, blur, or entering/exiting player control cannot reset the cooldown.
+Cancelling an unfinished charge remains allowed. Pause freezes recovery;
+Rebuild city resets it. The existing charge animation and long dash trail
+remain in use.
