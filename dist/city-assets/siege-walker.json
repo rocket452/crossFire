@@ -1,6 +1,6 @@
 {
   "height": 21,
-  "triangles": 3068,
+  "triangles": 3744,
   "parts": [
     {
       "name": "pelvis",
@@ -143,6 +143,15 @@
       "pivot": [
         3.6,
         12.1,
+        0
+      ]
+    },
+    {
+      "name": "rocket_pod",
+      "parent": "chest",
+      "pivot": [
+        -3.6,
+        17.4,
         0
       ]
     }

@@ -4,8 +4,8 @@ import {RunnerAnimator} from './runner-animation.js?v=runner-ai-7';
 import {RunnerAI} from './runner-ai.js?v=runner-ai-7';
 import {RunnerElectric} from './runner-electric.js?v=runner-6';
 export class Speedster {
- constructor({scene,camera,controls,canvas,model,spec,getSections,traceAim,onElectric,isPaused,onEnter,onExit,getRobot}){
-  Object.assign(this,{scene,camera,controls,canvas,spec,getSections,traceAim,onElectric,isPaused,onEnter,onExit,getRobot});this.root=new THREE.Group();scene.add(this.root);this.nodes={};model.scene.updateMatrixWorld(true);
+ constructor({scene,camera,controls,canvas,model,spec,getSections,traceAim,onElectric,isPaused,onEnter,onExit,getRobot,getMissileTarget=()=>null}){
+  Object.assign(this,{scene,camera,controls,canvas,spec,getSections,traceAim,onElectric,isPaused,onEnter,onExit,getRobot,getMissileTarget});this.root=new THREE.Group();scene.add(this.root);this.nodes={};model.scene.updateMatrixWorld(true);
   for(const p of spec.parts){const src=model.scene.getObjectByName(p.name);if(!src?.isMesh)throw Error('Missing runner mesh '+p.name);const pivot=new THREE.Vector3(...p.pivot),geometry=src.geometry.clone().applyMatrix4(src.matrixWorld);geometry.translate(-pivot.x,-pivot.y,-pivot.z);const material=src.material.clone();if(['sigil','eyes'].includes(p.name)){material.emissive=new THREE.Color('#5ceaff');material.emissiveIntensity=3;}const mesh=new THREE.Mesh(geometry,material);mesh.castShadow=true;mesh.receiveShadow=true;const node=new THREE.Group();node.add(mesh);const parent=p.parent?this.nodes[p.parent]:this.root,parentPivot=p.parent?new THREE.Vector3(...spec.parts.find(q=>q.name===p.parent).pivot):new THREE.Vector3();node.position.copy(pivot).sub(parentPivot);parent.add(node);this.nodes[p.name]=node;}
   this.animator=new RunnerAnimator(this.root,this.nodes);this.ai=new RunnerAI();this.motion=new RunnerMotion();this.fx=new RunnerElectric(scene);this.active=false;this.keys=new Set();this.stick={x:0,y:0};this.boost=false;this.heldFire=false;this.mouseFire=false;this.jumpPending=false;this.pulse=0;this.yaw=Math.PI;this.pitch=-.10;this.wallYaw=0;this.cameraUp=new THREE.Vector3(0,1,0);this.bodyUp=new THREE.Vector3(0,1,0);this.bodyForward=new THREE.Vector3(0,0,-1);this.cameraDirection=new THREE.Vector3();this.hud=document.getElementById('runner-hud');this.viewer=document.querySelector('.viewer');this.damageClock=0;this.damage=0;this.ticks=0;this.lastHit=null;this.time=0;this.reset();this.bindInput();
  }
@@ -34,6 +34,8 @@ export class Speedster {
   if(!this.active){
    const robot=this.getRobot(),target=robot?.aimPoint(new THREE.Vector3(this.motion.position.x,this.motion.position.y+1.6,this.motion.position.z));
    cpu=this.ai.update(dt,{motion:this.motion,robotAlive:!!robot?.combatUnit?.alive,target,canShoot:()=>{if(!target)return false;const p=this.motion.position,n=this.motion.normal,from=new THREE.Vector3(p.x+n.x*1.65,p.y+n.y*1.65,p.z+n.z*1.65),hit=this.traceAim(from,target,{allied:true});return hit?.unit?.kind==='robot'&&hit.unit.alive;}});
+   const n=this.motion.normal,p=this.motion.position,from=new THREE.Vector3(p.x+n.x*1.65,p.y+n.y*1.65,p.z+n.z*1.65),missile=this.getMissileTarget(from);
+   if(missile){const clear=this.traceAim(from,missile.position,{allied:true})?.missile===missile;this.ai.mode='missile-defense';cpu={input:this.motion.mode==='wall'?{forward:1}:this.motion.mode==='air'||clear?{}:{forward:1,boost:true},fire:clear,yaw:this.motion.mode==='wall'?this.motion.yaw:Math.atan2(missile.position.x-p.x,missile.position.z-p.z),target:missile.position};}
    input=cpu.input;this.yaw=cpu.yaw;
   }
   const oldMode=this.motion.mode;this.motion.yaw=this.yaw;this.motion.step(input,dt,this.getSections());this.jumpPending=false;

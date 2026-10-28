@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
 const spec=JSON.parse(fs.readFileSync(new URL('../dist/city-assets/siege-walker.json',import.meta.url)));
-assert.equal(spec.height,21);assert(spec.triangles<=5000);assert.equal(spec.parts.length,16);
+assert.equal(spec.height,21);assert(spec.triangles<=5000);assert.equal(spec.parts.length,17);
 const seen=new Set();for(const p of spec.parts){assert(!seen.has(p.name));if(p.parent)assert(seen.has(p.parent),'parent is created first');assert(p.pivot.every(Number.isFinite));seen.add(p.name);}
 const bytes=fs.readFileSync(new URL('../dist/city-assets/siege-walker.glb',import.meta.url));
 assert.equal(bytes.toString('utf8',0,4),'glTF');const gltf=JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)).toString());

@@ -18,7 +18,7 @@ window.qa={
  const errors=[];const page=await browser.newPage({viewport:{width:1100,height:1000},deviceScaleFactor:1});page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/battle.js?*',route=>route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,'dist/battle.js'),'utf8').replace('requestAnimationFrame(animate);const elapsed=', 'requestAnimationFrame(animate);if(window.__qaStopRender)return;const elapsed=')+harness}));
  await page.goto(process.env.BASE_URL||'http://127.0.0.1:8765',{waitUntil:'domcontentloaded',timeout:60000});await page.waitForFunction(()=>window.battleDiagnostics?.().loaded,null,{timeout:60000});await page.evaluate(()=>qa.pause());await page.locator('#viewport').scrollIntoViewIfNeeded();await page.evaluate(()=>qa.render());if(!process.env.SKIP_SCREENSHOTS)await page.locator('#viewport').screenshot({path:'/tmp/walker-start.png'});
- let d=await page.evaluate(()=>battleDiagnostics());assert.equal(d.view,'hero');assert.equal(d.robot.parts,16);assert.equal(d.robot.triangles,3068);assert.equal(await page.locator('#pilot-impact').count(),0);
+ let d=await page.evaluate(()=>battleDiagnostics());assert.equal(d.view,'hero');assert.equal(d.robot.parts,17);assert.equal(d.robot.triangles,3744);assert.equal(await page.locator('#pilot-impact').count(),0);
  const cpuMs=await page.evaluate(()=>qa.step(20));d=await page.evaluate(()=>battleDiagnostics());
  assert(d.robot.hits.shell>0&&d.robot.hits.rocket>0&&d.robot.hits.infantry>0);assert(d.robot.damageByTeam.every(n=>n>0));assert(d.robot.returnShots>=1);assert(d.beam.shieldHits>0||d.combat.units.some(u=>u.kind!=='robot'&&u.health<(u.kind==='tank'?100:u.kind==='helicopter'?90:35)));
  console.log('PASS autonomous battle',JSON.stringify({robot:d.robot,impacts:d.weaponImpacts,sim20SecondsCpuMs:Math.round(cpuMs)}));
@@ -39,10 +39,10 @@ window.qa={
  // Exercise the normal damage/disable callback; either faction may win the beam encounter.
  await page.evaluate(()=>{qa.step(10);qa.defeat();});
  d=await page.evaluate(()=>battleDiagnostics());assert.equal(d.robot.alive,false);await page.evaluate(()=>qa.step(2));
- const falling=await page.evaluate(()=>qa.wreck());assert.equal(falling.length,16);await page.evaluate(()=>qa.step(1));const fallen=await page.evaluate(()=>qa.wreck());assert(fallen.every(w=>w.finite&&Math.abs(w.y-w.renderedY)<.001));assert(fallen.some((w,i)=>w.y<falling[i].y-.2),'actual rigid parts fall');
+ const falling=await page.evaluate(()=>qa.wreck());assert.equal(falling.length,17);await page.evaluate(()=>qa.step(1));const fallen=await page.evaluate(()=>qa.wreck());assert(fallen.every(w=>w.finite&&Math.abs(w.y-w.renderedY)<.001));assert(fallen.some((w,i)=>w.y<falling[i].y-.2),'actual rigid parts fall');
  await page.evaluate(()=>qa.render());if(!process.env.SKIP_SCREENSHOTS)await page.locator('#viewport').screenshot({path:'/tmp/walker-destroyed.png'});
  const shots=(await page.evaluate(()=>battleDiagnostics())).shotsFired;await page.evaluate(()=>qa.step(5));assert.equal((await page.evaluate(()=>battleDiagnostics())).shotsFired,shots,'armies hold fire after robot death');
- console.log('PASS damage-triggered destruction, 16 falling rendered wrecks and allied ceasefire',JSON.stringify({seconds:d.seconds,robot:d.robot}));
+ console.log('PASS damage-triggered destruction, 17 falling rendered wrecks and allied ceasefire',JSON.stringify({seconds:d.seconds,robot:d.robot}));
  await page.locator('#reset').click();d=await page.evaluate(()=>battleDiagnostics());assert.equal(d.robot.health,12000);assert.equal(d.robot.broken,false);assert.equal(d.robot.wreckBodies,0);assert.equal(d.combat.disabled,0);assert.equal(d.physics.detached,0);assert.equal(d.playerMissiles,0);assert(!d.pilot.active);assert.equal(d.robot.returnShots,0);
  assert.deepEqual(errors,[]);console.log('PASS complete rebuild, no hit popup and no browser errors');
  // Responsive phone view and touch pilot/fire controls.

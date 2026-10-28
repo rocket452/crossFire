@@ -29,6 +29,7 @@ Click an aircraft or its PILOT tag to enter. Desktop W/S move, A/D strafe, Q/E t
 - dist/helicopter-flight.js: assisted flight, damping, clearance and bounds.
 - dist/infantry.js: shared crowd meshes, baked Blender animation sampling, transitions, and weapon timing.
 - dist/destruction.js: damage, support propagation, rigid bodies, activation budget.
+- dist/robot-missiles.js: shoulder salvos, swept missile flight, target claims and interception damage.
 - dist/physics-grid.js: static spatial hashing for collision broadphase.
 - dist/city-assets/README.md: physics scope, limitations, import/download notes.
 

@@ -61,6 +61,18 @@ for side,s in [('l',-1),('r',1)]:
   cube((x,0,9.2),(1.6,1.4,.9),dark)
   for j in [-1,0,1]:cube((x+j*.52,-.25,8.65),(.37,1.2,1.2),light,.05)
  part('forearm_'+side,'upperarm_'+side,(x,0,12.1))
+# Six-cell launcher, rigidly mounted above the left shoulder; +Z forward in glTF.
+cube((-3.6,.15,18.7),(3.45,3.4,2.85),armor,.20)
+cube((-3.6,.65,17.25),(1.6,1.7,.7),dark,.1)
+cube((-3.6,-1.62,18.7),(3.25,.20,2.6),trim,.06)
+for row in range(2):
+ for col in range(3):
+  x=-3.6+(col-1)*.94;z=18.2+row*.94
+  cyl((x,-1.8,z),.43,.26,dark,axis=(0,-1,0),v=8)
+  cyl((x,-1.96,z),.29,.12,light,axis=(0,-1,0),v=8)
+  cyl((x,-2.04,z),.11,.04,glow,axis=(0,-1,0),v=6)
+for x in [-5.25,-1.95]:cube((x,.1,18.7),(.14,2.8,1.9),light,.03)
+part('rocket_pod','chest',(-3.6,0,17.4))
 # Save source and rigid parts, no texture downloads or runtime skeleton required.
 bpy.ops.object.select_all(action='DESELECT')
 for o in meshes:o.select_set(True)
@@ -68,3 +80,13 @@ bpy.ops.export_scene.gltf(filepath=OUT+'/siege-walker.glb',export_format='GLB',u
 triangles=sum(sum(len(p.vertices)-2 for p in o.data.polygons) for o in meshes)
 json.dump({'height':21,'triangles':triangles,'parts':parts,'authoring':'Blender 4.3 / rigid low-poly articulation'},open(OUT+'/siege-walker.json','w'),indent=2)
 bpy.ops.wm.save_as_mainfile(filepath=OUT+'/siege-walker.blend');print('ROBOT_TRIANGLES',triangles,'PARTS',len(parts))
+# One reusable low-poly missile, origin at center, forward -Y -> glTF +Z.
+cyl((0,0,0),.24,1.5,light,axis=(0,1,0),v=8)
+cyl((0,.76,0),.25,.15,trim,axis=(0,1,0),v=8)
+bpy.ops.mesh.primitive_cone_add(vertices=8,radius1=.24,radius2=0,depth=.52,location=(0,-1.01,0))
+o=bpy.context.object;o.rotation_euler[0]=math.pi/2;bpy.ops.object.transform_apply(location=False,rotation=True,scale=True);color(o,trim)
+for x,z in [(1,0),(-1,0),(0,1),(0,-1)]:
+ cube((x*.27,.48,z*.27),(.58 if x else .06,.65,.58 if z else .06),dark,.01)
+part('robot_missile',None,(0,0,0))
+bpy.ops.object.select_all(action='DESELECT');meshes[-1].select_set(True)
+bpy.ops.export_scene.gltf(filepath=OUT+'/robot-missile.glb',export_format='GLB',use_selection=True,export_animations=False,export_materials='EXPORT')

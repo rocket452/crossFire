@@ -30,7 +30,7 @@ export class SiegeWalker {
  }
  reset(){
   for(const w of this.wrecks){w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
-  this.wrecks=[];this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;
+  this.wrecks=[];this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;
   this.weapon.reset();this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
   for(const [name,n]of Object.entries(this.nodes)){n.rotation.set(0,0,0);n.position.copy(this.restPositions[name]);}
   this.walkPose=this.gait.reset();this.applyWalkPose(this.walkPose);
@@ -45,7 +45,7 @@ export class SiegeWalker {
  recordHit(kind,team,amount){if(amount<=0)return;this.hits[kind]=(this.hits[kind]||0)+1;if(team===0||team===1)this.damageByTeam[team]+=amount;else this.heroDamage+=amount;this.flash=.14;}
  destroy(){this.weapon.stop();this.onBeam(null);this.dead=true;this.deathTime=0;this.deathPose={y:this.root.position.y,chest:this.nodes.chest.rotation.x,head:this.nodes.head.rotation.x,thigh:this.nodes.thigh_l.rotation.x,shin:this.nodes.shin_l.rotation.x};this.onEffect(this.root.position.clone().add(new THREE.Vector3(0,14,0)),false);}
  update(dt,time,targets){
-  this.flash=Math.max(0,this.flash-dt);
+  this.flash=Math.max(0,this.flash-dt);this.podRecoil=Math.max(0,this.podRecoil-dt*.8);if(this.nodes.rocket_pod)this.nodes.rocket_pod.position.z=this.restPositions.rocket_pod.z-this.podRecoil;
   if(this.dead){
    this.deathTime+=dt;
    if(!this.broken){
