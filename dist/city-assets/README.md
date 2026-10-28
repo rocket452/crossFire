@@ -322,3 +322,28 @@ are cancelled. Rebuild clears missiles, effects, charges, claims and counters.
 Pause freezes flight/defense with the rest of combat. The hero HUD shows live
 inbound count and total shot down; `battleDiagnostics().missileDefense`
 provides individual projectile state and separate Violet/Volt kill counters.
+
+### Deliberate rooftop attacks
+
+CPU Volt Rush now uses `runner-rooftops.js` to occasionally approach a building,
+climb its actual facade, move to a firing point, attack from the supported roof,
+and leave before resuming patrol. The first opportunity begins after 1.4 s;
+completed visits have a 14–20 s cooldown. Roof attacks last up to 4.8 s, with
+1.15 s firing windows in a 1.6 s cycle. He brakes before firing and aims at
+the robot using the existing real electricity damage/occlusion path.
+
+Candidates come from live intact roof slabs, within six nearby buildings;
+firing positions are checked against real line of sight. Position probes are
+checked every 0.25 s, LOS every 0.12 s, and a detached/destroyed local support
+cancels shooting immediately. Blocked shots trigger repositioning or departure.
+Approaches use normal movement, climbing and gravity; debris stalls trigger a
+jump recovery. A missed approach re-routes to the facade staging point, and
+an unsuccessful sortie times out after 22 active seconds. No teleporting,
+fixed altitude or immunity to falling is added.
+
+Incoming missiles retain priority and suspend the roof routine. Player takeover
+cancels it at the current position; exiting re-enables autonomous decisions.
+Robot defeat cancels roof attacks. Rebuild resets visits, timers and damage.
+Choose **Volt Rush escort** to watch. Diagnostics expose phase, chosen building,
+completed/aborted visits, recovery count, firing time and real robot damage
+under `battleDiagnostics().runner.cpu.rooftop`.

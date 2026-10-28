@@ -1,13 +1,15 @@
+import {RooftopTactics} from './runner-rooftops.js?v=rooftops-10';
 const angle=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 export class RunnerAI {
- constructor(){this.route=[{x:0,z:12},{x:12,z:12},{x:24,z:12},{x:24,z:-24},{x:0,z:-24},{x:-24,z:-24},{x:-24,z:24},{x:0,z:24}];this.reset();}
- reset(){this.mode='patrol';this.index=0;this.cooldown=.85;this.attackTime=0;this.bursts=0;this.distance=0;this.lastPosition=null;this.sightTimer=0;this.visible=false;this.stuck=0;this.recoveries=0;this.suspended=false;}
- suspend(){this.suspended=true;this.mode='player';this.attackTime=0;}
- resume(position){this.suspended=false;this.mode='patrol';this.attackTime=0;this.cooldown=.65;this.sightTimer=0;this.stuck=0;let best=Infinity;for(let i=0;i<this.route.length;i++){const p=this.route[i],d=Math.hypot(p.x-position.x,p.z-position.z);if(d<best){best=d;this.index=i;}}this.lastPosition={...position};}
- update(dt,{motion,robotAlive,canShoot,target}){
+ constructor(){this.rooftops=new RooftopTactics();this.route=[{x:0,z:12},{x:12,z:12},{x:24,z:12},{x:24,z:-24},{x:0,z:-24},{x:-24,z:-24},{x:-24,z:24},{x:0,z:24}];this.reset();}
+ reset(){this.rooftops.reset();this.mode='patrol';this.index=0;this.cooldown=.85;this.attackTime=0;this.bursts=0;this.distance=0;this.lastPosition=null;this.sightTimer=0;this.visible=false;this.stuck=0;this.recoveries=0;this.suspended=false;}
+ suspend(){this.rooftops.cancel();this.suspended=true;this.mode='player';this.attackTime=0;}
+ resume(position){this.rooftops.cancel(2.5);this.suspended=false;this.mode='patrol';this.attackTime=0;this.cooldown=.65;this.sightTimer=0;this.stuck=0;let best=Infinity;for(let i=0;i<this.route.length;i++){const p=this.route[i],d=Math.hypot(p.x-position.x,p.z-position.z);if(d<best){best=d;this.index=i;}}this.lastPosition={...position};}
+ update(dt,{motion,robotAlive,canShoot,target,buildings=[],sections=[],canShootFrom,urgent=false}){
   if(this.suspended)return{input:{},fire:false,yaw:motion.yaw};const p=motion.position;
   const traveled=this.lastPosition?Math.hypot(p.x-this.lastPosition.x,p.y-this.lastPosition.y,p.z-this.lastPosition.z):0;this.distance+=traveled;this.lastPosition={...p};this.cooldown=Math.max(0,this.cooldown-dt);this.sightTimer-=dt;
   if(this.sightTimer<=0){this.visible=!!robotAlive&&canShoot();this.sightTimer=.2;}
+  const rooftop=this.rooftops.update(dt,{motion,robotAlive,target,buildings,sections,canShootFrom,urgent});if(rooftop){this.mode='roof-'+this.rooftops.plan.phase;return rooftop;}if(this.mode.startsWith('roof-')){this.mode='patrol';this.cooldown=.5;}
   if(motion.mode==='wall'){this.mode='climbing';this.attackTime=0;return{input:{forward:1,boost:false},fire:false,yaw:motion.yaw};}
   if(motion.mode==='air'){this.mode='recovering';this.attackTime=0;return{input:{},fire:false,yaw:motion.yaw};}
   if(this.mode==='climbing'||this.mode==='recovering'){this.mode='patrol';this.cooldown=.5;}
@@ -22,5 +24,5 @@ export class RunnerAI {
   this.stuck=traveled<.008&&motion.speed<.3?this.stuck+dt:0;const jump=this.stuck>1.2;if(jump){this.stuck=0;this.recoveries++;}
   return{input:{forward:1,boost:distance>11,jump},fire:false,yaw};
  }
- diagnostics(){return{mode:this.mode,waypoint:this.index,bursts:this.bursts,distance:this.distance,recoveries:this.recoveries,suspended:this.suspended};}
+ diagnostics(){return{mode:this.mode,waypoint:this.index,bursts:this.bursts,distance:this.distance,recoveries:this.recoveries,suspended:this.suspended,rooftop:this.rooftops.diagnostics()};}
 }
