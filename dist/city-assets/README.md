@@ -81,3 +81,29 @@ Detached collision proxies are inset by 3% so broken panels can separate from ti
 Quick touch taps fire once on release. On a held touch trigger, the first launch briefly waits for aim input; drag-to-aim therefore has a chance to update before the first shot. Holding continues normal repeat fire. Desktop keyboard/mouse triggering is unchanged. The confirmation popup and its reticle flash were removed.
 
 Validation now includes the actual rendered instance transform: a cockpit-fired missile displaced a previously intact roof slab and façade panel by more than 0.8 m, matched by the physical body position, with before/after screenshot review showing a hole. This is stronger than checking only the hit counter.
+
+## Siege Walker — giant robot encounter
+
+Blender-authored 21 m robot: `siege-walker.blend`, `siege-walker.glb`,
+`siege-walker.json` and reproducible `build_robot.py` (run Blender in background).
+3,068 triangles, 16 rigid articulated mesh components, vertex colors, no image
+textures. Runtime articulation in `siege-walker.js`: slow stride, tracking head,
+shoulder aiming, cannon fire, damage flash, critical reactor smoke, buckling and
+16 independently falling Cannon rigid-body wreck components. This is procedural
+animation, not a skinned FBX animation library.
+
+Both divisions now share the robot as their target. All eight tanks, four AI
+helicopters, and 36 riflemen use actual swept/segment collision against robot
+components and city cover. Rifle fire deals 2.2 damage; shell direct hits 80;
+rocket direct hits 68. Shared robot armor starts at 12,000. The robot fires a
+24-damage cannon round every 2.6 s after aligning; splash falls off with distance.
+AI army fire cannot damage allied units. Manually piloted rockets retain damage
+to all enemy/scene targets; the occupied helicopter remains protected as before.
+Once armor is depleted, allied AI hold fire while the robot breaks apart. Rebuild
+restores armor, units, geometry, rigid bodies and combat counters. The dedicated
+Siege Walker view opens by default and follows the robot along the open avenue.
+A fixed armor bar replaces no existing controls; the removed hit popup stays absent.
+
+Browser QA uses software WebGL; actual phone GPU, thermal behavior and frame
+rate remain device-dependent. The new model adds 16 draws, no texture memory and
+approximately 297 KB of GLB data. Wreck components add at most 16 physics bodies.

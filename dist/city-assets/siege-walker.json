@@ -1,0 +1,151 @@
+{
+  "height": 21,
+  "triangles": 3068,
+  "parts": [
+    {
+      "name": "pelvis",
+      "parent": null,
+      "pivot": [
+        0,
+        10,
+        0
+      ]
+    },
+    {
+      "name": "waist",
+      "parent": "pelvis",
+      "pivot": [
+        0,
+        10.8,
+        0
+      ]
+    },
+    {
+      "name": "chest",
+      "parent": "waist",
+      "pivot": [
+        0,
+        12.3,
+        0
+      ]
+    },
+    {
+      "name": "reactor",
+      "parent": "chest",
+      "pivot": [
+        0,
+        14.1,
+        2.23
+      ]
+    },
+    {
+      "name": "head",
+      "parent": "chest",
+      "pivot": [
+        0,
+        16.6,
+        0
+      ]
+    },
+    {
+      "name": "visor",
+      "parent": "head",
+      "pivot": [
+        0,
+        18.65,
+        1.235
+      ]
+    },
+    {
+      "name": "thigh_l",
+      "parent": "pelvis",
+      "pivot": [
+        -1.75,
+        9.8,
+        0
+      ]
+    },
+    {
+      "name": "shin_l",
+      "parent": "thigh_l",
+      "pivot": [
+        -1.75,
+        6.1,
+        0
+      ]
+    },
+    {
+      "name": "foot_l",
+      "parent": "shin_l",
+      "pivot": [
+        -1.75,
+        1.6,
+        0
+      ]
+    },
+    {
+      "name": "upperarm_l",
+      "parent": "chest",
+      "pivot": [
+        -3.6,
+        15.5,
+        0
+      ]
+    },
+    {
+      "name": "forearm_l",
+      "parent": "upperarm_l",
+      "pivot": [
+        -3.6,
+        12.1,
+        0
+      ]
+    },
+    {
+      "name": "thigh_r",
+      "parent": "pelvis",
+      "pivot": [
+        1.75,
+        9.8,
+        0
+      ]
+    },
+    {
+      "name": "shin_r",
+      "parent": "thigh_r",
+      "pivot": [
+        1.75,
+        6.1,
+        0
+      ]
+    },
+    {
+      "name": "foot_r",
+      "parent": "shin_r",
+      "pivot": [
+        1.75,
+        1.6,
+        0
+      ]
+    },
+    {
+      "name": "upperarm_r",
+      "parent": "chest",
+      "pivot": [
+        3.6,
+        15.5,
+        0
+      ]
+    },
+    {
+      "name": "forearm_r",
+      "parent": "upperarm_r",
+      "pivot": [
+        3.6,
+        12.1,
+        0
+      ]
+    }
+  ],
+  "authoring": "Blender 4.3 / rigid low-poly articulation"
+}

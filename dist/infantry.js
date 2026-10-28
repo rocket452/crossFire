@@ -2,9 +2,9 @@ import * as THREE from 'three';
 // Shared Blender animation palettes drive instanced, rigid-skinned body segments.
 // The crowd does not allocate one renderer or one skinned draw per soldier.
 export class InfantryCrowd {
- constructor(scene,gltf,motion,{random=Math.random,onShot=()=>{}}={}){
-  this.motion=motion;this.random=random;this.onShot=onShot;this.batches=[];this.soldiers=[];this.geometryCount=motion.parts.length;this.currentTime=0;this.shotCount=0;gltf.scene.updateMatrixWorld(true);
-  this.base=new THREE.Matrix4();this.local=new THREE.Matrix4();this.world=new THREE.Matrix4();this.p=new THREE.Vector3();this.q=new THREE.Quaternion();this.p0=new THREE.Vector3();this.q0=new THREE.Quaternion();this.prevP=new THREE.Vector3();this.prevQ=new THREE.Quaternion();this.scale=new THREE.Vector3(1,1,1);this.yAxis=new THREE.Vector3(0,1,0);this.heading=new THREE.Quaternion();this.muzzle=new THREE.Vector3();
+ constructor(scene,gltf,motion,{random=Math.random,onShot=()=>{},getTarget=()=>null}={}){
+  this.getTarget=getTarget;this.motion=motion;this.random=random;this.onShot=onShot;this.batches=[];this.soldiers=[];this.geometryCount=motion.parts.length;this.currentTime=0;this.shotCount=0;gltf.scene.updateMatrixWorld(true);
+  this.base=new THREE.Matrix4();this.local=new THREE.Matrix4();this.world=new THREE.Matrix4();this.p=new THREE.Vector3();this.q=new THREE.Quaternion();this.p0=new THREE.Vector3();this.q0=new THREE.Quaternion();this.prevP=new THREE.Vector3();this.prevQ=new THREE.Quaternion();this.scale=new THREE.Vector3(1,1,1);this.yAxis=new THREE.Vector3(0,1,0);this.heading=new THREE.Quaternion();this.aimMatrix=new THREE.Matrix4();this.aimTranslate=new THREE.Matrix4().makeTranslation(0,-1.15,0);this.muzzle=new THREE.Vector3();
   for(let team=0;team<2;team++){
    const batch={};
    for(const name of motion.parts){const src=gltf.scene.getObjectByName(name);if(!src?.isMesh)throw Error('Missing soldier mesh '+name);const geometry=src.geometry.clone().applyMatrix4(src.matrixWorld),color=geometry.getAttribute('color');
@@ -16,7 +16,7 @@ export class InfantryCrowd {
   }
   this.reset();
  }
- reset(){this.currentTime=0;this.shotCount=0;for(const s of this.soldiers){const row=Math.floor((s.i%9)/3),lane=s.i%3;s.x=(s.team===0?-1:1)*(19+row*3.5+lane*.55);s.z=(s.i<9?-1:1)*(2.0+lane*.9);s.stopDistance=10.6+row*1.5+lane*.18;s.y=.035;s.disabled=false;s.fallTime=0;s.clip='Idle';s.clipTime=s.phase;s.previous=null;s.blend=1;s.fireTimer=.4+(s.i%4)*.33;s.burst=0;s.burstTimer=0;s.ammo=9+(s.i%3)*3;s.reloadTime=0;s.firingTime=0;s.seen.clear();s.seen.add('Idle');}this.update(0,0);}
+ reset(){this.currentTime=0;this.shotCount=0;for(const s of this.soldiers){const row=Math.floor((s.i%9)/3),lane=s.i%3;s.x=(s.team===0?-1:1)*(19+row*3.5+lane*.55);s.z=(s.i<9?-1:1)*(2.0+lane*.9);s.stopDistance=10.6+row*1.5+lane*.18;s.y=.035;s.disabled=false;s.aimTarget=null;s.pendingShot=false;s.fallTime=0;s.clip='Idle';s.clipTime=s.phase;s.previous=null;s.blend=1;s.fireTimer=.4+(s.i%4)*.33;s.burst=0;s.burstTimer=0;s.ammo=9+(s.i%3)*3;s.reloadTime=0;s.firingTime=0;s.seen.clear();s.seen.add('Idle');}this.update(0,0);}
  duration(name){return this.motion.clips[name].duration;}
  transition(s,name,restart=false){if(s.clip===name&&!restart)return;s.previous={name:s.clip,time:s.clipTime};s.clip=name;s.clipTime=(name==='Fire'||name==='CrouchFire'||name==='Reload')?0:s.phase;s.blend=0;s.seen.add(name);}
  sample(name,time,bone,outP,outQ){const clip=this.motion.clips[name],count=clip.frames.length;const t=clip.loop?((time%clip.duration)+clip.duration)%clip.duration:Math.min(clip.duration,Math.max(0,time));const f=t/clip.duration*(count-1),a=Math.floor(f),b=Math.min(count-1,a+1),k=f-a,offset=bone*7,A=clip.frames[a],B=clip.frames[b];outP.fromArray(A,offset);this.p0.fromArray(B,offset);outP.lerp(this.p0,k);outQ.fromArray(A,offset+3);this.q0.fromArray(B,offset+3);outQ.slerp(this.q0,k).normalize();}
@@ -27,7 +27,7 @@ export class InfantryCrowd {
    s.firingTime=Math.max(0,s.firingTime-dt);
    if(s.reloadTime>0){s.reloadTime=Math.max(0,s.reloadTime-dt);desired='Reload';if(s.reloadTime===0)s.ammo=12;}
    else if(moving){const speed=(run?2.3:1.05)*s.scale;s.x+=side*Math.min(Math.abs(s.x)-s.stopDistance,speed*dt);s.burst=0;}
-   else if(desired!=='Idle'){
+   else if(desired!=='Idle'&&this.combatEnabled!==false){
     s.fireTimer-=dt;s.burstTimer-=dt;
     if(s.ammo===0){s.reloadTime=this.duration('Reload');desired='Reload';this.transition(s,'Reload');}
     else{
@@ -38,18 +38,19 @@ export class InfantryCrowd {
    }
    this.transition(s,desired);s.clipTime+=dt;if(s.previous)s.previous.time+=dt;s.blend=Math.min(1,s.blend+dt/.16);
    if(s.blend===1)s.previous=null;
-   this.renderSoldier(s);
-   if(s.pendingShot){s.pendingShot=false;this.muzzle.fromArray(this.motion.muzzle).applyMatrix4(s.weaponMatrix);const target=new THREE.Vector3(s.x+side*28,this.muzzle.y+(this.random()-.5)*.3,-s.z+(this.random()-.5)*.4);this.onShot(this.muzzle.clone(),target,s.team);this.shotCount++;}
+   s.aimTarget=this.getTarget(s);this.renderSoldier(s);
+   if(s.pendingShot){s.pendingShot=false;this.muzzle.fromArray(this.motion.muzzle).applyMatrix4(s.weaponMatrix);const target=s.aimTarget?s.aimTarget.clone().add(new THREE.Vector3((this.random()-.5)*1.2,(this.random()-.5)*1.2,(this.random()-.5)*1.2)):new THREE.Vector3(s.x+side*28,this.muzzle.y+(this.random()-.5)*.3,-s.z+(this.random()-.5)*.4);this.onShot(this.muzzle.clone(),target,s.team,s);this.shotCount++;}
   }
   for(const b of this.batches)for(const o of Object.values(b))o.instanceMatrix.needsUpdate=true;
  }
  disable(s){s.disabled=true;s.fallTime=0;s.pendingShot=false;s.burst=0;s.previous=null;}
  renderSoldier(s,fall=0){
-   this.heading.setFromAxisAngle(this.yAxis,(s.team===0?1:-1)*Math.PI/2);this.scale.setScalar(s.scale);if(fall){const angle=fall*Math.PI/2;this.heading.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),angle));}this.base.compose(this.p.set(s.x,s.y+Math.sin(fall*Math.PI/2)*.32,s.z),this.heading,this.scale);
+   this.heading.setFromAxisAngle(this.yAxis,s.aimTarget?Math.atan2(s.aimTarget.x-s.x,s.aimTarget.z-s.z):(s.team===0?1:-1)*Math.PI/2);this.scale.setScalar(s.scale);if(fall){const angle=fall*Math.PI/2;this.heading.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),angle));}this.base.compose(this.p.set(s.x,s.y+Math.sin(fall*Math.PI/2)*.32,s.z),this.heading,this.scale);
+   if(s.aimTarget&&!fall){const pitch=-Math.min(.85,Math.max(-.3,Math.atan2(s.aimTarget.y-1.3,Math.hypot(s.aimTarget.x-s.x,s.aimTarget.z-s.z))));this.aimMatrix.makeRotationX(pitch).multiply(this.aimTranslate);this.aimMatrix.elements[13]+=1.15;}
    for(let bone=0;bone<this.motion.parts.length;bone++){
     const name=this.motion.parts[bone];this.sample(s.clip,s.clipTime,bone,this.p,this.q);
     if(s.previous){this.sample(s.previous.name,s.previous.time,bone,this.prevP,this.prevQ);this.p.lerpVectors(this.prevP,this.p,s.blend);this.prevQ.slerp(this.q,s.blend).normalize();this.q.copy(this.prevQ);}
-    this.local.compose(this.p,this.q,this.scale.set(1,1,1));this.world.multiplyMatrices(this.base,this.local);this.batches[s.team][name].setMatrixAt(s.i,this.world);if(name==='weapon')s.weaponMatrix.copy(this.world);
+    this.local.compose(this.p,this.q,this.scale.set(1,1,1));if(s.aimTarget&&!fall&&!['pelvis','thigh_l','shin_l','foot_l','thigh_r','shin_r','foot_r'].includes(name)){this.local.premultiply(this.aimMatrix);}this.world.multiplyMatrices(this.base,this.local);this.batches[s.team][name].setMatrixAt(s.i,this.world);if(name==='weapon')s.weaponMatrix.copy(this.world);
    }
  }
  position(index=0){const s=this.soldiers[index];return s?new THREE.Vector3(s.x,s.y,s.z):null;}
