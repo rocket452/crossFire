@@ -11,6 +11,7 @@ for(const dt of [1/30,1/60,1/120,.075]){
   if(['charging','firing'].includes(robot.weapon.phase)){assert.equal(pod.pending,0);assert(!pod.missiles.some(m=>m.alive));assert(!warning.active);}
   for(const m of pod.missiles)if(m.age>2)pod.hurt(m,100,'volt');
  }
+ for(const rest of arsenal.transitions.filter(t=>t.event==='rest')){const ready=arsenal.transitions.find(t=>t.event==='ready'&&t.next===rest.next&&t.time>=rest.time);if(ready)assert(Math.abs(ready.time-rest.time-5)<=dt+1e-6);}
  assert(launches>=12);assert(warnings>5);const turns=arsenal.turns.map(t=>t.weapon);assert(turns.length>=4);for(let i=1;i<turns.length;i++)assert.notEqual(turns[i],turns[i-1]);
  robot.dead=true;pod.update(dt,66);arsenal.update(dt,robot,pod);assert.equal(arsenal.phase,'off');assert(!arsenal.warning().active);arsenal.reset();pod.reset();assert.equal(arsenal.phase,'beam');assert.equal(arsenal.turns.length,0);assert(!pod.missiles.length);console.log('PASS alternating beam / warning / salvo / clearance at dt',dt);
 }

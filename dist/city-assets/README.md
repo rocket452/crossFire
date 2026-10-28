@@ -529,12 +529,18 @@ The Blender source and build script, GLB (428,276 bytes), metadata and native
 `.blend` have been regenerated. Existing articulation, hit boxes and death
 wreck generation include the new component. It is one added character draw.
 
-The cannon gimbal maintains an actual world-space **45° elevation**, compensating
-for walking/torso motion, and turns horizontally toward each locked target.
-Each artillery turn warns for 2.4 s before the first shot; a second shot follows
+The cannon stays aligned with the torso’s forward axis at **45° elevation**,
+compensating for walking pitch/roll. The robot turns its body/waist toward the
+locked target; the shoulder mount never independently swings sideways or backward.
+Launch waits until the barrel is aligned within 0.012 radians. Each artillery
+turn warns for at least 2.4 s before the first shot; a second shot follows
 1.6 s later where a separate target is available. A shared arsenal rotates
 **plasma → beam → rocket pod → plasma**, waiting for all live shells/missiles
-to clear between weapons. Plasma opens the first turn so it is visible early.
+to clear between weapons. After each attack clears, all weapons rest for
+**five full simulation seconds** before the next weapon begins charging or its
+launch warning. The rotation is plasma → five-second rest → beam → five-second
+rest → rocket pod → five-second rest → repeat. Existing charge/warning times
+follow that pause. Plasma opens the first turn so it is visible early.
 The existing beam and pod never charge/fire together with the artillery.
 
 `plasma-artillery.js` solves a 45° ballistic trajectory from the actual muzzle

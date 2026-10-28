@@ -46,7 +46,8 @@ export class PlasmaArtillery {
    if(s.state==='warning'){
     if(!this.isRobotAlive()){this.removeShell(s);this.shells.splice(i,1);this.cancelled++;continue;}
     const muzzle=this.getMuzzle(s.target);s.position.copy(muzzle.position);this.muzzleGlow.visible=true;this.muzzleGlow.position.copy(muzzle.position);this.muzzleGlow.scale.setScalar(.5+Math.min(1,(this.clock-s.createdAt)/PLASMA.warningSeconds)*1.8);
-    if(this.clock>=s.launchAt-1e-9){s.trajectory=plasmaTrajectory(muzzle.position,{...s.target,y:s.target.y+PLASMA.projectileRadius+.02});s.impactAt=this.clock+s.trajectory.duration;s.state='flying';s.age=0;s.justLaunched=true;s.position.copy(muzzle.position);s.mesh.visible=true;this.launched++;this.onLaunch(s.position);}
+    if(this.clock>=s.launchAt-1e-9&&muzzle.aligned===false){s.launchAt+=dt;s.impactAt+=dt;}
+    if(this.clock>=s.launchAt-1e-9&&muzzle.aligned!==false){s.trajectory=plasmaTrajectory(muzzle.position,{...s.target,y:s.target.y+PLASMA.projectileRadius+.02});s.impactAt=this.clock+s.trajectory.duration;s.state='flying';s.age=0;s.justLaunched=true;s.position.copy(muzzle.position);s.mesh.visible=true;this.launched++;this.onLaunch(s.position);}
    }
    if(s.state==='flying'){
     let hit=null,remaining=s.justLaunched?0:dt;s.justLaunched=false;while(remaining>1e-9&&!hit&&s.age<s.trajectory.duration){const h=Math.min(remaining,1/90,s.trajectory.duration-s.age),end=plasmaPosition(s.trajectory,s.age+h);hit=this.traceWorld(s.position,end,PLASMA.projectileRadius);s.age+=h;remaining-=h;if(hit)s.position.set(hit.point.x,hit.point.y,hit.point.z);else s.position.copy(end);}

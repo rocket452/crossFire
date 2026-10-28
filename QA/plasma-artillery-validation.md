@@ -31,3 +31,23 @@
 - Existing node checks passed: `runner-dash-test.mjs`, `portal-hero-test.mjs`,
   `robot-arsenal-test.mjs`, `robot-combat-test.mjs`. Historical robot browser
   assertions now use the new part/triangle/wreck counts.
+
+## Forward mount and five-second weapon changes
+
+- Plasma cannon horizontal direction now matches the torso’s forward axis;
+  it retains 45° world elevation. Body/waist/head turn toward the pending
+  plasma aim point. Actual launch waits for barrel alignment within 0.012 rad,
+  keeping the shot from emerging sideways. Fixed ground markers remain locked.
+- `RobotArsenal` now rests five simulation seconds at all three transitions,
+  after the preceding shells/missiles clear. Next weapon charge/warning follows
+  the rest. Diagnostics expose the next phase, remaining delay and transition
+  timestamps; the robot readout displays the countdown.
+- Node artillery/arsenal suites passed at 30/60/120 Hz and long frames, checking
+  exact five-second rest/ready timestamps and the repeated three-weapon order.
+- Updated actual-scene browser checks cover desktop and touch layouts, forward
+  error below 0.0001°, launch mismatch below 0.7°, unchanged 45° elevation,
+  five-second transitions within one 60 Hz frame, and no active attacks during
+  rest. Real plasma, beam and pod turns are verified through 38 simulated seconds.
+- Portal evacuations, CPU rescue dash, unrescued blast damage, physical robot
+  wrecks and reset remain covered. Screenshots:
+  `/tmp/forward-plasma-arc.png`, `/tmp/forward-plasma-arc-phone.png`.

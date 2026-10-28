@@ -63,8 +63,9 @@ export class SiegeWalker {
   if(!locked&&available.length&&(!this.target?.alive||(this.weapon.phase==='ready'&&!this.aiming))){const index=this.targetIndex++,air=available.filter(u=>u.kind==='helicopter'),ground=available.filter(u=>u.kind!=='helicopter');this.target=index%2===0&&air.length?air[Math.floor(index/2)%air.length]:ground.length?ground[(index*3)%ground.length]:available[index%available.length];this.aiming=true;}
   if(locked&&this.target?.kind==='helicopter'&&this.target.alive&&this.target.shapes[0])this.beamAim={...this.target.shapes[0].center};
   let center=locked?this.beamAim:available.length?this.target?.shapes[0]?.center:null;
+  if(this.plasmaCharging&&this.plasmaAim)center=this.plasmaAim;
   if(center&&this.weapon.phase==='firing')center=sweptBeamTarget(center,this.beamSweepOrigin||this.root.position,Math.sin(this.weapon.elapsed/this.weapon.fireSeconds*Math.PI*2)*BEAM_SWEEP);
-  const desiredYaw=center?Math.atan2(center.x-this.root.position.x,center.z-this.root.position.z):this.gait.yaw;
+  const origin=this.plasmaCharging?this.nodes.plasma_cannon.getWorldPosition(new THREE.Vector3()):this.root.position;const desiredYaw=center?Math.atan2(center.x-origin.x,center.z-origin.z):this.gait.yaw;
   this.walkPose=this.gait.update(dt,time,desiredYaw);this.applyWalkPose(this.walkPose);
   for(const step of this.walkPose.landings)this.onFootfall(step);
   const swing=Math.sin(time*Math.PI*2/this.gait.cycle);
@@ -105,7 +106,12 @@ export class SiegeWalker {
   if(hp<.4&&Math.floor(time*3)!==this.lastSmoke){this.lastSmoke=Math.floor(time*3);this.onEffect(this.root.localToWorld(new THREE.Vector3(1,15,1)),true);}
   this.root.updateMatrixWorld(true);
  }
- aimPlasma(target){this.plasmaAim={...target};const node=this.nodes.plasma_cannon;node.parent.updateWorldMatrix(true,false);const p=node.getWorldPosition(new THREE.Vector3()),yaw=Math.atan2(target.x-p.x,target.z-p.z),world=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/4,yaw,0,'YXZ')),parent=node.parent.getWorldQuaternion(new THREE.Quaternion());node.quaternion.copy(parent.invert()).multiply(world);node.updateWorldMatrix(false,true);return{position:node.localToWorld(new THREE.Vector3(0,1.4,3.35)),direction:new THREE.Vector3(0,0,1).transformDirection(node.matrixWorld)};}
+ aimPlasma(target){
+  this.plasmaAim={...target};const node=this.nodes.plasma_cannon;node.parent.updateWorldMatrix(true,false);
+  // Hold the gun above the torso's forward axis; aiming turns the robot, never the mount sideways.
+  const forward=new THREE.Vector3(0,0,1).transformDirection(node.parent.matrixWorld);forward.y=0;forward.normalize();const yaw=Math.atan2(forward.x,forward.z),world=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/4,yaw,0,'YXZ')),parent=node.parent.getWorldQuaternion(new THREE.Quaternion());node.quaternion.copy(parent.invert()).multiply(world);node.updateWorldMatrix(false,true);
+  const position=node.localToWorld(new THREE.Vector3(0,1.4,3.35)),direction=new THREE.Vector3(0,0,1).transformDirection(node.matrixWorld),to=new THREE.Vector3(target.x-position.x,0,target.z-position.z).normalize();return{position,direction,aligned:forward.dot(to)>=Math.cos(.012)};
+ }
  updatePlasmaWarning(active,time=0){this.plasmaCharging=active;const m=this.meshes.plasma_cannon?.material;if(m){m.emissive.set('#18f3a3');m.emissiveIntensity=active?(.45+.4*Math.sin(time*15)**2):0;}}
  updatePodWarning(state){this.podWarning={...state};const m=this.meshes.rocket_pod?.material;if(!m)return;m.emissive.set('#ff3b0c');m.emissiveIntensity=state.active?(state.pulse?4.2:.1):0;}
  trackHead(target,dt){
@@ -177,5 +183,6 @@ export class SiegeWalker {
    result.push({center:{x:c.x,y:c.y,z:c.z},half:{x:b.size.x/2,y:b.size.y/2,z:b.size.z/2},rotation:{x:q.x,y:q.y,z:q.z,w:q.w}});
   }return result;
  }
- diagnostics(){return{health:this.combatUnit?.health,maxHealth:this.combatUnit?.maxHealth,alive:!this.dead,position:this.root.position.toArray(),triangles:this.spec.triangles,parts:this.spec.parts.length,hits:{...this.hits},damageByTeam:[...this.damageByTeam],heroDamage:this.heroDamage,returnShots:this.returnShots,broken:this.broken,wreckBodies:this.wrecks.length,target:this.target?.id,gait:this.gait.diagnostics(),pod:{angleDegrees:45,warning:{...this.podWarning},emissive:this.meshes.rocket_pod?.material.emissiveIntensity},plasmaCannon:{charging:this.plasmaCharging,angleDegrees:this.nodes.plasma_cannon?THREE.MathUtils.radToDeg(Math.asin(new THREE.Vector3(0,0,1).transformDirection(this.nodes.plasma_cannon.matrixWorld).y)):null},weapon:this.weapon.diagnostics(),gaze:this.gazeDiagnostics()};}
+ plasmaForwardError(){const node=this.nodes.plasma_cannon;if(!node)return null;const a=new THREE.Vector3(0,0,1).transformDirection(node.matrixWorld),b=new THREE.Vector3(0,0,1).transformDirection(node.parent.matrixWorld);a.y=b.y=0;a.normalize();b.normalize();return THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp(a.dot(b),-1,1)));}
+ diagnostics(){return{health:this.combatUnit?.health,maxHealth:this.combatUnit?.maxHealth,alive:!this.dead,position:this.root.position.toArray(),triangles:this.spec.triangles,parts:this.spec.parts.length,hits:{...this.hits},damageByTeam:[...this.damageByTeam],heroDamage:this.heroDamage,returnShots:this.returnShots,broken:this.broken,wreckBodies:this.wrecks.length,target:this.target?.id,gait:this.gait.diagnostics(),pod:{angleDegrees:45,warning:{...this.podWarning},emissive:this.meshes.rocket_pod?.material.emissiveIntensity},plasmaCannon:{charging:this.plasmaCharging,forwardErrorDegrees:this.plasmaForwardError(),angleDegrees:this.nodes.plasma_cannon?THREE.MathUtils.radToDeg(Math.asin(new THREE.Vector3(0,0,1).transformDirection(this.nodes.plasma_cannon.matrixWorld).y)):null},weapon:this.weapon.diagnostics(),gaze:this.gazeDiagnostics()};}
 }
