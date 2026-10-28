@@ -52,7 +52,8 @@ for side,sign in [('l',-1),('r',1)]:
  cube((x,0,1.34),(.23,.27,.37),light,.04);cube((x,-.02,1.08),(.24,.25,.21),dark,.035);cube((x,-.16,1.30),(.16,.055,.17),glow,.02);part('forearm_'+side,'upperarm_'+side,(x,0,1.50))
  x=sign*.19
  cube((x,0,.91),(.27,.31,.47),armor,.05);cube((x,-.15,.96),(.17,.06,.28),light,.02);part('thigh_'+side,'pelvis',(x,0,1.14))
- cyl((x,0,.65),.145,.25,dark,axis=(1,0,0));cube((x,0,.42),(.26,.29,.43),light,.035);cube((x,-.10,.12),(.30,.49,.22),dark,.04);cube((x,-.355,.14),(.24,.04,.11),trim,.015);part('shin_'+side,'thigh_'+side,(x,0,.66))
+ cyl((x,0,.65),.145,.25,dark,axis=(1,0,0));cube((x,0,.42),(.26,.29,.43),light,.035);part('shin_'+side,'thigh_'+side,(x,0,.66))
+ cube((x,-.10,.12),(.30,.49,.22),dark,.04);cube((x,-.355,.14),(.24,.04,.11),trim,.015);part('foot_'+side,'shin_'+side,(x,0,.21))
 bpy.ops.object.select_all(action='DESELECT')
 for o in meshes:o.select_set(True)
 bpy.ops.export_scene.gltf(filepath=OUT+'/volt-runner.glb',export_format='GLB',use_selection=True,export_animations=False,export_materials='EXPORT')

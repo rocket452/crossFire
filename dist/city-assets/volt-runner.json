@@ -84,6 +84,15 @@
       ]
     },
     {
+      "name": "foot_l",
+      "parent": "shin_l",
+      "pivot": [
+        -0.19,
+        0.21,
+        0
+      ]
+    },
+    {
       "name": "upperarm_r",
       "parent": "chest",
       "pivot": [
@@ -116,6 +125,15 @@
       "pivot": [
         0.19,
         0.66,
+        0
+      ]
+    },
+    {
+      "name": "foot_r",
+      "parent": "shin_r",
+      "pivot": [
+        0.19,
+        0.21,
         0
       ]
     }

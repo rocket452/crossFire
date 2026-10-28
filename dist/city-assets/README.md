@@ -206,7 +206,7 @@ real phone GPU/thermal performance remains unbenchmarked.
 
 ## Volt Rush — playable electric speedster
 
-Original Blender-built 1,760-triangle hero with 13 articulated parts, a blue/gold
+Original Blender-built 1,760-triangle hero with 15 articulated parts, a blue/gold
 suit, luminous visor and lightning emblem. Files: `volt-runner.blend`,
 `volt-runner.glb`, `volt-runner.json`, reproducible `build_runner.py`.
 
@@ -241,3 +241,28 @@ instanced batches; speed trails begin above 18 m/s. No external VFX textures.
 Robot warning translucency: red line/rings/arrows reduced from 0.90 to 0.36 alpha,
 halo 0.18 to 0.06 and sweep fill from 0.065–0.12 to 0.018–0.038. Targeting and
 warning geometry are unchanged. Actual phone GPU performance remains unmeasured.
+
+### Speedster gait and CPU update
+
+Volt Rush now has separate ankle/foot components in the native Blender asset,
+keeping the same 1,760 triangle budget (15 rigid parts). `runner-animation.js`
+uses an integrated stride clock instead of global-time-times-speed, with smoothed
+cadence/run blending, two-bone leg solves, heel/toe articulation, knee recovery,
+arm pumping, torso counter-rotation, acceleration lean, turn banking, braking
+and airborne/landing transitions. Cadence is capped at a readable 4.5 cycles/s;
+this is stylized super-speed animation, not a promise of world-locked footplants
+at 46 m/s. The same rig/animation handles ground, slopes and wall surfaces.
+
+Whenever the player is not controlling him, `runner-ai.js` drives the existing
+RunnerMotion and electricity systems. A route through streets includes a facade
+and rooftop crossing. He boosts on longer legs, climbs through real collision,
+recovers with gravity after drops, and fires 1.05 s aimed bursts when his sight
+line to the robot is clear. CPU fire excludes allied units and uses regular AI
+building-debris capacity. It ceases when the robot is defeated. Direct player
+control, including its existing weapon behavior, remains unchanged.
+
+Taking control suspends CPU decisions immediately, stops autonomous fire and
+brakes at the current location. Exiting resumes CPU behavior from that same
+location. Reset restores the gait, route, counters and effects. Pause freezes
+both modes. The **Volt Rush escort** preset observes his CPU patrol; **Play Volt
+Rush** takes control. CPU attacks do not borrow or move the observer's camera.
