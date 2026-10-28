@@ -441,8 +441,10 @@ objects with immutable positions and exact five-second expiry, including
 opening/closing animation. They use animated energy-disc shaders, shared
 ring geometry and instanced runes rather than extra scene-render cameras.
 
-An attack portal aims at the robot, warms up for 0.35 s, then emits eight
-65 m/s projectiles per second while open (up to 37 shots). Each bolt uses
+An attack portal aims at the robot, warms up for 0.35 s, then emits four
+65 m/s projectiles per second while open (up to 18 shots, half the original
+firing rate). Bolts have 2.4× wider gold cores, green halos, three animated
+star twinkles each, and short sparkling trails. Each bolt uses
 real swept world collision, dealing 8 damage to the robot/missiles or
 2 building-section damage with the existing scorch path. Buildings block
 shots. Only one attack portal is active; bolts have a two-second lifespan.
@@ -464,7 +466,16 @@ so teleporting does not create a swept collider across the city. Homing
 missiles targeting an evacuated unit lose their lock and continue toward
 the old target point; no unit invulnerability or healing is added.
 
-Limits: twelve portal openings, 64 bolt instances and 120 effect instances.
+A thin traveling gold-and-green trace follows every successful self, tank
+or soldier teleport from source to destination. It is a short moving dash,
+not a persistent full-length beam: 0.05 m core diameter, up to 2.5 m long,
+0.65–1.1 s travel plus 0.14 s fade, with a slight raised arc for visibility.
+Trace endpoints are copied at teleport time and never follow moving units.
+Failed rescues do not create traces. Reset clears them.
+
+Limits: twelve portal openings, 64 bolt cores/halos, 192 star twinkles,
+120 effect particles and eight trace cores/halos. Effects are instanced
+with fixed buffers; four additional draw calls, no lights or render targets.
 Shared geometry/materials are retained; per-opening rune instance buffers
 are disposed on expiry/reset. Pause freezes expiry, attacks and rescues.
 Rebuild removes portals/bolts and restores original army positions/health,
