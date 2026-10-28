@@ -11,7 +11,8 @@ export class RunnerElectric {
  addArc(a,b,time,life=.23,width=.025,amplitude=.16){
   let previous=a.clone();for(let i=1;i<=8;i++){const t=i/8,p=a.clone().lerp(b,t);if(i<8){p.x+=Math.sin(i*3.7+time*22)*amplitude;p.y+=Math.cos(i*6.1+time*19)*amplitude;p.z+=Math.sin(i*4.3-time*17)*amplitude;}if(this.trails.length>=350)this.trails.shift();this.trails.push({a:previous,b:p,life,max:life,width});previous=p;}
  }
- update(dt,time,{position,normal,speed,beam=null,charge=null}){
+ update(dt,time,{position,normal,speed,beam=null,charge=null,carryTrails=[],dashing=false}){
+  for(const trail of carryTrails){const height=trail.kind==='tank'?1.6:1;this.addArc(new THREE.Vector3(trail.from.x,trail.from.y+height,trail.from.z),new THREE.Vector3(trail.to.x,trail.to.y+height,trail.to.z),time,.42,.035,.22);if(dashing)this.addArc(position.clone().addScaledVector(normal,1),new THREE.Vector3(trail.to.x,trail.to.y+height,trail.to.z),time+2,.12,.014,.13);}
   this.timer-=dt;const foot=position.clone().addScaledVector(normal,.18);
   if(this.previous&&speed>18&&this.timer<=0){
    this.addArc(this.previous,foot,time,.72,.025,.16);this.addArc(this.previous.clone().addScaledVector(normal,.9),foot.clone().addScaledVector(normal,.8),time+3,.62,.019,.22);this.timer=.035;

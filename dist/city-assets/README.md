@@ -480,3 +480,42 @@ Shared geometry/materials are retained; per-opening rune instance buffers
 are disposed on expiry/reset. Pause freezes expiry, attacks and rescues.
 Rebuild removes portals/bolts and restores original army positions/health,
 hero state and counters. Diagnostics are in `battleDiagnostics().portalHero`.
+
+## Volt Rush — rescue dash
+
+Press **E** while controlling Volt Rush, or tap **DASH** on the phone HUD.
+Dash runs forward up to 10 m at 60 m/s (about 0.167 s), with a five-second
+cooldown from activation. It captures every live friendly tank and infantry
+unit whose feet are within a 5 m sphere at departure, including both allied
+divisions. Aircraft and disabled units are excluded. Relative horizontal
+positions are preserved and each actor follows the local ground height.
+Ground and roof starts are supported; wall/air starts are rejected.
+
+`runner-dash.js` plans the whole group in 0.25 m steps, expanding live city
+section/debris boxes by each actor's world-space footprint. Other units,
+world bounds, excessive height steps, missing roof support and roof edges
+stop the whole group at the shortest safe distance. Paths under 0.75 m are
+rejected without consuming the cooldown. Live geometry is checked again
+throughout movement. This is continuous movement, with per-frame swept
+collision histories, rather than teleporting allies to an endpoint.
+
+Real tank transforms, infantry transforms, render/weapon matrices and hit
+shapes move together. Normal army navigation pauses while carried, then
+resumes. Cyan lightning tethers and short trails use the existing bounded
+350 trail segments / 500 instance pools; no extra renderer or physics-body
+pool is added. Dash interrupts electricity charging/firing and preserves
+existing weapon recovery. No healing, immunity, missile-lock cancellation
+or guaranteed rescue is added: homing missiles can pursue moved allies.
+Rift Warden will not teleport a currently carried ally.
+
+The CPU scans every 0.15 s while ready and near eligible allies. Predicted
+incoming projectile impacts within 1.5 s trigger an attempted rescue.
+It tests both directions perpendicular to the incoming trajectory, requires
+at least 4 m of clear movement, and scores the entire group's clearance
+from the predicted projectile over 1.25 s. It rejects direct intersections
+and chooses the better clear route; tight spaces may prevent a rescue.
+It does not abandon distant rooftop positions to chase every threatened
+unit. Player input can dash without passengers. Pause freezes movement and
+cooldown; switching control/blur releases all passengers at their current
+position without resetting recharge. Rebuild resets the ability and allies.
+Diagnostics: `battleDiagnostics().runner.dash`.

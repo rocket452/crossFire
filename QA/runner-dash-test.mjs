@@ -1,0 +1,19 @@
+import assert from 'node:assert/strict';
+import {RunnerDash,DASH} from '../dist/runner-dash.js';
+import {RunnerMotion} from '../dist/runner-motion.js';
+const q={x:0,y:0,z:0,w:1};
+function fixture(){const motion=new RunnerMotion();motion.reset({x:0,y:.08,z:0});let sections=[],threats=[];const units=[
+ {id:'rifleman',kind:'infantry',alive:true,health:35,entity:{x:2,y:.035,z:0},shapes:[]},
+ {id:'tank',kind:'tank',alive:true,health:100,entity:{root:{position:{x:-3,y:.1,z:0},quaternion:q}},shapes:[]},
+ {id:'far',kind:'infantry',alive:true,entity:{x:9,y:.035,z:0},shapes:[]},
+ {id:'dead',kind:'infantry',alive:false,entity:{x:0,y:.035,z:1},shapes:[]},
+ {id:'aircraft',kind:'helicopter',alive:true,entity:{},shapes:[]}];
+ const dash=new RunnerDash({getUnits:()=>units,getSections:()=>sections,getThreats:()=>threats,onMoveUnit:(u,p)=>{if(u.kind==='tank')Object.assign(u.entity.root.position,p);else Object.assign(u.entity,p);}});return{motion,units,dash,setSections:s=>sections=s,setThreats:s=>threats=s};}
+for(const dt of [1/30,1/60,1/120]){const f=fixture();assert(f.dash.start(f.motion,0));assert.equal(f.dash.last.allies.length,2);assert(f.units.slice(0,2).every(u=>u.dashCarried));const z=[];for(let i=0;i<Math.ceil(.25/dt);i++){f.dash.update(dt,f.motion);z.push(f.motion.position.z);}assert(Math.abs(f.motion.position.z-10)<1e-8);assert.equal(f.units[0].entity.z,10);assert.equal(f.units[1].entity.root.position.z,10);assert.equal(f.units[0].entity.x,2);assert.equal(f.units[1].entity.root.position.x,-3);assert(z.every((v,i)=>i===0||v>=z[i-1]));assert.equal(f.units[0].health,35);assert.equal(f.units[1].health,100);assert(f.units.slice(0,2).every(u=>!u.dashCarried));assert.equal(f.units[2].entity.z,0);assert(!f.dash.start(f.motion,0));const cool=f.dash.cooldown;f.dash.cancel();assert.equal(f.dash.cooldown,cool);f.dash.update(5,f.motion);assert(f.dash.start(f.motion,0));f.dash.reset();assert.equal(f.dash.cooldown,0);assert.equal(f.dash.dashes,0);assert(f.units.every(u=>!u.dashCarried));}
+const wall=(x,z,size=[1,4,1],y=2)=>({x,y,z,size,state:'intact',hidden:false});
+const blocked=fixture();blocked.setSections([wall(-3,6,[4,4,.5])]);assert(blocked.dash.start(blocked.motion,0));for(let i=0;i<20;i++)blocked.dash.update(1/60,blocked.motion);assert(blocked.motion.position.z>1&&blocked.motion.position.z<3.5,'whole group stops before tank hits wall');assert.equal(blocked.units[0].entity.z,blocked.motion.position.z);assert(blocked.dash.last.blocked);
+const dynamic=fixture();assert(dynamic.dash.start(dynamic.motion,0));dynamic.dash.update(1/60,dynamic.motion);dynamic.setSections([wall(0,4,[14,4,1])]);for(let i=0;i<20;i++)dynamic.dash.update(1/60,dynamic.motion);assert(dynamic.motion.position.z<2.5,'new obstacles are checked during the dash');
+const roof=fixture();roof.motion.reset({x:0,y:10,z:0});roof.setSections([wall(0,0,[8,.3,8],9.85)]);assert(roof.dash.start(roof.motion,0));for(let i=0;i<20;i++)roof.dash.update(1/60,roof.motion);assert(roof.motion.position.z<=3.75);assert.equal(roof.dash.last.allies.length,0,'rooftop dash does not grab allies on street below');
+for(const mode of ['wall','air']){const f=fixture();f.motion.mode=mode;assert(!f.dash.start(f.motion,0));assert.equal(f.dash.cooldown,0);}
+const cpu=fixture();cpu.units[0].shapes=[{center:{x:2,y:1,z:0},half:{x:.4,y:1,z:.4}}];cpu.setThreats([{id:'incoming',alive:true,homing:true,age:1,target:cpu.units[0],position:{x:2,y:2,z:8},velocity:{x:0,y:-1,z:-8},speed:8.5}]);assert(cpu.dash.tryCPU(cpu.motion,.2));assert.equal(cpu.dash.cpuRescues,1);for(let i=0;i<20;i++)cpu.dash.update(1/60,cpu.motion);assert(cpu.motion.position.x<=-4,'CPU moves the entire group away without sweeping the tank across the incoming path');
+console.log('PASS rescue dash: 30/60/120 Hz continuous 10m carry, 5m pickup, 5s cooldown, both ally types, health, exclusions, obstacle/ledge checks, live obstruction, handoff/reset and CPU avoidance');

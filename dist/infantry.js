@@ -23,7 +23,7 @@ export class InfantryCrowd {
  update(dt,time){this.currentTime=time;
   for(const s of this.soldiers){
    if(s.disabled){s.fallTime=Math.min(1,s.fallTime+dt/.7);this.renderSoldier(s,s.fallTime);continue;}
-   const side=s.team===0?1:-1,cycle=(time+s.offset)%12,canAdvance=Math.abs(s.x)>s.stopDistance+.001,moving=canAdvance&&cycle<5.2&&!s.reloadTime;const run=(s.i%3!==1),crouched=!moving&&s.i%3===0&&cycle>7.3;let desired=moving?(run?'Run':'Walk'):crouched?'CrouchAim':cycle>11.25&&s.i%4===1?'Idle':'Aim';
+   const side=s.team===0?1:-1,cycle=(time+s.offset)%12,canAdvance=Math.abs(s.x)>s.stopDistance+.001,moving=!s.combatUnit?.dashSweep&&canAdvance&&cycle<5.2&&!s.reloadTime;const run=(s.i%3!==1),crouched=!moving&&s.i%3===0&&cycle>7.3;let desired=moving?(run?'Run':'Walk'):crouched?'CrouchAim':cycle>11.25&&s.i%4===1?'Idle':'Aim';
    s.firingTime=Math.max(0,s.firingTime-dt);
    if(s.reloadTime>0){s.reloadTime=Math.max(0,s.reloadTime-dt);desired='Reload';if(s.reloadTime===0)s.ammo=12;}
    else if(moving){const speed=(run?2.3:1.05)*s.scale;s.x+=side*Math.min(Math.abs(s.x)-s.stopDistance,speed*dt);s.burst=0;}
