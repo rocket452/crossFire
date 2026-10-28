@@ -266,3 +266,23 @@ brakes at the current location. Exiting resumes CPU behavior from that same
 location. Reset restores the gait, route, counters and effects. Pause freezes
 both modes. The **Volt Rush escort** preset observes his CPU patrol; **Play Volt
 Rush** takes control. CPU attacks do not borrow or move the observer's camera.
+
+### Building durability and damage tint
+
+All section health is multiplied by 1.30: walls 5.2 (previously 4), slabs
+7.8 (previously 6), columns 13 (previously 10). Direct hits now subtract
+weapon damage rather than bypassing health; they apply once, and splash
+retains its existing distance falloff. Powerful shells, rockets and energy
+weapons can still destroy individual panels in one hit. Support rules,
+weapon strength, and active-debris limits retain their existing values.
+
+Every damaging hit calls the same persistent per-section scorch update,
+including rifle fire into cover, shells, helicopter rockets, force orbs,
+electricity, beam hits and their blast neighbors. An undamaged panel uses
+its original tint. On first positive damage, the linear color multiplier
+becomes `1 - min(0.72, 0.24 + 0.48 * lostHealthFraction)` and darkens with
+further damage, down to 0.28 at zero health. It remains on falling and
+settled debris. Unscorched pieces knocked loose by support loss retain
+the existing 0.78 debris tint. This uses the existing InstancedMesh color
+buffers, with no additional meshes, textures, materials or draw calls.
+Rebuild city restores full increased health and original colors.
