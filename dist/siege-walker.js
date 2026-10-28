@@ -1,12 +1,13 @@
 import * as THREE from './vendor/three.module.js';
+import {BeamCycle} from './beam-cycle.js?v=beam-3';
 import {WalkerGait,solveLegKnee,angleDelta} from './walker-gait.js?v=walk-2';
 
 // Blender-built rigid components share one health pool and explicit collision boxes.
 export class SiegeWalker {
- constructor(scene,gltf,spec,{onFire,onDebris,onEffect,onFootfall=()=>{}}){
-  Object.assign(this,{scene,spec,onFire,onDebris,onEffect,onFootfall});
+ constructor(scene,gltf,spec,{onFire,onDebris,onEffect,onFootfall=()=>{},onBeam=()=>{}}){
+  Object.assign(this,{scene,spec,onFire,onDebris,onEffect,onFootfall,onBeam});
   this.root=new THREE.Group();this.root.name='Siege Walker';scene.add(this.root);
-  this.nodes={};this.meshes={};this.boxes={};this.restPositions={};this.wrecks=[];this.gait=new WalkerGait();
+  this.nodes={};this.meshes={};this.boxes={};this.restPositions={};this.wrecks=[];this.gait=new WalkerGait();this.weapon=new BeamCycle();
   this.ik={hip:new THREE.Vector3(),upper:new THREE.Vector3(),lower:new THREE.Vector3(),down:new THREE.Vector3(0,-1,0),axis:new THREE.Vector3(0,1,0),parent:new THREE.Quaternion(),yaw:new THREE.Quaternion(),rotation:new THREE.Quaternion()};
   gltf.scene.updateMatrixWorld(true);
   for(const p of spec.parts){
@@ -28,8 +29,8 @@ export class SiegeWalker {
  }
  reset(){
   for(const w of this.wrecks){w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
-  this.wrecks=[];this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.cooldown=3.8;this.targetIndex=0;this.flash=0;
-  this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
+  this.wrecks=[];this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;
+  this.weapon.reset();this.beamAim=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
   for(const [name,n]of Object.entries(this.nodes)){n.rotation.set(0,0,0);n.position.copy(this.restPositions[name]);}
   this.walkPose=this.gait.reset();this.applyWalkPose(this.walkPose);
   for(const m of Object.values(this.meshes)){m.material.color.set('#ffffff');if(m.material.emissive)m.material.emissiveIntensity=m===this.meshes.reactor||m===this.meshes.visor?2:0;}
@@ -41,7 +42,7 @@ export class SiegeWalker {
   return new THREE.Vector3(p.x+(variant%3-1)*.65,from.y>20?15:12.8,p.z);
  }
  recordHit(kind,team,amount){if(amount<=0)return;this.hits[kind]=(this.hits[kind]||0)+1;this.damageByTeam[team]+=amount;this.flash=.14;}
- destroy(){this.dead=true;this.deathTime=0;this.deathPose={y:this.root.position.y,chest:this.nodes.chest.rotation.x,head:this.nodes.head.rotation.x,thigh:this.nodes.thigh_l.rotation.x,shin:this.nodes.shin_l.rotation.x};this.onEffect(this.root.position.clone().add(new THREE.Vector3(0,14,0)),false);}
+ destroy(){this.weapon.stop();this.onBeam(null);this.dead=true;this.deathTime=0;this.deathPose={y:this.root.position.y,chest:this.nodes.chest.rotation.x,head:this.nodes.head.rotation.x,thigh:this.nodes.thigh_l.rotation.x,shin:this.nodes.shin_l.rotation.x};this.onEffect(this.root.position.clone().add(new THREE.Vector3(0,14,0)),false);}
  update(dt,time,targets){
   this.flash=Math.max(0,this.flash-dt);
   if(this.dead){
@@ -56,9 +57,10 @@ export class SiegeWalker {
    return;
   }
   const available=targets.filter(u=>u.alive&&u.kind!=='robot'&&u.id!==this.protectedUnit);
-  this.cooldown-=dt;
-  if(available.length&&(!this.target?.alive||(this.cooldown<=0&&!this.aiming))){this.target=available[(this.targetIndex++*7+3)%available.length];this.aiming=true;}
-  const center=available.length?this.target?.shapes[0]?.center:null;
+  const locked=['charging','firing'].includes(this.weapon.phase);
+  if(!locked&&available.length&&(!this.target?.alive||(this.weapon.phase==='ready'&&!this.aiming))){this.target=available[(this.targetIndex++*7+2)%available.length];this.aiming=true;}
+  let center=locked?this.beamAim:available.length?this.target?.shapes[0]?.center:null;
+  if(center&&this.weapon.phase==='firing'){const dx=center.x-this.root.position.x,dz=center.z-this.root.position.z,a=Math.sin(this.weapon.elapsed/this.weapon.fireSeconds*Math.PI*2)*.13;center={x:this.root.position.x+dx*Math.cos(a)+dz*Math.sin(a),y:center.y,z:this.root.position.z+dz*Math.cos(a)-dx*Math.sin(a)};}
   const desiredYaw=center?Math.atan2(center.x-this.root.position.x,center.z-this.root.position.z):this.gait.yaw;
   this.walkPose=this.gait.update(dt,time,desiredYaw);this.applyWalkPose(this.walkPose);
   for(const step of this.walkPose.landings)this.onFootfall(step);
@@ -66,6 +68,7 @@ export class SiegeWalker {
   this.nodes.upperarm_l.rotation.x=-.10+swing*.18;this.nodes.forearm_l.rotation.x=-.23-Math.max(0,swing)*.08;
   this.nodes.chest.rotation.x=.025+this.walkPose.compression*.015;
   this.nodes.chest.rotation.z=-this.walkPose.roll*.55;
+  let aligned=false;
   if(center){
    this.targetPoint=new THREE.Vector3(center.x,center.y,center.z);
    const relative=angleDelta(desiredYaw,this.root.rotation.y+this.nodes.pelvis.rotation.y);
@@ -74,19 +77,25 @@ export class SiegeWalker {
    const aimError=angleDelta(desiredYaw,this.root.rotation.y+this.nodes.pelvis.rotation.y+this.nodes.waist.rotation.y);
    this.nodes.head.rotation.y=THREE.MathUtils.clamp(aimError,-.35,.35);
    this.nodes.head.rotation.x=-this.nodes.chest.rotation.x*.6;
-   const range=Math.hypot(center.x-this.root.position.x,center.z-this.root.position.z);
-   this.nodes.upperarm_r.rotation.x=-Math.PI/2-Math.atan2(center.y-(15+this.root.position.y),range)-this.nodes.chest.rotation.x;
-   this.nodes.forearm_r.rotation.x=0;
-   if(this.cooldown<=0&&Math.abs(aimError)<.25){
-    this.root.updateMatrixWorld(true);
-    const muzzle=this.nodes.forearm_r.localToWorld(new THREE.Vector3(0,-3.9,0));
-    this.onFire(muzzle,this.targetPoint.clone());this.returnShots++;this.cooldown=2.6;this.aiming=false;
-   }
-  }else{this.nodes.upperarm_r.rotation.x=-.10-swing*.18;this.cooldown=2.6;}
+   // Align the actual barrel axis, including the cannon shoulder's lateral offset.
+   this.root.updateMatrixWorld(true);
+   const localTarget=this.nodes.chest.worldToLocal(this.targetPoint.clone()).sub(this.nodes.upperarm_r.position).normalize();
+   this.nodes.upperarm_r.quaternion.setFromUnitVectors(this.ik.down,localTarget);
+   this.nodes.forearm_r.rotation.set(0,0,0);
+   aligned=Math.abs(aimError)<.25;
+  }else this.nodes.upperarm_r.rotation.x=-.10-swing*.18;
+  const state=this.weapon.step(dt,!!center&&aligned);
+  if(state.events.includes('charging'))this.beamAim={...center};
+  if(state.events.includes('firing')){this.returnShots++;this.onFire?.();}
+  if(state.events.includes('cooling'))this.aiming=false;
+  this.root.updateMatrixWorld(true);
+  const muzzle=this.nodes.forearm_r.localToWorld(new THREE.Vector3(0,-3.9,0));
+  const direction=new THREE.Vector3(0,-1,0).transformDirection(this.nodes.forearm_r.matrixWorld);
+  this.onBeam({state,from:muzzle,direction,time,protectedUnit:this.protectedUnit});
   const hp=this.combatUnit?this.combatUnit.health/this.combatUnit.maxHealth:1;
   for(const [name,m]of Object.entries(this.meshes)){
    m.material.color.set(this.flash>0?'#ffd5a4':'#ffffff');
-   if(name==='reactor'||name==='visor')m.material.emissiveIntensity=(1.5+Math.sin(time*4)*.4)*(hp<.3?1.8:1);
+   if(name==='reactor'||name==='visor'){m.material.emissive.set(state.phase==='charging'||state.phase==='firing'?'#2eabff':'#ff6b17');m.material.emissiveIntensity=(1.5+Math.sin(time*4)*.4)*(hp<.3?1.8:1)+state.charge*3;}
   }
   if(hp<.4&&Math.floor(time*3)!==this.lastSmoke){this.lastSmoke=Math.floor(time*3);this.onEffect(this.root.localToWorld(new THREE.Vector3(1,15,1)),true);}
   this.root.updateMatrixWorld(true);
@@ -141,5 +150,5 @@ export class SiegeWalker {
    result.push({center:{x:c.x,y:c.y,z:c.z},half:{x:b.size.x/2,y:b.size.y/2,z:b.size.z/2},rotation:{x:q.x,y:q.y,z:q.z,w:q.w}});
   }return result;
  }
- diagnostics(){return{health:this.combatUnit?.health,maxHealth:this.combatUnit?.maxHealth,alive:!this.dead,position:this.root.position.toArray(),triangles:this.spec.triangles,parts:this.spec.parts.length,hits:{...this.hits},damageByTeam:[...this.damageByTeam],returnShots:this.returnShots,broken:this.broken,wreckBodies:this.wrecks.length,target:this.target?.id,gait:this.gait.diagnostics()};}
+ diagnostics(){return{health:this.combatUnit?.health,maxHealth:this.combatUnit?.maxHealth,alive:!this.dead,position:this.root.position.toArray(),triangles:this.spec.triangles,parts:this.spec.parts.length,hits:{...this.hits},damageByTeam:[...this.damageByTeam],returnShots:this.returnShots,broken:this.broken,wreckBodies:this.wrecks.length,target:this.target?.id,gait:this.gait.diagnostics(),weapon:this.weapon.diagnostics()};}
 }

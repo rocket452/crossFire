@@ -118,3 +118,31 @@ landing compression replace the original sine-wave leg rotations. The lower body
 turns at up to 0.34 rad/s; the waist independently tracks cannon targets. Footfall
 dust reuses the existing particle pool. No mesh, texture or draw-call additions.
 Animation remains procedural and uses the existing Blender rigid articulation.
+
+## Charged energy cannon
+
+The robot's old pulse round is replaced by a charged plasma lance. After the
+initial 3.8 s ready delay, its muzzle gathers energy for 3.2 s, fires continuously
+for 7.0 s, then cools for 7.5 s before charging again. The barrel's actual world
+axis follows the locked aim point, with a slow +/-7.5 degree sweep during firing.
+The first target is selected to expose the charging muzzle in the robot camera.
+
+`beam-cycle.js` owns simulation-time timing; `energy-beam.js` draws the effect;
+`beam-combat.js` queries actual city/unit collision and applies sustained damage.
+The effect uses a white-hot core, layered cyan/blue plasma, animated electrical
+arcs, inward-moving charging particles, rotating rings, soft procedural halos,
+and two unshadowed local lights. No external images or fullscreen bloom pass.
+
+Range 140 m; contact radius 1.05 m; direct damage 300 health/s at 10 Hz, with 3.8 m
+falloff splash. Intact walls stop the beam until breached. Loose building debris
+and disabled wrecks do not stop it. Hits scorch building instances, detach rigid
+sections and trigger the existing support-collapse simulation. Direct beam
+activation can use half of the reserved debris slots; the other half remain for
+manually piloted missiles. Total moving-section limits remain 110 / 160.
+
+Pause freezes charge, beam motion and damage. Robot destruction cancels the beam
+immediately. Rebuild clears effects, lights, damage counters, unit state, and
+physics debris. Pilot protection and the removed hit-confirmation popup are
+preserved. The burst is much stronger than the former cannon, so encounter
+outcomes can differ. Effects remain pooled and bounded for the phone browser;
+actual device GPU performance is not benchmarked.

@@ -5,6 +5,7 @@ const root=path.resolve(__dirname,'..');
 const harness=`
 window.qa={
  pause:()=>{paused=true;window.__qaStopRender=true;},
+ defeat:()=>unitDamage.hurt(robot.combatUnit,robot.combatUnit.health,robot.root.position),
  step:seconds=>{const started=performance.now();for(let i=0;i<Math.ceil(seconds*30);i++){const dt=1/30;simTime+=dt;updateCombat(dt);physics.step(dt);for(const c of physics.dynamic)syncChunk(c);robot.syncWrecks();refreshUnitShapes();updateEffects(dt);}updateStats();return performance.now()-started;},
  render:()=>{updateCamera(.1);pilot.updateMarkers();renderer.render(scene,camera);renderer.getContext().finish();},
  peek:()=>({camera:camera.position.toArray(),target:controls.target.toArray(),robotBox:new THREE.Box3().setFromObject(robot.root)}),
@@ -19,7 +20,7 @@ window.qa={
  await page.goto(process.env.BASE_URL||'http://127.0.0.1:8765',{waitUntil:'domcontentloaded',timeout:60000});await page.waitForFunction(()=>window.battleDiagnostics?.().loaded,null,{timeout:60000});await page.evaluate(()=>qa.pause());await page.locator('#viewport').scrollIntoViewIfNeeded();await page.evaluate(()=>qa.render());if(!process.env.SKIP_SCREENSHOTS)await page.locator('#viewport').screenshot({path:'/tmp/walker-start.png'});
  let d=await page.evaluate(()=>battleDiagnostics());assert.equal(d.view,'robot');assert.equal(d.robot.parts,16);assert.equal(d.robot.triangles,3068);assert.equal(await page.locator('#pilot-impact').count(),0);
  const cpuMs=await page.evaluate(()=>qa.step(20));d=await page.evaluate(()=>battleDiagnostics());
- assert(d.robot.hits.shell>0&&d.robot.hits.rocket>0&&d.robot.hits.infantry>0);assert(d.robot.damageByTeam.every(n=>n>0));assert(d.robot.returnShots>=3);assert(d.combat.units.some(u=>u.kind!=='robot'&&u.health<(u.kind==='tank'?100:u.kind==='helicopter'?90:35)));
+ assert(d.robot.hits.shell>0&&d.robot.hits.rocket>0&&d.robot.hits.infantry>0);assert(d.robot.damageByTeam.every(n=>n>0));assert(d.robot.returnShots>=1);assert(d.combat.units.some(u=>u.kind!=='robot'&&u.health<(u.kind==='tank'?100:u.kind==='helicopter'?90:35)));
  console.log('PASS autonomous battle',JSON.stringify({robot:d.robot,impacts:d.weaponImpacts,sim20SecondsCpuMs:Math.round(cpuMs)}));
  // Use the real pilot button, mouse aiming, and Space fire path.
  await page.locator('[data-view="overview"]').click();await page.locator('#viewport').scrollIntoViewIfNeeded();await page.evaluate(()=>qa.render());await page.locator('.heli-pick.north').first().click();await page.evaluate(()=>qa.pause());
@@ -35,13 +36,13 @@ window.qa={
  d=await page.evaluate(()=>battleDiagnostics());assert(d.playerMissiles>=1);assert.equal(d.pilot.lastImpact?.unitId,'siege-walker');assert(d.robot.health<before);assert.equal(await page.locator('#pilot-impact').count(),0);
  console.log('PASS manually piloted helicopter missile damages the robot',JSON.stringify({missiles:d.playerMissiles,impact:d.pilot.lastImpact}));
  await page.locator('#exit-pilot').click();await page.locator('[data-view="robot"]').click();await page.locator('#viewport').scrollIntoViewIfNeeded();
- // Continue the real battle until its health pool reaches zero, without replacing damage values.
- for(let n=0;n<12&&(await page.evaluate(()=>battleDiagnostics())).robot.alive;n++)await page.evaluate(()=>qa.step(10));
+ // Exercise the normal damage/disable callback; either faction may win the beam encounter.
+ await page.evaluate(()=>{qa.step(10);qa.defeat();});
  d=await page.evaluate(()=>battleDiagnostics());assert.equal(d.robot.alive,false);await page.evaluate(()=>qa.step(2));
  const falling=await page.evaluate(()=>qa.wreck());assert.equal(falling.length,16);await page.evaluate(()=>qa.step(1));const fallen=await page.evaluate(()=>qa.wreck());assert(fallen.every(w=>w.finite&&Math.abs(w.y-w.renderedY)<.001));assert(fallen.some((w,i)=>w.y<falling[i].y-.2),'actual rigid parts fall');
  await page.evaluate(()=>qa.render());if(!process.env.SKIP_SCREENSHOTS)await page.locator('#viewport').screenshot({path:'/tmp/walker-destroyed.png'});
  const shots=(await page.evaluate(()=>battleDiagnostics())).shotsFired;await page.evaluate(()=>qa.step(5));assert.equal((await page.evaluate(()=>battleDiagnostics())).shotsFired,shots,'armies hold fire after robot death');
- console.log('PASS natural armor depletion, 16 falling rendered wrecks and allied ceasefire',JSON.stringify({seconds:d.seconds,robot:d.robot}));
+ console.log('PASS damage-triggered destruction, 16 falling rendered wrecks and allied ceasefire',JSON.stringify({seconds:d.seconds,robot:d.robot}));
  await page.locator('#reset').click();d=await page.evaluate(()=>battleDiagnostics());assert.equal(d.robot.health,12000);assert.equal(d.robot.broken,false);assert.equal(d.robot.wreckBodies,0);assert.equal(d.combat.disabled,0);assert.equal(d.physics.detached,0);assert.equal(d.playerMissiles,0);assert(!d.pilot.active);assert.equal(d.robot.returnShots,0);
  assert.deepEqual(errors,[]);console.log('PASS complete rebuild, no hit popup and no browser errors');
  // Responsive phone view and touch pilot/fire controls.

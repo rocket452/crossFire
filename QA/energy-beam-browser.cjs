@@ -1,0 +1,31 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'/opt/codex/cua_node/lib/node_modules/playwright-core');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..');
+const harness=`
+window.qa={
+ pause:()=>{paused=true;window.__qaStopRender=true;},
+ reset:()=>$('reset').click(),
+ step:seconds=>{for(let i=0;i<Math.round(seconds*60);i++){simTime+=1/60;updateCombat(1/60);physics.step(1/60);for(const c of physics.dynamic)syncChunk(c);robot.syncWrecks();refreshUnitShapes();updateEffects(1/60);}updateStats();},
+ render:()=>{updateCamera(.1);pilot.updateMarkers();renderer.render(scene,camera);renderer.getContext().finish();},
+ watch:()=>{const cb=beamCombat.onSection;beamCombat.onSection=c=>{cb(c);window.__qaBeamSection??={c,before:[c.body.position.x,c.body.position.y,c.body.position.z]};};},
+ moved:()=>{const p=window.__qaBeamSection;if(!p)return null;const m=new THREE.Matrix4();chunkBatches[p.c.type].getMatrixAt(p.c.index,m);const position=new THREE.Vector3().setFromMatrixPosition(m);return{state:p.c.state,displacement:position.distanceTo(new THREE.Vector3(...p.before)),rendered:position.toArray(),body:[p.c.body.position.x,p.c.body.position.y,p.c.body.position.z]};},
+ defeat:()=>unitDamage.hurt(robot.combatUnit,robot.combatUnit.health,robot.root.position),
+ aim:()=>{const d=robot.aimPoint(camera.position).sub(camera.position);return{yaw:Math.atan2(d.x,d.z),pitch:Math.atan2(d.y,Math.hypot(d.x,d.z))};}
+};`;
+async function prepare(page){await page.route('**/battle.js?*',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,'dist/battle.js'),'utf8').replace('requestAnimationFrame(animate);const elapsed=','requestAnimationFrame(animate);if(window.__qaStopRender)return;const elapsed=')+harness}));await page.goto(process.env.BASE_URL||'http://127.0.0.1:8765',{waitUntil:'domcontentloaded',timeout:60000});await page.waitForFunction(()=>window.battleDiagnostics?.().loaded,null,{timeout:60000});await page.evaluate(()=>{qa.pause();qa.reset();qa.watch();});}
+(async()=>{
+ const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});try{
+ const errors=[];const p=await browser.newPage({viewport:{width:1100,height:1000},deviceScaleFactor:1});p.setDefaultTimeout(60000);p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error'&&/shader|WebGL|THREE/.test(m.text()))errors.push(m.text());});
+ await prepare(p);await p.locator('#viewport').scrollIntoViewIfNeeded();
+ await p.evaluate(()=>qa.step(6.5));let d=await p.evaluate(()=>battleDiagnostics());assert.equal(d.robot.weapon.phase,'charging');assert.equal(d.beam.ticks,0);assert(d.beamEffect.visible);assert(!d.beamEffect.beamVisible);await p.evaluate(()=>qa.render());await p.locator('#viewport').screenshot({path:'/tmp/energy-charge.png',timeout:60000});console.log('PASS visible charge before damage',JSON.stringify(d.robot.weapon));
+ await p.evaluate(()=>qa.step(1));d=await p.evaluate(()=>battleDiagnostics());assert.equal(d.robot.weapon.phase,'firing');assert(d.beamEffect.beamVisible);assert.equal(d.robot.returnShots,1);await p.evaluate(()=>qa.render());await p.locator('#viewport').screenshot({path:'/tmp/energy-beam-close.png',timeout:60000});
+ await p.locator('[data-view="overview"]').click();await p.locator('#viewport').scrollIntoViewIfNeeded();await p.evaluate(()=>qa.render());await p.locator('#viewport').screenshot({path:'/tmp/energy-beam-overview.png',timeout:60000});
+ await p.evaluate(()=>qa.step(3));d=await p.evaluate(()=>battleDiagnostics());assert.equal(d.robot.weapon.phase,'firing');assert(d.beam.buildingHits>0||d.beam.unitDamage>0);const moved=await p.evaluate(()=>qa.moved());if(moved){assert(moved.displacement>.1);assert(moved.rendered.every((n,i)=>Math.abs(n-moved.body[i])<.001));}
+ console.log('PASS sustained damage and rendered structural motion',JSON.stringify({weapon:d.robot.weapon,combat:d.beam,moved}));
+ const frozen=JSON.stringify({phase:d.robot.weapon,beam:d.beam});await p.waitForTimeout(200);d=await p.evaluate(()=>battleDiagnostics());assert.equal(JSON.stringify({phase:d.robot.weapon,beam:d.beam}),frozen);
+ await p.evaluate(()=>qa.step(4));d=await p.evaluate(()=>battleDiagnostics());assert.equal(d.robot.weapon.phase,'cooling');assert.equal(d.beamEffect.visible,false);assert.equal(d.robot.weapon.damageTicks,70);assert(d.beam.unitKills>0);console.log('PASS seven-second burst / continuous high damage / cooling',JSON.stringify({weapon:d.robot.weapon,combat:d.beam}));
+ await p.locator('#reset').click();d=await p.evaluate(()=>battleDiagnostics());assert.equal(d.beam.ticks,0);assert.equal(d.beam.unitDamage,0);assert.equal(d.beamEffect.visible,false);assert.equal(d.robot.weapon.bursts,0);
+ await p.evaluate(()=>qa.step(8));assert((await p.evaluate(()=>battleDiagnostics())).beamEffect.beamVisible);await p.evaluate(()=>qa.defeat());assert.equal((await p.evaluate(()=>battleDiagnostics())).beamEffect.visible,false);await p.evaluate(()=>qa.step(2));assert((await p.evaluate(()=>battleDiagnostics())).robot.broken);await p.locator('#reset').click();assert.deepEqual(errors,[]);console.log('PASS pause, reset and immediate beam cancellation on destruction; no shader/page errors');
+ await p.close();const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});mobile.on('pageerror',e=>errors.push(e.message));await prepare(mobile);await mobile.evaluate(()=>qa.step(8));await mobile.locator('#viewport').scrollIntoViewIfNeeded();await mobile.evaluate(()=>qa.render());await mobile.locator('#viewport').screenshot({path:'/tmp/energy-beam-phone.png',timeout:60000});assert((await mobile.evaluate(()=>battleDiagnostics())).beamEffect.beamVisible);assert(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await mobile.locator('#reset').tap();assert.equal((await mobile.evaluate(()=>battleDiagnostics())).beamEffect.visible,false);assert.deepEqual(errors,[]);console.log('PASS 390px charged beam view and touch reset');
+ }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1});
