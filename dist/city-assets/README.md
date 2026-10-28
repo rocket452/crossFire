@@ -394,3 +394,22 @@ The rendered shield center and tilted normal are used for actual beam
 collision; shake never leaves a hidden stationary collision plane behind.
 The forward offset remains 2.21 m during tangent shake. Reset clears recoil.
 Shielding still prevents attacks and preserves the slower flight/shot timing.
+
+### Volt Rush charged lightning and extended dash streak
+
+`runner-charge.js` adds a 0.5 s wind-up to each continuous weapon activation
+for both the player and CPU. Damage timing accounts only for the frame portion
+after charge completes; existing 0.08 s / 150 DPS beam ticks follow it.
+A growing white/cyan palm core, two spinning rings, spiral forearm arcs and
+light buildup accompany a pull-back/extend arm pose. Charge status appears
+in the player HUD. Holding fire sustains the beam; tapping FIRE queues the
+wind-up and a short 0.18 s beam pulse. Releasing keyboard fire before charge
+completes cancels it. Blur, takeover/exit and reset clear partial charge.
+
+Dash arcs now persist for 0.72/0.62 s rather than 0.16/0.13 s, with stronger
+older-trail visibility and wider cores. Successive emissions connect from the
+last emitted position to avoid dashed gaps. Body arcs use 0.18 s lifetime.
+The 350-trail / 500-rendered-segment limits and two existing instance pools
+remain fixed. At 46 m/s, the straight-line test retains about 34.5 m of
+actual movement path. Charge uses four reusable visible meshes; no geometry
+is allocated per activation. Stationary trails fade and all effects reset.
