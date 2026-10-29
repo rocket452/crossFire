@@ -47,3 +47,5 @@
 @media(max-width:700px),(pointer:coarse){#runner-energy-meter{left:12px;top:103px;width:148px;padding:6px 8px}#runner-energy-meter>div{font-size:6px}.is-running .robot-readout{top:157px}#runner-energy-status{font-size:5px}}
 
 .scene-picker{font-size:9px;display:flex;gap:8px;align-items:center}.scene-picker select{max-width:170px;background:#d9e9e6;color:#294f53;padding:10px 6px;border:1px solid #759d9d;border-radius:5px}#evac-status{padding:12px;background:#163e35;color:#c8fff0;font-size:11px;line-height:1.5}@media(max-width:700px){.header-actions{flex-wrap:wrap;justify-content:flex-end}.scene-picker{font-size:0}.scene-picker select{font-size:11px;max-width:135px}header{height:auto;min-height:80px}}
+
+.presets button[hidden]{display:none}
