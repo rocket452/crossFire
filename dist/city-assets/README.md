@@ -675,3 +675,7 @@ The uploaded female body now has a live animation layer: breathing/weight shifts
 ## Revision 35 — joined ice slide and longer trail
 
 Solara's slide now curves from the trail tangent into her current travel direction. Shared cross-sections join the ice surface and luminous rails through turns, with capped corner widths and a stable heading when stopped. The trail lasts 9.6 seconds instead of 4.8, with twice the history capacity and unchanged sample density. Two bounded meshes render up to 195 segments including the live slide, using the same two draw calls. See `QA/solara-ice-path-validation.md` for measured length and geometry/browser checks.
+
+## Revision 36 — fiery fireball trails
+
+Solara's fireballs now have bright flickering cores, continuous golden/orange flame particles that cool to red, and drifting embers. Particles emit along the collision-clipped flight path at 0.24m spacing and fade after impact. Two bounded instanced pools support 384 flames and 128 embers across all shots. Damage, flight and firing cadence are unchanged. See `QA/solara-fire-trail-validation.md` for rendering, lifetime and frame-rate checks.
