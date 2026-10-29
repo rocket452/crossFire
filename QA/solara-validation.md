@@ -1,12 +1,12 @@
-# Solara Frost and three-hero roster — revision 28
+# Solara Frost and three-hero roster — revision 29
 
 Solara is a CPU defender, replacing Rift Warden in the default team alongside Volt Rush and Violet Sentinel. Heroes in the header opens the selection screen; choose exactly three of four heroes. Deploying a team restarts the encounter, persists locally, enables only its actors/effects/controls, and keeps Rift fully selectable. Cancel preserves the roster. Only Volt supports player control. The selection dialog pauses combat and restores the previous pause state on close.
 
 ## Character and travel
 
-- Actual supplied weighted 1,256-triangle humanoid and 53 bones, with original Blender-authored 1,378-triangle elemental armor/hair across 13 articulated attachment groups (2,634 combined character triangles).
+- Actual supplied weighted 1,256-triangle humanoid and 53 bones, with original Blender-authored 490-triangle elemental hair/eyes across 4 articulated head attachments (1,746 combined character triangles).
 - Anatomical right / source negative X is fire; anatomical left / positive X is ice. A bind-space shader uses a hard step at X=0, including crossing torso/face triangles. Hair geometry is clipped to its own half. Right red eye and left blue eye follow the actual head bone. Original flame hair moves in the vertex shader; frozen hair stays angular.
-- Bone-attached fitted molten/frost armor, asymmetric shoulders, forearm cuffs and crest. No raw licensed input is embedded in the new accessory files.
+- The body shares Volt Rush’s exact geometry, dimensions and skinning, with an independent elemental material and skeleton instance. Separate chest/hip/shoulder/cuff armor and crest have been removed. Only the elemental hair and eyes are added. No raw licensed input is embedded in the new accessory files.
 - Surf stance uses the actual weighted arms/legs/head. Gliding follows a growing 3D ice ribbon above intact roof height. Maximum 96 trailing panels plus one lead panel, 194 thin edge rails, 4.8-second trail life. Low-speed samples accumulate displacement, so the trail works at 30/60/120 Hz. Six flame wisps and bounded fire/ice particles show the two elements.
 - Patrol speed cap 20 m/s, rescue approach 32 m/s. Fireballs charge 0.65 s in the actual right hand, then use 1.6 s recovery; 38 m/s projectiles deal 90 robot damage on a real hit. World/building/missile collision remains authoritative. Army units are excluded from her attack trace. Buildings retain 90% non-robot damage reduction.
 
@@ -21,10 +21,12 @@ Solara is a CPU defender, replacing Rift Warden in the default team alongside Vo
 
 - `hero-roster-test.mjs`: valid/default/exactly-three selection, persistence, invalid input and blocked storage fallback.
 - `solara-test.mjs`: real GLBs/skin/accessories, correct hair halves; both plasma arcs intercepted at 30/60/120 Hz and 75 ms steps, zero ground-damage callbacks, tank 100 HP / soldier 35 HP retained, real fireballs hit the robot, bounded pools, nearest-cover precedence, reset/deactivation, eight-second aiming delay, exposed lethal control and collider removal mid-flight.
-- `solara-browser.cjs`: desktop 1100×1000 and touch 390×844. Actual weighted bones/attachments, shader rendering, ice path, both natural plasma shots intercepted including robot aiming delay, fireballs hit robot, all roster combinations, Rift attacks/teleports, disabled Volt controls, defaults/cancel/persistence. Controlled actual rendered tank/soldier remain 100/35 HP behind ice; both fall to zero in the identical unprotected control. No page/shader errors or horizontal overflow.
+- `solara-browser.cjs`: desktop 1100×1000 and touch 390×844. Exact geometry shared with Volt Rush, material isolation, four weighted head attachments, shader rendering, ice path, both natural plasma shots intercepted including robot aiming delay, fireballs hit robot, all roster combinations, Rift attacks/teleports, disabled Volt controls, defaults/cancel/persistence. Controlled actual rendered tank/soldier remain 100/35 HP behind ice; both fall to zero in the identical unprotected control. No page/shader errors or horizontal overflow.
 - `explosive-characters-browser.cjs`: explicitly chooses the legacy Volt/Violet/Rift team and verifies its original 39 weighted actors, shared palettes, rifle grips, source movement/death, hand-attached electricity, reset and natural combat on desktop/phone.
 - `runner-feel-browser.cjs`: missile assistance/manual aim, preferences and real dash rescue feedback. Its rescue fixture disables Solara to isolate dash attribution from plasma interception.
 - `runner-camera-follow-browser.cjs`: keyboard/touch turn-follow, stable held movement, manual aim priority, collision and handoff.
 - Existing plasma artillery, portal hero, source asset, Violet inertia/flight, runner movement/heading/dash/charge suites; JavaScript syntax and whitespace checks.
 
 Visuals inspected at `/tmp/solara-model28.png`, `/tmp/solara-model28-phone.png`, `/tmp/solara-roster28.png`, `/tmp/solara-roster28-phone.png`. Tests use software-rendered Chromium; physical phone FPS/thermal performance has not been measured.
+
+Revision 29 changes only the presentation: the Speedster and Solara share the same 1,256-triangle geometry and scale, while separate materials preserve Volt’s cyan suit. Head attachments are reduced from 13 groups / 1,378 triangles to 4 groups / 490 triangles. `solara-test.mjs` verifies geometry identity, bone-name/scale parity and material isolation. `solara-browser.cjs` repeats those checks against the actual Speedster instance on desktop and phone. Her surf pose, fireballs, path, plasma protection and selection behavior are retained.

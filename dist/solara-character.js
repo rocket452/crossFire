@@ -1,9 +1,8 @@
 import * as THREE from './vendor/three.module.js';
-import {HumanoidCharacter} from './humanoid-character.js?v=solara-28';
-const UP=new THREE.Vector3(0,1,0);
+import {HumanoidCharacter} from './humanoid-character.js?v=characters-24';
 export class SolaraCharacter {
  constructor(root,humanoid,model,spec){
-  this.root=root;this.character=new HumanoidCharacter(humanoid,{variant:'solara',height:2.59});root.add(this.character.root);this.parts=[];this.flameUniform={value:0};
+  this.root=root;this.character=new HumanoidCharacter(humanoid,{variant:'volt',height:2.59});this.character.variant='solara';for(const mesh of this.character.meshes)mesh.material=mesh.material.clone();root.add(this.character.root);this.parts=[];this.flameUniform={value:0};
   const c=this.character;for(let i=0;i<c.bones.length;i++){c.bones[i].position.copy(c.rest[i].p);c.bones[i].quaternion.copy(c.rest[i].q);}root.updateMatrixWorld(true);model.scene.updateMatrixWorld(true);
   for(const part of spec.parts){const source=model.scene.getObjectByName(part.name);if(!source)throw Error('Missing Solara accessory '+part.name);const group=new THREE.Group();group.name=part.name;root.add(group);
    source.traverse(o=>{if(!o.isMesh)return;const geometry=o.geometry.clone().applyMatrix4(o.matrixWorld);geometry.translate(-part.pivot[0],-part.pivot[1],-part.pivot[2]);
@@ -36,5 +35,5 @@ export class SolaraCharacter {
  sync(time){this.flameUniform.value=time;this.root.updateMatrixWorld(true);const inverse=this.root.getWorldQuaternion(new THREE.Quaternion()).invert();for(const p of this.parts){p.mesh.position.copy(this.root.worldToLocal(p.bone.getWorldPosition(new THREE.Vector3())));p.mesh.quaternion.copy(inverse).multiply(p.bone.getWorldQuaternion(new THREE.Quaternion())).multiply(p.inverseBind);}}
  hand(side){return this.character.hand(side);}
  reset(){this.character.reset();this.sync(0);}
- diagnostics(){return{...this.character.diagnostics(),accessoryParts:this.parts.length,elementSplit:'anatomical right fire / left ice',flameTime:this.flameUniform.value};}
+ diagnostics(){return{...this.character.diagnostics(),baseModel:'Volt Rush',accessoryParts:this.parts.length,elementSplit:'anatomical right fire / left ice',flameTime:this.flameUniform.value};}
 }
