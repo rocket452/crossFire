@@ -667,3 +667,7 @@ Removed the right look joystick. MOVE plus BOOST/JUMP/DASH/FIRE now all sit on t
 ## Revision 33 — robot eye-bolt bursts
 
 During heavy-weapon recovery, Siege Walker periodically charges red eye sights for 1.1s and fires three pairs of straight energy bolts at Volt Rush (CPU or player). Predictive aim locks 0.22s before firing; bolts travel 52m/s with a 120m limit and a seven-second minimum cooldown. Move after lock, dash or use solid buildings to evade. The existing three heavy weapons keep their rotation/recovery. The animated visor supplies both muzzle positions. Continuous world/hero sweeps stop bolts at the nearest hit. Real building damage uses the robot source; hero impacts add sparks and brief red edge feedback without introducing a new hero health system. Effects use four bounded instanced draws, no new external assets. See `QA/robot-eye-beams-validation.md`.
+
+## Revision 34 — dynamic Solara surfing and casting
+
+The uploaded female body now has a live animation layer: breathing/weight shifts, deeper speed-dependent crouching, planted staggered feet, opposite turn banks, spine/shoulder motion, fireball wind-up and follow-through, and a left-arm ice-summoning sweep with target-following head motion. Pose blending and stable elbow-plane IK prevent snapping; effects remain attached to the real weighted hands/head. Slow patrol gliding is expressive as well as high-speed rescue travel. The source mesh and gameplay charge/cooldown/dome timing stay the same. See `QA/solara-animation-validation.md` for checks.
