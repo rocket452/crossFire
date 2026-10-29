@@ -42,6 +42,7 @@ Choose **Rift Warden escort** to watch the third CPU hero teleport, fire through
 - dist/portal-hero.js: portal hero articulation, teleport/attack/rescue effects and pooled projectiles.
 - dist/portal-policy.js: hostile-impact prediction and safe friendly evacuation destinations.
 - dist/robot-missiles.js: shoulder salvos, swept missile flight, target claims and interception damage.
+- dist/missile-explosions.js: bounded fire/shockwave/spark/smoke bursts for rocket impacts and harmless shootdowns.
 - dist/physics-grid.js: static spatial hashing for collision broadphase.
 - dist/city-assets/README.md: physics scope, limitations, import/download notes.
 

@@ -7,7 +7,7 @@ export class RobotMissiles {
   Object.assign(this,{scene,getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst,onTrail,onLaunch,onSalvo,autoFire,canLaunch});
   this.template=model.scene;this.forward=new THREE.Vector3(0,0,1);this.flameGeometry=new THREE.ConeGeometry(.24,1.3,6);this.flameGeometry.rotateX(-Math.PI/2);this.flameMaterial=new THREE.MeshBasicMaterial({color:'#ffaf39',toneMapped:false});this.reset();
  }
- reset(){for(const m of this.missiles||[])this.scene.remove(m.mesh);this.missiles=[];this.clock=0;this.cooldown=5.2;this.pending=0;this.launchClock=0;this.launched=0;this.salvos=0;this.intercepted=0;this.impacts=0;this.expired=0;this.byHero={violet:0,volt:0,other:0};this.sequence=0;this.targetIndex=0;}
+ reset(){for(const m of this.missiles||[])this.scene.remove(m.mesh);this.missiles=[];this.clock=0;this.cooldown=5.2;this.pending=0;this.launchClock=0;this.launched=0;this.salvos=0;this.intercepted=0;this.impacts=0;this.expired=0;this.byHero={violet:0,volt:0,solara:0,other:0};this.sequence=0;this.targetIndex=0;}
  beginSalvo(){if(!this.canLaunch()||!this.isRobotAlive()||this.pending||this.missiles.filter(m=>m.alive).length>6||!this.getTargets().length)return false;this.pending=6;this.launchClock=0;this.salvos++;this.onSalvo();return true;}
  launch(){
   if(!this.canLaunch())return;

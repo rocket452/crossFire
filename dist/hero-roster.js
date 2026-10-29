@@ -1,7 +1,7 @@
 export const HEROES=Object.freeze([
  {id:'volt',name:'Volt Rush',element:'LIGHTNING',role:'Speed & rescue',detail:'Run up buildings, fire charged lightning and dash allies out of danger.',control:'Player or CPU',color:'#81e8f5',icon:'ϟ'},
  {id:'violet',name:'Violet Sentinel',element:'FORCE',role:'Air defense',detail:'Fly into the beam’s path, raise a force shield and launch charged purple orbs.',control:'CPU defender',color:'#bc8bf5',icon:'◈'},
- {id:'solara',name:'Solara Frost',element:'FIRE / ICE',role:'Plasma defense',detail:'Ride a growing ice path, throw fireballs and grow protective ice domes over allies.',control:'CPU defender',color:'#9bdfff',icon:'✦'},
+ {id:'solara',name:'Solara Frost',element:'FIRE / ICE',role:'Missile / plasma defense',detail:'Track incoming missiles with fireballs, ride an ice path and raise protective domes over allies.',control:'CPU defender',color:'#9bdfff',icon:'✦'},
  {id:'rift',name:'Rift Warden',element:'PORTALS',role:'Evacuation & barrage',detail:'Teleport threatened allies to safety and fire sparkling projectiles from portals.',control:'CPU defender',color:'#a6e8bf',icon:'◎'}
 ]);
 export const DEFAULT_HEROES=Object.freeze(['volt','violet','solara']);

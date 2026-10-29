@@ -1,0 +1,17 @@
+# Solara missile defense and larger detonations — revision 44
+
+Solara prioritizes visible robot missiles within 90m while not growing an ice dome. Selection retains a valid target through the existing 0.65s fireball wind-up, avoids her own in-flight duplicates, and respects other heroes’ missile reservations unless impact is imminent (under 1.2s). She returns to robot attacks when no eligible missile remains. The existing 1.6s post-shot cooldown remains. The real right-hand muzzle leads missile travel and each defensive projectile tracks its own missile at 38m/s with swept world collision. Buildings still block acquisition and shots. A projectile dissipates if another hero destroys its target. Fireball hits pass through the shared missile damage authority, with Solara kill credit and a visible counter. Dome casting retains priority over shooting.
+
+Missile shootdowns, self-detonations and actual rocket impacts now use clustered orange fire, expanding shockwave, outward sparks and rising dark smoke. Ground impacts are visually 25% larger than airborne detonations. Fire lobes last 0.55–0.69s, sparks 0.65–1.05s, shockwave 0.48s and smoke 1.8–2.34s. A bounded shared pool holds up to 12 bursts: 300 fire/spark/ring billboards and 120 smoke billboards, two draw calls, no textures or new lights. Rebuild clears the pool; simulation pause freezes it. The effect has no damage authority: intercepted missiles remain harmless and real impacts retain their existing damage/radii.
+
+Validation:
+
+- `solara-missiles-test.mjs`: actual weighted Solara model and moving guided missiles at 30/60/120Hz and 75ms steps. Led/homing shots earn a Solara interception, preserve tank health, never call impact damage, and return to real robot damage. Checks reset and multi-salvo effect caps, finite matrices and complete expiry.
+- `solara-test.mjs`: existing real body/rig, both plasma blocks, exposed lethal control, delayed-aim dome persistence, disabled cleanup and robot damage pass at all existing timesteps.
+- `robot-missiles-test.mjs`: actual sweeps, reservations, exact kill credit, harmless interceptions, building/unit damage and reset pass. Updated the old impact fixture to identify the robot damage source and step deferred physics activation.
+- `robot-arsenal-test.mjs`, `plasma-artillery-test.mjs` and `solara-fire-trail-test.mjs`: timing, beam/pod/plasma exclusion, startup delay, existing rescue/blast behavior and flame trails pass.
+- `solara-browser.cjs`: desktop 1100×1000 and touch 390×844 real model/attachments, natural plasma blocks, protected versus exposed tank/soldier controls, roster swaps/persistence/default/cancel and reset pass. Its natural-artillery observation now waits for the actual plasma turn following the revision 42 beam-first opening.
+
+- `solara-missiles-browser.cjs`: final desktop and touch runs pass real fireball/missile sweeps, Solara kill credit, unchanged allied health, real building occlusion, actual damaging impact control, effect shaders/expiry/reset and no renderer/layout errors. Over 42 simulated seconds of default-team battle, Solara shoots down two of six missiles (Violet one, Volt three) and builds both plasma domes. Natural weapon order remains beam → pod → plasma. Final fireburst and smoke screenshots visually reviewed in both layouts (`/tmp/solara-missile44*.png`, `/tmp/missile-smoke44*.png`).
+
+Physical phone FPS/thermal behavior is not measured by software Chromium checks.
