@@ -44,7 +44,7 @@ export class RobotMissiles {
    const goal=m.age<2.25?m.origin.clone().lerp(m.targetPoint,.35).setY(Math.max(32,m.origin.y+12)):m.targetPoint;
    const desired=goal.clone().sub(m.position).normalize();m.direction.lerp(desired,1-Math.exp(-(m.age<.5?1.4:2.4)*dt)).normalize();m.velocity.copy(m.direction).multiplyScalar(m.speed);
    const end=m.position.clone().addScaledVector(m.velocity,dt),hit=this.traceWorld(m.position,end,m.radius);
-   if(hit){m.position.set(hit.point.x,hit.point.y,hit.point.z);m.alive=false;this.impacts++;this.scene.remove(m.mesh);this.onImpact(m.position,hit);continue;}
+   if(hit){m.position.set(hit.point.x,hit.point.y,hit.point.z);m.alive=false;this.impacts++;this.scene.remove(m.mesh);this.onImpact(m.position,hit,m.id);continue;}
    m.position.copy(end);m.mesh.quaternion.setFromUnitVectors(this.forward,m.direction);m.flame.scale.setScalar(.8+Math.sin(time*27+m.age*3)*.2);
    m.trail-=dt;if(m.trail<=0){this.onTrail(m.position,m.direction);m.trail=.09;}
    if(m.life<=0){m.alive=false;this.expired++;this.scene.remove(m.mesh);this.onBurst(m.position,'expired');}

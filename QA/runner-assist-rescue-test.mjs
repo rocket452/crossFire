@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import * as THREE from '../dist/vendor/three.module.js';
+import {selectRunnerAim} from '../dist/runner-aim.js';
+import {RunnerRescues} from '../dist/runner-rescues.js';
+const origin=new THREE.Vector3(),forward=new THREE.Vector3(0,0,1),at=degrees=>new THREE.Vector3(Math.tan(degrees*Math.PI/180)*40,0,40);
+const missile={id:'m',kind:'missile',position:at(4)},robot={id:'r',unitId:'siege-walker',kind:'robot',position:at(2)};
+const trace=(a,b)=>b===null?null:b.distanceTo(missile.position)<.1?{missile:{id:'m'}}:{unit:{id:'siege-walker'}};
+assert.equal(selectRunnerAim(origin,forward,[missile],{trace}).id,'m');assert.equal(selectRunnerAim(origin,forward,[robot],{trace}).id,'r');assert.equal(selectRunnerAim(origin,forward,[{...missile,position:at(6)}],{trace}),null);assert.equal(selectRunnerAim(origin,forward,[{...robot,position:at(4)}],{trace}),null);assert.equal(selectRunnerAim(origin,forward,[missile],{enabled:false,trace}),null);assert.equal(selectRunnerAim(origin,forward,[{...missile,alive:false}],{trace}),null);assert.equal(selectRunnerAim(origin,forward,[{...missile,position:new THREE.Vector3(0,0,-10)}],{trace}),null);assert.equal(selectRunnerAim(origin,forward,[missile],{trace:()=>({kind:'building'})}),null);assert.equal(selectRunnerAim(origin,forward,[missile],{trace:()=>({unit:{id:'friendly'}})}),null);assert.deepEqual(forward.toArray(),[0,0,1]);
+function fixture(){let threats=[{id:'plasma',alive:true,owner:'siege-walker',position:{x:0,y:20,z:0},impactPoint:{x:0,y:.08,z:0},timeToImpact:.5,blastRadius:7}],events=[];const u={id:'ally',alive:true,kind:'infantry',entity:{x:0,y:.08,z:0},shapes:[{center:{x:0,y:1.08,z:0},half:{x:.4,y:1,z:.4}}]};const r=new RunnerRescues({getThreats:()=>threats,onRescue:e=>events.push(e)});return{r,u,events,track:()=>r.track([{unit:u}]),move:(x=10)=>{r.moved(u,{...u.entity},{...u.entity,x});u.entity.x=x;u.shapes[0].center.x=x;},setThreats:t=>threats=t,impact:()=>r.impact('plasma',{x:0,y:.08,z:0},7)};}
+let f=fixture();f.track();f.move();assert.equal(f.impact().count,1);assert(f.r.last.closeCall);assert.equal(f.events.length,1);assert.equal(f.r.saved,1);assert.equal(f.impact(),null);f.track();assert.equal(f.r.pending.size,0,'same ally/threat never double counted');
+f=fixture();f.move();f.track();assert.equal(f.r.pending.size,0,'safe allies do not enter tracking');assert.equal(f.impact(),null);
+f=fixture();f.track();f.move(1);assert.equal(f.impact(),null,'tiny or blocked carry is not a rescue');
+f=fixture();f.track();f.move(4);assert.equal(f.impact(),null,'still inside blast is not rescued');
+f=fixture();f.track();f.move();f.u.alive=false;assert.equal(f.impact(),null,'dead ally no credit');
+f=fixture();f.track();f.move();assert.equal(f.r.impact('plasma',{x:30,y:0,z:0},7),null,'actual redirected blast did not threaten original position');
+f=fixture();f.r.track([{unit:f.u}],{cpu:true});assert.equal(f.r.pending.size,0,'CPU does not earn player rescue score');
+f=fixture();f.setThreats([]);f.track();f.move();assert.equal(f.impact(),null,'moving safe allies earns nothing');
+f=fixture();f.track();f.move();f.r.update(3);assert.equal(f.r.pending.size,0);assert.equal(f.r.saved,0,'intercepted/expired attack earns no rescue');
+f=fixture();f.setThreats([{id:'plasma',owner:'friendly',alive:true,impactPoint:{x:0,y:0,z:0},timeToImpact:.3,blastRadius:7}]);f.track();assert.equal(f.r.pending.size,0,'friendly/projectile farming excluded');
+f=fixture();f.track();f.move();assert.equal(f.r.impact('other',{x:0,y:0,z:0},7),null);assert.equal(f.r.saved,0,'matching actual impact required');f.impact();f.r.reset();assert.equal(f.r.saved,0);assert.equal(f.r.pending.size,0);
+f=fixture();f.track();f.u.entity.x=f.u.shapes[0].center.x=20;assert.equal(f.impact(),null,'a later portal or ordinary movement cannot earn dash credit');
+console.log('PASS small-cone visible live hostile aim assistance; real-impact rescue attribution, survival, actual displacement, safe exit, no repeat/friendly/intercepted/safe-carry farming and reset');

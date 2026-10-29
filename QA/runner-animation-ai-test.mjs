@@ -20,8 +20,8 @@ console.log('PASS actual 15-part Blender rig, continuous stride during accelerat
 // Exercise the CPU through the same physics/controller inputs in a real city layout.
 const layout=JSON.parse(fs.readFileSync(new URL('../dist/city-assets/city-layout.json',import.meta.url))),sections=[];
 for(const b of layout.buildings)for(let f=0;f<b.floors;f++){
- for(let side=0;side<4;side++)for(let j=0;j<4;j++){const a=side*Math.PI/2,u=(j-1.5)*2.5;sections.push({state:'intact',size:[2.5,2.72,.32],body:{position:{x:b.x+5*Math.sin(a)+u*Math.cos(a),y:f*3+1.5,z:b.z+5*Math.cos(a)-u*Math.sin(a)},quaternion:{x:0,y:Math.sin(a/2),z:0,w:Math.cos(a/2)}}});}
- for(let x=0;x<3;x++)for(let z=0;z<3;z++)sections.push({state:'intact',size:[10/3,.28,10/3],body:{position:{x:b.x+(x-1)*10/3,y:(f+1)*3,z:b.z+(z-1)*10/3},quaternion:{x:0,y:0,z:0,w:1}}});
+ for(let side=0;side<4;side++)for(let j=0;j<4;j++){const a=side*Math.PI/2,u=(j-1.5)*2.5;sections.push({type:'wall',state:'intact',size:[2.5,2.72,.32],body:{position:{x:b.x+5*Math.sin(a)+u*Math.cos(a),y:f*3+1.5,z:b.z+5*Math.cos(a)-u*Math.sin(a)},quaternion:{x:0,y:Math.sin(a/2),z:0,w:Math.cos(a/2)}}});}
+ for(let x=0;x<3;x++)for(let z=0;z<3;z++)sections.push({type:'slab',state:'intact',size:[10/3,.28,10/3],body:{position:{x:b.x+(x-1)*10/3,y:(f+1)*3,z:b.z+(z-1)*10/3},quaternion:{x:0,y:0,z:0,w:1}}});
 }
 const cpu=new RunnerAI(),movement=new RunnerMotion(),target={x:0,y:13,z:0};let fired=0;
 for(let i=0;i<1800;i++){const decision=cpu.update(1/60,{motion:movement,robotAlive:true,target,canShoot:()=>!traceImpact({x:movement.position.x,y:movement.position.y+1.65,z:movement.position.z},target,{sections,ground:false})});movement.yaw=decision.yaw;movement.step(decision.input,1/60,sections);if(decision.fire)fired++;}
