@@ -11,7 +11,7 @@ export class RunnerDash {
  reset(){this.cancel();this.rescues.reset();this.cooldown=0;this.dashes=0;this.carried=0;this.cpuRescues=0;this.last=null;this.scan=0;this.trails=[];}
  cancel(){if(this.active)for(const a of this.active.actors)if(a.unit)a.unit.dashCarried=false;this.active=null;this.trails=[];}
  allies(motion){return this.getUnits().filter(u=>u.alive&&['tank','infantry'].includes(u.kind)&&!u.dashCarried&&dist(foot(u),motion.position)<=DASH.radius);}
- actors(motion){return[{position:copy(motion.position),half:{x:.38,y:1.05,z:.38}},...this.allies(motion).map(u=>({unit:u,position:foot(u),half:u.kind==='tank'?worldHalf({x:1.85,y:1.4,z:2.4},u.entity.root.quaternion):{x:.42,y:1,z:.52}}))];}
+ actors(motion){return[{position:copy(motion.position),half:{x:.38,y:1.3,z:.38}},...this.allies(motion).map(u=>({unit:u,position:foot(u),half:u.kind==='tank'?worldHalf({x:1.85,y:1.4,z:2.4},u.entity.root.quaternion):{x:.42,y:1,z:.52}}))];}
  nearby(actors){return this.getSections().filter(c=>!c.hidden&&['intact','settled','dynamic'].includes(c.state)&&actors.some(a=>{const p=c.body?.position||c;return Math.abs(p.x-a.position.x)<DASH.range+Math.hypot(...c.size)/2+4&&Math.abs(p.z-a.position.z)<DASH.range+Math.hypot(...c.size)/2+4&&Math.abs(p.y-a.position.y)<Math.hypot(...c.size)/2+5;}));}
  next(actors,direction,length,sections){
   const result=[],group=new Set(actors.map(v=>v.unit));for(const a of actors){const p=a.position,q={x:p.x+direction.x*length,y:p.y,z:p.z+direction.z*length};if(Math.abs(q.x)>55||Math.abs(q.z)>55)return null;
