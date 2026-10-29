@@ -687,3 +687,7 @@ Solara now rides lower and sideways, with a leading foot, toes across the slide,
 ## Revision 38 — ice forming at the slide tip
 
 A faint blue-white edge shimmer, soft frost mist and tiny ice sparkles now show Solara creating ice ahead of the slide. The small effect follows the real ribbon tip through turns and slopes and fades when she stops. Two bounded draws, up to 48 procedural particles, no textures or lights. Existing trail and gameplay stay unchanged. See `QA/solara-ice-forming-validation.md`.
+
+## Revision 39 — wider, smoother Solara turns
+
+Solara now carries momentum through bounded heading changes instead of cutting tight corners or reversing through zero speed. She brakes gently into large turns; the body follows her slide direction more slowly and holds its heading when idle. Existing travel speed caps, attack/dome behavior, surfer pose and ice/fire effects remain. See `QA/solara-steering-validation.md` for measured turn-radius and combat checks.
