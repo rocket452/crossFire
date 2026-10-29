@@ -671,3 +671,7 @@ During heavy-weapon recovery, Siege Walker periodically charges red eye sights f
 ## Revision 34 — dynamic Solara surfing and casting
 
 The uploaded female body now has a live animation layer: breathing/weight shifts, deeper speed-dependent crouching, planted staggered feet, opposite turn banks, spine/shoulder motion, fireball wind-up and follow-through, and a left-arm ice-summoning sweep with target-following head motion. Pose blending and stable elbow-plane IK prevent snapping; effects remain attached to the real weighted hands/head. Slow patrol gliding is expressive as well as high-speed rescue travel. The source mesh and gameplay charge/cooldown/dome timing stay the same. See `QA/solara-animation-validation.md` for checks.
+
+## Revision 35 — joined ice slide and longer trail
+
+Solara's slide now curves from the trail tangent into her current travel direction. Shared cross-sections join the ice surface and luminous rails through turns, with capped corner widths and a stable heading when stopped. The trail lasts 9.6 seconds instead of 4.8, with twice the history capacity and unchanged sample density. Two bounded meshes render up to 195 segments including the live slide, using the same two draw calls. See `QA/solara-ice-path-validation.md` for measured length and geometry/browser checks.
