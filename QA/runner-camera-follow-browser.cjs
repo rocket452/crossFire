@@ -1,6 +1,6 @@
 const{chromium}=require('/opt/codex/cua_node/lib/node_modules/playwright-core');const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');const root=path.resolve(__dirname,'..');const delta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 const harness=`window.__qaStopRender=true;window.qa={
- stage:()=>{runner.clearInput();runner.boost=false;runner.charge.reset();runner.motion.reset({x:0,y:.08,z:26});runner.yaw=runner.motion.yaw=Math.PI;runner.pitch=-.1;runner.pose(0);runner.updateCamera(1,true);paused=false;},
+ stage:()=>{runner.clearInput();runner.energy.amount=100;runner.boost=false;runner.charge.reset();runner.energy.amount=100;runner.motion.reset({x:0,y:.08,z:26});runner.yaw=runner.motion.yaw=Math.PI;runner.pitch=-.1;runner.pose(0);runner.updateCamera(1,true);paused=false;},
  step:s=>{for(let i=0;i<Math.round(s*60);i++){simTime+=1/60;updateCombat(1/60);physics.step(1/60);for(const c of physics.dynamic)syncChunk(c);robot.syncWrecks();refreshUnitShapes();updateEffects(1/60);updateCamera(1/60);}},
  state:()=>({yaw:runner.yaw,follow:runner.heading.diagnostics(),position:{...runner.motion.position},velocity:{...runner.motion.velocity},mode:runner.motion.mode,body:runner.bodyForward.toArray(),direction:camera.getWorldDirection(new THREE.Vector3()).toArray(),up:camera.up.toArray(),inside:!!traceImpact(camera.position,camera.position,{sections:physics.chunks,ground:false}),charging:runner.charging}),
  render:()=>{renderer.render(scene,camera);renderer.getContext().finish();},

@@ -691,3 +691,7 @@ A faint blue-white edge shimmer, soft frost mist and tiny ice sparkles now show 
 ## Revision 39 — wider, smoother Solara turns
 
 Solara now carries momentum through bounded heading changes instead of cutting tight corners or reversing through zero speed. She brakes gently into large turns; the body follows her slide direction more slowly and holds its heading when idle. Existing travel speed caps, attack/dome behavior, surfer pose and ice/fire effects remain. See `QA/solara-steering-validation.md` for measured turn-radius and combat checks.
+
+## Revision 40 — running builds electric charge
+
+Volt Rush now stores 0–100 static charge from real running/wall-running distance. Roughly six seconds of full-speed travel fills it; each lightning attack costs 25 at release after the existing half-second wind-up. Empty means no attack; idle keeps charge. Movement, BOOST, jumping, wall running and rescue DASH remain free, and dashing/falling cannot farm charge. Player and CPU share the rules; CPU moves to recharge. The HUD displays cost/readiness, with a ready flash/ping and stronger stored-energy arcs. Rebuild clears energy; control handoff preserves it. See `QA/runner-energy-validation.md`.

@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';import{RunnerEnergy,RUNNER_ENERGY}from'../dist/runner-energy.js';import{RunnerCharge}from'../dist/runner-charge.js';
+for(const hz of[30,60,120]){
+ const energy=new RunnerEnergy(),charge=new RunnerCharge();assert(!energy.ready);for(let i=0;i<hz*3;i++)assert.equal(charge.step(1/hz,true,energy).damageSeconds,0);assert.equal(charge.bursts,0);
+ for(let i=0;i<hz*6;i++)energy.earn(46/hz,1/hz);assert(Math.abs(energy.amount-100)<1e-6,'six seconds full-speed running fills meter');assert(energy.ready);for(let i=0;i<hz*10;i++)energy.earn(0,1/hz);assert.equal(energy.amount,100,'idle never drains');
+ charge.step(.25,true,energy);charge.cancel();assert.equal(energy.amount,100,'canceled wind-up is free');let seconds=0;for(let i=0;i<hz*15;i++)seconds+=charge.step(1/hz,true,energy).damageSeconds;assert.equal(energy.discharges,4);assert.equal(energy.spent,100);assert.equal(charge.bursts,4);assert(Math.abs(seconds-1.6)<1e-6);assert.equal(energy.amount,0);assert.equal(charge.phase,'idle');
+ energy.earn(20,1,{surface:false});energy.earn(20,1,{moving:false});energy.earn(20,1,{dashing:true});energy.earn(100,1/60);assert.equal(energy.amount,0,'airfall, pushing, dash and teleports cannot farm energy');energy.earn(30,1);assert(energy.amount>10&&energy.amount<12);const saved=energy.amount;charge.cancel();assert.equal(energy.amount,saved,'input/handoff cancellation does not reset charge');energy.reset();assert.equal(energy.spent,0);assert.equal(energy.amount,0);
+ const wall=new RunnerEnergy();for(let i=0;i<hz*6;i++)wall.earn(12/hz,1/hz,{surface:true});assert(Math.abs(wall.amount-72*RUNNER_ENERGY.perMetre)<1e-6,'wall distance earns same charge');
+ console.log('PASS',hz,'Hz: empty lock, distance earning, six-second fill, four paid attacks, no idle drain, free canceled wind-up, no fall/dash/teleport farming and reset');
+}
+const e=new RunnerEnergy();e.amount=100;const c=new RunnerCharge();const s=c.step(20,true,e);assert.equal(c.bursts,4);assert.equal(e.amount,0);assert(Math.abs(s.damageSeconds-1.6)<1e-6,'long frames cannot overdraw');

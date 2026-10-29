@@ -7,13 +7,13 @@ export class RunnerCharge {
   else if(this.phase!=='cooldown')this.phase='idle';
   this.elapsed=0;
  }
- step(dt,requested){
+ step(dt,requested,energy=null){
   if(!requested)this.cancel();let left=Math.max(0,dt),damageSeconds=0;
   while(left>1e-9){
-   if(this.phase==='idle'){if(!requested)break;this.phase='charging';this.elapsed=0;}
+   if(this.phase==='idle'){if(!requested||(energy&&!energy.ready))break;this.phase='charging';this.elapsed=0;}
    if(this.phase==='charging'){
     const slice=Math.min(left,this.seconds-this.elapsed);this.elapsed+=slice;left-=slice;
-    if(this.elapsed>=this.seconds-1e-9){this.phase='firing';this.elapsed=0;this.bursts++;}else break;
+    if(this.elapsed>=this.seconds-1e-9){if(energy&&!energy.spend()){this.phase='idle';this.elapsed=0;break;}this.phase='firing';this.elapsed=0;this.bursts++;}else break;
    }else if(this.phase==='firing'){
     const slice=Math.min(left,this.burstSeconds-this.elapsed);this.elapsed+=slice;left-=slice;damageSeconds+=slice;
     if(this.elapsed>=this.burstSeconds-1e-9){this.phase='cooldown';this.cooldown=this.cooldownSeconds;this.elapsed=0;}else break;
