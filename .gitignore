@@ -1,4 +1,4 @@
 *.blend1
 __pycache__/
-# User-licensed Unity character runtime assets stay in the private Sites build.
+# Uploaded/licensed character runtime assets stay in the private Sites build.
 dist/city-assets/licensed-characters/

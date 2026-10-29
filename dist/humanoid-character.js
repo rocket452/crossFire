@@ -8,9 +8,9 @@ function coloredGeometry(source,variant){let entries=geometryCache.get(source);i
 function cloneSkinned(source){const clone=source.clone(true),map=new Map();const pair=(a,b)=>{map.set(a,b);for(let i=0;i<a.children.length;i++)pair(a.children[i],b.children[i]);};pair(source,clone);source.traverse(o=>{if(o.isSkinnedMesh){const target=map.get(o);target.skeleton=new THREE.Skeleton(o.skeleton.bones.map(b=>map.get(b)),o.skeleton.boneInverses);target.bind(target.skeleton,o.bindMatrix);}});return clone;}
 export class HumanoidCharacter {
  constructor(gltf,{variant='north',height=1.86,phase=0}={}){
-  this.root=new THREE.Group();this.body=cloneSkinned(gltf.scene);this.root.add(this.body);this.body.scale.setScalar(height/1.86);this.variant=variant;this.nodes={};this.meshes=[];this.clips=new Map(gltf.animations.map(c=>[c.name,c]));this.mixer=new THREE.AnimationMixer(this.body);this.actions={};this.phase=phase;this.seen=new Set();this.basePose=[];
+  this.metadata=gltf.scene.userData.character||{};this.root=new THREE.Group();this.body=cloneSkinned(gltf.scene);this.root.add(this.body);this.body.scale.setScalar(height/(this.metadata.nominalHeight||1.86));this.variant=variant;this.nodes={};this.meshes=[];this.clips=new Map(gltf.animations.map(c=>[c.name,c]));this.mixer=new THREE.AnimationMixer(this.body);this.actions={};this.phase=phase;this.seen=new Set();this.basePose=[];
   this.body.traverse(o=>{if(o.isBone)this.nodes[o.name]=o;if(o.isSkinnedMesh){o.geometry=coloredGeometry(o.geometry,variant);let materials=materialCache.get(o.material);if(!materials)materialCache.set(o.material,materials=new Map());if(!materials.has(variant)){const material=o.material.clone();material.roughness=.84;materials.set(variant,material);}o.material=materials.get(variant);o.castShadow=o.receiveShadow=true;o.frustumCulled=false;this.meshes.push(o);}});
-  this.bones=Object.values(this.nodes);this.rest=this.bones.map(b=>({p:b.position.clone(),q:b.quaternion.clone()}));this.reset();
+  this.triangles=this.meshes.reduce((sum,m)=>sum+(m.geometry.index?m.geometry.index.count:m.geometry.getAttribute('position').count)/3,0);this.bones=Object.values(this.nodes);this.rest=this.bones.map(b=>({p:b.position.clone(),q:b.quaternion.clone()}));this.reset();
  }
  reset(){this.mixer.stopAllAction();this.current=null;this.elapsed=0;this.seen.clear();for(let i=0;i<this.bones.length;i++){this.bones[i].position.copy(this.rest[i].p);this.bones[i].quaternion.copy(this.rest[i].q);}this.capture();this.update('Idle',0);}
  capture(){for(let i=0;i<this.bones.length;i++){const bone=this.bones[i];if(!this.basePose[i])this.basePose[i]={p:bone.position.clone(),q:bone.quaternion.clone()};else{this.basePose[i].p.copy(bone.position);this.basePose[i].q.copy(bone.quaternion);}}}
@@ -34,5 +34,5 @@ export class HumanoidCharacter {
   const correction=this.hand('R').sub(right);if(correction.length()>.002){matrix.elements[12]+=correction.x;matrix.elements[13]+=correction.y;matrix.elements[14]+=correction.z;this.arm('R',right.add(correction));this.arm('L',left.add(correction));}
 
  }
- diagnostics(){return{source:'Explosive LLC',variant:this.variant,triangles:1256,bones:this.bones.length,weighted:true,clip:this.current,seen:[...this.seen],hands:{left:this.hand('L').toArray(),right:this.hand('R').toArray()}};}
+ diagnostics(){return{source:this.metadata.source||'Explosive LLC',variant:this.variant,triangles:this.triangles,bones:this.bones.length,weighted:true,clip:this.current,seen:[...this.seen],hands:{left:this.hand('L').toArray(),right:this.hand('R').toArray()}};}
 }

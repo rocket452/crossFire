@@ -6,7 +6,7 @@ Public GitHub repository: https://github.com/rocket452/crossFire . The pack and 
 
 ## Assets and conversion
 
-The retained source is in `/workspace/private-assets/explosive/ExplosiveLLC/` outside the public repository. Runtime files are generated into the ignored `dist/city-assets/licensed-characters/` directory for local QA and copied into the private build checkout. Only `humanoid.glb` and `manifest.json` are deployed; the uploaded archive, FBXs, PSD, Unity scripts and demo scenes are not deployed.
+The retained source is in `/workspace/private-assets/explosive/ExplosiveLLC/` outside the public repository. Runtime files are generated into the ignored `dist/city-assets/licensed-characters/` directory for local QA and copied into the private build checkout. The deployed private runtime files are `humanoid.glb`, `manifest.json`, `solara-female.glb` and `solara-female.json`; the uploaded archive, FBXs, PSD, Unity scripts and demo scenes are not deployed.
 
 Convert the supplied PSD palette to PNG with Pillow, keeping it in private storage:
 
@@ -37,6 +37,18 @@ For future code changes:
 4. Run the asset/character checks against the private checkout. Package `.openai` and `dist` from its exact commit.
 5. Push that private commit to the Sites source remote using a fresh Sites credential, then save/deploy that same SHA and archive using the confirmed owner-private operation. Never print/persist credential tokens.
 
-If the private checkout is absent, create an isolated worktree/branch from public `main`, copy the locally generated runtime folder there, and force-add only its two runtime files to the private branch. It is intentionally possible for the private Sites source SHA to differ from the public GitHub SHA. Public source clones require the licensed input package and conversion step before launching this character-enabled version.
+If the private checkout is absent, create an isolated worktree/branch from public `main`, copy the locally generated runtime folder there, and force-add only the four runtime files listed above to the private branch. It is intentionally possible for the private Sites source SHA to differ from the public GitHub SHA. Public source clones require the licensed input package and conversion step before launching this character-enabled version.
 
 A future switch to a public game audience needs review of asset distribution/licensing; do not expose the raw package as downloadable game content. Original Blender-generated character download links in the page refer to the earlier in-house assets, not the uploaded pack.
+
+## Uploaded Solara female model (revision 31)
+
+The user supplied `/workspace/.codex-attachments/6a26f405-8016-4fd6-92cd-f5ef93496467/f74ad436-98e4-4af7-95a7-1cbeae91f7a7/female.blend`. Preserve that original outside GitHub. It contains one mirrored female mesh, no armature/weights, and orphan animation actions; those actions are not treated as usable animations. Inspection/conversion uses Blender `--disable-autoexec` and does not execute embedded instructions.
+
+`source/convert_solara_female.py` applies the existing mirror modifier, keeps all 574 evaluated source triangles, fits a 23-bone anatomical rig, generates Blender heat weights, normalizes four influences per vertex, and creates a rest action for the game's procedural surf/cast IK. It exports only the supplied geometry/rig, not geometry or animations from the Unity pack. Run:
+
+```sh
+blender --factory-startup --disable-autoexec -b /private/female.blend -t 2 --python source/convert_solara_female.py -- --output /workspace/private-assets/solara-female/runtime
+```
+
+Copy `solara-female.glb` and `solara-female.json` into the ignored runtime directory for local QA, and commit them only on `site-licensed-assets`. The runtime GLB is 88,636 bytes; 574 source triangles, 23 bones, no unweighted vertices. The private asset folder now has four tracked files. Other soldiers/heroes continue using the earlier Unity-pack humanoid. Solara's original hair/eye accessory GLB remains public original artwork and is fitted to the new head in runtime code.

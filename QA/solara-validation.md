@@ -1,4 +1,4 @@
-# Solara Frost and three-hero roster — revision 30
+# Solara Frost and three-hero roster — revision 31
 
 Solara is a CPU defender, replacing Rift Warden in the default team alongside Volt Rush and Violet Sentinel. Heroes in the header opens the selection screen; choose exactly three of four heroes. Deploying a team restarts the encounter, persists locally, enables only its actors/effects/controls, and keeps Rift fully selectable. Cancel preserves the roster. Only Volt supports player control. The selection dialog pauses combat and restores the previous pause state on close.
 
@@ -32,3 +32,14 @@ Visuals inspected at `/tmp/solara-model28.png`, `/tmp/solara-model28-phone.png`,
 Revision 29 changes only the presentation: the Speedster and Solara share the same 1,256-triangle geometry and scale, while separate materials preserve Volt’s cyan suit. Head attachments are reduced from 13 groups / 1,378 triangles to 4 groups / 490 triangles. `solara-test.mjs` verifies geometry identity, bone-name/scale parity and material isolation. `solara-browser.cjs` repeats those checks against the actual Speedster instance on desktop and phone. Her surf pose, fireballs, path, plasma protection and selection behavior are retained.
 
 Revision 30: `QA/ice-dome-test.mjs` checks 25%/50%/100% growth, shader/rim/height parity, hollow interior/open bottom, incomplete crown, formed side walls, sphere/rim contact, rounded-corner misses, 80 dense surface-distance references, swept-contact references, shake/fade and collider removal. Browser snapshots at 0.65/1.3/2.6 s verify the actual dome on desktop and phone (`/tmp/ice-dome30-*.png`). Both natural plasma shots remain blocked and controlled tank/soldier health stays 100/35; exposed controls die.
+
+## Uploaded female model — revision 31
+
+The latest user request replaces the earlier shared Speedster body with the attached `female.blend`. Previous body-sharing assertions describe revisions 29–30 only. Current Solara preserves all 574 evaluated source triangles and uses a newly fitted 23-bone heat-weighted rig. None of the mesh vertices required fallback weights. Four-influence export discards at most 3.22% of a vertex's weight before renormalization. The original file has no armature and no bound animation; Solara uses a generated rest action plus the existing procedural surf/fire/ice IK. The original 490-triangle hair/eye set is fitted using per-model head offsets/scales. Total character geometry is 1,064 triangles.
+
+- `solara-female-test.mjs`: exact source triangle count and normalized height, valid normalized weights, independent skeletons/materials, finite and bounded weighted deformation for surf/fire/ice targets at 30/60/120 Hz, feet at the requested surf stance, actual head attachments, actual hand-bound charge/fire and reset.
+- `solara-test.mjs`: updated to load the uploaded female runtime. Actual fireball hits, dome interception, delayed launch, protected/exposed tank and soldier control, deactivation and bounded effects continue to pass.
+- `solara-browser.cjs`: desktop and phone actual uploaded source/bone count, head fits, material isolation from Volt, dome growth, fireballs hitting the robot, protection, roster/cancel/persistence and reset.
+- Original infantry/hero source-asset and character browser checks ensure the existing Unity-pack actors remain unchanged. Dome collision tests remain valid.
+
+Runtime/private source separation: four private runtime files (the prior two Unity files plus the new female GLB/report); original upload retained outside both repositories. Screenshots `/tmp/solara-female-surf31.png`, `/tmp/solara-female-fire31.png`, `/tmp/solara-female-ice31.png` show the new source model under its live bone poses.
