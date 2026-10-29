@@ -3,6 +3,7 @@ import {ShieldShake,SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12'
 import {advanceVioletFlight,VIOLET_TUNING} from './violet-flight.js?v=violet-inertia-11';
 import {RescuePolicy,interceptPoint} from './hero-defense.js?v=hero-5';
 
+import {VioletFlightPose} from './violet-flight-pose.js?v=violet-pose-26';
 import {HumanoidCharacter} from './humanoid-character.js?v=characters-24';
 export class VioletHero {
  constructor(scene,gltf,spec,{characterModel=null,getRobot,traceOrb,onOrbHit,onEvent=()=>{},buildings=[],getMissileTarget=()=>null,claimMissile=()=>{}}){
@@ -10,6 +11,7 @@ export class VioletHero {
   this.root=new THREE.Group();this.root.name='Violet Sentinel';scene.add(this.root);this.nodes={};this.meshes={};gltf.scene.updateMatrixWorld(true);
   for(const p of spec.parts){const source=gltf.scene.getObjectByName(p.name);if(!source?.isMesh)throw Error('Missing hero mesh '+p.name);const pivot=new THREE.Vector3(...p.pivot),geometry=source.geometry.clone().applyMatrix4(source.matrixWorld);geometry.translate(-pivot.x,-pivot.y,-pivot.z);const material=source.material.clone();if(['sigil','eyes'].includes(p.name)){material.emissive=new THREE.Color('#b84bff');material.emissiveIntensity=3;}const mesh=new THREE.Mesh(geometry,material);mesh.castShadow=true;mesh.receiveShadow=true;if(characterModel&&!['eyes','sigil','cape_top','cape_mid','cape_tail'].includes(p.name))mesh.visible=false;const node=new THREE.Group();node.add(mesh);const parent=p.parent?this.nodes[p.parent]:this.root,parentPivot=p.parent?new THREE.Vector3(...spec.parts.find(q=>q.name===p.parent).pivot):new THREE.Vector3();node.position.copy(pivot).sub(parentPivot);parent.add(node);this.nodes[p.name]=node;this.meshes[p.name]=mesh;}
   this.character=characterModel?new HumanoidCharacter(characterModel,{variant:'violet',height:spec.height}):null;if(this.character)this.root.add(this.character.root);
+  this.flightPose=new VioletFlightPose();this.visual=new THREE.Group();this.visual.name='Violet flight presentation';this.visual.position.y=1.5;this.root.add(this.visual);this.visual.add(this.nodes.pelvis);this.nodes.pelvis.position.y-=1.5;if(this.character){this.visual.add(this.character.root);this.character.root.position.y=-1.5;}
   this.orbs=[];this.particles=[];this.vfx=new THREE.Group();scene.add(this.vfx);this.dummy=new THREE.Object3D();this.temp=new THREE.Vector3();this.goal=new THREE.Vector3();this.velocity=new THREE.Vector3();this.forward=new THREE.Vector3();this.zAxis=new THREE.Vector3(0,0,1);
   this.coreMat=new THREE.MeshBasicMaterial({color:'#f5dcff',toneMapped:false});this.forceMat=new THREE.MeshBasicMaterial({color:'#ad40ff',transparent:true,opacity:.55,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false});this.ico=new THREE.IcosahedronGeometry(1,1);
   const size=64,data=new Uint8Array(size*size*4);for(let y=0;y<size;y++)for(let x=0;x<size;x++){const r=Math.hypot((x-32)/32,(y-32)/32),i=(y*size+x)*4;data[i]=data[i+1]=data[i+2]=255;data[i+3]=Math.round(255*Math.pow(Math.max(0,1-r),2));}const texture=new THREE.DataTexture(data,size,size);texture.needsUpdate=true;this.glowMat=new THREE.SpriteMaterial({map:texture,color:'#ac35ff',transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
@@ -21,7 +23,7 @@ export class VioletHero {
   this.reset();
  }
  makeOrb(){const group=new THREE.Group(),body=new THREE.Mesh(this.ico,this.forceMat),core=new THREE.Mesh(this.ico,this.coreMat),halo=new THREE.Sprite(this.glowMat);body.scale.setScalar(.70);core.scale.setScalar(.25);halo.scale.setScalar(4.8);group.add(body,core,halo);return group;}
- reset(){this.shieldShake.reset();this.character?.reset();for(const o of this.orbs)this.vfx.remove(o.mesh);this.orbs=[];this.defenseCharge=0;this.defenseShots=0;this.defenseTarget=null;this.particles=[];this.root.position.set(-12,30,4);this.root.rotation.set(0,0,0);for(const n of Object.values(this.nodes))n.rotation.set(0,0,0);this.velocity.set(0,0,0);this.policy.reset();this.threat=null;this.mode='patrol';this.shieldEnergy=3000;this.shieldDeploy=0;this.shieldNormal=new THREE.Vector3(0,0,1);this.shield.visible=false;this.contact.visible=false;this.chargeOrb.visible=false;this.attackCooldown=1.1;this.chargeTime=0;this.charging=false;this.shots=0;this.robotHits=0;this.buildingHits=0;this.damage=0;this.blockedDamage=0;this.blocks=0;this.shieldBreaks=0;this.hitGlow=0;this.trailTimer=0;this.lastAttackBlocked=null;this.rescues=0;this.sparkPool.count=0;this.light.intensity=0;this.aura.position.copy(this.root.position).add(new THREE.Vector3(0,1.5,0));this.root.updateMatrixWorld(true);}
+ reset(){this.flightPose.reset();this.visual.quaternion.identity();this.shieldShake.reset();this.character?.reset();for(const o of this.orbs)this.vfx.remove(o.mesh);this.orbs=[];this.defenseCharge=0;this.defenseShots=0;this.defenseTarget=null;this.particles=[];this.root.position.set(-12,30,4);this.root.rotation.set(0,0,0);for(const n of Object.values(this.nodes))n.rotation.set(0,0,0);this.nodes.head.position.set(0,.70,0);this.velocity.set(0,0,0);this.policy.reset();this.threat=null;this.mode='patrol';this.shieldEnergy=3000;this.shieldDeploy=0;this.shieldNormal=new THREE.Vector3(0,0,1);this.shield.visible=false;this.contact.visible=false;this.chargeOrb.visible=false;this.attackCooldown=1.1;this.chargeTime=0;this.charging=false;this.shots=0;this.robotHits=0;this.buildingHits=0;this.damage=0;this.blockedDamage=0;this.blocks=0;this.shieldBreaks=0;this.hitGlow=0;this.trailTimer=0;this.lastAttackBlocked=null;this.rescues=0;this.sparkPool.count=0;this.light.intensity=0;this.aura.position.copy(this.root.position).add(new THREE.Vector3(0,1.5,0));this.root.updateMatrixWorld(true);}
  receiveThreat(payload){
   if(!payload||!['charging','firing'].includes(payload.state.phase)||payload.targetUnit?.kind!=='helicopter'||!payload.targetUnit.alive){this.threat=null;return;}
   if(!this.policy.decide(payload.attackId,'helicopter')){this.threat=null;return;}
@@ -47,9 +49,10 @@ export class VioletHero {
   const speed=this.mode==='intercepting'?VIOLET_TUNING.rescueSpeed:this.mode==='blocking'?16:this.mode==='defending'?VIOLET_TUNING.defenseSpeed:VIOLET_TUNING.patrolSpeed;
   advanceVioletFlight(this.root.position,this.velocity,destination,dt,{speed,rescue:this.mode==='intercepting'||this.mode==='blocking'});
   const facing=this.threat?this.threat.from:this.defenseTarget?this.defenseTarget.position:robot?robot.root.position.clone().add(new THREE.Vector3(0,14,0)):new THREE.Vector3();
-  const yaw=Math.atan2(facing.x-this.root.position.x,facing.z-this.root.position.z);this.root.rotation.set(this.mode==='patrol'?.10:0,yaw,Math.max(-.12,Math.min(.12,-this.velocity.x*.004)),'YXZ');
+  const yaw=Math.atan2(facing.x-this.root.position.x,facing.z-this.root.position.z);this.root.rotation.set(0,yaw,0,'YXZ');
   const deployTarget=this.mode==='blocking'?1:0;this.shieldDeploy=THREE.MathUtils.damp(this.shieldDeploy,deployTarget,deployTarget?10:14,dt);this.shield.visible=this.shieldDeploy>.015;
-  this.pose(time);if(this.character){this.character.update('Fall',dt);this.character.syncArms(this.nodes);}this.nodes.head.rotation.x=THREE.MathUtils.clamp(-Math.atan2(facing.y-this.root.position.y-2.3,Math.hypot(facing.x-this.root.position.x,facing.z-this.root.position.z)),-.6,.8);
+  const raised=this.mode==='blocking'||this.shield.visible||this.charging||(!!this.defenseTarget&&this.attackCooldown<=0),lookPitch=THREE.MathUtils.clamp(-Math.atan2(facing.y-this.root.position.y-2.3,Math.hypot(facing.x-this.root.position.x,facing.z-this.root.position.z)),-.6,.8);
+  this.flightPose.step(dt,this.velocity,yaw,{raised,blocking:this.mode==='blocking'});this.flightPose.applyVisual(this.root,this.visual);this.pose(time);if(this.character)this.flightPose.applyCharacter(this.character,this.nodes,dt,lookPitch);else this.nodes.head.rotation.x=-this.flightPose.pitch*.78+lookPitch*(1-this.flightPose.flight);
   this.root.updateMatrixWorld(true);
   const center=this.root.position.clone().add(new THREE.Vector3(0,1.5,0));this.aura.position.copy(center);
   if(this.shield.visible&&this.threat){
@@ -76,18 +79,7 @@ export class VioletHero {
   this.renderParticles(dt);
   this.light.position.copy(this.shield.visible?this.shield.position: this.chargeOrb.visible?this.chargeOrb.position:center);this.light.intensity=this.shield.visible?25+this.hitGlow*65:this.charging?15+this.chargeTime*15:5;
  }
- pose(time){
-  const raised=this.mode==='blocking'||this.charging||this.defenseCharge>0;
-  for(const [side,sign]of [['l',-1],['r',1]]){
-   this.nodes['upperarm_'+side].rotation.set(raised?-1.35:-.22,0,raised?-sign*.32:-sign*.14);
-   this.nodes['forearm_'+side].rotation.x=raised?-.15:-.32;
-   this.nodes['thigh_'+side].rotation.x=.10+Math.sin(time*2+sign)*.06;
-   this.nodes['shin_'+side].rotation.x=.24+Math.sin(time*2+sign)*.05;
-  }
-  this.nodes.chest.rotation.x=this.mode==='blocking'?-.06:.02;
-  this.nodes.cape_top.rotation.x=.20+Math.sin(time*3.5)*.12;this.nodes.cape_mid.rotation.x=.18+Math.sin(time*3.5-.7)*.18;this.nodes.cape_tail.rotation.x=.10+Math.sin(time*3.5-1.4)*.23;
-  this.nodes.cape_tail.rotation.z=Math.sin(time*2)*.10;
- }
+ pose(time){this.flightPose.pose(this.nodes,time);}
  isShielding(){return this.mode==='blocking'||this.shield.visible||this.shieldDeploy>.015;}
  launch(from,target,missile=null){if(this.isShielding()||this.attackCooldown>0)return false;const mesh=this.makeOrb();mesh.position.copy(from);this.vfx.add(mesh);this.orbs.push({mesh,targetMissile:missile,direction:target.clone().sub(from).normalize(),life:5,trail:0});this.shots++;return true;}
  advanceOrbs(dt,time,alive){
@@ -107,5 +99,5 @@ export class VioletHero {
   if(this.lastAttackBlocked!==this.threat?.attackId){this.lastAttackBlocked=this.threat?.attackId;this.rescues++;this.onEvent('Violet Sentinel intercepting the beam.');}
   if(this.shieldEnergy===0){this.shieldBreaks++;this.threat=null;this.mode='patrol';this.emit(p,45,6);this.onEvent('Violet barrier overloaded.');}
  }
- diagnostics(){return{name:'Violet Sentinel',mode:this.mode,velocity:this.velocity.toArray(),speed:this.velocity.length(),shielding:this.isShielding(),attackCooldown:this.attackCooldown,defenseCharge:this.defenseCharge,tuning:VIOLET_TUNING,defenseTarget:this.defenseTarget?.id||null,defenseShots:this.defenseShots,position:this.root.position.toArray(),triangles:this.character?1256:this.spec.triangles,character:this.character?.diagnostics(),parts:this.spec.parts.length,charging:this.charging,chargeSeconds:this.chargeTime,shots:this.shots,orbs:this.orbs.length,robotHits:this.robotHits,buildingHits:this.buildingHits,damage:this.damage,responses:this.policy.responses,opportunities:this.policy.opportunities,rescues:this.rescues,blocks:this.blocks,blockedDamage:this.blockedDamage,shieldBreaks:this.shieldBreaks,shieldVisible:this.shield.visible,shieldCenter:this.shield.position.toArray(),shieldNormal:this.shieldNormal.toArray(),shieldRadius:5.8*this.shieldDeploy,shieldOffset:SHIELD_FORWARD_OFFSET,shieldShake:{strength:this.shieldShake.strength,impacts:this.shieldShake.impacts,offset:{...this.shieldShake.offset}},shieldEnergy:this.shieldEnergy,defending:this.threat?.unit?.id||null};}
+ diagnostics(){return{name:'Violet Sentinel',mode:this.mode,animation:this.flightPose.diagnostics(),velocity:this.velocity.toArray(),speed:this.velocity.length(),shielding:this.isShielding(),attackCooldown:this.attackCooldown,defenseCharge:this.defenseCharge,tuning:VIOLET_TUNING,defenseTarget:this.defenseTarget?.id||null,defenseShots:this.defenseShots,position:this.root.position.toArray(),triangles:this.character?1256:this.spec.triangles,character:this.character?.diagnostics(),parts:this.spec.parts.length,charging:this.charging,chargeSeconds:this.chargeTime,shots:this.shots,orbs:this.orbs.length,robotHits:this.robotHits,buildingHits:this.buildingHits,damage:this.damage,responses:this.policy.responses,opportunities:this.policy.opportunities,rescues:this.rescues,blocks:this.blocks,blockedDamage:this.blockedDamage,shieldBreaks:this.shieldBreaks,shieldVisible:this.shield.visible,shieldCenter:this.shield.position.toArray(),shieldNormal:this.shieldNormal.toArray(),shieldRadius:5.8*this.shieldDeploy,shieldOffset:SHIELD_FORWARD_OFFSET,shieldShake:{strength:this.shieldShake.strength,impacts:this.shieldShake.impacts,offset:{...this.shieldShake.offset}},shieldEnergy:this.shieldEnergy,defending:this.threat?.unit?.id||null};}
 }
