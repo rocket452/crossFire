@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {SolaraSteering} from './solara-steering.js?v=solara-turns-39';
-import {SolaraIceForming} from './solara-ice-forming.js?v=ice-forming-41';
+import {SolaraIceForming} from './solara-ice-forming.js?v=ice-forming-43';
 import {SolaraFireTrail} from './solara-fire-trail.js?v=fire-trail-36';
 import {SolaraIcePath} from './solara-ice-path.js?v=ice-path-35';
 import {IceDome} from './ice-dome.js?v=ice-dome-30';
