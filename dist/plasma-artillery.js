@@ -9,8 +9,8 @@ export function plasmaTrajectory(from,target,gravity=PLASMA.gravity){
 }
 export function plasmaPosition(p,time){return new THREE.Vector3(p.from.x+p.velocity.x*time,p.from.y+p.velocity.y*time-p.gravity*time*time/2,p.from.z+p.velocity.z*time);}
 export class PlasmaArtillery {
- constructor(scene,{getMuzzle,getTargets,isRobotAlive,getGroundHeight=()=>.08,previewTrace=()=>null,traceWorld=()=>null,getBarriers=()=>[],onImpact=()=>{},onLaunch=()=>{},onEvent=()=>{}}){
-  Object.assign(this,{scene,getMuzzle,getTargets,isRobotAlive,getGroundHeight,previewTrace,traceWorld,getBarriers,onImpact,onLaunch,onEvent});
+ constructor(scene,{getMuzzle,getTargets,isRobotAlive,targetKinds=['tank','infantry'],getGroundHeight=()=>.08,previewTrace=()=>null,traceWorld=()=>null,getBarriers=()=>[],onImpact=()=>{},onLaunch=()=>{},onEvent=()=>{}}){
+  Object.assign(this,{scene,getMuzzle,getTargets,isRobotAlive,targetKinds,getGroundHeight,previewTrace,traceWorld,getBarriers,onImpact,onLaunch,onEvent});
   const material=(color,opacity=1)=>new THREE.MeshBasicMaterial({color,transparent:opacity<1,opacity,depthWrite:opacity===1,blending:opacity<1?THREE.AdditiveBlending:THREE.NormalBlending,toneMapped:false,side:THREE.DoubleSide});
   this.coreGeometry=new THREE.IcosahedronGeometry(PLASMA.projectileRadius,1);this.coreMaterial=material('#d8fff1');this.haloMaterial=material('#17f4a0',.2);this.ringGeometry=new THREE.TorusGeometry(.95,.035,4,24);this.ringMaterial=material('#6affc1',.8);
   this.targetGeometry=new THREE.RingGeometry(.955,1,64);this.fillGeometry=new THREE.CircleGeometry(1,48);this.targetMaterial=material('#ff764d',.8);this.fillMaterial=material('#ff462b',.095);this.targetMaterial.depthTest=this.fillMaterial.depthTest=false;
@@ -36,7 +36,7 @@ export class PlasmaArtillery {
   const s={id:'plasma-'+(++this.sequence),state:'warning',target:{...target},trajectory,launchAt:this.clock+delay,impactAt:this.clock+delay+trajectory.duration,createdAt:this.clock,age:0,mesh,core,halo,rings,position:new THREE.Vector3().copy(muzzle.position),trailClock:0};s.marker=this.createMarker(s);return s;
  }
  beginVolley(){
-  if(this.busy||!this.isRobotAlive())return false;const targets=this.getTargets().filter(u=>u.alive&&['tank','infantry'].includes(u.kind)&&u.shapes?.length);if(!targets.length)return false;
+  if(this.busy||!this.isRobotAlive())return false;const targets=this.getTargets().filter(u=>u.alive&&this.targetKinds.includes(u.kind)&&u.shapes?.length);if(!targets.length)return false;
   const selected=[];for(let i=0;i<2;i++){const kind=i===0?'tank':'infantry',team=this.volleys%2,candidates=[...targets.filter(u=>u.kind===kind&&u.entity.team===team),...targets.filter(u=>u.kind===kind),...targets];for(const u of candidates){const center=u.shapes[0].center,target={x:center.x,y:this.getGroundHeight(center.x,center.z),z:center.z};if(selected.some(s=>Math.hypot(s.target.x-target.x,s.target.z-target.z)<PLASMA.blastRadius*2))continue;const s=this.buildShot(target,PLASMA.warningSeconds+i*PLASMA.shotSpacing);if(s){selected.push(s);break;}}}
   this.shells.push(...selected);if(!selected.length)return false;this.volleys++;this.onEvent('Plasma artillery locking ground targets. Clear the marked blast zones.');return true;
  }

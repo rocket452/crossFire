@@ -60,7 +60,7 @@ export class SiegeWalker {
   }
   const available=targets.filter(u=>u.alive&&u.kind!=='robot'&&u.id!==this.protectedUnit);
   const locked=['charging','firing'].includes(this.weapon.phase);
-  if(!locked&&available.length&&(!this.target?.alive||(this.weapon.phase==='ready'&&!this.aiming))){const index=this.targetIndex++,air=available.filter(u=>u.kind==='helicopter'),ground=available.filter(u=>u.kind!=='helicopter');this.target=index%2===0&&air.length?air[Math.floor(index/2)%air.length]:ground.length?ground[(index*3)%ground.length]:available[index%available.length];this.aiming=true;}
+  if(!locked&&available.length&&(!this.target?.alive||!available.some(u=>u.id===this.target.id)||(this.weapon.phase==='ready'&&!this.aiming))){const index=this.targetIndex++,air=available.filter(u=>u.kind==='helicopter'),ground=available.filter(u=>u.kind!=='helicopter');this.target=this.targetSelector?this.targetSelector(available):index%2===0&&air.length?air[Math.floor(index/2)%air.length]:ground.length?ground[(index*3)%ground.length]:available[index%available.length];this.aiming=true;}
   if(locked&&this.target?.kind==='helicopter'&&this.target.alive&&this.target.shapes[0])this.beamAim={...this.target.shapes[0].center};
   let center=locked?this.beamAim:available.length?this.target?.shapes[0]?.center:null;
   if(this.plasmaCharging&&this.plasmaAim)center=this.plasmaAim;

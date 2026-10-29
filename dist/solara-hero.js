@@ -8,7 +8,7 @@ import {SOLARA_ANIMATION} from './solara-animation.js?v=surfer-37';
 import {SolaraCharacter} from './solara-character.js?v=surfer-37';
 export const SOLARA=Object.freeze({speed:20,rescueSpeed:32,chargeSeconds:.65,shotCooldown:1.6,fireballSpeed:38,fireballDamage:90,barrierGrowth:2.6,barrierHalf:8,barrierHeight:6.4,maxBarriers:3,maxPath:192,pathLife:9.6,maxFireballs:24});
 const UP=new THREE.Vector3(0,1,0),FORWARD=new THREE.Vector3(0,0,1);
-export function threatenedGroundUnits(threat,units){if(!threat?.alive||threat.kind!=='plasma'||!threat.impactPoint)return[];return units.filter(u=>u.alive&&['tank','infantry'].includes(u.kind)&&u.shapes?.some(s=>Math.hypot(s.center.x-threat.impactPoint.x,s.center.z-threat.impactPoint.z)<threat.blastRadius+Math.max(s.half.x,s.half.z)));}
+export function threatenedGroundUnits(threat,units){if(!threat?.alive||threat.kind!=='plasma'||!threat.impactPoint)return[];return units.filter(u=>u.alive&&['tank','infantry','civilian'].includes(u.kind)&&u.shapes?.some(s=>Math.hypot(s.center.x-threat.impactPoint.x,s.center.z-threat.impactPoint.z)<threat.blastRadius+Math.max(s.half.x,s.half.z)));}
 export function solaraMissileAim(from,missile){const aim=missile.position.clone(),velocity=missile.velocity||new THREE.Vector3();for(let i=0;i<3;i++){const travel=Math.min(2.8,from.distanceTo(aim)/SOLARA.fireballSpeed);aim.copy(missile.position).addScaledVector(velocity,travel);}return aim;}
 export class SolaraHero {
  constructor(scene,model,spec,humanoid,{getRobot,getUnits,getThreats,traceFireball,onFireballHit,getMissileTarget=()=>null,claimMissile=()=>{},onEvent=()=>{},buildings=[]}){
