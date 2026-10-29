@@ -37,7 +37,7 @@ Choose **Rift Warden escort** to watch the third CPU hero teleport, fire through
 - dist/violet-flight.js: bounded acceleration, persistent momentum and Violet combat tuning.
 - dist/runner-charge.js: half-second wind-up and damage-time accounting for player/CPU electricity.
 - dist/runner-rooftops.js: CPU speedster roof selection, facade approaches, supported rooftop attacks and departure.
-- dist/robot-arsenal.js: alternating beam/pod attacks and pre-launch warning.
+- dist/robot-arsenal.js: five-second initial/rebuild grace, beam → missiles → plasma rotation, five-second weapon changes and pre-launch warning.
 - dist/shield-shake.js: shield forward offset and damage recoil.
 - dist/portal-hero.js: portal hero articulation, teleport/attack/rescue effects and pooled projectiles.
 - dist/portal-policy.js: hostile-impact prediction and safe friendly evacuation destinations.
