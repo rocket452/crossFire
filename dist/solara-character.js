@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {SolaraAnimation} from './solara-animation.js?v=solara-motion-34';
+import {SolaraAnimation} from './solara-animation.js?v=surfer-37';
 import {HumanoidCharacter} from './humanoid-character.js?v=solara-female-31';
 export class SolaraCharacter {
  constructor(root,humanoid,model,spec){
@@ -27,7 +27,7 @@ export class SolaraCharacter {
   };material.customProgramCacheKey=()=> 'solara-perfect-half-v1';this.sync(0);
  }
  rotate(bone,axis,angle){const world=bone.getWorldQuaternion(new THREE.Quaternion()).premultiply(new THREE.Quaternion().setFromAxisAngle(axis,angle));bone.quaternion.copy(bone.parent.getWorldQuaternion(new THREE.Quaternion()).invert()).multiply(world);bone.updateWorldMatrix(false,true);}
- leg(side,target){const c=this.character,upper=c.nodes['B_'+side+'_Thigh'],lower=c.nodes['B_'+side+'_Calf'],foot=c.nodes['B_'+side+'_Foot'];const a=c.world(upper.name),b=c.world(lower.name),end=c.world(foot.name),u=a.distanceTo(b),l=b.distanceTo(end),direction=target.clone().sub(a),distance=THREE.MathUtils.clamp(direction.length(),Math.abs(u-l)+.001,u+l-.001);direction.normalize();const pole=this.root.localToWorld(new THREE.Vector3(0,.7,1)).sub(a);pole.addScaledVector(direction,-pole.dot(direction)).normalize();const along=(u*u-l*l+distance*distance)/(2*distance),knee=a.clone().addScaledVector(direction,along).addScaledVector(pole,Math.sqrt(Math.max(0,u*u-along*along)));c.point(upper,lower,knee);c.point(lower,foot,target);const toe=c.nodes['B_'+side+'_Toe0'];c.point(foot,toe,foot.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,0,1).transformDirection(this.root.matrixWorld)));}
+ leg(side,target,kneeYaw=0){const c=this.character,upper=c.nodes['B_'+side+'_Thigh'],lower=c.nodes['B_'+side+'_Calf'],foot=c.nodes['B_'+side+'_Foot'];const a=c.world(upper.name),b=c.world(lower.name),end=c.world(foot.name),u=a.distanceTo(b),l=b.distanceTo(end),direction=target.clone().sub(a),distance=THREE.MathUtils.clamp(direction.length(),Math.abs(u-l)+.001,u+l-.001);direction.normalize();const pole=this.root.localToWorld(new THREE.Vector3(Math.sin(kneeYaw)*1.2,.65,Math.cos(kneeYaw)*1.2)).sub(a);pole.addScaledVector(direction,-pole.dot(direction)).normalize();const along=(u*u-l*l+distance*distance)/(2*distance),knee=a.clone().addScaledVector(direction,along).addScaledVector(pole,Math.sqrt(Math.max(0,u*u-along*along)));c.point(upper,lower,knee);c.point(lower,foot,target);const toe=c.nodes['B_'+side+'_Toe0'];c.point(foot,toe,foot.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,0,1).transformDirection(this.root.matrixWorld)));}
  armFrame(direction,normal){const y=direction.clone().normalize(),x=normal.clone().addScaledVector(y,-normal.dot(y)).normalize(),z=new THREE.Vector3().crossVectors(x,y).normalize();return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,z));}
  arm(side,target,dt){
   const c=this.character,upper=c.nodes['B_'+side+'_UpperArm'],lower=c.nodes['B_'+side+'_Forearm'],hand=c.nodes['B_'+side+'_Hand'],a=c.world(upper.name),b=c.world(lower.name),end=c.world(hand.name),u=a.distanceTo(b),l=b.distanceTo(end),delta=target.clone().sub(a),distance=THREE.MathUtils.clamp(delta.length(),Math.abs(u-l)+.002,(u+l)*.975),direction=delta.normalize();
@@ -42,7 +42,7 @@ export class SolaraCharacter {
   const pelvis=c.nodes.B_Pelvis;pelvis.position.copy(pelvis.parent.worldToLocal(this.root.localToWorld(new THREE.Vector3(p.pelvis.x,(c.metadata.pose?.pelvisHeight||1.19)+p.pelvis.y,p.pelvis.z))));pelvis.updateWorldMatrix(false,true);rotate(pelvis,p.pelvis);
   for(const[name,weight]of[['B_Spine',.25],['B_Spine1',.35],['B_Spine2',.4]])rotate(c.nodes[name],p.spine,weight);
   for(const[side,sign]of[['R',-1],['L',1]]){
-   const f=p.feet[side],foot=this.root.localToWorld(new THREE.Vector3(f.x,f.y,f.z));this.footTargets[side]=foot.clone();this.leg(side,foot);
+   const f=p.feet[side],foot=this.root.localToWorld(new THREE.Vector3(f.x,f.y,f.z));this.footTargets[side]=foot.clone();this.leg(side,foot,p.pelvis.yaw);
    const toe=c.nodes['B_'+side+'_Toe0'],ankle=c.nodes['B_'+side+'_Foot'],toeDirection=new THREE.Vector3(Math.sin(f.yaw),0,Math.cos(f.yaw)).transformDirection(this.root.matrixWorld);c.point(ankle,toe,c.world(ankle.name).add(toeDirection));
    rotate(c.nodes['B_'+side+'_Clavicle'],{roll:sign*(.025+.04*p.speedBlend),yaw:sign*p.shoulderSwing});
    const h=p.hands[side],neutral=this.root.localToWorld(new THREE.Vector3(h.x,h.y,h.z));let desired=neutral;
@@ -55,8 +55,8 @@ export class SolaraCharacter {
    // Local-space filtering retains the hand pose during travel/turns without world lag.
    const local=this.root.worldToLocal(desired.clone()),previous=this.handTargets[side];if(!previous||dt===0)this.handTargets[side]=local;else previous.lerp(local,1-Math.exp(-22*Math.max(0,dt)));this.arm(side,this.root.localToWorld(this.handTargets[side].clone()),dt);
   }
-  let headPose={pitch:p.head.pitch-p.spine.pitch*.4,yaw:p.head.yaw-p.spine.yaw*.35};const target=fireTarget||iceTarget;
-  if(target){const at=this.root.worldToLocal(c.world('B_Head')),to=this.root.worldToLocal(target.clone()).sub(at);headPose={pitch:THREE.MathUtils.clamp(-Math.atan2(to.y,Math.hypot(to.x,to.z)),-.45,.50),yaw:THREE.MathUtils.clamp(Math.atan2(to.x,to.z),-.75,.75)};}
+  const bodyYaw=p.pelvis.yaw+p.spine.yaw;let headPose={pitch:p.head.pitch-p.spine.pitch*.4,yaw:THREE.MathUtils.clamp(p.head.yaw-bodyYaw,-.85,.85)};const target=fireTarget||iceTarget;
+  if(target){const at=this.root.worldToLocal(c.world('B_Head')),to=this.root.worldToLocal(target.clone()).sub(at);headPose={pitch:THREE.MathUtils.clamp(-Math.atan2(to.y,Math.hypot(to.x,to.z)),-.45,.50),yaw:THREE.MathUtils.clamp(Math.atan2(to.x,to.z)-bodyYaw,-.85,.85)};}
   if(!this.lastHead||dt===0)this.lastHead=headPose;else{const blend=1-Math.exp(-8*Math.max(0,dt));this.lastHead.pitch=THREE.MathUtils.lerp(this.lastHead.pitch,headPose.pitch,blend);this.lastHead.yaw=THREE.MathUtils.lerp(this.lastHead.yaw,headPose.yaw,blend);}rotate(c.nodes.B_Neck,this.lastHead,.35);rotate(c.nodes.B_Head,this.lastHead,.65);this.sync(time);
  }
  sync(time){this.flameUniform.value=time;this.root.updateMatrixWorld(true);const inverse=this.root.getWorldQuaternion(new THREE.Quaternion()).invert();for(const p of this.parts){p.mesh.position.copy(this.root.worldToLocal(p.bone.getWorldPosition(new THREE.Vector3())));p.mesh.quaternion.copy(inverse).multiply(p.bone.getWorldQuaternion(new THREE.Quaternion())).multiply(p.inverseBind);}}

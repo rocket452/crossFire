@@ -679,3 +679,7 @@ Solara's slide now curves from the trail tangent into her current travel directi
 ## Revision 36 — fiery fireball trails
 
 Solara's fireballs now have bright flickering cores, continuous golden/orange flame particles that cool to red, and drifting embers. Particles emit along the collision-clipped flight path at 0.24m spacing and fade after impact. Two bounded instanced pools support 384 flames and 128 embers across all shots. Damage, flight and firing cadence are unchanged. See `QA/solara-fire-trail-validation.md` for rendering, lifetime and frame-rate checks.
+
+## Revision 37 — relaxed surfer stance
+
+Solara now rides lower and sideways, with a leading foot, toes across the slide, bent knees aligned to the hips and relaxed balance arms. Slow hip/knee/shoulder adjustments add minor motion while both feet stay planted. Her head continues looking along travel and the existing casting poses blend from the new stance. Gameplay and effect timing are unchanged. See `QA/solara-surfer-validation.md`.
