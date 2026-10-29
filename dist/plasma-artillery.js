@@ -43,7 +43,7 @@ export class PlasmaArtillery {
  threats(){return this.shells.map(s=>({id:s.id,kind:'plasma',alive:true,position:s.position,velocity:s.state==='flying'?new THREE.Vector3(s.trajectory.velocity.x,s.trajectory.velocity.y-PLASMA.gravity*s.age,s.trajectory.velocity.z):new THREE.Vector3(),impactPoint:{...s.target},timeToImpact:Math.max(0,s.impactAt-this.clock),blastRadius:PLASMA.blastRadius,owner:'siege-walker'}));}
  traceSegment(from,to,radius){
   let hit=this.traceWorld(from,to,radius),nearest=hit?(hit.t??new THREE.Vector3(hit.point.x,hit.point.y,hit.point.z).distanceTo(from)/Math.max(1e-8,from.distanceTo(to))):Infinity;
-  for(const barrier of this.getBarriers()){if(!barrier.active||barrier.half.x<=0)continue;const t=segmentBoxFraction(from,to,barrier.center,barrier.half,barrier.rotation,radius);if(t!==null&&t<nearest){nearest=t;hit={kind:'ice-barrier',barrier,t,point:{x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t,z:from.z+(to.z-from.z)*t}};}}
+  for(const barrier of this.getBarriers()){if(!barrier.active||barrier.half.x<=0)continue;const t=barrier.trace?barrier.trace(from,to,radius):segmentBoxFraction(from,to,barrier.center,barrier.half,barrier.rotation,radius);if(t!==null&&t<nearest){nearest=t;hit={kind:'ice-barrier',barrier,t,point:{x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t,z:from.z+(to.z-from.z)*t}};}}
   return hit;
  }
  update(dt,time){
