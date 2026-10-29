@@ -11,3 +11,9 @@ Validation:
 - `solara-test.mjs` and `solara-browser.cjs`: PASS real fireball damage, both natural plasma interceptions, protected/exposed tank/soldier controls, roster/persistence/reset and existing bounds.
 
 Software browser checks do not measure physical phone FPS/thermal behavior.
+
+## Revision 41 — doubled front effect
+
+Doubled the shimmer band's width/depth, frost particle dimensions, and particle spread around the existing leading-edge anchor. Emission rate, lifetime, opacity, 48-particle cap, two draw calls and the ice slide/trail geometry remain unchanged.
+
+Validation: existing ice-forming checks pass at 30/60/120Hz. Direct geometry/instance checks confirm the 2× band dimensions, particle size and spread. Ice-path browser checks pass at desktop 1100×1000 and touch 390×844 with no shader/runtime errors; attachment, reset and natural fireball combat pass. Front close-up screenshot reviewed.

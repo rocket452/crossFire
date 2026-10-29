@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-export const ICE_FORMING=Object.freeze({limit:48,rate:24});
+export const ICE_FORMING=Object.freeze({limit:48,rate:24,sizeScale:2});
 // A small, slide-local effect: frost stays at the growing edge through fast turns.
 export class SolaraIceForming {
  constructor(parent){
@@ -18,8 +18,8 @@ export class SolaraIceForming {
   for(let i=this.items.length-1;i>=0;i--){const p=this.items[i];p.age+=dt;p.local.addScaledVector(p.velocity,dt);if(p.age>=p.life)this.items.splice(i,1);}
   if(active)this.clock+=dt*ICE_FORMING.rate;else this.clock=0;
   while(this.clock>=1){this.clock--;const seed=++this.emitted,a=seed*2.399,kind=seed%3===0?1:0;const p={local:new THREE.Vector3(Math.sin(a)*tip.halfWidth*.85,.03,Math.cos(a*1.7)*.12),velocity:new THREE.Vector3(Math.sin(a*1.3)*.17,.22+(seed%4)*.04,-.16),age:0,life:.38+(seed%5)*.06,size:kind?.075+(seed%3)*.015:.24+(seed%4)*.05,kind};if(this.items.length>=ICE_FORMING.limit)this.items.shift();this.items.push(p);}
-  const positions=this.band.geometry.attributes.position;for(let i=0;i<4;i++){const p=(i%2?tip.right:tip.left).clone().addScaledVector(forward,i<2?-.24:.08);p.y+=.125;positions.setXYZ(i,p.x,p.y,p.z);}positions.needsUpdate=true;this.uniforms.strength.value=this.strength;this.uniforms.time.value=time;
-  let n=0;const fade=this.particles.geometry.attributes.frostFade,kind=this.particles.geometry.attributes.frostKind;for(const p of this.items){const age=p.age/p.life,size=p.size*(p.kind?1:.7+age*.5);this.dummy.position.copy(this.anchor).addScaledVector(side,p.local.x).addScaledVector(forward,p.local.z);this.dummy.position.y+=p.local.y;this.dummy.quaternion.identity();this.dummy.scale.set(size,size*(p.kind?1:.7),size);this.dummy.updateMatrix();this.particles.setMatrixAt(n,this.dummy.matrix);fade.setX(n,Math.sin(Math.PI*age)*this.strength);kind.setX(n++,p.kind);}
+  const scale=ICE_FORMING.sizeScale,positions=this.band.geometry.attributes.position;for(let i=0;i<4;i++){const p=(i%2?tip.right:tip.left).clone().sub(tip.center).multiplyScalar(scale).add(tip.center).addScaledVector(forward,(i<2?-.24:.08)*scale);p.y+=.125;positions.setXYZ(i,p.x,p.y,p.z);}positions.needsUpdate=true;this.uniforms.strength.value=this.strength;this.uniforms.time.value=time;
+  let n=0;const fade=this.particles.geometry.attributes.frostFade,kind=this.particles.geometry.attributes.frostKind;for(const p of this.items){const age=p.age/p.life,size=p.size*scale*(p.kind?1:.7+age*.5);this.dummy.position.copy(this.anchor).addScaledVector(side,p.local.x*scale).addScaledVector(forward,p.local.z*scale);this.dummy.position.y+=p.local.y*scale;this.dummy.quaternion.identity();this.dummy.scale.set(size,size*(p.kind?1:.7),size);this.dummy.updateMatrix();this.particles.setMatrixAt(n,this.dummy.matrix);fade.setX(n,Math.sin(Math.PI*age)*this.strength);kind.setX(n++,p.kind);}
   this.particles.count=n;this.particles.instanceMatrix.needsUpdate=fade.needsUpdate=kind.needsUpdate=true;this.root.visible=this.strength>.005||n>0;
  }
  diagnostics(){return{active:this.root.visible,particles:this.particles.count,limit:ICE_FORMING.limit,emitted:this.emitted,strength:this.strength,anchor:this.anchor.toArray(),drawCalls:2};}
