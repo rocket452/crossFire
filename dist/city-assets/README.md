@@ -683,3 +683,7 @@ Solara's fireballs now have bright flickering cores, continuous golden/orange fl
 ## Revision 37 — relaxed surfer stance
 
 Solara now rides lower and sideways, with a leading foot, toes across the slide, bent knees aligned to the hips and relaxed balance arms. Slow hip/knee/shoulder adjustments add minor motion while both feet stay planted. Her head continues looking along travel and the existing casting poses blend from the new stance. Gameplay and effect timing are unchanged. See `QA/solara-surfer-validation.md`.
+
+## Revision 38 — ice forming at the slide tip
+
+A faint blue-white edge shimmer, soft frost mist and tiny ice sparkles now show Solara creating ice ahead of the slide. The small effect follows the real ribbon tip through turns and slopes and fades when she stops. Two bounded draws, up to 48 procedural particles, no textures or lights. Existing trail and gameplay stay unchanged. See `QA/solara-ice-forming-validation.md`.
