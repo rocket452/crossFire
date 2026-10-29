@@ -611,3 +611,9 @@ are unchanged. Sufficient accumulated non-robot damage can still break panels;
 robot damage can still cause full physical structural collapse. Rebuild restores
 health/colors and retains the armor rule. Diagnostics expose
 `physics.nonRobotDamageMultiplier = 0.1` and `physics.robotDamageMultiplier = 1`.
+
+### Mobile hero twin sticks
+
+Volt Rush now has separate MOVE and LOOK sticks on narrow screens and coarse-pointer devices, including landscape fullscreen. The left stick moves forward/back/left/right relative to the view. The right stick continuously turns and looks while held: up to 2.4 rad/s yaw and 1.65 rad/s pitch, pitch limited to ±1 radian. Both use a radial 12% deadzone and analog strength; releasing/canceling a contact recenters only its own stick. Blur, hidden documents, exiting/rebuilding and viewport resize clear the stick contacts.
+
+BOOST (toggle), JUMP and rescue DASH sit immediately above the movement stick. FIRE sits above LOOK, and still supports holding to charge/fire and dragging to aim. Ability buttons activate on pointer-down, including non-primary contacts while both sticks are held; keyboard activation remains available. Touch ability targets are at least 48×44 pixels, FIRE is 56×56, and both stick pads are 96×96. Safe-area insets keep controls clear in fullscreen. Screen-right player strafe follows screen-right on ground and walls; CPU motion conventions remain unchanged. Existing keyboard, wall-running, rescue-dash limits and charge/cooldown timings are retained.
