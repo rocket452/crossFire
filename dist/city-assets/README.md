@@ -95,7 +95,7 @@ animation, not a skinned FBX animation library.
 Both divisions now share the robot as their target. All eight tanks, four AI
 helicopters, and 36 riflemen use actual swept/segment collision against robot
 components and city cover. Rifle fire deals 2.2 damage; shell direct hits 80;
-rocket direct hits 68. Shared robot armor starts at 12,000. The robot fires a
+rocket direct hits 68. Shared robot armor starts at 14,400 (20% above its original 12,000). The robot fires a
 24-damage cannon round every 2.6 s after aligning; splash falls off with distance.
 AI army fire cannot damage allied units. Manually piloted rockets retain damage
 to all enemy/scene targets; the occupied helicopter remains protected as before.
