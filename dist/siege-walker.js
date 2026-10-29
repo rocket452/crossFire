@@ -31,7 +31,7 @@ export class SiegeWalker {
  reset(){
   for(const w of this.wrecks){w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
   this.wrecks=[];this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;this.plasmaRecoil=0;this.plasmaCharging=false;this.plasmaAim=null;this.beamAllowed=true;this.podWarning={active:false,progress:0,pulse:false};
-  this.weapon.reset();this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
+  this.weapon.reset();this.eyeTarget=null;this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
   for(const [name,n]of Object.entries(this.nodes)){n.rotation.set(0,0,0);n.position.copy(this.restPositions[name]);}
   if(this.nodes.rocket_pod)this.nodes.rocket_pod.rotation.x=-Math.PI/4;if(this.nodes.plasma_cannon)this.nodes.plasma_cannon.rotation.x=-Math.PI/4;
   this.walkPose=this.gait.reset();this.applyWalkPose(this.walkPose);
@@ -64,6 +64,7 @@ export class SiegeWalker {
   if(locked&&this.target?.kind==='helicopter'&&this.target.alive&&this.target.shapes[0])this.beamAim={...this.target.shapes[0].center};
   let center=locked?this.beamAim:available.length?this.target?.shapes[0]?.center:null;
   if(this.plasmaCharging&&this.plasmaAim)center=this.plasmaAim;
+  else if(!locked&&this.eyeTarget)center=this.eyeTarget;
   if(center&&this.weapon.phase==='firing')center=sweptBeamTarget(center,this.beamSweepOrigin||this.root.position,Math.sin(this.weapon.elapsed/this.weapon.fireSeconds*Math.PI*2)*BEAM_SWEEP);
   const origin=this.plasmaCharging?this.nodes.plasma_cannon.getWorldPosition(new THREE.Vector3()):this.root.position;const desiredYaw=center?Math.atan2(center.x-origin.x,center.z-origin.z):this.gait.yaw;
   this.walkPose=this.gait.update(dt,time,desiredYaw);this.applyWalkPose(this.walkPose);

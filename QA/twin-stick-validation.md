@@ -1,3 +1,5 @@
+> Superseded by revision 32: see runner-left-controls-validation.md. The right look stick has been removed and FIRE moved left.
+
 # Mobile hero twin-stick validation
 
 Feature: mobile Volt Rush controls with a dedicated movement stick, a dedicated continuous look stick, and ability buttons beside movement.
