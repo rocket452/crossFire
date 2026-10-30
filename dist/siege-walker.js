@@ -77,7 +77,7 @@ export class SiegeWalker {
    }
    return;
   }
-  const available=targets.filter(u=>u.alive&&u.kind!=='robot'&&u.id!==this.protectedUnit);
+  const available=targets.filter(u=>u.alive&&!u.dashPhased&&u.kind!=='robot'&&u.id!==this.protectedUnit);
   const locked=['charging','firing'].includes(this.weapon.phase);
   if(!locked&&available.length&&(!this.target?.alive||!available.some(u=>u.id===this.target.id)||(this.weapon.phase==='ready'&&!this.aiming))){const index=this.targetIndex++,air=available.filter(u=>u.kind==='helicopter'),ground=available.filter(u=>u.kind!=='helicopter');this.target=this.targetSelector?this.targetSelector(available):index%2===0&&air.length?air[Math.floor(index/2)%air.length]:ground.length?ground[(index*3)%ground.length]:available[index%available.length];this.aiming=true;}
   const liveTarget=available.find(u=>u.id===this.target?.id);if(liveTarget)this.target=liveTarget;

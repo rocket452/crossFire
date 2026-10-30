@@ -1,5 +1,5 @@
 import {shieldBeamIntersection} from './hero-defense.js?v=hero-5';
-import {traceImpact} from './combat-collision.js?v=robot-1';
+import {traceImpact} from './combat-collision.js?v=wave-dash-62';
 // Loose debris and disabled wrecks no longer stop the energy lance; intact cover does.
 export class BeamCombat {
  constructor({physics,units,onSection=()=>{},onImpact=()=>{},getBarriers=()=>[],getTerrainHit=()=>null}){Object.assign(this,{physics,units,onSection,onImpact,getBarriers,getTerrainHit});this.range=140;this.radius=1.05;this.reset();}

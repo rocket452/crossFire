@@ -24,6 +24,7 @@ export class InfantryCrowd {
  sample(name,time,bone,outP,outQ){const clip=this.motion.clips[name],count=clip.frames.length;const t=clip.loop?((time%clip.duration)+clip.duration)%clip.duration:Math.min(clip.duration,Math.max(0,time));const f=t/clip.duration*(count-1),a=Math.floor(f),b=Math.min(count-1,a+1),k=f-a,offset=bone*7,A=clip.frames[a],B=clip.frames[b];outP.fromArray(A,offset);this.p0.fromArray(B,offset);outP.lerp(this.p0,k);outQ.fromArray(A,offset+3);this.q0.fromArray(B,offset+3);outQ.slerp(this.q0,k).normalize();}
  update(dt,time){this.currentTime=time;
   for(const s of this.soldiers){
+   if(s.combatUnit?.dashPhased){this.renderSoldier(s);continue;}
    if(s.disabled){s.fallTime=Math.min(1,s.fallTime+dt/.7);this.renderSoldier(s,s.fallTime);continue;}
    const side=s.team===0?1:-1,cycle=(time+s.offset)%12,canAdvance=Math.abs(s.x)>s.stopDistance+.001,moving=!s.combatUnit?.dashSweep&&canAdvance&&cycle<5.2&&!s.reloadTime;const run=(s.i%3!==1),crouched=!moving&&s.i%3===0&&cycle>7.3;let desired=moving?(run?'Run':'Walk'):crouched?'CrouchAim':cycle>11.25&&s.i%4===1?'Idle':'Aim';
    s.firingTime=Math.max(0,s.firingTime-dt);
@@ -47,6 +48,7 @@ export class InfantryCrowd {
  }
  disable(s){s.disabled=true;s.fallTime=0;s.pendingShot=false;s.burst=0;s.previous=null;}
  renderSoldier(s,fall=0){
+   if(s.combatUnit?.dashPhased){if(s.character)s.character.root.visible=false;this.world.makeScale(0,0,0);for(const mesh of Object.values(this.batches[s.team])){mesh.setMatrixAt(s.i,this.world);mesh.instanceMatrix.needsUpdate=true;}return;}if(s.character)s.character.root.visible=true;
    this.heading.setFromAxisAngle(this.yAxis,s.aimTarget?Math.atan2(s.aimTarget.x-s.x,s.aimTarget.z-s.z):(s.team===0?1:-1)*Math.PI/2);this.scale.setScalar(s.scale);if(fall){const angle=fall*Math.PI/2;this.heading.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),angle));}this.base.compose(this.p.set(s.x,s.y+Math.sin(fall*Math.PI/2)*.32,s.z),this.heading,this.scale);
    if(s.aimTarget&&!fall){const pitch=-Math.min(.85,Math.max(-.3,Math.atan2(s.aimTarget.y-1.3,Math.hypot(s.aimTarget.x-s.x,s.aimTarget.z-s.z))));this.aimMatrix.makeRotationX(pitch).multiply(this.aimTranslate);this.aimMatrix.elements[13]+=1.15;}
    for(let bone=0;bone<this.motion.parts.length;bone++){

@@ -22,3 +22,7 @@ Desktop hides movement sticks, gameplay action buttons and observer altitude but
 An ordinary desktop primary click queues the existing 0.5-second wind-up plus the full 0.4-second beam. Energy cost (25), attack recovery (1.5 seconds), weak-point collision and damage are unchanged. Mouse aiming no longer cancels a held desktop primary attack. Touch scene drags only aim. Paused/menu input cannot queue primary fire or a rescue dash. Browser mouse capture uses the standard Pointer Lock API when available, with a drag fallback on denial; no dependency was added.
 
 Changed runtime files: `input-mode.js`, `speedster.js`, `helicopter-pilot.js`, `battle.js`, `battle.css`, `index.html`. Relevant tests: `QA/device-controls-browser.cjs`, updated touch activation in weak-point/hero-power regressions, and the existing left-control suite updated to expect hidden desktop controls. See `QA/device-controls-validation.md`.
+
+## Lightning wave update (revision 62)
+
+Right-click / E / DASH now transforms Volt and carried ground allies into electricity. Soldiers, tanks and civilians touched along the route join the wave and reform near its endpoint. Movement input chooses dash direction without snapping the camera; otherwise the dash follows the view. It travels 10 metres in about 0.28 seconds, has the existing five-second cooldown and costs no charge. A short landing input buffer and explicit blocked/cooldown feedback improve manual activation. See `QA/runner-wave-validation.md` for behavior, tuning, changed files and checks.
