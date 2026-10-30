@@ -1,3 +1,4 @@
+import {projectileSilhouette} from './projectile-silhouette.js?v=silhouette-49';
 import * as THREE from './vendor/three.module.js';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-1';
 
@@ -13,7 +14,7 @@ export class RobotMissiles {
   if(!this.canLaunch())return;
   const targets=this.getTargets().filter(u=>u.alive&&u.shapes?.length);if(!targets.length)return;
   const index=this.targetIndex++,target=targets[index%targets.length],rail=(6-this.pending)%6,muzzle=this.getMuzzles()[rail];if(!muzzle)return;
-  const mesh=this.template.clone(true);mesh.position.copy(muzzle.position);const flame=new THREE.Mesh(this.flameGeometry,this.flameMaterial);flame.position.z=-1.35;mesh.add(flame);this.scene.add(mesh);
+  const mesh=this.template.clone(true);const parts=[];mesh.traverse(o=>{if(o.isMesh)parts.push(o);});for(const part of parts)projectileSilhouette(part,'#ffad54');mesh.position.copy(muzzle.position);const flame=new THREE.Mesh(this.flameGeometry,this.flameMaterial);flame.position.z=-1.35;mesh.add(flame);this.scene.add(mesh);
   const m={id:'siege-missile-'+(++this.sequence),alive:true,health:18,age:0,life:22,speed:8.5,radius:.36,position:mesh.position,previous:mesh.position.clone(),direction:muzzle.direction.clone().normalize(),velocity:new THREE.Vector3(),origin:mesh.position.clone(),target,targetPoint:new THREE.Vector3().copy(target.shapes[0].center),mesh,flame,trail:0,claim:null,claimUntil:0};
   this.missiles.push(m);this.launched++;this.onLaunch(m.position);return m;
  }

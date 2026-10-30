@@ -1,3 +1,4 @@
+import {projectileSilhouette} from './projectile-silhouette.js?v=silhouette-49';
 import * as THREE from './vendor/three.module.js';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-1';
 export const PLASMA={gravity:5,warningSeconds:2.4,shotSpacing:1.6,blastRadius:7,projectileRadius:.65,maxShells:2};
@@ -32,7 +33,7 @@ export class PlasmaArtillery {
   const muzzle=this.getMuzzle(target),trajectory=plasmaTrajectory(muzzle.position,{...target,y:target.y+PLASMA.projectileRadius+.02});if(!trajectory)return null;
   // Reject existing cover on the intended arc. Newly falling debris can still intercept a live shell.
   let previous=new THREE.Vector3().copy(muzzle.position);for(let t=.08;t<trajectory.duration;t+=.08){const p=plasmaPosition(trajectory,t);if(this.previewTrace(previous,p))return null;previous=p;}
-  const mesh=new THREE.Group(),core=new THREE.Mesh(this.coreGeometry,this.coreMaterial),halo=new THREE.Mesh(this.coreGeometry,this.haloMaterial);halo.scale.setScalar(2.2);mesh.add(core,halo);const rings=[];for(let i=0;i<2;i++){const ring=new THREE.Mesh(this.ringGeometry,this.ringMaterial);mesh.add(ring);rings.push(ring);}mesh.visible=false;this.scene.add(mesh);
+  const mesh=new THREE.Group(),core=new THREE.Mesh(this.coreGeometry,this.coreMaterial),halo=new THREE.Mesh(this.coreGeometry,this.haloMaterial);halo.scale.setScalar(2.2);projectileSilhouette(core,'#71ffd0',1.35);mesh.add(core,halo);const rings=[];for(let i=0;i<2;i++){const ring=new THREE.Mesh(this.ringGeometry,this.ringMaterial);mesh.add(ring);rings.push(ring);}mesh.visible=false;this.scene.add(mesh);
   const s={id:'plasma-'+(++this.sequence),state:'warning',target:{...target},trajectory,launchAt:this.clock+delay,impactAt:this.clock+delay+trajectory.duration,createdAt:this.clock,age:0,mesh,core,halo,rings,position:new THREE.Vector3().copy(muzzle.position),trailClock:0};s.marker=this.createMarker(s);return s;
  }
  beginVolley(){

@@ -1,3 +1,4 @@
+import {silhouetteMaterial,markVisibleProjectile} from './projectile-silhouette.js?v=silhouette-49';
 import * as THREE from './vendor/three.module.js';
 import {EYE_BEAMS,RobotEyeCycle,segmentSphereFraction} from './robot-eye-cycle.js?v=eye-beams-33';
 export class RobotEyeBeams{
@@ -6,9 +7,11 @@ export class RobotEyeBeams{
   const material=(color,opacity)=>new THREE.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,toneMapped:false,blending:THREE.AdditiveBlending});
   const cylinder=new THREE.CylinderGeometry(1,1,1,5,1,true),ball=new THREE.IcosahedronGeometry(1,1);
   this.core=new THREE.InstancedMesh(cylinder,material('#fff1d8',1),EYE_BEAMS.maxBolts);this.glow=new THREE.InstancedMesh(cylinder,material('#ff163c',.6),EYE_BEAMS.maxBolts);this.charges=new THREE.InstancedMesh(ball,material('#ff1737',.85),4);this.guides=new THREE.InstancedMesh(cylinder,material('#ff2548',.16),2);
-  for(const m of[this.core,this.glow,this.charges,this.guides]){m.count=0;m.frustumCulled=false;this.root.add(m);}this.reset();
+  this.core.material=markVisibleProjectile(this.core.material);
+  this.silhouettes=new THREE.InstancedMesh(cylinder,silhouetteMaterial('#ff688e'),EYE_BEAMS.maxBolts);this.silhouettes.renderOrder=100;
+  for(const m of[this.core,this.glow,this.charges,this.guides,this.silhouettes]){m.count=0;m.frustumCulled=false;this.root.add(m);}this.reset();
  }
- reset(){this.cycle.reset();this.bolts=[];this.previousCenters=null;this.hits=0;this.coverHits=0;this.expired=0;this.sequence=0;this.lastHit=null;this.history=[];for(const m of[this.core,this.glow,this.charges,this.guides])m.count=0;const robot=this.getRobot();if(robot)robot.eyeTarget=null;}
+ reset(){this.cycle.reset();this.bolts=[];this.previousCenters=null;this.hits=0;this.coverHits=0;this.expired=0;this.sequence=0;this.lastHit=null;this.history=[];for(const m of[this.core,this.glow,this.charges,this.guides,this.silhouettes])m.count=0;const robot=this.getRobot();if(robot)robot.eyeTarget=null;}
  muzzles(){const robot=this.getRobot(),visor=robot.nodes.visor,box=robot.boxes.visor;robot.root.updateMatrixWorld(true);return[-1,1].map(side=>visor.localToWorld(new THREE.Vector3(box.center.x+side*box.size.x*.29,box.center.y,box.center.z+box.size.z*.5+.13)));}
  centers(runner){return[.65,1.5,2.05].map(h=>runner.root.position.clone().addScaledVector(runner.bodyUp,h));}
  update(dt,time){
@@ -27,11 +30,11 @@ export class RobotEyeBeams{
  }
  segment(mesh,index,a,b,radius){this.dummy.position.copy(a).add(b).multiplyScalar(.5);this.dummy.quaternion.setFromUnitVectors(this.up,b.clone().sub(a).normalize());this.dummy.scale.set(radius,a.distanceTo(b),radius);this.dummy.updateMatrix();mesh.setMatrixAt(index,this.dummy.matrix);}
  render(time,muzzles){
-  this.core.count=this.glow.count=this.bolts.length;
-  for(let i=0;i<this.bolts.length;i++){const b=this.bolts[i],tail=b.position.clone().addScaledVector(b.dir,-Math.min(3,EYE_BEAMS.speed*b.age));this.segment(this.core,i,tail,b.position,.075);this.segment(this.glow,i,tail,b.position,.25);}
+  this.core.count=this.glow.count=this.silhouettes.count=this.bolts.length;
+  for(let i=0;i<this.bolts.length;i++){const b=this.bolts[i],tail=b.position.clone().addScaledVector(b.dir,-Math.min(3,EYE_BEAMS.speed*b.age));this.segment(this.core,i,tail,b.position,.075);this.segment(this.glow,i,tail,b.position,.25);this.segment(this.silhouettes,i,tail,b.position,.16);}
   this.charges.count=this.guides.count=0;const charging=this.cycle.phase==='charging',progress=charging?Math.min(1,this.cycle.elapsed/EYE_BEAMS.charge):0;
   if(charging&&this.cycle.target){const end=new THREE.Vector3(this.cycle.target.x,this.cycle.target.y,this.cycle.target.z);for(let i=0;i<muzzles.length;i++){this.segment(this.guides,i,muzzles[i],end,.018);for(let j=0;j<2;j++){this.dummy.position.copy(muzzles[i]);this.dummy.quaternion.identity();this.dummy.scale.setScalar((.18+progress*.3)*(j?1.65:1)*(1+.08*Math.sin(time*35)));this.dummy.updateMatrix();this.charges.setMatrixAt(i*2+j,this.dummy.matrix);}}this.charges.count=4;this.guides.count=2;}
-  for(const m of[this.core,this.glow,this.charges,this.guides])m.instanceMatrix.needsUpdate=true;
+  for(const m of[this.core,this.glow,this.charges,this.guides,this.silhouettes])m.instanceMatrix.needsUpdate=true;
  }
  diagnostics(){return{...this.cycle.diagnostics(),liveBolts:this.bolts.length,hits:this.hits,coverHits:this.coverHits,expired:this.expired,lastHit:this.lastHit,history:this.history.map(h=>({...h,from:[...h.from],target:{...h.target}}))};}
 }

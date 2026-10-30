@@ -1,3 +1,4 @@
+import {projectileSilhouette} from './projectile-silhouette.js?v=silhouette-49';
 import {VOLT_STUN} from './hero-powers.js?v=powers-48';
 import {RobotStunEffect} from './hero-power-effects.js?v=powers-48';
 import {EvacuationScene} from './evacuation.js?v=powers-48';
@@ -13,20 +14,20 @@ import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=building-armor-21';
 import {VioletHero} from './violet-hero.js?v=powers-48';
 import {Speedster} from './speedster.js?v=powers-48';
-import {RobotMissiles} from './robot-missiles.js?v=rift-47';
+import {RobotMissiles} from './robot-missiles.js?v=silhouette-49';
 import {MissileExplosions} from './missile-explosions.js?v=solara-defense-44';
 import {PortalHero} from './portal-hero.js?v=rift-47';
 import {SolaraHero} from './solara-hero.js?v=rift-47';
 import {HeroRoster} from './hero-roster.js?v=powers-48';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-1';
-import {PlasmaArtillery} from './plasma-artillery.js?v=rift-47';
-import {RobotEyeBeams} from './robot-eye-beams.js?v=rift-47';
+import {PlasmaArtillery} from './plasma-artillery.js?v=silhouette-49';
+import {RobotEyeBeams} from './robot-eye-beams.js?v=silhouette-49';
 import {RobotArsenal} from './robot-arsenal.js?v=powers-48';
 import {terrainHeight,traceTerrain} from './runner-motion.js?v=runner-6';
 const evacuationMode=new URLSearchParams(location.search).get('scene')==='evacuation';let evacuation=null;
 const $=id=>document.getElementById(id),viewport=$('viewport');
 let renderer;
-try{renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});}catch(e){$('loading').innerHTML='<b>WebGL is unavailable.</b><span>Open this scene in a current Safari or Chrome browser.</span>';throw e;}
+try{renderer=new THREE.WebGLRenderer({stencil:true,antialias:true,powerPreference:'high-performance'});}catch(e){$('loading').innerHTML='<b>WebGL is unavailable.</b><span>Open this scene in a current Safari or Chrome browser.</span>';throw e;}
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.35));renderer.setClearColor('#a5b2b0');renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;viewport.prepend(renderer.domElement);renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','City battle observer. Drag to orbit, pinch or scroll to zoom, two fingers or right drag to pan.');
 const scene=new THREE.Scene();scene.background=new THREE.Color('#a5b2b0');scene.fog=new THREE.Fog('#a5b2b0',100,240);const camera=new THREE.PerspectiveCamera(47,1,.2,450);camera.position.set(77,68,85);
 const missileExplosions=new MissileExplosions(scene);const robotStunEffect=new RobotStunEffect(scene);
@@ -123,7 +124,7 @@ function updateCannonBeam(payload){
  }
  beamEffect?.update(state,from,direction,end,time,payload.plan);
 }
-function fire(from,to,team,kind,isPlayer=false,owner=null){if(!to)return;if(isPlayer)playerMissiles++;const o=new THREE.Mesh(kind==='rocket'?rocketGeo:projectileGeo,kind==='pulse'?pulseMat:projectileMat);if(kind==='pulse')o.scale.setScalar(2.6);o.position.copy(from);scene.add(o);const dir=to.clone().sub(from).normalize();if(kind==='rocket')o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);projectiles.push({id:'round-'+(++projectileSequence),mesh:o,dir,player:isPlayer,owner,trail:0,speed:kind==='rocket'?55:62,life:6,kind,team,origin:from.clone()});shotsFired++;particles.push({kind:'flash',p:from.clone(),v:new THREE.Vector3(),life:.12,max:.12,size:kind==='rocket'?.6:1.1,scale:1});}
+function fire(from,to,team,kind,isPlayer=false,owner=null){if(!to)return;if(isPlayer)playerMissiles++;const o=new THREE.Mesh(kind==='rocket'?rocketGeo:projectileGeo,kind==='pulse'?pulseMat:projectileMat);if(owner==='siege-walker')projectileSilhouette(o,'#ffad54',1.3);if(kind==='pulse')o.scale.setScalar(2.6);o.position.copy(from);scene.add(o);const dir=to.clone().sub(from).normalize();if(kind==='rocket')o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);projectiles.push({id:'round-'+(++projectileSequence),mesh:o,dir,player:isPlayer,owner,trail:0,speed:kind==='rocket'?55:62,life:6,kind,team,origin:from.clone()});shotsFired++;particles.push({kind:'flash',p:from.clone(),v:new THREE.Vector3(),life:.12,max:.12,size:kind==='rocket'?.6:1.1,scale:1});}
 const pulseMat=new THREE.MeshBasicMaterial({color:'#ff5a22'});
 function selectSolaraMissile(from,current){
  const eligible=m=>m.alive&&from.distanceToSquared(m.position)<90*90&&!solara.fireballs.some(b=>b.targetMissile===m)&&(m.claimUntil<=robotMissiles.clock||!m.claim||m.claim==='solara'||m.position.distanceTo(m.targetPoint)/m.speed<1.2)&&traceWorld(from,m.position,{radius:.34,allied:true})?.missile===m;
