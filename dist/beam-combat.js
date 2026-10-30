@@ -8,7 +8,7 @@ export class BeamCombat {
   const far={x:from.x+direction.x*this.range,y:from.y+direction.y*this.range,z:from.z+direction.z*this.range};
   let collision=traceImpact(from,far,{sections:this.physics.chunks.filter(c=>c.state==='intact'),targets:this.units.units.filter(u=>u.alive&&u.kind!=='robot'&&u.id!==protectedUnit),radius:this.radius});
   const terrain=this.getTerrainHit(from,far,this.radius);if(terrain&&(!collision||terrain.t<collision.t))collision=terrain;
-  for(const barrier of this.getBarriers()){const hit=shieldBeamIntersection(from,far,barrier,this.radius);if(hit&&(!collision||hit.t<collision.t))collision={kind:'shield',barrier,...hit};}
+  for(const barrier of this.getBarriers()){const fraction=barrier.trace?.(from,far,this.radius),hit=barrier.trace?(fraction===null?null:{t:fraction,point:{x:from.x+(far.x-from.x)*fraction,y:from.y+(far.y-from.y)*fraction,z:from.z+(far.z-from.z)*fraction}}):shieldBeamIntersection(from,far,barrier,this.radius);if(hit&&(!collision||hit.t<collision.t))collision={kind:'shield',barrier,...hit};}
   const end=collision?.point||far;this.lastEnd={...end};this.lastHit=collision?.section?.building||collision?.unit?.id||collision?.kind||null;
   if(damageSeconds>0&&collision){
    this.ticks++;

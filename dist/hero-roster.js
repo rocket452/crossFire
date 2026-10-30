@@ -1,4 +1,5 @@
 export const HEROES=Object.freeze([
+ {id:'mochi',name:'Mochi Pink',element:'JOY / DECORA',role:'Bubble defense & daze',detail:'Sakura “Koko” Tanaka skates on glittering light, shields allies with neon bubbles, and dazes robots with her wand.',control:'CPU defender',color:'#ff99d5',icon:'♥'},
  {id:'volt',name:'Volt Rush',element:'LIGHTNING',role:'Speed & rescue',detail:'Run to charge lightning, interrupt robot attacks with Overload, and dash allies out of danger.',control:'Player or CPU',color:'#81e8f5',icon:'ϟ'},
  {id:'violet',name:'Violet Sentinel',element:'FORCE',role:'Air defense',detail:'Absorb hits with a force shield to power a stationary sustained beam. Also fires purple orbs.',control:'CPU defender',color:'#bc8bf5',icon:'◈'},
  {id:'solara',name:'Solara Frost',element:'FIRE / ICE',role:'Missile / plasma defense',detail:'Track incoming missiles with fireballs, ride an ice path and raise protective domes over allies.',control:'CPU defender',color:'#9bdfff',icon:'✦'},
