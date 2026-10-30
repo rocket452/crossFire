@@ -2,7 +2,7 @@ export const HEROES=Object.freeze([
  {id:'volt',name:'Volt Rush',element:'LIGHTNING',role:'Speed & rescue',detail:'Run to charge lightning, interrupt robot attacks with Overload, and dash allies out of danger.',control:'Player or CPU',color:'#81e8f5',icon:'ϟ'},
  {id:'violet',name:'Violet Sentinel',element:'FORCE',role:'Air defense',detail:'Absorb hits with a force shield to power a stationary sustained beam. Also fires purple orbs.',control:'CPU defender',color:'#bc8bf5',icon:'◈'},
  {id:'solara',name:'Solara Frost',element:'FIRE / ICE',role:'Missile / plasma defense',detail:'Track incoming missiles with fireballs, ride an ice path and raise protective domes over allies.',control:'CPU defender',color:'#9bdfff',icon:'✦'},
- {id:'rift',name:'Rift Warden',element:'PORTALS',role:'Evacuation & barrage',detail:'Personal teleport, up to three firing portals, and a large transport pair for allies and projectiles.',control:'CPU defender',color:'#a6e8bf',icon:'◎'}
+ {id:'rift',name:'Rift Warden',element:'PORTALS',role:'Evacuation & barrage',detail:'Personal teleport, up to three autonomous firing portals, and a large transport pair for allies and projectiles.',control:'CPU defender',color:'#a6e8bf',icon:'◎'}
 ]);
 export const DEFAULT_HEROES=Object.freeze(['volt','violet','rift']);
 export function validRoster(ids){return Array.isArray(ids)&&ids.length<=3&&new Set(ids).size===ids.length&&ids.every(id=>HEROES.some(h=>h.id===id));}
