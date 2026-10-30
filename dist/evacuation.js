@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {EVACUATION_CONFIG,CIVILIAN_SPAWN_INTERVAL} from './evacuation-config.js?v=evacuation-57';
+import {EVACUATION_CONFIG,CIVILIAN_SPAWN_INTERVAL} from './evacuation-config.js?v=drone-squad-65';
 import {EvacuationNavigation} from './evacuation-navigation.js?v=evacuation-57';
 export const CIVILIAN_WAVE_SIZE=12,MAX_CIVILIANS=72;
 export class EvacuationScene {
@@ -51,7 +51,7 @@ export class EvacuationScene {
   }
   this.cohorts=this.cohorts.filter(group=>group.members.some(c=>c.unit.alive));
  }
- disable(u){if(u===this.raider?.combatUnit){this.raider.destroy();return true;}if(!u.entity.evac)return false;if(u===this.heli){if(this.phase==='destroyed')return true;this.lost+=this.passengers;this.passengers=0;this.phase='destroyed';this.flightTime=0;this.destroyedHelicopters++;this.marker.visible=false;this.aircraft.rotation.z=.6;this.boardingGroup=null;this.onEvent('Helicopter destroyed · passengers lost. Replacement inbound shortly.');}else{this.lost++;u.entity.root.visible=false;}return true;}
+ disable(u){if(this.raider?.disable(u))return true;if(!u.entity.evac)return false;if(u===this.heli){if(this.phase==='destroyed')return true;this.lost+=this.passengers;this.passengers=0;this.phase='destroyed';this.flightTime=0;this.destroyedHelicopters++;this.marker.visible=false;this.aircraft.rotation.z=.6;this.boardingGroup=null;this.onEvent('Helicopter destroyed · passengers lost. Replacement inbound shortly.');}else{this.lost++;u.entity.root.visible=false;}return true;}
  sync(){for(const c of this.civilians)c.unit.shapes=c.unit.alive?[{center:{x:c.root.position.x,y:c.root.position.y+.92,z:c.root.position.z},half:{x:.35,y:.95,z:.35}}]:[];this.heli.shapes=this.heli.alive?[{center:{x:this.aircraft.position.x,y:this.aircraft.position.y+1,z:this.aircraft.position.z},half:{x:1.8,y:2,z:5.8}}]:[];}
  update(dt){this.time+=dt;while(this.time+1e-9>=this.nextSpawn){this.spawn();this.nextSpawn+=CIVILIAN_SPAWN_INTERVAL;}
   this.updateCohorts(dt);const c=this.config;this.flightTime+=dt;

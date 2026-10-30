@@ -9,7 +9,7 @@ const foot=u=>u.entity.root?copy(u.entity.root.position):{x:u.entity.x,y:u.entit
 function worldHalf(size,q={x:0,y:0,z:0,w:1}){const {x,y,z,w}=q,a=size.x,b=size.y,c=size.z;return{x:Math.abs(1-2*y*y-2*z*z)*a+Math.abs(2*x*y-2*z*w)*b+Math.abs(2*x*z+2*y*w)*c,y:Math.abs(2*x*y+2*z*w)*a+Math.abs(1-2*x*x-2*z*z)*b+Math.abs(2*y*z-2*x*w)*c,z:Math.abs(2*x*z-2*y*w)*a+Math.abs(2*y*z+2*x*w)*b+Math.abs(1-2*x*x-2*y*y)*c};}
 import {RunnerRescues} from './runner-rescues.js?v=evacuation-57';
 export class RunnerDash {
- constructor({getUnits=()=>[],getSections=()=>[],getThreats=()=>[],traceThreat=()=>null,onMoveUnit=()=>{},onPhaseUnit=()=>{},onEvent=()=>{},onRescue=()=>{}}={}){Object.assign(this,{getUnits,getSections,getThreats,traceThreat,onMoveUnit,onPhaseUnit,onEvent});this.rescues=new RunnerRescues({getThreats,traceThreat,onRescue});this.reset();}
+ constructor({getUnits=()=>[],getSections=()=>[],getThreats=()=>[],traceThreat=()=>null,onMoveUnit=()=>{},onPhaseUnit=()=>{},onEvent=()=>{},onRescue=()=>{}}={}){Object.assign(this,{getUnits,getSections,getThreats,traceThreat,onMoveUnit,onPhaseUnit,onEvent});this.bounds={minX:-55,maxX:55,minZ:-55,maxZ:55};this.rescues=new RunnerRescues({getThreats,traceThreat,onRescue});this.reset();}
  reset(){this.cancel();this.rescues.reset();this.cooldown=0;this.dashes=0;this.carried=0;this.cpuRescues=0;this.last=null;this.scan=0;this.trails=[];this.effects=[];this.lastFailure=null;}
  cancel(){if(this.active)this.finish(this.active.motion);this.trails=[];}
  effect(kind,p,size=1){this.effects??=[];if(this.effects.length>=64)this.effects.shift();this.effects.push({kind,position:copy(p),size});}
@@ -28,7 +28,7 @@ export class RunnerDash {
  actors(motion){return[{position:copy(motion.position),half:{x:.38,y:1.3,z:.38}},...this.allies(motion).map(u=>this.actor(u))];}
  nearby(actors){return this.getSections().filter(c=>!c.hidden&&['intact','settled','dynamic'].includes(c.state)&&actors.some(a=>{const p=c.body?.position||c;return Math.abs(p.x-a.position.x)<DASH.range+Math.hypot(...c.size)/2+4&&Math.abs(p.z-a.position.z)<DASH.range+Math.hypot(...c.size)/2+4&&Math.abs(p.y-a.position.y)<Math.hypot(...c.size)/2+5;}));}
  next(actors,direction,length,sections,ignoreFriendly=true){
-  const result=[],group=new Set(actors.map(v=>v.unit));for(const a of actors){const p=a.position,q={x:p.x+direction.x*length,y:p.y,z:p.z+direction.z*length};if(Math.abs(q.x)>55||Math.abs(q.z)>55)return null;
+  const result=[],group=new Set(actors.map(v=>v.unit));for(const a of actors){const p=a.position,q={x:p.x+direction.x*length,y:p.y,z:p.z+direction.z*length};if(q.x<this.bounds.minX||q.x>this.bounds.maxX||q.z<this.bounds.minZ||q.z>this.bounds.maxZ)return null;
    const ground=terrainHeight(q.x,q.z);let support=traceImpact({x:q.x,y:p.y+.35,z:q.z},{x:q.x,y:p.y-.5,z:q.z},{sections,ground:false,radius:0});if(!support&&p.y-ground>.1&&p.y-ground<=.6){for(const x of [-a.half.x,a.half.x])for(const z of [-a.half.z,a.half.z]){const edge=traceImpact({x:q.x+x,y:p.y+.35,z:q.z+z},{x:q.x+x,y:p.y-.5,z:q.z+z},{sections,ground:false,radius:0});if(edge&&(!support||edge.point.y>support.point.y))support=edge;}}let floor=Math.max(ground,support?.point.y??-Infinity);
    if(Math.max(p.y,floor)-ground>.6){if(!support)return null;for(const x of [-a.half.x,a.half.x])for(const z of [-a.half.z,a.half.z])if(!traceImpact({x:q.x+x,y:floor+.2,z:q.z+z},{x:q.x+x,y:floor-.25,z:q.z+z},{sections,ground:false,radius:0}))return null;}
    if(Math.abs(floor-p.y)>.5)return null;q.y=floor;const from={x:p.x,y:p.y+a.half.y+.04,z:p.z},to={x:q.x,y:q.y+a.half.y+.04,z:q.z};

@@ -15,7 +15,7 @@ function faceNormal(c,p,radius=0,prefer=null){
  return result;
 }
 export class RunnerMotion {
- constructor(){this.reset();}
+ constructor(){this.bounds={minX:-56,maxX:56,minZ:-56,maxZ:56};this.reset();}
  reset(position={x:-3,y:.08,z:12}){this.position={...position};this.velocity={x:0,y:0,z:0};this.normal={x:0,y:1,z:0};this.mode='ground';this.yaw=Math.PI;this.speed=0;this.distance=0;this.wallSeconds=0;this.idleGrip=0;this.jumping=false;this.support=null;this.climbs=0;this.roofs=0;this.coyote=0;this.jumpBuffer=0;this.assistedLandings=0;this.airTime=0;this.wallLock=0;this.wallIntent=0;this.intentNormal=null;this.slides=0;this.overlapRecoveries=0;this.wallReleases=0;this.stepUps=0;this.departedSupportY=null;this.escapeNormal=null;}
  trace(a,b,radius=0,prefer=null){const hit=traceImpact(a,b,{sections:this.near,radius,ground:false});if(hit)hit.normal=faceNormal(hit.section,hit.point,radius,prefer);return hit;}
  floor(x,z,high,low){
@@ -87,7 +87,7 @@ export class RunnerMotion {
      if(this.velocity.y<=0){const floor=this.landing(p.x,p.z,oldY+.25,p.y-.08);if(floor){p.x=floor.x;p.z=floor.z;if(floor.assisted)this.assistedLandings++;p.y=floor.height;this.normal=floor.normal;this.support=floor.section;this.velocity.y=0;this.mode='ground';}}
     }
    }
-   p.x=clamp(p.x,-56,56);p.z=clamp(p.z,-56,56);
+   p.x=clamp(p.x,this.bounds.minX,this.bounds.maxX);p.z=clamp(p.z,this.bounds.minZ,this.bounds.maxZ);
    const ground=terrainHeight(p.x,p.z);if(p.y<ground){p.y=ground;this.mode='ground';this.normal=terrainNormal(p.x,p.z);this.velocity.y=0;}
   }
   const distance=Math.hypot(this.position.x-start.x,this.position.y-start.y,this.position.z-start.z);this.distance+=distance;this.speed=distance/dt;
