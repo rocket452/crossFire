@@ -30,7 +30,7 @@ export class SiegeWalker {
  }
  reset(){
   for(const w of this.wrecks){w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
-  this.wrecks=[];this.stunRemaining=0;this.stunKind=null;this.stuns=0;this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;this.plasmaRecoil=0;this.plasmaCharging=false;this.plasmaAim=null;this.beamAllowed=true;this.podWarning={active:false,progress:0,pulse:false};
+  this.wrecks=[];this.staggerPose=null;this.stunRemaining=0;this.stunKind=null;this.stuns=0;this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;this.plasmaRecoil=0;this.plasmaCharging=false;this.plasmaAim=null;this.beamAllowed=true;this.podWarning={active:false,progress:0,pulse:false};
   this.weapon.reset();this.eyeTarget=null;this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
   for(const [name,n]of Object.entries(this.nodes)){n.rotation.set(0,0,0);n.position.copy(this.restPositions[name]);}
   if(this.nodes.rocket_pod)this.nodes.rocket_pod.rotation.x=-Math.PI/4;if(this.nodes.plasma_cannon)this.nodes.plasma_cannon.rotation.x=-Math.PI/4;
@@ -44,10 +44,26 @@ export class SiegeWalker {
   return new THREE.Vector3(p.x+(variant%3-1)*.65,from.y>20?15:12.8,p.z);
  }
  recordHit(kind,team,amount){if(amount<=0)return;this.hits[kind]=(this.hits[kind]||0)+1;if(team===0||team===1)this.damageByTeam[team]+=amount;else this.heroDamage+=amount;this.flash=.14;}
- destroy(){this.stunRemaining=0;this.weapon.stop();this.onBeam(null);this.dead=true;this.deathTime=0;this.deathPose={y:this.root.position.y,chest:this.nodes.chest.rotation.x,head:this.nodes.head.rotation.x,thigh:this.nodes.thigh_l.rotation.x,shin:this.nodes.shin_l.rotation.x};this.onEffect(this.root.position.clone().add(new THREE.Vector3(0,14,0)),false);}
- stun(seconds=1,kind='electric'){if(this.dead)return false;this.stunKind=kind;this.stunRemaining=Math.max(this.stunRemaining,seconds);this.stuns++;this.onBeam(null);return true;}
+ destroy(){this.restoreStagger();this.stunRemaining=0;this.weapon.stop();this.onBeam(null);this.dead=true;this.deathTime=0;this.deathPose={y:this.root.position.y,chest:this.nodes.chest.rotation.x,head:this.nodes.head.rotation.x,thigh:this.nodes.thigh_l.rotation.x,shin:this.nodes.shin_l.rotation.x};this.onEffect(this.root.position.clone().add(new THREE.Vector3(0,14,0)),false);}
+ restoreStagger(){if(!this.staggerPose)return;for(const [name,q]of Object.entries(this.staggerPose))this.nodes[name].quaternion.copy(q);this.staggerPose=null;this.root.updateMatrixWorld(true);}
+ stun(seconds=1,kind='electric'){
+  if(this.dead)return false;
+  if(kind==='weakpoint'&&!this.staggerPose){this.staggerPose=Object.fromEntries(['chest','head','upperarm_l','upperarm_r'].map(name=>[name,this.nodes[name].quaternion.clone()]));this.staggerAge=0;}
+  this.stunKind=this.staggerPose?'weakpoint':kind;this.stunRemaining=Math.max(this.stunRemaining,seconds);this.stuns++;this.onBeam(null);return true;
+ }
+ animateStagger(dt,time){
+  if(!this.staggerPose)return;this.staggerAge+=dt;
+  const weight=THREE.MathUtils.smoothstep(this.staggerAge,0,.25)*THREE.MathUtils.smoothstep(this.stunRemaining,0,.4);
+  for(const [name,q]of Object.entries(this.staggerPose)){
+   const node=this.nodes[name];node.quaternion.copy(q);
+   if(name==='chest'){node.rotateX(.28*weight);node.rotateZ(Math.sin(time*27)*.018*weight);}
+   else if(name==='head')node.rotateX(.38*weight);
+   else node.quaternion.slerp(new THREE.Quaternion().setFromEuler(new THREE.Euler(.12,0,name.endsWith('l')?.1:-.1)),weight*.85);
+  }
+  this.root.updateMatrixWorld(true);
+ }
  update(dt,time,targets){
-  if(this.stunRemaining>0&&!this.dead){this.stunRemaining=Math.max(0,this.stunRemaining-dt);this.onBeam(null);return;}
+  if(this.stunRemaining>0&&!this.dead){this.stunRemaining=Math.max(0,this.stunRemaining-dt);if(this.stunRemaining<1e-8)this.stunRemaining=0;this.animateStagger(dt,time);if(this.stunRemaining===0)this.restoreStagger();this.onBeam(null);return;}
   this.plasmaRecoil=Math.max(0,this.plasmaRecoil-dt*1.5);if(this.nodes.plasma_cannon)this.nodes.plasma_cannon.position.z=this.restPositions.plasma_cannon.z-this.plasmaRecoil;this.flash=Math.max(0,this.flash-dt);this.podRecoil=Math.max(0,this.podRecoil-dt*.8);if(this.nodes.rocket_pod)this.nodes.rocket_pod.position.z=this.restPositions.rocket_pod.z-this.podRecoil;
   if(this.dead){
    this.deathTime+=dt;
