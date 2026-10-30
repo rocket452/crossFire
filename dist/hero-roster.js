@@ -1,15 +1,15 @@
 export const HEROES=Object.freeze([
- {id:'volt',name:'Volt Rush',element:'LIGHTNING',role:'Speed & rescue',detail:'Run up buildings, fire charged lightning and dash allies out of danger.',control:'Player or CPU',color:'#81e8f5',icon:'ϟ'},
- {id:'violet',name:'Violet Sentinel',element:'FORCE',role:'Air defense',detail:'Fly into the beam’s path, raise a force shield and launch charged purple orbs.',control:'CPU defender',color:'#bc8bf5',icon:'◈'},
+ {id:'volt',name:'Volt Rush',element:'LIGHTNING',role:'Speed & rescue',detail:'Run to charge lightning, interrupt robot attacks with Overload, and dash allies out of danger.',control:'Player or CPU',color:'#81e8f5',icon:'ϟ'},
+ {id:'violet',name:'Violet Sentinel',element:'FORCE',role:'Air defense',detail:'Absorb hits with a force shield to power a stationary sustained beam. Also fires purple orbs.',control:'CPU defender',color:'#bc8bf5',icon:'◈'},
  {id:'solara',name:'Solara Frost',element:'FIRE / ICE',role:'Missile / plasma defense',detail:'Track incoming missiles with fireballs, ride an ice path and raise protective domes over allies.',control:'CPU defender',color:'#9bdfff',icon:'✦'},
- {id:'rift',name:'Rift Warden',element:'PORTALS',role:'Evacuation & barrage',detail:'Teleport threatened allies to safety and fire sparkling projectiles from portals.',control:'CPU defender',color:'#a6e8bf',icon:'◎'}
+ {id:'rift',name:'Rift Warden',element:'PORTALS',role:'Evacuation & barrage',detail:'Personal teleport, up to three firing portals, and a large transport pair for allies and projectiles.',control:'CPU defender',color:'#a6e8bf',icon:'◎'}
 ]);
-export const DEFAULT_HEROES=Object.freeze(['volt','violet','solara']);
-export function validRoster(ids){return Array.isArray(ids)&&ids.length===3&&new Set(ids).size===3&&ids.every(id=>HEROES.some(h=>h.id===id));}
+export const DEFAULT_HEROES=Object.freeze(['volt','violet','rift']);
+export function validRoster(ids){return Array.isArray(ids)&&ids.length<=3&&new Set(ids).size===ids.length&&ids.every(id=>HEROES.some(h=>h.id===id));}
 export class HeroRoster {
- constructor({storage,onApply=()=>{},onOpen=()=>{},onClose=()=>{}}={}){if(storage===undefined)try{storage=globalThis.localStorage;}catch{storage=null;}this.storage=storage;this.onApply=onApply;this.onOpen=onOpen;this.onClose=onClose;this.active=[...DEFAULT_HEROES];try{const saved=JSON.parse(storage?.getItem('crossfire-hero-roster-v1')||'null');if(validRoster(saved))this.active=[...saved];}catch{}this.draft=[...this.active];}
+ constructor({storage,onApply=()=>{},onOpen=()=>{},onClose=()=>{}}={}){if(storage===undefined)try{storage=globalThis.localStorage;}catch{storage=null;}this.storage=storage;this.onApply=onApply;this.onOpen=onOpen;this.onClose=onClose;this.active=[...DEFAULT_HEROES];try{const saved=JSON.parse(storage?.getItem('crossfire-hero-roster-v2')||'null');if(validRoster(saved))this.active=[...saved];}catch{}this.draft=[...this.active];}
  has(id){return this.active.includes(id);}
- apply(ids){if(!validRoster(ids))return false;this.active=[...ids];try{this.storage?.setItem('crossfire-hero-roster-v1',JSON.stringify(this.active));}catch{}this.onApply(this.active);return true;}
+ apply(ids){if(!validRoster(ids))return false;this.active=[...ids];try{this.storage?.setItem('crossfire-hero-roster-v2',JSON.stringify(this.active));}catch{}this.onApply(this.active);return true;}
  bind(){
   const dialog=document.getElementById('hero-select');this.dialog=dialog;const cards=document.getElementById('hero-cards');
   cards.innerHTML=HEROES.map(h=>`<button type="button" class="hero-card" data-select-hero="${h.id}" aria-pressed="false" style="--hero-accent:${h.color}"><span class="hero-card-art ${h.id}" aria-hidden="true"><span class="hero-portrait"><i></i><b>${h.icon}</b></span><em>${h.icon}</em></span><span class="hero-card-meta">${h.element}<span class="hero-check">✓</span></span><strong>${h.name}</strong><span class="hero-card-role">${h.role}</span><span class="hero-card-detail">${h.detail}</span><span class="hero-card-control">${h.control}</span></button>`).join('');

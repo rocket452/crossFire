@@ -8,6 +8,6 @@ export class RunnerEnergy {
   if(!surface||!moving||dashing||dt<=0||!Number.isFinite(distance)||distance<=0||distance>48*dt+.02)return 0;
   let next=Math.min(RUNNER_ENERGY.capacity,this.amount+distance*RUNNER_ENERGY.perMetre);if(RUNNER_ENERGY.capacity-next<1e-8)next=RUNNER_ENERGY.capacity;const gain=next-this.amount;this.amount=next;this.gained+=gain;return gain;
  }
- spend(){if(!this.ready)return false;this.amount=Math.max(0,this.amount-RUNNER_ENERGY.attackCost);this.spent+=RUNNER_ENERGY.attackCost;this.discharges++;return true;}
+ spend(cost=RUNNER_ENERGY.attackCost){if(!Number.isFinite(cost)||cost<=0||this.amount<cost-1e-8)return false;this.amount=Math.max(0,this.amount-cost);this.spent+=cost;this.discharges++;return true;}
  diagnostics(){return{amount:this.amount,capacity:RUNNER_ENERGY.capacity,attackCost:RUNNER_ENERGY.attackCost,ready:this.ready,gained:this.gained,spent:this.spent,discharges:this.discharges,perMetre:RUNNER_ENERGY.perMetre};}
 }

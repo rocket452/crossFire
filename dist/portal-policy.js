@@ -1,4 +1,4 @@
-const groundUnit=u=>u?.alive&&(u.kind==='tank'||u.kind==='infantry');
+const groundUnit=u=>u?.alive&&(u.kind==='tank'||u.kind==='infantry'||u.kind==='civilian');
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 // Predict real hostile impacts; a locked homing missile warrants an earlier evacuation.
 export function findPortalRescue(threats,units,{canRescue=()=>true,trace=()=>null,impactHorizon=3.5}={}){

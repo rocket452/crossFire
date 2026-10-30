@@ -1,8 +1,8 @@
 import * as THREE from './vendor/three.module.js';
 import {EYE_BEAMS,RobotEyeCycle,segmentSphereFraction} from './robot-eye-cycle.js?v=eye-beams-33';
 export class RobotEyeBeams{
- constructor(scene,{getRobot,getRunner,canAttack,traceWorld,onImpact,onLaunch=()=>{}}){
-  Object.assign(this,{scene,getRobot,getRunner,canAttack,traceWorld,onImpact,onLaunch});this.cycle=new RobotEyeCycle();this.root=new THREE.Group();this.root.name='Robot eye beams';scene.add(this.root);this.dummy=new THREE.Object3D();this.up=new THREE.Vector3(0,1,0);
+ constructor(scene,{redirect=()=>null,getRobot,getRunner,canAttack,traceWorld,onImpact,onLaunch=()=>{}}){
+  Object.assign(this,{redirect,scene,getRobot,getRunner,canAttack,traceWorld,onImpact,onLaunch});this.cycle=new RobotEyeCycle();this.root=new THREE.Group();this.root.name='Robot eye beams';scene.add(this.root);this.dummy=new THREE.Object3D();this.up=new THREE.Vector3(0,1,0);
   const material=(color,opacity)=>new THREE.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,toneMapped:false,blending:THREE.AdditiveBlending});
   const cylinder=new THREE.CylinderGeometry(1,1,1,5,1,true),ball=new THREE.IcosahedronGeometry(1,1);
   this.core=new THREE.InstancedMesh(cylinder,material('#fff1d8',1),EYE_BEAMS.maxBolts);this.glow=new THREE.InstancedMesh(cylinder,material('#ff163c',.6),EYE_BEAMS.maxBolts);this.charges=new THREE.InstancedMesh(ball,material('#ff1737',.85),4);this.guides=new THREE.InstancedMesh(cylinder,material('#ff2548',.16),2);
@@ -18,7 +18,7 @@ export class RobotEyeBeams{
   const aims=this.cycle.step(dt,{alive,target,origin,velocity:runner?.motion.velocity,allowed:this.canAttack(),aligned:direction.dot(desired)>.82});robot.eyeTarget=this.cycle.target;
   for(const aim of aims)for(const from of muzzles){if(this.bolts.length>=EYE_BEAMS.maxBolts)break;const dir=new THREE.Vector3(aim.x,aim.y,aim.z).sub(from).normalize();this.bolts.push({id:++this.sequence,position:from.clone(),dir,age:0});this.history.push({from:from.toArray(),target:{...aim},time});this.onLaunch(from);}
   this.history=this.history.slice(-12);const centers=enabled?this.centers(runner):[],previous=this.previousCenters||centers;
-  for(let i=this.bolts.length-1;i>=0;i--){const b=this.bolts[i],from=b.position.clone(),to=from.clone().addScaledVector(b.dir,EYE_BEAMS.speed*dt);let hit=this.traceWorld(from,to,EYE_BEAMS.radius);
+  for(let i=this.bolts.length-1;i>=0;i--){const b=this.bolts[i],from=b.position.clone(),to=from.clone().addScaledVector(b.dir,EYE_BEAMS.speed*dt);const transit=this.redirect(b,from,to);if(transit){b.position.copy(transit.position);b.dir.copy(transit.direction);b.age+=dt;continue;}let hit=this.traceWorld(from,to,EYE_BEAMS.radius);
    if(enabled)for(let j=0;j<centers.length;j++){const t=segmentSphereFraction(from,to,centers[j],.48+EYE_BEAMS.radius,previous[j]||centers[j]);if(t!==null&&(!hit||t<hit.t))hit={kind:'speedster',t,point:from.clone().lerp(to,t)};}
    if(hit){b.position.set(hit.point.x,hit.point.y,hit.point.z);this.lastHit=hit.kind;if(hit.kind==='speedster'){this.hits++;runner.receiveEyeHit?.(b.position);}else this.coverHits++;this.onImpact(b.position.clone(),hit);this.bolts.splice(i,1);continue;}
    b.position.copy(to);b.age+=dt;if(b.age>EYE_BEAMS.range/EYE_BEAMS.speed){this.expired++;this.bolts.splice(i,1);}

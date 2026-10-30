@@ -1,0 +1,21 @@
+# Defender powers and evacuation update — revision 48
+
+Violet Sentinel stores up to 1,200 actual damage absorbed by his barrier. There is no passive gain. Once the shield has retracted and he has a clear shot at the living robot, the CPU consumes the full reserve for a four-second purple beam (420 damage/second, 1,680 total). His world position and velocity stay fixed during the beam; shield deployment, new orbs and missile-defense shots are suppressed. Existing orbs continue. The weighted character aims both hands at the target. The HUD shows stored energy and remaining beam time. Reset/deselection clears the resource and effect.
+
+Volt's Overload uses 50 of 100 charge, deals 450 damage, stuns for one second and has a 15-second simulation-time cooldown. Q or the left-side STUN button activates it against the robot within 90m and clear line of sight. Invalid/blocked targets consume nothing. CPU Volt also uses it when an attack is preparing. It cancels the cannon charge/beam, pending pod launches and unlaunched plasma warnings, then advances to the next weapon through the existing five-second recovery. Already airborne projectiles persist. A bounded 144-segment core/glow pool wraps the robot in electrical arcs. Death, rebuild and deselection clean up relevant states.
+
+Evacuation excludes both armies' tanks, soldiers and military helicopters; the original battle retains 8 tanks, 36 soldiers and 4 military helicopters. The Chinook is excluded from robot target selection while boarding or below 15m. Each departure rolls one 25% chance at that altitude; eligibility remains stable for the flight and still requires line of sight. Returning/off-map aircraft cannot be targeted. This is target-selection protection, not general invulnerability to stray projectiles.
+
+Rift Warden is in the default team with Volt and Violet. The menu supports up to three heroes. Personal teleport, a maximum of three attack portals, and one 12-second large transport pair are separate abilities. The pair moves civilians and allies and redirects missiles, shells, plasma, eye bolts and hero projectiles. Projectile exits use the upper portion of the portal to clear newly transported ground units. Continuous beams are not redirected.
+
+## Verification
+
+- `hero-powers-test.mjs`: barrier-only resource, threshold/cap/consume/reset, duration, half-bar spending, all three arsenal interruption paths, preservation of flying plasma and missiles.
+- `hero-powers-browser.cjs`: desktop and 390px touch viewport; real Q/tap inputs, 49-charge rejection, exact 50 cost, cooldown rejection, one-second stun, visible 144-segment effect, beam/pod/plasma cancellation and CPU use. Actual BeamCombat shield collisions supply 1,200 energy; the actual robot loses 1,680 HP during a stationary four-second beam. Checks shield/orb exclusion, VFX, reset, army counts, altitude gating and one chance roll per flight.
+- `evacuation-policy-test.mjs`, `evacuation-browser.cjs`: category rotation/LOS, safe boarding/low flight, original-scene isolation, 30-second alternating waves, routes/boarding/departure, live combat, failure/rebuild and scene switching.
+- `rift-pair-test.mjs`, `rift47-browser.cjs`: portal plane/cover/expiry, roster persistence, three concurrent attack portals, personal travel, natural civilian rescues, staged tank/civilian transport, real guided missile and ballistic plasma redirection, disable/reset. The tank fixture is created only by the test in the army-free evacuation scene.
+- Runner energy/charge, missile, eye weapon, plasma, roster, Violet inertia/flight-pose unit suites pass. Runner energy browser regression checks movement earning, paid normal attacks, free jump/dash, control handoff and CPU recharge.
+- `runner-left-controls-browser.cjs`: 390px phone, 320px narrow phone, landscape fullscreen and desktop. All five ability buttons and the movement stick are contained, non-overlapping, at least 44px, and on the left; simultaneous movement/fire/ability input and cancellation remain intact.
+- Screenshots inspected for the large purple beam and full-body robot electrical effect. Desktop and emulated phone browser runs use Chromium/SwiftShader; physical phone FPS and thermal behavior are not measured.
+
+The public repository contains code/tests only. Licensed runtime character files remain in the private Site build.

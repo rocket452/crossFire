@@ -49,3 +49,7 @@
 .scene-picker{font-size:9px;display:flex;gap:8px;align-items:center}.scene-picker select{max-width:170px;background:#d9e9e6;color:#294f53;padding:10px 6px;border:1px solid #759d9d;border-radius:5px}#evac-status{padding:12px;background:#163e35;color:#c8fff0;font-size:11px;line-height:1.5}@media(max-width:700px){.header-actions{flex-wrap:wrap;justify-content:flex-end}.scene-picker{font-size:0}.scene-picker select{font-size:11px;max-width:135px}header{height:auto;min-height:80px}}
 
 .presets button[hidden]{display:none}
+
+#runner-stun{border-color:#65dcff;background:#244458;color:#c2f4ff;font-size:7px}#runner-stun.ready{background:#a6f4ff;color:#123346;box-shadow:0 0 9px #65dfff77}#runner-stun:disabled{opacity:.65}#violet-energy-status{color:#d5aaff}.factions[hidden]{display:none}
+@media(max-width:700px),(pointer:coarse){.runner-movement{position:relative}.runner-actions #runner-stun{position:absolute;left:100px;bottom:22px}}
+@media(max-height:500px) and (pointer:coarse){.runner-actions #runner-stun{position:static}}

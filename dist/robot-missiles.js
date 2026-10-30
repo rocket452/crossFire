@@ -3,8 +3,8 @@ import {segmentBoxFraction} from './combat-collision.js?v=robot-1';
 
 // Bounded, swept-collision missiles. An intercepted warhead has no damaging blast.
 export class RobotMissiles {
- constructor(scene,model,{getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst=()=>{},onTrail=()=>{},onLaunch=()=>{},onSalvo=()=>{},autoFire=true,canLaunch=()=>true}){
-  Object.assign(this,{scene,getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst,onTrail,onLaunch,onSalvo,autoFire,canLaunch});
+ constructor(scene,model,{redirect=()=>null,getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst=()=>{},onTrail=()=>{},onLaunch=()=>{},onSalvo=()=>{},autoFire=true,canLaunch=()=>true}){
+  Object.assign(this,{redirect,scene,getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst,onTrail,onLaunch,onSalvo,autoFire,canLaunch});
   this.template=model.scene;this.forward=new THREE.Vector3(0,0,1);this.flameGeometry=new THREE.ConeGeometry(.24,1.3,6);this.flameGeometry.rotateX(-Math.PI/2);this.flameMaterial=new THREE.MeshBasicMaterial({color:'#ffaf39',toneMapped:false});this.reset();
  }
  reset(){for(const m of this.missiles||[])this.scene.remove(m.mesh);this.missiles=[];this.clock=0;this.cooldown=5.2;this.pending=0;this.launchClock=0;this.launched=0;this.salvos=0;this.intercepted=0;this.impacts=0;this.expired=0;this.byHero={violet:0,volt:0,solara:0,other:0};this.sequence=0;this.targetIndex=0;}
@@ -43,7 +43,7 @@ export class RobotMissiles {
    // Clear the shoulder and climb above most roofs before steering down at a target.
    const goal=m.age<2.25?m.origin.clone().lerp(m.targetPoint,.35).setY(Math.max(32,m.origin.y+12)):m.targetPoint;
    const desired=goal.clone().sub(m.position).normalize();m.direction.lerp(desired,1-Math.exp(-(m.age<.5?1.4:2.4)*dt)).normalize();m.velocity.copy(m.direction).multiplyScalar(m.speed);
-   const end=m.position.clone().addScaledVector(m.velocity,dt),hit=this.traceWorld(m.position,end,m.radius);
+   const end=m.position.clone().addScaledVector(m.velocity,dt),transit=this.redirect(m,m.position,end);if(transit){m.position.copy(transit.position);m.previous.copy(m.position);m.direction.copy(transit.direction);m.velocity.copy(m.direction).multiplyScalar(m.speed);m.lockLost=true;m.age=Math.max(3,m.age);m.targetPoint.copy(m.position).addScaledVector(m.direction,150);continue;}const hit=this.traceWorld(m.position,end,m.radius);
    if(hit){m.position.set(hit.point.x,hit.point.y,hit.point.z);m.alive=false;this.impacts++;this.scene.remove(m.mesh);this.onImpact(m.position,hit,m.id);continue;}
    m.position.copy(end);m.mesh.quaternion.setFromUnitVectors(this.forward,m.direction);m.flame.scale.setScalar(.8+Math.sin(time*27+m.age*3)*.2);
    m.trail-=dt;if(m.trail<=0){this.onTrail(m.position,m.direction);m.trail=.09;}

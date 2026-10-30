@@ -3,9 +3,19 @@ export class RobotArsenal {
  constructor({plasma=false}={}){this.plasma=plasma;this.warningSeconds=2;this.delaySeconds=5;this.startupSeconds=5;this.reset();}
  reset(){this.phase='startup';this.nextPhase='beam';this.elapsed=0;this.clock=0;this.completedBeams=0;this.turns=[];this.transitions=[];}
  rest(nextPhase){this.phase='recovery';this.nextPhase=nextPhase;this.elapsed=0;this.transitions.push({event:'rest',time:this.clock,next:nextPhase});this.transitions=this.transitions.slice(-18);}
- beforeBeam(robot,pod,artillery){robot.beamAllowed=this.phase==='beam'&&!pod.pending&&!pod.missiles.some(m=>m.alive)&&!artillery?.busy;}
+ preparing(robot,artillery){return robot.weapon.phase==='charging'||this.phase==='warning'||!!artillery?.shells.some(s=>s.state==='warning');}
+ interrupt(robot,pod,artillery){
+  const phase=this.phase;
+  if(['charging','firing'].includes(robot.weapon.phase)){robot.weapon.phase='cooling';robot.weapon.elapsed=0;robot.weapon.remaining=robot.weapon.coolSeconds;robot.weapon.damageClock=0;robot.aiming=false;robot.target=null;robot.onBeam(null);}
+  pod.pending=0;
+  for(const shell of artillery?.shells||[])if(shell.state==='warning'){artillery.removeShell(shell);artillery.cancelled++;}
+  if(artillery){artillery.shells=artillery.shells.filter(s=>s.state!=='warning');artillery.muzzleGlow.visible=false;}
+  this.completedBeams=robot.weapon.bursts;
+  if(['beam','warning','salvo','clear','plasma','plasma-clear'].includes(phase))this.rest(phase==='beam'?'warning':['warning','salvo','clear'].includes(phase)?(this.plasma?'plasma':'beam'):'beam');
+ }
+ beforeBeam(robot,pod,artillery){robot.beamAllowed=!robot.stunRemaining&&this.phase==='beam'&&!pod.pending&&!pod.missiles.some(m=>m.alive)&&!artillery?.busy;}
  update(dt,robot,pod,artillery){
-  this.clock+=dt;if(robot.dead){this.phase='off';this.nextPhase=null;this.elapsed=0;return;}this.elapsed+=dt;
+  if(robot.stunRemaining>0)return;this.clock+=dt;if(robot.dead){this.phase='off';this.nextPhase=null;this.elapsed=0;return;}this.elapsed+=dt;
   if(this.phase==='plasma'){if(artillery?.beginVolley()){this.turns.push({weapon:'plasma',time:this.clock});this.phase='plasma-clear';this.elapsed=0;}else if(this.elapsed>1)this.rest('beam');}
   else if(this.phase==='plasma-clear'&&!artillery?.busy)this.rest('beam');
   else if(this.phase==='beam'&&robot.weapon.bursts>this.completedBeams&&robot.weapon.phase==='cooling'){
