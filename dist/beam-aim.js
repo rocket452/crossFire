@@ -1,4 +1,4 @@
-// One aim model drives the fired sweep and its non-damaging warning corridor.
+// Shared cannon-ray geometry; the warning spread surrounds the actual tracked barrel.
 export const BEAM_SWEEP=.13;
 export function sweptBeamTarget(target,origin,angle){
  const dx=target.x-origin.x,dz=target.z-origin.z,c=Math.cos(angle),s=Math.sin(angle);
@@ -19,4 +19,10 @@ export function beamWarningPlan(target,origin,shoulder){
   const ray=cannonRay(shoulder,sweptBeamTarget(target,origin,angle));
   return{angle,...ray,end:warningEndpoint(ray.from,ray.direction)};
  })};
+}
+
+// The warning uses the real, rate-limited barrel, including while it is catching up.
+export function trackedBeamWarningPlan(from,direction,target){
+ const distance=Math.hypot(target.x-from.x,target.y-from.y,target.z-from.z);
+ return{target:{x:from.x+direction.x*distance,y:from.y+direction.y*distance,z:from.z+direction.z*distance},trackingTarget:{...target},sweep:BEAM_SWEEP,radius:1.05,rays:[-BEAM_SWEEP,0,BEAM_SWEEP].map(angle=>{const dir=sweptBeamTarget(direction,{x:0,y:0,z:0},angle);return{angle,from:{x:from.x,y:from.y,z:from.z},direction:dir,end:warningEndpoint(from,dir)};})};
 }

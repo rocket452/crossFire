@@ -32,7 +32,7 @@ for(let i=1;i<=450;i++){
   const distance=Math.hypot(center.from.x-payload.from.x,center.from.y-payload.from.y,center.from.z-payload.from.z);
   assert(distance<.001,'preview must start at the physical cannon muzzle');
   assert(center.direction.x*payload.direction.x+center.direction.y*payload.direction.y+center.direction.z*payload.direction.z>1-1e-8,'preview does not match actual barrel axis');
-  assert.deepEqual(payload.plan.target,walker.beamAim);
+  assert.deepEqual(payload.plan.trackingTarget,walker.beamAim);
   assert.equal(payload.plan.rays[0].angle,-BEAM_SWEEP);assert.equal(payload.plan.rays[2].angle,BEAM_SWEEP);
   assert(payload.plan.rays.every(r=>Object.values(r.end).every(Number.isFinite)));
   if(payload.state.charge>.5)assert(walker.gazeDiagnostics().errorDegrees<2.5);

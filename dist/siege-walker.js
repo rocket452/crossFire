@@ -1,5 +1,6 @@
+import {CannonTracking,CANNON_TRACKING} from './cannon-tracking.js?v=beam-tracking-61';
 import * as THREE from './vendor/three.module.js';
-import {BEAM_SWEEP,sweptBeamTarget,beamWarningPlan} from './beam-aim.js?v=telegraph-4';
+import {trackedBeamWarningPlan} from './beam-aim.js?v=beam-tracking-61';
 import {BeamCycle} from './beam-cycle.js?v=beam-3';
 import {WalkerGait,solveLegKnee,angleDelta} from './walker-gait.js?v=walk-2';
 
@@ -8,7 +9,7 @@ export class SiegeWalker {
  constructor(scene,gltf,spec,{onFire,onDebris,onEffect,onFootfall=()=>{},onBeam=()=>{}}){
   Object.assign(this,{scene,spec,onFire,onDebris,onEffect,onFootfall,onBeam});
   this.root=new THREE.Group();this.root.name='Siege Walker';scene.add(this.root);
-  this.nodes={};this.meshes={};this.boxes={};this.restPositions={};this.wrecks=[];this.gait=new WalkerGait();this.weapon=new BeamCycle();
+  this.nodes={};this.meshes={};this.boxes={};this.restPositions={};this.wrecks=[];this.gait=new WalkerGait();this.cannonTracking=new CannonTracking();this.weapon=new BeamCycle();
   this.ik={hip:new THREE.Vector3(),upper:new THREE.Vector3(),lower:new THREE.Vector3(),down:new THREE.Vector3(0,-1,0),axis:new THREE.Vector3(0,1,0),parent:new THREE.Quaternion(),yaw:new THREE.Quaternion(),rotation:new THREE.Quaternion()};
   gltf.scene.updateMatrixWorld(true);
   for(const p of spec.parts){
@@ -31,7 +32,7 @@ export class SiegeWalker {
  reset(){
   for(const w of this.wrecks){w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
   this.wrecks=[];this.staggerPose=null;this.stunRemaining=0;this.stunKind=null;this.stuns=0;this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;this.plasmaRecoil=0;this.plasmaCharging=false;this.plasmaAim=null;this.beamAllowed=true;this.podWarning={active:false,progress:0,pulse:false};
-  this.weapon.reset();this.eyeTarget=null;this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
+  this.cannonTracking.reset();this.weapon.reset();this.eyeTarget=null;this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
   for(const [name,n]of Object.entries(this.nodes)){n.rotation.set(0,0,0);n.position.copy(this.restPositions[name]);}
   if(this.nodes.rocket_pod)this.nodes.rocket_pod.rotation.x=-Math.PI/4;if(this.nodes.plasma_cannon)this.nodes.plasma_cannon.rotation.x=-Math.PI/4;
   this.walkPose=this.gait.reset();this.applyWalkPose(this.walkPose);
@@ -79,11 +80,11 @@ export class SiegeWalker {
   const available=targets.filter(u=>u.alive&&u.kind!=='robot'&&u.id!==this.protectedUnit);
   const locked=['charging','firing'].includes(this.weapon.phase);
   if(!locked&&available.length&&(!this.target?.alive||!available.some(u=>u.id===this.target.id)||(this.weapon.phase==='ready'&&!this.aiming))){const index=this.targetIndex++,air=available.filter(u=>u.kind==='helicopter'),ground=available.filter(u=>u.kind!=='helicopter');this.target=this.targetSelector?this.targetSelector(available):index%2===0&&air.length?air[Math.floor(index/2)%air.length]:ground.length?ground[(index*3)%ground.length]:available[index%available.length];this.aiming=true;}
-  if(locked&&this.target?.kind==='helicopter'&&this.target.alive&&this.target.shapes[0])this.beamAim={...this.target.shapes[0].center};
+  const liveTarget=available.find(u=>u.id===this.target?.id);if(liveTarget)this.target=liveTarget;
+  if(locked&&liveTarget?.shapes[0])this.beamAim={...liveTarget.shapes[0].center};
   let center=locked?this.beamAim:available.length?this.target?.shapes[0]?.center:null;
   if(this.plasmaCharging&&this.plasmaAim)center=this.plasmaAim;
-  else if(!locked&&this.eyeTarget)center=this.eyeTarget;
-  if(center&&this.weapon.phase==='firing')center=sweptBeamTarget(center,this.beamSweepOrigin||this.root.position,Math.sin(this.weapon.elapsed/this.weapon.fireSeconds*Math.PI*2)*BEAM_SWEEP);
+  else if(!locked&&this.eyeTarget&&this.beamAllowed===false)center=this.eyeTarget;
   const origin=this.plasmaCharging?this.nodes.plasma_cannon.getWorldPosition(new THREE.Vector3()):this.root.position;const desiredYaw=center?Math.atan2(center.x-origin.x,center.z-origin.z):this.gait.yaw;
   this.walkPose=this.gait.update(dt,time,desiredYaw);this.applyWalkPose(this.walkPose);
   for(const step of this.walkPose.landings)this.onFootfall(step);
@@ -96,15 +97,16 @@ export class SiegeWalker {
    this.targetPoint=new THREE.Vector3(center.x,center.y,center.z);
    const relative=angleDelta(desiredYaw,this.root.rotation.y+this.nodes.pelvis.rotation.y);
    const twist=THREE.MathUtils.clamp(relative,-1.45,1.45);
-   this.nodes.waist.rotation.y+=(twist-this.nodes.waist.rotation.y)*(1-Math.exp(-4*dt));
+   const waistStep=(twist-this.nodes.waist.rotation.y)*(1-Math.exp(-4*dt)),waistLimit=THREE.MathUtils.degToRad(CANNON_TRACKING.waistDegreesPerSecond)*dt;
+   this.nodes.waist.rotation.y+=(locked||this.beamAllowed!==false)?THREE.MathUtils.clamp(waistStep,-waistLimit,waistLimit):waistStep;
    const aimError=angleDelta(desiredYaw,this.root.rotation.y+this.nodes.pelvis.rotation.y+this.nodes.waist.rotation.y);
-   // Align the actual barrel axis, including the cannon shoulder's lateral offset.
+   // Follow live positions without predicting ahead of an instantaneous beam.
    this.root.updateMatrixWorld(true);
-   const localTarget=this.nodes.chest.worldToLocal(this.targetPoint.clone()).sub(this.nodes.upperarm_r.position).normalize();
-   this.nodes.upperarm_r.quaternion.setFromUnitVectors(this.ik.down,localTarget);
-   this.nodes.forearm_r.rotation.set(0,0,0);
-   aligned=Math.abs(aimError)<.25;
-  }else this.nodes.upperarm_r.rotation.x=-.10-swing*.18;
+   const shoulder=this.nodes.upperarm_r.getWorldPosition(new THREE.Vector3()),desired=this.targetPoint.clone().sub(shoulder).normalize(),initial=new THREE.Vector3(0,-1,0).transformDirection(this.nodes.forearm_r.matrixWorld),direction=this.cannonTracking.update(dt,desired,initial,this.weapon.phase==='firing'||this.weapon.phase==='charging'&&this.weapon.elapsed+dt>=this.weapon.chargeSeconds-1e-9);
+   const localDirection=direction.clone().applyQuaternion(this.nodes.chest.getWorldQuaternion(new THREE.Quaternion()).invert());
+   this.nodes.upperarm_r.quaternion.setFromUnitVectors(this.ik.down,localDirection);this.nodes.forearm_r.rotation.set(0,0,0);
+   aligned=Math.abs(aimError)<.25&&this.cannonTracking.errorDegrees<CANNON_TRACKING.startErrorDegrees;
+  }else{this.nodes.upperarm_r.rotation.x=-.10-swing*.18;this.cannonTracking.reset();}
   this.trackHead(center,dt);
   const state=this.weapon.step(dt,!!center&&aligned&&this.beamAllowed!==false);
   if(state.events.includes('charging')){this.beamAim={...center};this.beamSweepOrigin={x:this.root.position.x,y:this.root.position.y,z:this.root.position.z};}
@@ -113,8 +115,7 @@ export class SiegeWalker {
   this.root.updateMatrixWorld(true);
   const muzzle=this.nodes.forearm_r.localToWorld(new THREE.Vector3(0,-3.9,0));
   const direction=new THREE.Vector3(0,-1,0).transformDirection(this.nodes.forearm_r.matrixWorld);
-  const shoulder=this.nodes.upperarm_r.getWorldPosition(new THREE.Vector3());
-  const plan=state.phase==='charging'&&this.beamAim?beamWarningPlan(this.beamAim,this.beamSweepOrigin,shoulder):null;
+  const plan=state.phase==='charging'&&this.beamAim?trackedBeamWarningPlan(muzzle,direction,this.beamAim):null;
   this.onBeam({state,from:muzzle,direction,time,plan,aimTarget:this.targetPoint,targetUnit:this.target,attackId:this.weapon.bursts+(state.phase==='charging'?1:0),protectedUnit:this.protectedUnit});
   const hp=this.combatUnit?this.combatUnit.health/this.combatUnit.maxHealth:1;
   for(const [name,m]of Object.entries(this.meshes)){
@@ -203,5 +204,5 @@ export class SiegeWalker {
   }return result;
  }
  plasmaForwardError(){const node=this.nodes.plasma_cannon;if(!node)return null;const a=new THREE.Vector3(0,0,1).transformDirection(node.matrixWorld),b=new THREE.Vector3(0,0,1).transformDirection(node.parent.matrixWorld);a.y=b.y=0;a.normalize();b.normalize();return THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp(a.dot(b),-1,1)));}
- diagnostics(){return{stunRemaining:this.stunRemaining,stuns:this.stuns,health:this.combatUnit?.health,maxHealth:this.combatUnit?.maxHealth,alive:!this.dead,position:this.root.position.toArray(),triangles:this.spec.triangles,parts:this.spec.parts.length,hits:{...this.hits},damageByTeam:[...this.damageByTeam],heroDamage:this.heroDamage,returnShots:this.returnShots,broken:this.broken,wreckBodies:this.wrecks.length,target:this.target?.id,gait:this.gait.diagnostics(),pod:{angleDegrees:45,warning:{...this.podWarning},emissive:this.meshes.rocket_pod?.material.emissiveIntensity},plasmaCannon:{charging:this.plasmaCharging,forwardErrorDegrees:this.plasmaForwardError(),angleDegrees:this.nodes.plasma_cannon?THREE.MathUtils.radToDeg(Math.asin(new THREE.Vector3(0,0,1).transformDirection(this.nodes.plasma_cannon.matrixWorld).y)):null},weapon:this.weapon.diagnostics(),gaze:this.gazeDiagnostics()};}
+ diagnostics(){return{cannonTracking:this.cannonTracking.diagnostics(),stunRemaining:this.stunRemaining,stuns:this.stuns,health:this.combatUnit?.health,maxHealth:this.combatUnit?.maxHealth,alive:!this.dead,position:this.root.position.toArray(),triangles:this.spec.triangles,parts:this.spec.parts.length,hits:{...this.hits},damageByTeam:[...this.damageByTeam],heroDamage:this.heroDamage,returnShots:this.returnShots,broken:this.broken,wreckBodies:this.wrecks.length,target:this.target?.id,gait:this.gait.diagnostics(),pod:{angleDegrees:45,warning:{...this.podWarning},emissive:this.meshes.rocket_pod?.material.emissiveIntensity},plasmaCannon:{charging:this.plasmaCharging,forwardErrorDegrees:this.plasmaForwardError(),angleDegrees:this.nodes.plasma_cannon?THREE.MathUtils.radToDeg(Math.asin(new THREE.Vector3(0,0,1).transformDirection(this.nodes.plasma_cannon.matrixWorld).y)):null},weapon:this.weapon.diagnostics(),gaze:this.gazeDiagnostics()};}
 }
