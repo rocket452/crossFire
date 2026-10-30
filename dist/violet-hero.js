@@ -3,7 +3,7 @@ import {BarrierCapacitor,VIOLET_BEAM} from './hero-powers.js?v=powers-48';
 import {violetBeamEffect} from './hero-power-effects.js?v=powers-48';
 import {ShieldShake,SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
 import {advanceVioletFlight,VIOLET_TUNING} from './violet-flight.js?v=violet-inertia-11';
-import {RescuePolicy,interceptPoint} from './hero-defense.js?v=hero-5';
+import {RescuePolicy,interceptPoint} from './hero-defense.js?v=evacuation-57';
 
 import {VioletFlightPose} from './violet-flight-pose.js?v=violet-pose-26';
 import {HumanoidCharacter} from './humanoid-character.js?v=characters-24';
@@ -29,8 +29,8 @@ export class VioletHero {
  setEnabled(enabled){this.enabled=!!enabled;this.reset();this.root.visible=this.vfx.visible=this.enabled;}
  receiveThreat(payload){
   if(this.enabled===false||this.capacitor.remaining>0){this.threat=null;return;}
-  if(!payload||!['charging','firing'].includes(payload.state.phase)||payload.targetUnit?.kind!=='helicopter'||!payload.targetUnit.alive){this.threat=null;return;}
-  if(!this.policy.decide(payload.attackId,'helicopter')){this.threat=null;return;}
+  if(!payload||!['charging','firing'].includes(payload.state.phase)||!['helicopter','civilian'].includes(payload.targetUnit?.kind)||!payload.targetUnit.alive){this.threat=null;return;}
+  if(!this.policy.decide(payload.attackId,payload.targetUnit.kind)){this.threat=null;return;}
   this.threat={from:payload.from.clone(),direction:payload.direction.clone(),target:{...payload.aimTarget},unit:payload.targetUnit,attackId:payload.attackId};
  }
  safeGoal(p){for(const b of this.buildings)if(Math.abs(p.x-b.x)<6.2&&Math.abs(p.z-b.z)<6.2)p.y=Math.max(p.y,b.floors*3+1.4);p.y=Math.max(7,p.y);return p;}

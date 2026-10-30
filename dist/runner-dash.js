@@ -1,16 +1,16 @@
 import {segmentBoxFraction,traceImpact} from './combat-collision.js?v=robot-1';
 import {terrainHeight,terrainNormal} from './runner-motion.js?v=runner-6';
-import {findPortalRescue} from './portal-policy.js?v=plasma-18';
+import {findPortalRescue} from './portal-policy.js?v=evacuation-57';
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z),copy=p=>({x:p.x,y:p.y,z:p.z});
 export const DASH={range:10,radius:5,speed:60,cooldown:5};
-const foot=u=>u.kind==='tank'?copy(u.entity.root.position):{x:u.entity.x,y:u.entity.y,z:u.entity.z};
+const foot=u=>u.entity.root?copy(u.entity.root.position):{x:u.entity.x,y:u.entity.y,z:u.entity.z};
 function worldHalf(size,q={x:0,y:0,z:0,w:1}){const {x,y,z,w}=q,a=size.x,b=size.y,c=size.z;return{x:Math.abs(1-2*y*y-2*z*z)*a+Math.abs(2*x*y-2*z*w)*b+Math.abs(2*x*z+2*y*w)*c,y:Math.abs(2*x*y+2*z*w)*a+Math.abs(1-2*x*x-2*z*z)*b+Math.abs(2*y*z-2*x*w)*c,z:Math.abs(2*x*z-2*y*w)*a+Math.abs(2*y*z+2*x*w)*b+Math.abs(1-2*x*x-2*y*y)*c};}
-import {RunnerRescues} from './runner-rescues.js?v=runner-feel-23';
+import {RunnerRescues} from './runner-rescues.js?v=evacuation-57';
 export class RunnerDash {
  constructor({getUnits=()=>[],getSections=()=>[],getThreats=()=>[],traceThreat=()=>null,onMoveUnit=()=>{},onEvent=()=>{},onRescue=()=>{}}={}){Object.assign(this,{getUnits,getSections,getThreats,traceThreat,onMoveUnit,onEvent});this.rescues=new RunnerRescues({getThreats,traceThreat,onRescue});this.reset();}
  reset(){this.cancel();this.rescues.reset();this.cooldown=0;this.dashes=0;this.carried=0;this.cpuRescues=0;this.last=null;this.scan=0;this.trails=[];}
  cancel(){if(this.active)for(const a of this.active.actors)if(a.unit)a.unit.dashCarried=false;this.active=null;this.trails=[];}
- allies(motion){return this.getUnits().filter(u=>u.alive&&['tank','infantry'].includes(u.kind)&&!u.dashCarried&&dist(foot(u),motion.position)<=DASH.radius);}
+ allies(motion){return this.getUnits().filter(u=>u.alive&&['tank','infantry','civilian'].includes(u.kind)&&!u.dashCarried&&dist(foot(u),motion.position)<=DASH.radius);}
  actors(motion){return[{position:copy(motion.position),half:{x:.38,y:1.3,z:.38}},...this.allies(motion).map(u=>({unit:u,position:foot(u),half:u.kind==='tank'?worldHalf({x:1.85,y:1.4,z:2.4},u.entity.root.quaternion):{x:.42,y:1,z:.52}}))];}
  nearby(actors){return this.getSections().filter(c=>!c.hidden&&['intact','settled','dynamic'].includes(c.state)&&actors.some(a=>{const p=c.body?.position||c;return Math.abs(p.x-a.position.x)<DASH.range+Math.hypot(...c.size)/2+4&&Math.abs(p.z-a.position.z)<DASH.range+Math.hypot(...c.size)/2+4&&Math.abs(p.y-a.position.y)<Math.hypot(...c.size)/2+5;}));}
  next(actors,direction,length,sections){

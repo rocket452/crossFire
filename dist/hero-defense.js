@@ -16,7 +16,7 @@ export class RescuePolicy {
  constructor(){this.reset();}
  reset(){this.lastAttack=null;this.opportunities=0;this.responses=0;this.accepted=false;}
  decide(attackId,kind){
-  if(kind!=='helicopter')return false;
+  if(!['helicopter','civilian'].includes(kind))return false;
   if(this.lastAttack!==attackId){this.lastAttack=attackId;this.opportunities++;this.accepted=this.opportunities%5!==0;if(this.accepted)this.responses++;}
   return this.accepted;
  }

@@ -1,6 +1,6 @@
-import {findPortalRescue} from './portal-policy.js?v=plasma-18';
+import {findPortalRescue} from './portal-policy.js?v=evacuation-57';
 const copy=p=>({x:p.x,y:p.y,z:p.z});
-const foot=u=>u.kind==='tank'?u.entity.root.position:u.entity;
+const foot=u=>u.entity.root?u.entity.root.position:u.entity;
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 const shapes=u=>u.shapes.map(s=>({center:copy(s.center),radius:Math.max(s.half.x,s.half.y,s.half.z)}));
 const inside=(point,radius,list,margin=0)=>list.some(s=>distance(point,s.center)-s.radius<radius+margin);
