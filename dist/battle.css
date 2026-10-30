@@ -59,3 +59,13 @@
 .robot-readout #weak-point-status{margin-top:7px;font-size:8px;line-height:1.35;letter-spacing:.45px;color:#8cf8e8}.robot-readout #weak-point-status[data-state=final]{color:#ff9aef}.robot-readout #weak-point-status[data-state=stunned]{color:#e7fbff}.robot-readout #weak-point-status[data-state=cooldown]{color:#b3bdc2}@media(max-width:700px){.robot-readout #weak-point-status{font-size:7px;letter-spacing:.15px}}
 /* Reserve space beneath the boss meter for the weak-point line. */
 .portal-readout,.solara-readout{top:195px}.has-rift .solara-readout{top:272px}@media(max-width:700px){.portal-readout,.solara-readout{top:205px}.has-rift .solara-readout{top:277px}}
+/* Device input chooses controls independently of responsive layout breakpoints. */
+html[data-input-mode=desktop] .runner-bottom,html[data-input-mode=desktop] .pilot-bottom,html[data-input-mode=desktop] .touch-height{display:none!important}
+html[data-input-mode=desktop] .runner-mobile,html[data-input-mode=desktop] .mobile-flight-help{display:none!important}
+html[data-input-mode=desktop] .runner-desktop{display:inline!important}
+html[data-input-mode=desktop] .runner-help>.runner-desktop{display:flex!important;justify-content:center;flex-wrap:wrap;gap:9px 16px;max-width:850px;margin:0 auto;padding:11px 15px;border:1px solid #8ddde24d;border-radius:7px;background:#102e3de0;font-size:10px;letter-spacing:.25px;text-shadow:none}
+html[data-input-mode=desktop] .runner-help>.runner-desktop>span{white-space:nowrap}html[data-input-mode=desktop] .runner-help .runner-desktop kbd{display:inline-block;padding:4px 6px;margin-right:4px;border:1px solid #8ddde266;border-radius:3px;color:#f0ffff;font:600 10px monospace;background:#244854}
+html[data-input-mode=desktop] .runner-help .runner-desktop small{flex-basis:100%;font-size:10px;line-height:1.5;letter-spacing:0;color:#acd1d8}
+html[data-input-mode=desktop] .runner-help{bottom:15px;left:18px;right:18px}html[data-input-mode=desktop] .desktop-flight-help{display:inline!important}
+html[data-input-mode=touch] .runner-desktop,html[data-input-mode=touch] .desktop-flight-help{display:none!important}
+html[data-input-mode=touch] .runner-mobile,html[data-input-mode=touch] .mobile-flight-help{display:inline!important}
