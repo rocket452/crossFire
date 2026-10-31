@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import * as THREE from '../dist/vendor/three.module.js';
+import {RunnerHitEffect,LIGHTNING_HIT} from '../dist/runner-hit-effect.js';
+const scene=new THREE.Scene(),fx=new RunnerHitEffect(scene),from=new THREE.Vector3(0,2,10),point=new THREE.Vector3(0,2,1.1);
+const enemy=id=>{const root=new THREE.Group(),armor=new THREE.MeshStandardMaterial({color:'#687177',emissive:'#000000',emissiveIntensity:.2}),reactor=new THREE.MeshStandardMaterial({emissive:'#ff3010',emissiveIntensity:2});const mesh=new THREE.Mesh(new THREE.BoxGeometry(2,4,2),armor);mesh.position.y=2;root.add(mesh,new THREE.Mesh(new THREE.BoxGeometry(.3,.3,.3),reactor));scene.add(root);return{id,kind:'robot',entity:{root},alive:true,maxHealth:1000,armor,reactor,mesh};};
+for(const dt of[1/30,1/60,1/120]){
+ fx.clear();const u=enemy('drone-'+dt),original=u.armor.emissive.clone();fx.update(dt,0,[{unit:u,damage:0,point}],from);assert.equal(fx.diagnostics().targets,0);fx.update(dt,0,[{unit:{...u,kind:'civilian'},damage:5,point}],from);assert.equal(fx.diagnostics().targets,0);
+ for(let i=0;i<Math.ceil(2/dt);i++)fx.update(dt,i*dt,[{unit:u,damage:150*dt,point}],from);
+ let d=fx.diagnostics();assert.equal(d.targets,1);assert(d.segments>0&&d.sparks>0&&d.draws===6);assert(d.bursts<=22,'sustained damage does not create a burst per frame');assert(d.bursts>=16);assert(Math.abs(d.contacts[0].damage-300)<1e-7,'tracks paid damage without changing it');assert(u.armor.emissive.getHex()!==0);assert.equal(u.reactor.emissive.getHexString(),'ff3010','existing reactor color preserved');assert.equal(u.reactor.emissiveIntensity,2);
+ const before=[...fx.targets.values()][0].point.clone();u.entity.root.position.x=2;fx.update(dt,3);const after=[...fx.targets.values()][0].point;assert(Math.abs(after.x-before.x-2)<1e-7,'contact follows moving target part');
+ for(let i=0;i<Math.ceil(.6/dt);i++)fx.update(dt,3+i*dt);d=fx.diagnostics();assert.equal(d.targets,0);assert.equal(d.draws,0);assert.equal(d.sparks,0);assert(u.armor.emissive.equals(original));assert.equal(u.armor.emissiveIntensity,.2);
+ fx.update(dt,4,[{unit:u,damage:5,point,anchor:u.mesh,weakPoint:true}],from);assert.equal(fx.targets.get(u.id).anchor,u.mesh);fx.clear();assert.equal(fx.diagnostics().draws,0);assert.equal(u.armor.emissive.getHex(),0);assert.equal(u.armor.emissiveIntensity,.2);
+ console.log('PASS',dt,'confirmed-only feedback, rate-limited sustained bursts, moving contact attachment, preserved reactor, material recovery/expiry/reset');
+}
+for(let i=0;i<30;i++)fx.update(.01,i*.01,[{unit:enemy('unit-'+i),damage:1,point}],from);const d=fx.diagnostics();assert(d.targets<=LIGHTNING_HIT.targets&&d.sparks<=LIGHTNING_HIT.sparks&&d.segments<=LIGHTNING_HIT.segments);assert(d.draws<=6);fx.clear();assert.equal(fx.diagnostics().targets,0);assert(scene.children.filter(x=>x.name==='Volt confirmed lightning impacts').length===1);console.log('PASS target/spark/segment/draw bounds under rapid target switching');

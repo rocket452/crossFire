@@ -7,7 +7,7 @@ import {RunnerMotion,terrainHeight} from './runner-motion.js?v=sticky-panel-wall
 import {RunnerAnimator} from './runner-animation.js?v=runner-ai-7';
 import {RunnerLookPose} from './runner-look-pose.js?v=torso-look-75';
 import {RunnerAI} from './runner-ai.js?v=run-energy-40';
-import {RunnerElectric} from './runner-electric.js?v=wave-dash-62';
+import {RunnerElectric} from './runner-electric.js?v=lightning-hits-76';
 import {RunnerBeam,RUNNER_BEAM} from './runner-beam.js?v=no-fire-lock-68';
 import {RunnerCharge} from './runner-charge.js?v=instant-lightning-63';
 import {RunnerDash,DASH} from './runner-dash.js?v=drone-squad-65';
@@ -120,7 +120,7 @@ export class Speedster {
    this.root.updateMatrixWorld(true);const local=this.nodes.chest.worldToLocal(target.clone()).sub(this.nodes.upperarm_r.position).normalize();this.nodes.upperarm_r.quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),local);this.nodes.forearm_r.rotation.set(0,0,0);
    this.root.updateMatrixWorld(true);this.character?.syncArms(this.nodes);const from=this.character?this.character.hand('R'):this.nodes.forearm_r.localToWorld(new THREE.Vector3(0,-.47,.05));
    let damageTime=charge.damageSeconds;if(this.active){if(damageTime>0)this.ticks++;}else{this.damageClock+=damageTime;damageTime=0;while(this.damageClock>=.08-1e-9){this.damageClock-=.08;damageTime+=.08;this.ticks++;}}
-   const result=this.onElectric(from,target,damageTime,{cpu:!this.active});this.damage+=result.damage||0;if(cpu?.rooftopFire&&result.kind==='robot')this.ai.rooftops.recordDamage(result.damage);this.lastHit=result.kind||null;beam={from,end:new THREE.Vector3(result.end.x,result.end.y,result.end.z)};
+   const result=this.onElectric(from,target,damageTime,{cpu:!this.active});this.damage+=result.damage||0;if(cpu?.rooftopFire&&result.kind==='robot')this.ai.rooftops.recordDamage(result.damage);this.lastHit=result.kind||null;beam={from,end:new THREE.Vector3(result.end.x,result.end.y,result.end.z),enemyHits:result.enemyHits};
   }else this.damageClock=0;
   if(this.stunFlash>0&&this.stunTarget){const local=this.nodes.chest.worldToLocal(this.stunTarget.clone()).sub(this.nodes.upperarm_r.position).normalize();this.nodes.upperarm_r.quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),local);this.nodes.forearm_r.rotation.set(0,0,0);this.root.updateMatrixWorld(true);this.character?.syncArms(this.nodes);const from=this.character?this.character.hand('R'):this.nodes.forearm_r.getWorldPosition(new THREE.Vector3());beam={from,end:this.stunTarget};}
   this.fx.update(dt,time,{position:this.root.position,normal:this.bodyUp,speed:this.motion.speed,beam,carryTrails:this.dash.trails,dashing,energy:this.energy.amount/100,wave:{active:!!this.dash.active,direction:this.dash.active?.direction,carried:this.dash.active?this.dash.active.actors.length-1:0},phaseEvents:this.dash.takeEffects()});this.feedback.update(dt,{active:this.active,camera:this.camera,aim:this.assistedAim});
