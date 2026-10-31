@@ -1,6 +1,6 @@
-# Siege Walker cannon tracking — revision 61
+# Siege Walker cannon tracking — revisions 61 and 98
 
-The existing beam clock, damage, render effects and arsenal rotation remain in use. The cannon now refreshes the locked target's live visible position for heroes, civilians and ground vehicles as well as helicopters. Same-ID target objects are refreshed, preventing stale references. If a target leaves the available/visible set during a burst, the cannon retains its last known aim point. It does not acquire another target mid-beam.
+The existing beam clock, damage, render effects and arsenal rotation remain in use. The cannon refreshes the locked target's live position for heroes, civilians and ground vehicles as well as helicopters. Same-ID target objects are refreshed, preventing stale references. Once charging starts, the cannon retains its original live unit and continues refreshing its aim when cover or eligibility removes that unit from the acquisition list. It does not acquire another target mid-beam. A dead or removed target retains only its last aim point through the current burst; the next attack can select a new unit.
 
 `dist/cannon-tracking.js` exposes `CANNON_TRACKING`:
 
@@ -25,3 +25,15 @@ Verification:
 - Node regressions PASS: arsenal, hero powers, five-second weak-point stagger cycle, walker gait at 30/60/120 Hz, hero defense, plasma artillery and eye bolts.
 
 Changed runtime files: `cannon-tracking.js`, `siege-walker.js`, `beam-aim.js`, cache versions in `battle.js` and `index.html`. Models, beam damage, charge/fire duration and weapon recovery are unchanged. Fast nearby targets can deliberately outrun the beam; this is the intended consequence of the turn limit. Physical phone FPS/thermal performance is not measured.
+
+## Revision 98 — retain pursuit through cover
+
+The committed beam now refreshes aim from its existing registered target when the visible acquisition list omits it. Hero proxies and civilian/helicopter units continue receiving live shapes elsewhere in the existing update, so the cannon, head and walking chassis keep turning toward the original moving unit throughout charge/fire. Initial target acquisition still requires visibility; the normal arsenal clock, charge/fire durations, damage, 30°/s charge/acquisition turn, 20°/s firing turn, shields, building collision, death and interruption behavior remain in use. Protected pilot exclusion is retained. No new target acquisition or aim assistance is introduced.
+
+Validation passed:
+
+- Expanded `cannon-tracking-test.mjs`: at 30/60/120Hz, moving hidden original heroes/civilians/helicopters stay locked for charge and firing despite a visible decoy. Aim, head and chassis continue pursuing; world-space turn limits hold; target death freezes the last aim and reset releases the lock. Existing visible moving-target, teleport, stun and death checks pass.
+- Expanded `cannon-tracking-browser.cjs`: actual evacuation gameplay on desktop and emulated touch phone; keyboard/touch strafe is followed, an actual building removes the original hero from the visible target list, and the firing cannon still follows its live position. Warning-ray error remains zero; firing turn remains capped at 20°/s. Screenshots `/tmp/cannon98-covered.png` and `/tmp/cannon98-covered-phone.png`; no browser errors; rebuild returns to startup.
+- `head-telegraph-test.mjs`, `energy-beam-test.mjs`, `robot-arsenal-test.mjs`, `walker-weapons-test.mjs`: head/warning alignment, seven-second damage, cover breach, pilot protection, weapon sequencing, shield behavior, disarming and rebuild continue passing.
+
+Physical phone performance remains unmeasured.

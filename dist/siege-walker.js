@@ -102,7 +102,10 @@ export class SiegeWalker {
   const available=targets.filter(u=>u.alive&&!u.dashPhased&&u.kind!=='robot'&&u.id!==this.protectedUnit);
   const locked=['charging','firing'].includes(this.weapon.phase);
   if(!locked&&available.length&&(!this.target?.alive||!available.some(u=>u.id===this.target.id)||(this.weapon.phase==='ready'&&!this.aiming))){const index=this.targetIndex++,air=available.filter(u=>u.kind==='helicopter'),ground=available.filter(u=>u.kind!=='helicopter');this.target=this.targetSelector?this.targetSelector(available):index%2===0&&air.length?air[Math.floor(index/2)%air.length]:ground.length?ground[(index*3)%ground.length]:available[index%available.length];this.aiming=true;}
-  const liveTarget=available.find(u=>u.id===this.target?.id);if(liveTarget)this.target=liveTarget;
+  // Visibility gates acquisition, not an attack already committed to this unit.
+  // Registered units keep live shapes even when cover/eligibility hides them from
+  // the selector. Retain that original unit instead of freezing at its last sighting.
+  const liveTarget=available.find(u=>u.id===this.target?.id)||(locked&&this.target?.alive&&this.target.id!==this.protectedUnit?this.target:null);if(liveTarget)this.target=liveTarget;
   if(locked&&liveTarget?.shapes[0])this.beamAim={...liveTarget.shapes[0].center};
   let center=locked?this.beamAim:available.length?this.target?.shapes[0]?.center:null;
   if(this.plasmaCharging&&this.plasmaAim)center=this.plasmaAim;

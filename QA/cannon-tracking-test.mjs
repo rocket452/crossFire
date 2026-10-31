@@ -30,3 +30,18 @@ for(const hz of [30,60,120]){
  console.log('PASS',hz,'Hz live same-ID ground tracking, harmless barrel-aligned warning, accurate firing, physical world-space 30/20 deg/s caps, teleport dodge, stun/reset/death',JSON.stringify({chargeFrames,trackedFrames,maxTurn}));
 }
 assert.equal(CANNON_TRACKING.waistDegreesPerSecond,20);
+
+// The gameplay acquisition list omits units hidden by buildings. Their registered
+// unit objects still receive current shapes; a committed beam must follow them.
+for(const hz of[30,60,120])for(const kind of['hero','civilian','helicopter']){
+ const dt=1/hz,original={id:'initial',kind,alive:true,shapes:[{center:{x:24,y:2,z:24}}]},decoy={id:'decoy',kind:'hero',alive:true,shapes:[{center:{x:-10,y:2,z:30}}]};
+ let payload;const robot=new SiegeWalker(new THREE.Scene(),model,spec,{onEffect:()=>{},onBeam:p=>payload=p});robot.target=original;robot.beamAim={...original.shapes[0].center};robot.aiming=true;robot.weapon.phase='charging';let previous=null,charge=0,fire=0;
+ for(let i=0;i<hz*5;i++){
+  const time=(i+1)*dt,a=.7+time*.35;original.shapes=[{center:{x:Math.sin(a)*32,y:2+Math.sin(time),z:Math.cos(a)*32}}];const phase=robot.weapon.phase;robot.update(dt,time,[decoy]);assert.equal(robot.target,original,'visible decoy must not steal the attack');assert.deepEqual(robot.beamAim,original.shapes[0].center,'original target keeps updating while absent from acquisition');assert.deepEqual(robot.gazeTarget,original.shapes[0].center);
+  const direction=new THREE.Vector3(0,-1,0).transformDirection(robot.nodes.forearm_r.matrixWorld);if(previous)assert(degrees(previous,direction)<=(phase==='firing'?20:30)*dt+1e-5);previous=direction;
+  if(payload.state.phase==='charging'){charge++;assert.deepEqual(payload.plan.trackingTarget,original.shapes[0].center);}if(payload.state.phase==='firing')fire++;
+ }
+ assert(charge>hz*3&&fire>hz);assert(robot.root.rotation.y>1,'the chassis continues turning to pursue the hidden original');
+ const last={...robot.beamAim};original.alive=false;original.shapes[0].center.x=999;robot.update(dt,6,[decoy]);assert.deepEqual(robot.beamAim,last,'dead targets are not pursued');assert.equal(robot.target,original,'no substitute mid-burst');robot.reset();robot.update(dt,7,[decoy]);assert.equal(robot.target,decoy,'next acquisition may choose another target');
+ console.log('PASS',hz,kind,'hidden moving original retained through charge/fire, decoy rejected, chassis/head/barrel pursue with turn caps, death freezes last aim, reset clears lock');
+}
