@@ -31,3 +31,11 @@ Passed on 1100×1000 desktop and emulated 390×844 phone:
 - No page or console errors.
 
 Screenshots: `/tmp/sticky-wall71-desktop.png`, `/tmp/sticky-wall71-phone.png`. Phone checks emulate touch input; physical-device frame rate and thermal performance were not measured. Syntax checks for changed runtime modules and `git diff --check` pass.
+
+## Panel-boundary follow-up — revision 72
+
+An additional floor-height sweep exposed delayed first catches at 36 sampled heights: the original tall-wall gate measured only the struck 2.72 m panel. The assisted catch now accepts actual same-building/same-facing upper-wall contact at 1.85 m or 2.1 m above the feet, rather than inferring a facade from its overall bounds. This change applies only to boosted airborne catches and adds at most two short traces when the struck panel fails the original height check.
+
+The expanded `runner-air-wall-test.mjs` passes 1,456 first-impact cases (91 floor phases × four facade orientations × four frame durations). Missing, dynamic, hidden, other-building, recessed or non-wall upper geometry cannot satisfy the new check. Existing catch, release, roof and collision suites listed above pass again.
+
+The updated browser suite verifies first-update catches at eight previously problematic heights (4.3, 4.5, 5, 5.2, 7.3, 7.5, 8 and 8.2 m) against the actual B11 city facade on desktop and emulated phone input. It also reruns the original leap, strafe, sustained beam, charge gain, weighted animation, wall-jump and rooftop checks. No production QA hooks or changes to civilian/combat behavior are introduced.

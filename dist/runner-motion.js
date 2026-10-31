@@ -27,6 +27,11 @@ export class RunnerMotion {
   const heights=bodyContact?[0,.18,-.18,.7,1.45,2.1]:[0,.18,-.18];
   let best=null,score=Infinity;for(const dy of heights){const hit=this.trace({x:p.x+n.x*.45,y:p.y+dy,z:p.z+n.z*.45},{x:p.x-n.x*.60,y:p.y+dy,z:p.z-n.z*.60},0,n);if(!hit||Math.abs(hit.normal.y)>.35||dot(hit.normal,n)<.45||bodyContact&&(hit.section.state!=='intact'||hit.section.building!==this.support?.building))continue;const cost=Math.abs(dy)+(hit.section.type==='slab' ? .25 : 0);if(cost<score){score=cost;best=hit;}}return best;
  }
+ wallAbove(p,n,section){
+  // A facade is split into short destructible panels. Its upper-body support
+  // can belong to the next panel; never infer support from a building's bounds.
+  for(const dy of [1.85,2.1]){const y=p.y+dy,hit=this.trace({x:p.x+n.x*.45,y,z:p.z+n.z*.45},{x:p.x-n.x*.60,y,z:p.z-n.z*.60},0,n);if(hit?.section.type==='wall'&&hit.section.state==='intact'&&hit.section.building===section.building&&dot(hit.normal,n)>.9)return true;}return false;
+ }
  sweep(from,to,player){
   let nearest=null;for(const c of this.near){if(this.top(c)<=Math.min(from.y,to.y)+RUNNER_CONTROL.stepHeight+.01)continue;for(const height of player?[.70,1.55,2.25]:[.8]){const hit=traceImpact({x:from.x,y:from.y+height,z:from.z},{x:to.x,y:to.y+height,z:to.z},{sections:[c],radius:RUNNER_CONTROL.radius,ground:false});if(!hit)continue;hit.normal=faceNormal(c,hit.point,RUNNER_CONTROL.radius);if(Math.abs(hit.normal.y)>.55)continue;if(!nearest||hit.t<nearest.t)nearest=hit;}}return nearest;
  }
@@ -76,10 +81,11 @@ export class RunnerMotion {
     this.velocity.x+=(tx-this.velocity.x)*blend;this.velocity.z+=(tz-this.velocity.z)*blend;
     if(this.jumpBuffer>0&&(this.mode==='ground'||this.coyote>0)){this.mode='air';this.velocity.y=9;this.support=null;this.departedSupportY=null;this.jumpBuffer=this.coyote=0;}
     if(this.player)this.recoverOverlap(p,desired);const incoming={x:this.velocity.x,z:this.velocity.z},hit=this.slide(p,{x:this.velocity.x*h,z:this.velocity.z*h},this.player);
-    if(hit){const n=hit.normal,into=-(desired.x*n.x+desired.z*n.z)/(magnitude||1),viewInto=-(sy*n.x+cy*n.z),tall=this.top(hit.section)-p.y>1.8,deliberate=this.player?forward>.3&&viewInto>.65&&into>.8:forward>.1&&incoming.x*n.x+incoming.z*n.z<-1;
+    if(hit){const n=hit.normal,into=-(desired.x*n.x+desired.z*n.z)/(magnitude||1),viewInto=-(sy*n.x+cy*n.z),deliberate=this.player?forward>.3&&viewInto>.65&&into>.8:forward>.1&&incoming.x*n.x+incoming.z*n.z<-1;
      // A real boosted airborne impact grabs immediately, including strafing and oblique approaches.
      // Ground glances retain the deliberate intent gate; release/jump lockout still wins.
      const airCatch=this.player&&this.mode==='air'&&input.boost&&magnitude>.15&&into>RUNNER_CONTROL.airWallMinInto&&-(incoming.x*n.x+incoming.z*n.z)>=RUNNER_CONTROL.airWallMinNormalSpeed&&hit.section.type==='wall'&&hit.section.state==='intact'&&!!hit.section.building;
+     const tall=this.top(hit.section)-p.y>1.8||airCatch&&this.wallAbove(p,n,hit.section);
      if((deliberate||airCatch)&&tall&&Math.abs(n.y)<.2&&this.wallLock<=0){if(!this.intentNormal||dot(this.intentNormal,n)<.9)this.wallIntent=0;this.intentNormal={...n};this.wallIntent+=h;if(airCatch||!this.player||this.wallIntent>=RUNNER_CONTROL.wallIntentSeconds){this.stickyWall=!!airCatch;if(airCatch)this.airClimbs++;this.mode='wall';this.normal=n;this.support=hit.section;this.idleGrip=0;this.wallIntent=0;this.climbs++;p.x=hit.point.x-n.x*(RUNNER_CONTROL.radius-.06);p.z=hit.point.z-n.z*(RUNNER_CONTROL.radius-.06);this.velocity={x:0,y:0,z:0};}}
      else this.wallIntent=0;
     }else this.wallIntent=0;

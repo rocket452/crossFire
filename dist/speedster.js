@@ -3,7 +3,7 @@ import * as THREE from './vendor/three.module.js';
 import {VOLT_STUN} from './hero-powers.js?v=powers-48';
 import {RunnerEnergy} from './runner-energy.js?v=sustained-lightning-67';
 import {RunnerHeading} from './runner-heading.js?v=runner-camera-27';
-import {RunnerMotion,terrainHeight} from './runner-motion.js?v=sticky-air-wall-71';
+import {RunnerMotion,terrainHeight} from './runner-motion.js?v=sticky-panel-wall-72';
 import {RunnerAnimator} from './runner-animation.js?v=runner-ai-7';
 import {RunnerAI} from './runner-ai.js?v=run-energy-40';
 import {RunnerElectric} from './runner-electric.js?v=wave-dash-62';
