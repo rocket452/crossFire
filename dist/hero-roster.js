@@ -1,4 +1,5 @@
 export const HEROES=Object.freeze([
+ {id:'ninja',name:'Kage',element:'SHADOW / STEEL',role:'Aerial chains & precision',detail:'Sprint at super speed, high jump and double jump. Throw shurikens and air dash toward the reticle. Dash kills reset its six-second cooldown; slow fall lets you line up another strike.',control:'Player or CPU',color:'#f3848d',icon:'✧'},
  {id:'mochi',name:'Mochi Pink',element:'JOY / DECORA',role:'Bubble defense & daze',detail:'Sakura “Koko” Tanaka skates on glittering light, shields allies with neon bubbles, and dazes robots with her wand.',control:'CPU defender',color:'#ff99d5',icon:'♥'},
  {id:'volt',name:'Volt Rush',element:'LIGHTNING',role:'Speed & rescue',detail:'Run to charge lightning, interrupt robot attacks with Overload, and dash allies out of danger.',control:'Player or CPU',color:'#81e8f5',icon:'ϟ'},
  {id:'violet',name:'Violet Sentinel',element:'FORCE',role:'Air defense',detail:'Absorb hits with a force shield to power a stationary sustained beam. Also fires purple orbs.',control:'CPU defender',color:'#bc8bf5',icon:'◈'},

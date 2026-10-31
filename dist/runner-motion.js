@@ -15,7 +15,7 @@ function faceNormal(c,p,radius=0,prefer=null){
  return result;
 }
 export class RunnerMotion {
- constructor(){this.bounds={minX:-56,maxX:56,minZ:-56,maxZ:56};this.reset();}
+ constructor({runSpeed=14,boostSpeed=46,wallRun=true}={}){this.runSpeed=runSpeed;this.boostSpeed=boostSpeed;this.wallRun=wallRun;this.bounds={minX:-56,maxX:56,minZ:-56,maxZ:56};this.reset();}
  reset(position={x:-3,y:.08,z:12}){this.position={...position};this.velocity={x:0,y:0,z:0};this.normal={x:0,y:1,z:0};this.mode='ground';this.yaw=Math.PI;this.speed=0;this.distance=0;this.wallSeconds=0;this.idleGrip=0;this.jumping=false;this.support=null;this.climbs=0;this.roofs=0;this.coyote=0;this.jumpBuffer=0;this.assistedLandings=0;this.airTime=0;this.wallLock=0;this.wallIntent=0;this.intentNormal=null;this.slides=0;this.overlapRecoveries=0;this.wallReleases=0;this.stepUps=0;this.departedSupportY=null;this.escapeNormal=null;this.stickyWall=false;this.airClimbs=0;}
  trace(a,b,radius=0,prefer=null){const hit=traceImpact(a,b,{sections:this.near,radius,ground:false});if(hit)hit.normal=faceNormal(hit.section,hit.point,radius,prefer);return hit;}
  floor(x,z,high,low){
@@ -60,10 +60,10 @@ export class RunnerMotion {
   this.stickyWall=false;this.position={x,y:roof.height,z};this.normal=roof.normal;this.support=roof.section;this.mode='ground';if(!this.player)this.yaw=Math.atan2(-normal.x,-normal.z);this.roofs++;this.coyote=RUNNER_FORGIVENESS.coyoteSeconds;this.velocity={x:-normal.x*Math.min(7,speed*.25),y:0,z:-normal.z*Math.min(7,speed*.25)};return true;
  }
  step(input,dt,sections=[]){
-  if(!(dt>0))return;this.player=!!input.player;if(!this.player)this.stickyWall=false;dt=Math.min(dt,.15);if(input.jump)this.jumpBuffer=RUNNER_FORGIVENESS.jumpBufferSeconds;const start={...this.position},margin=(input.boost?46:14)*dt+3;
+  if(!(dt>0))return;this.player=!!input.player;if(!this.player)this.stickyWall=false;dt=Math.min(dt,.15);if(input.jump)this.jumpBuffer=RUNNER_FORGIVENESS.jumpBufferSeconds;const start={...this.position},margin=(input.boost?this.boostSpeed:this.runSpeed)*dt+3;
   this.near=sections.filter(c=>!c.hidden&&(c.state==='intact'||c.state==='settled')&&Math.abs((c.body?.position.x??c.x)-this.position.x)<Math.hypot(...c.size)/2+margin&&Math.abs((c.body?.position.z??c.z)-this.position.z)<Math.hypot(...c.size)/2+margin&&Math.abs((c.body?.position.y??c.y)-this.position.y)<Math.hypot(...c.size)/2+margin+2);
   let forward=clamp(input.forward||0,-1,1),strafe=clamp(input.strafe||0,-1,1),magnitude=Math.hypot(forward,strafe);if(magnitude>1){forward/=magnitude;strafe/=magnitude;}magnitude=Math.min(1,magnitude);
-  const speed=input.boost?46:14,steps=Math.max(1,Math.ceil(dt/.008)),h=dt/steps;
+  const speed=input.boost?this.boostSpeed:this.runSpeed,steps=Math.max(1,Math.ceil(dt/.008)),h=dt/steps;
   for(let i=0;i<steps;i++){
    const p=this.position;this.wallLock=Math.max(0,this.wallLock-h);this.airTime=this.mode==='air'?this.airTime+h:0;if(this.mode==='ground')this.coyote=RUNNER_FORGIVENESS.coyoteSeconds;else this.coyote=Math.max(0,this.coyote-h);this.jumpBuffer=Math.max(0,this.jumpBuffer-h);
    if(this.mode==='wall'){
@@ -86,14 +86,14 @@ export class RunnerMotion {
      // Ground glances retain the deliberate intent gate; release/jump lockout still wins.
      const airCatch=this.player&&this.mode==='air'&&input.boost&&magnitude>.15&&into>RUNNER_CONTROL.airWallMinInto&&-(incoming.x*n.x+incoming.z*n.z)>=RUNNER_CONTROL.airWallMinNormalSpeed&&hit.section.type==='wall'&&hit.section.state==='intact'&&!!hit.section.building;
      const tall=this.top(hit.section)-p.y>1.8||airCatch&&this.wallAbove(p,n,hit.section);
-     if((deliberate||airCatch)&&tall&&Math.abs(n.y)<.2&&this.wallLock<=0){if(!this.intentNormal||dot(this.intentNormal,n)<.9)this.wallIntent=0;this.intentNormal={...n};this.wallIntent+=h;if(airCatch||!this.player||this.wallIntent>=RUNNER_CONTROL.wallIntentSeconds){this.stickyWall=!!airCatch;if(airCatch)this.airClimbs++;this.mode='wall';this.normal=n;this.support=hit.section;this.idleGrip=0;this.wallIntent=0;this.climbs++;p.x=hit.point.x-n.x*(RUNNER_CONTROL.radius-.06);p.z=hit.point.z-n.z*(RUNNER_CONTROL.radius-.06);this.velocity={x:0,y:0,z:0};}}
+     if(this.wallRun&&(deliberate||airCatch)&&tall&&Math.abs(n.y)<.2&&this.wallLock<=0){if(!this.intentNormal||dot(this.intentNormal,n)<.9)this.wallIntent=0;this.intentNormal={...n};this.wallIntent+=h;if(airCatch||!this.player||this.wallIntent>=RUNNER_CONTROL.wallIntentSeconds){this.stickyWall=!!airCatch;if(airCatch)this.airClimbs++;this.mode='wall';this.normal=n;this.support=hit.section;this.idleGrip=0;this.wallIntent=0;this.climbs++;p.x=hit.point.x-n.x*(RUNNER_CONTROL.radius-.06);p.z=hit.point.z-n.z*(RUNNER_CONTROL.radius-.06);this.velocity={x:0,y:0,z:0};}}
      else this.wallIntent=0;
     }else this.wallIntent=0;
     if(this.mode==='ground'){
      const floor=this.floor(p.x,p.z,p.y+RUNNER_CONTROL.stepHeight,p.y-.65);if(floor){this.departedSupportY=null;if(floor.height-p.y>.12)this.stepUps++;p.y=floor.height;this.normal=floor.normal;this.support=floor.section;this.velocity.y=0;}else{this.departedSupportY=p.y;this.mode='air';this.normal={x:0,y:1,z:0};this.support=null;}
     }
     if(this.mode==='air'){
-     const oldY=p.y;this.velocity.y=Math.max(-45,this.velocity.y-25*h);let nextY=p.y+this.velocity.y*h;if(this.player&&this.velocity.y>0){const ceiling=this.trace({x:p.x,y:p.y+2.3,z:p.z},{x:p.x,y:nextY+2.3,z:p.z},.26);if(ceiling&&ceiling.normal.y<-.45){nextY=Math.min(nextY,ceiling.point.y-2.3-.015);this.velocity.y=0;this.jumpBuffer=0;}}p.y=nextY;
+     const oldY=p.y;this.velocity.y=Math.max(-(input.fallSpeed??45),this.velocity.y-25*(input.gravityScale??1)*h);let nextY=p.y+this.velocity.y*h;if(this.player&&this.velocity.y>0){const ceiling=this.trace({x:p.x,y:p.y+2.3,z:p.z},{x:p.x,y:nextY+2.3,z:p.z},.26);if(ceiling&&ceiling.normal.y<-.45){nextY=Math.min(nextY,ceiling.point.y-2.3-.015);this.velocity.y=0;this.jumpBuffer=0;}}p.y=nextY;
      if(this.velocity.y<=0){const floor=this.landing(p.x,p.z,oldY+.25,p.y-.08);if(floor){p.x=floor.x;p.z=floor.z;if(floor.assisted)this.assistedLandings++;p.y=floor.height;this.normal=floor.normal;this.support=floor.section;this.velocity.y=0;this.mode='ground';}}
     }
    }

@@ -57,7 +57,7 @@ export class Speedster {
   const endLook=e=>{if(e.type==='pointercancel'){if(this.active)this.clearInput();return;}if(e.pointerType!=='mouse'&&this.pointer?.id===e.pointerId)this.pointer=null;};
   for(const name of ['pointerup','pointercancel'])window.addEventListener(name,endLook);
   this.canvas.addEventListener('lostpointercapture',e=>{if(this.pointer?.id===e.pointerId)this.pointer=null;});
-  this.mouseLocked=false;this.lockPending=false;document.addEventListener('pointerlockchange',()=>{const locked=document.pointerLockElement===this.canvas;this.lockPending=false;if(this.mouseLocked&&!locked)this.clearInput();this.mouseLocked=locked;if(locked&&(!this.active||!inputMode.desktop||this.settingsOpen))document.exitPointerLock();this.updateMousePrompt();});
+  this.mouseLocked=false;this.lockPending=false;document.addEventListener('pointerlockchange',()=>{const locked=this.active&&document.pointerLockElement===this.canvas;this.lockPending=false;if(this.mouseLocked&&!locked)this.clearInput();this.mouseLocked=locked;if(locked&&(!this.active||!inputMode.desktop||this.settingsOpen))document.exitPointerLock();this.updateMousePrompt();});
   document.addEventListener('pointerlockerror',()=>{this.lockPending=false;this.mouseLockError=true;this.updateMousePrompt();});
   document.getElementById('runner-resume').onclick=()=>this.requestMouseLock();
   inputMode.subscribe(mode=>{this.touchAim=mode==='touch';if(this.active)this.clearInput();if(mode==='touch'&&document.pointerLockElement===this.canvas)document.exitPointerLock();this.updateMousePrompt();});

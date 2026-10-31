@@ -5,7 +5,6 @@ registerHooks({resolve(s,c,n){return s==='three'?{url:new URL('../dist/vendor/th
 import * as THREE from '../dist/vendor/three.module.js';
 import {SiegeWalker} from '../dist/siege-walker.js';
 import {WalkerWeapons,WALKER_WEAPONS} from '../dist/walker-weapons.js';
-import {SiegeWeakPoints} from '../dist/weak-points.js';
 import {RobotArsenal} from '../dist/robot-arsenal.js';
 import {BeamCycle} from '../dist/beam-cycle.js';
 import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
@@ -16,14 +15,12 @@ import {PlasmaArtillery} from '../dist/plasma-artillery.js';
 const {GLTFLoader}=await import('../dist/vendor/GLTFLoader.js'),bytes=fs.readFileSync('dist/city-assets/siege-walker.glb'),spec=JSON.parse(fs.readFileSync('dist/city-assets/siege-walker.json')),gltf=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
 let completed=0;const modules=new WalkerWeapons({onDestroyed:()=>completed++});assert.equal(modules.hurt('chest',50),0);for(const n of[0,-1,NaN,Infinity])assert.equal(modules.hurt('forearm_r',n),0);modules.hurt('forearm_r',1800);modules.hurt('forearm_r',5000);assert.equal(completed,1);modules.reset();assert(modules.working('beam'));
 for(const dt of[1/30,1/60,1/120]){
- const scene=new THREE.Scene(),physics=new DestructionWorld(),fx=new RobotDeathEffects(scene),arsenal=new RobotArsenal({plasma:true}),pod={pending:0,missiles:[]},artillery={shells:[],muzzleGlow:{visible:false},cancelled:0,get busy(){return this.shells.length>0;},removeShell:()=>{}},broken=[];let cores;
- const robot=new SiegeWalker(scene,gltf,spec,{onBeam:()=>{},onEffect:()=>{},onDebris:s=>physics.addWreck(s),onRemoveDebris:b=>{fx.removePart(b);physics.removeWreck(b);},onDeath:(p,o)=>fx.explode(p,o),onWreck:w=>fx.part(w),onWeaponDestroyed:m=>{broken.push(m.id);cores?.relocatePart(m.part,'upperarm_r');arsenal.weaponDestroyed(m.id,robot,pod,artillery);}});
+ const scene=new THREE.Scene(),physics=new DestructionWorld(),fx=new RobotDeathEffects(scene),arsenal=new RobotArsenal({plasma:true}),pod={pending:0,missiles:[]},artillery={shells:[],muzzleGlow:{visible:false},cancelled:0,get busy(){return this.shells.length>0;},removeShell:()=>{}},broken=[];
+ const robot=new SiegeWalker(scene,gltf,spec,{onBeam:()=>{},onEffect:()=>{},onDebris:s=>physics.addWreck(s),onRemoveDebris:b=>{fx.removePart(b);physics.removeWreck(b);},onDeath:(p,o)=>fx.explode(p,o),onWreck:w=>fx.part(w),onWeaponDestroyed:m=>{broken.push(m.id);arsenal.weaponDestroyed(m.id,robot,pod,artillery);}});
  const damage=new UnitDamage(u=>u.entity.destroy(),(u,d,p,part)=>{if(u.health>0)robot.damageWeapon(d,p,part);}),boss=damage.add('boss','robot',robot,14400);boss.shapes=robot.shapes();
  // The helmet's coarse hull must not shield the thin recessed eye target.
  const visor=robot.meshes.visor.localToWorld(robot.boxes.visor.center.clone()),eyeFrom=visor.clone().add(new THREE.Vector3(0,0,25));eyeFrom.y=1.65;
  assert.equal(traceImpact(eyeFrom,visor,{targets:[boss],ground:false,radius:.1})?.part,'visor');
- // Force one real forearm core into the final state, preserving its strategic resource.
- cores=new SiegeWeakPoints(robot,{config:{locations:[{id:'arm',part:'forearm_r',region:'right-arm',x:0,y:.12}]}});const core=cores.points[0];cores.hurt(core,87,{player:true});assert.equal(core.health,93);assert(core.final);
  const originalHealth=boss.health;damage.hurt(boss,20,null,'pelvis');damage.hurt(boss,100);assert.equal(robot.weapons.forPart('forearm_r').health,1800,'global burst and other armor never wear a weapon');
  for(const m of WALKER_WEAPONS){
   boss.shapes=robot.shapes();const shape=boss.shapes.find(s=>s.part===m.part);assert(shape,'each weapon has real hit geometry, including eyes');
@@ -33,7 +30,7 @@ for(const dt of[1/30,1/60,1/120]){
   if(m.id==='missiles'){arsenal.phase='salvo';pod.pending=5;pod.missiles=[{alive:true}];}
   if(m.id==='plasma'){arsenal.phase='plasma-clear';artillery.shells=[{state:'warning'},{state:'flying'}];artillery.muzzleGlow.visible=true;}
   const point=robot.meshes[m.part].localToWorld(robot.boxes[m.part].center.clone());damage.hurt(boss,m.health*.75,point,m.part);assert(!robot.isWeaponWorking(m.id));assert.equal(robot.wrecks.length,broken.length);assert(!robot.shapes().some(s=>s.part===m.part));
-  if(m.id==='beam'){assert.equal(robot.weapon.phase,'off');assert.equal(arsenal.phase,'recovery');assert.equal(core.part,'upperarm_r');assert.equal(core.root.parent,robot.nodes.upperarm_r);assert.equal(core.health,93);assert(core.final&&core.root.visible&&cores.completions===0);}
+  if(m.id==='beam'){assert.equal(robot.weapon.phase,'off');assert.equal(arsenal.phase,'recovery');}
   if(m.id==='missiles'){assert.equal(pod.pending,0);arsenal.update(dt,robot,pod,artillery);assert.equal(arsenal.phase,'clear','launched missiles survive and block the next heavy weapon');pod.missiles=[];arsenal.update(dt,robot,pod,artillery);assert.equal(arsenal.phase,'recovery');}
   if(m.id==='plasma'){assert.equal(artillery.cancelled,1);assert.equal(artillery.shells.length,1);assert.equal(artillery.shells[0].state,'flying');assert(!artillery.muzzleGlow.visible);arsenal.update(dt,robot,pod,artillery);assert.equal(arsenal.phase,'plasma-clear');artillery.shells=[];}
   const n=broken.length;robot.damageWeapon(9999,point,m.part);assert.equal(broken.length,n,'one break callback per module');
@@ -41,9 +38,9 @@ for(const dt of[1/30,1/60,1/120]){
  assert.equal(boss.health,originalHealth-120-WALKER_WEAPONS.reduce((n,m)=>n+m.health,0),'ordinary hull damage once, no bonus break damage');
  for(let i=0;i<Math.ceil(6/dt);i++){arsenal.beforeBeam(robot,pod,artillery);robot.update(dt,i*dt,[]);arsenal.update(dt,robot,pod,artillery);physics.step(dt);robot.syncWrecks();fx.update(dt);}
  assert.equal(arsenal.phase,'disarmed');assert(!robot.beamAllowed);assert.equal(physics.wrecks.length,4);assert(fx.smoke.count>0);for(const m of WALKER_WEAPONS)assert.equal(robot.meshes[m.part].material.emissiveIntensity,0);
- cores.generate();assert(cores.points.every(p=>robot.isPartAvailable(p.part)),'future cycles use intact armor');damage.hurt(boss,14400);for(let i=0;i<Math.ceil(2/dt);i++)robot.update(dt,i*dt,[]);assert(robot.broken);assert.equal(robot.wrecks.length,18);assert.equal(physics.wrecks.length,18,'detached weapons never duplicate on boss death');robot.breakApart();assert.equal(physics.wrecks.length,18);
- fx.reset();robot.reset();damage.reset();cores.reset();assert.equal(physics.wrecks.length,0);for(const m of WALKER_WEAPONS){assert(robot.isWeaponWorking(m.id));assert.equal(robot.meshes[m.part].parent,robot.nodes[m.part]);assert.equal(robot.weapons.forPart(m.part).health,m.health);}assert.equal(robot.shapes().length,17);
- console.log('PASS',dt,'real-model part collision, direct/blast durability, ordinary hull damage, immediate disarm, airborne ordnance, protected final core relocation, 4 smoking physics mounts, 18 total death parts and full rebuild');
+damage.hurt(boss,14400);for(let i=0;i<Math.ceil(2/dt);i++)robot.update(dt,i*dt,[]);assert(robot.broken);assert.equal(robot.wrecks.length,18);assert.equal(physics.wrecks.length,18,'detached weapons never duplicate on boss death');robot.breakApart();assert.equal(physics.wrecks.length,18);
+ fx.reset();robot.reset();damage.reset();assert.equal(physics.wrecks.length,0);for(const m of WALKER_WEAPONS){assert(robot.isWeaponWorking(m.id));assert.equal(robot.meshes[m.part].parent,robot.nodes[m.part]);assert.equal(robot.weapons.forPart(m.part).health,m.health);}assert.equal(robot.shapes().length,17);
+ console.log('PASS',dt,'real-model part collision, direct/blast durability, ordinary hull damage, immediate disarm, airborne ordnance, 4 smoking physics mounts, 18 total death parts and full rebuild');
 }
 // Every remaining-weapon combination must keep cycling, including a completely disarmed boss.
 for(let mask=0;mask<8;mask++)for(const dt of[1/30,1/60,.075]){

@@ -31,9 +31,23 @@ Choose **Rift Warden escort** to watch the third CPU hero teleport, fire through
 
 Focus fire on the beam forearm, shoulder rocket pod, shoulder plasma cannon or eye emitters to wear down that weapon independently. Initial durability is 1,800 / 1,600 / 1,800 / 700 HP respectively, configured in `dist/walker-weapons.js`. Compact meters beneath the boss health bar show each weapon's remaining durability.
 
-Destroyed weapons explode, detach as smoking physics wreckage and remain offline until City Rebuild. The Walker cycles through its surviving main weapons. Losing a mount cancels charging and unlaunched shots; projectiles already airborne remain dangerous. Ordinary hits still damage the hull once, with no extra break-damage bonus. Existing weak cores keep their separate damage/stun rules; an arm core moves to the intact shoulder if the cannon falls off.
+Destroyed weapons explode, detach as smoking physics wreckage and remain offline until City Rebuild. The Walker cycles through its surviving main weapons. Losing a mount cancels charging and unlaunched shots; projectiles already airborne remain dangerous. Ordinary hits still damage the hull once, with no extra break-damage bonus. The previous glowing weak-point/stagger cycle has been removed; hero stun abilities remain available. Only damaged weapons flash red on the Walker; small robots flash red across their bodies.
+
+## Kage, the shadow ninja
+
+Choose Kage in **Heroes** (up to three active defenders), deploy, then choose **Play Kage**. The existing starting lineup stays Volt / Violet / Rift. Kage also fights automatically when not controlled.
+
+- Run: 46m/s, matching Volt's boosted speed. Space / JUMP launches at 30m/s; a second jump launches at 27m/s. An airborne jump within 1.55m of an intact building wall kicks away at 18m/s and upward at 36m/s, restoring one air jump. A short contact lock prevents repeated kicks against the same surface.
+- Primary: hold left-click / F / SHURIKEN; 55-damage stars every 0.22s at 85m/s, launched from the real weighted character's right hand. Stars share normal collision, damage, missile and portal systems.
+- Air strike: E / right-click / AIR DASH, up to 24m at 92m/s toward the camera reticle, 320 damage. Six-second cooldown. A confirmed **dash** kill on an enemy or missile resets it immediately; ordinary primary kills do not. Solid cover stops the dash. Dead enemies do not obstruct subsequent ninja attacks.
+- After dashing: two-second slow fall, gravity ×0.12 and downward speed capped at 3m/s. Ground contact ends this window. Double/wall jumps and dash resets remain distinct resources.
+- Desktop: pointer-lock mouse look, WASD, Space and the above attacks. Escape releases the mouse; again exits. Phone: left movement stick and jump/fire/dash buttons; drag the scene to aim. The minimap follows the ninja camera too.
+
+Values live in `dist/ninja-motion.js`. Character geometry/weights and clips reuse the supplied private humanoid; mask, headband, scarf, throwing star, sword and bounded effects are original runtime attachments. Violet now always shields himself against the boss beam, including interrupting his own force beam to defend. Weapon damage flashes preserve current warning lights.
 
 ## Runtime source
+- dist/ninja-hero.js: ninja rig accessories/animation, player/CPU control, real-hand shurikens, effects and camera.
+- dist/ninja-motion.js: shared city collision, high/double/wall jumps, aerial strike, confirmed-kill resets and slow fall.
 - dist/battle.js: city rendering, armies, weapons, camera, effects, UI.
 - dist/combat-collision.js: shared reticle/missile sweeps and unit durability.
 - dist/helicopter-pilot.js: selection, cockpit camera, input, HUD and launch integration.

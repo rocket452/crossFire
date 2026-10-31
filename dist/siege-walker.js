@@ -43,14 +43,14 @@ export class SiegeWalker {
  isWeaponWorking(id){return !this.dead&&this.weapons.working(id);}
  isPartAvailable(part){return !this.detachedParts.has(part);}
  damageWeapon(power,point,part=null){
-  if(this.dead)return 0;
+  this.lastWeaponHitPart=null;if(this.dead)return 0;
   // Tagged direct hits identify the first armor surface. Untagged splash only wears a
   // module if its impact is actually beside that module; global/core bursts have no point.
   if(!part&&point){
    this.root.updateMatrixWorld(true);
    for(const m of this.weapons.modules){if(m.destroyed)continue;const b=this.boxes[m.part],p=this.meshes[m.part].worldToLocal(new THREE.Vector3(point.x,point.y,point.z)).sub(b.center);if(['x','y','z'].every(a=>Math.abs(p[a])<=b.size[a]/2+.4)){part=m.part;break;}}
   }
-  return this.weapons.hurt(part,power);
+  const damage=this.weapons.hurt(part,power);if(damage>0)this.lastWeaponHitPart=part;return damage;
  }
  destroyWeapon(module){
   if(this.dead)return;
@@ -66,7 +66,7 @@ export class SiegeWalker {
   // Broad torso targets, never tiny lights; both factions have the same enemy.
   return new THREE.Vector3(p.x+(variant%3-1)*.65,from.y>20?15:12.8,p.z);
  }
- recordHit(kind,team,amount){if(amount<=0)return;this.hits[kind]=(this.hits[kind]||0)+1;if(team===0||team===1)this.damageByTeam[team]+=amount;else this.heroDamage+=amount;this.flash=.14;}
+ recordHit(kind,team,amount){if(amount<=0)return;this.hits[kind]=(this.hits[kind]||0)+1;if(team===0||team===1)this.damageByTeam[team]+=amount;else this.heroDamage+=amount;}
  destroy(){if(this.dead)return;this.restoreStagger();this.stunRemaining=0;this.weapon.stop();this.onBeam(null);this.dead=true;this.deathTime=0;this.deathPose={y:this.root.position.y,chest:this.nodes.chest.rotation.x,head:this.nodes.head.rotation.x,thigh:this.nodes.thigh_l.rotation.x,shin:this.nodes.shin_l.rotation.x};this.onDeath(this.meshes.reactor.localToWorld(this.boxes.reactor.center.clone().add(new THREE.Vector3(0,0,this.boxes.reactor.size.z*.5+.4))),{large:true});}
  restoreStagger(){if(!this.staggerPose)return;for(const [name,q]of Object.entries(this.staggerPose))this.nodes[name].quaternion.copy(q);this.staggerPose=null;this.root.updateMatrixWorld(true);}
  stun(seconds=1,kind='electric'){
@@ -142,7 +142,7 @@ export class SiegeWalker {
   const hp=this.combatUnit?this.combatUnit.health/this.combatUnit.maxHealth:1;
   for(const [name,m]of Object.entries(this.meshes)){
    if(!this.isPartAvailable(name))continue;
-   m.material.color.set(this.flash>0?'#ffd5a4':'#ffffff');const module=this.weapons.forPart(name);if(module&&!this.flash)m.material.color.multiplyScalar(.45+.55*module.health/module.maxHealth);
+   m.material.color.set('#ffffff');const module=this.weapons.forPart(name);if(module)m.material.color.multiplyScalar(.45+.55*module.health/module.maxHealth);
    if(name==='reactor'||name==='visor'){m.material.emissive.set(state.phase==='charging'||state.phase==='firing'?'#2eabff':'#ff6b17');m.material.emissiveIntensity=(1.5+Math.sin(time*4)*.4)*(hp<.3?1.8:1)+state.charge*3;}
   }
   if(this.plasmaAim)this.aimPlasma(this.plasmaAim);

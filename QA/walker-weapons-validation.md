@@ -1,5 +1,7 @@
 # Destructible Siege Walker weapons — revision 81
 
+Revision 82 removes the glowing weak-point feature and changes damage flashes. See `ninja-validation.md` for current behavior and validation; weak-core statements below describe the earlier revision.
+
 The existing Walker has four shared, independent durability modules. `WALKER_WEAPONS` in `dist/walker-weapons.js` configures part bindings and initial HP: beam forearm 1,800; shoulder rocket pod 1,600; shoulder plasma cannon 1,800; eye emitters 700. All heroes/allied weapons use the existing damage system. Four compact meters appear below the boss health/weak-point display. Damaged armor darkens; a depleted module explodes, detaches as an original mesh with Cannon physics, chars, smokes and shows OFF until City Rebuild.
 
 ## Damage and attack integration
