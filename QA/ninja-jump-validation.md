@@ -39,3 +39,11 @@ Passed:
 - JavaScript syntax checks and `git diff --check`.
 
 Browser verification uses headless Chromium with software WebGL and an emulated phone viewport/touch input. Physical-phone performance and subjective feel still require device playtesting. No multiplayer, stamina system, new animations/assets or new hero abilities were introduced.
+
+## Revision 95 — lower initial jump
+
+The first jump now uses `34 * Math.sqrt(0.7)` (approximately 28.446m/s) launch speed, reducing its height by 30% while retaining gravity, double-jump speed (30m/s), wall spring (40m/s), air steering and all dash behavior. The revision 93 measurements above describe the earlier jump.
+
+Current `ninja-jump-feel-test.mjs` measurements across 30/60/120Hz and 75ms frames: apex 12.614–12.664m, time to apex 0.883–0.900s, airtime 1.675–1.725s. A comparison with the previous 34m/s jump using the same collision/gravity controller measured 30.055–30.112% lower height above takeoff; the small difference comes from discrete integration. Existing jump/landing-buffer fixtures and browser height expectations were adjusted for the requested height. `ninja-motion-test.mjs` still passes double jumps, wall springs, roof landings, dash/slow-fall/kill-reset behavior at all four timings.
+
+`ninja-jump-browser.cjs` passes with actual desktop keyboard and emulated phone touch input: lower first jump, double jump, nonlooping weighted animation, upright camera, landing recovery, 75ms frames and resumed city combat. Physical-phone performance was not measured.

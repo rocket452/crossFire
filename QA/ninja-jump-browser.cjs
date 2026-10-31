@@ -24,7 +24,7 @@ const harness=`window.__qaStopRender=true;window.jumpQA={
  for(let i=1;i<samples.length;i++){const a=samples[i-1],b=samples[i];if(b.n.character.clip==='Jump'&&a.n.character.clip==='Jump'&&b.n.jumpCount===a.n.jumpCount)assert(b.n.animation.clipTime>=a.n.animation.clipTime-1e-6,'ascent clip does not loop backwards');}
  await p.evaluate(()=>jumpQA.render());await p.locator('#viewport').screenshot({path:'/tmp/kage93-land-'+(mobile?'phone':'desktop')+'.png'});
  // A second jump using irregular long frames still responds to actual UI input.
- await jump();const hitch=await step(.9,.075);assert(hitch.at(-1).n.position[1]>15);await step(2,.075);const settled=await p.evaluate(()=>jumpQA.state());assert.equal(settled.n.mode,'ground');assert(settled.finite);
+ await jump();const hitch=await step(.9,.075);assert(hitch.at(-1).n.position[1]>12);await step(2,.075);const settled=await p.evaluate(()=>jumpQA.state());assert.equal(settled.n.mode,'ground');assert(settled.finite);
  await p.evaluate(()=>jumpQA.resumed());await step(8);const stats=await p.evaluate(()=>jumpQA.stats());assert(stats.civilians.waiting>=0);assert(stats.chunks.totalChunks>100);assert.deepEqual(errors,[]);
  console.log('PASS',mobile?'phone touch':'desktop keyboard','actual movement/release/double jump, no roll, nonlooping weighted jump, upright camera, landing/recovery, 75ms frames, resumed city combat; peak',Math.max(...samples.map(s=>s.n.position[1])).toFixed(2));await p.close();
  }}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
