@@ -38,3 +38,7 @@ E / touch DASH converts Volt and nearby/touched soldiers, tanks and civilians in
 Escort mode extends player run/dash limits along the outer boulevard so Volt can intercept the three-drone squad. Original City battle limits remain unchanged. See `source/ESCORT_MISSION.md`.
 
 QA: `QA/sustained-lightning-browser.cjs`, `QA/runner-beam-test.mjs`, `QA/device-controls-browser.cjs`, `QA/runner-energy-browser.cjs`, and `QA/weak-points-browser.cjs`. The old instant-lightning browser entry point invokes the current sustained-beam suite.
+
+## Hero minimap (revision 69)
+
+The corner radar appears during hero control, follows the hero and rotates with the actual camera heading. The white center arrow points along the view; N rotates around the rim. Gold circles show nearby civilian groups with headcounts, red diamonds show the Siege Walker and drones, cyan dots show allied heroes, green H marks the evacuation zone and S marks the existing subways. Ground civilian and enemy totals appear below the map. Boarding/death remove markers; teleports and the electric wave move them with their real positions. Units outside the 90 m range remain as rim arrows. Destroyed buildings dim to rubble footprints. Mouse/touch gestures pass through the map, including right-drag aiming, and it occupies space separate from desktop/mobile buttons. See `QA/hero-minimap-validation.md` for tests and tuning.

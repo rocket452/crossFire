@@ -1,0 +1,22 @@
+# Rotating hero minimap — revision 69
+
+The top-right radar appears while a hero is player-controlled. It is centered on the hero's actual X/Z position and rotates from the camera's world-space horizontal direction, independently of body orientation. The player/view arrow stays up; north rotates around the rim. Local range is 90 m. Distant markers clamp to the rim with outward arrows, keeping the extended escort approach visible.
+
+Gold circles aggregate nearby ground civilians and show headcounts; the footer also gives the exact living-ground civilian total. Red diamonds mark every live robot, with a larger ring for the Siege Walker and bright cores for drones. Cyan dots identify other deployed heroes. Green H is the landing zone, S shows the two existing subways, and a rotor marker tracks an airborne/moving evacuation Chinook. Boarding/death remove civilians from the ground map. Portals and electric carrying use the same actual civilian positions. Whole-building destruction dims its map footprint to rubble.
+
+Implementation uses one SVG with reused marker nodes and static world geometry. It adds no WebGL pass, canvas, dependencies, physics/collision objects or input handlers. Camera transform/marker projection update with render frames; entity snapshots sample up to 20 Hz and building state up to 2 Hz. The overlay has pointer-events disabled, so mouse/touch aiming continues through it. It hides on hero exit. A generic controlled-hero lookup supports the existing active-controller interface; Volt is currently the game's player-controlled hero.
+
+## Passed verification
+
+- `node QA/hero-minimap-test.mjs`: cardinal/wrapped camera headings keep forward up and right right; hero centering, distant rim clamping, separate 12-person clusters and exact totals.
+- `node QA/hero-minimap-browser.cjs`: desktop 1100×1000, phone 390×844, narrow phone 320×740, landscape touch 844×390 fullscreen and narrow desktop 390×844. Uses real right-drag/touch-drag over the map; heading matches actual camera direction, markers rotate with terrain, and the gestures do not trigger dash. Map remains inside the viewport and does not overlap energy, exit/settings/fullscreen or movement/fire/ability controls.
+- Full desktop/phone cases exercise actual subway groups and second-wave squad: 12 initial civilians / one boss, then four live enemies when three drones spawn. Markers move along real routes, boarding removes 12 ground civilians, deaths disappear, and the existing portal callback moves a civilian marker to its real destination. Group counts sum correctly. Killing a drone removes its marker. Distant drones remain represented at the rim.
+- Real W/joystick movement keeps the hero centered. A camera-only rotation updates the map even while body heading stays unchanged. Hero exit hides it; reset/re-entry has no stale squad markers. Original City battle shows zero civilians / one boss and no subway/landing markers.
+- Whole-building state changes dim/restore its footprint. Sixty map-only updates leave simulation time, units, civilian positions and physics unchanged. Rendering with the map shown/hidden produces identical WebGL draw counts; the document still has one canvas.
+- `node QA/device-controls-browser.cjs`: desktop/narrow desktop and phone/tablet control layouts, mouse chord/right-drag/E dash behavior, touch move/fire/look and device switching pass with the map integrated.
+- `node QA/sustained-lightning-browser.cjs`: desktop/mobile held fire, zero-cooldown recharge restart, movement/weighted animations, aiming, exact energy/damage and building rate checks pass.
+- Syntax/whitespace checks pass. Browser runtime/console/shader errors: none. No horizontal document overflow. Physical phone performance was not measured.
+
+Screenshots reviewed at `/tmp/minimap69-desktop.png`, `/tmp/minimap69-phone.png`, `/tmp/minimap69-narrow-phone.png` and `/tmp/minimap69-landscape.png`. The minimap styles reserve space below the top hero controls and shrink on narrow layouts.
+
+Runtime files: `dist/hero-minimap.js` (new), `dist/battle.js`, `dist/battle.css`, `dist/index.html`. QA: the new projection and gameplay suites plus this report. Current controls are documented in `source/CONTROLS.md`. Range/refresh constants are in `MINIMAP` in the module. Units beyond range show direction rather than their full distance; civilian counts cluster within four metres to keep crowds readable.
