@@ -80,3 +80,6 @@ html[data-input-mode=touch] .runner-mobile,html[data-input-mode=touch] .mobile-f
 .minimap-enemy-core{fill:#fff0eb;stroke:none}
 
 #runner-resume{position:absolute;z-index:4;top:calc(50% + 58px);left:50%;transform:translateX(-50%);max-width:calc(100% - 32px);padding:13px 18px;border:1px solid #a0e9ed99;border-radius:6px;background:#102e3df2;color:#e3ffff;font:600 11px "DM Sans",sans-serif;letter-spacing:.6px;pointer-events:auto;cursor:pointer;box-shadow:0 3px 20px #082a3655}#runner-resume:disabled{opacity:.7;cursor:wait}
+
+/* Compact individual weapon durability; four shared modules, never per-civilian markers. */
+.robot-readout #walker-weapons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 9px;margin-top:8px;letter-spacing:.35px;font-size:7px}.robot-readout #walker-weapons[hidden]{display:none}.walker-weapon{display:grid;grid-template-columns:1fr auto;gap:2px;color:#b8dbda}.walker-weapon b{font-size:7px;font-variant-numeric:tabular-nums}.robot-readout .walker-weapon i{grid-column:1/-1;margin:1px 0 0;height:2px;background:#77959942}.robot-readout .walker-weapon i>span{background:#78ddce;transition:width .15s}.walker-weapon[data-destroyed=true]{color:#ef9b80}.walker-weapon[data-destroyed=true] i{opacity:.25}@media(max-width:700px){.robot-readout #walker-weapons{gap:4px 7px;margin-top:6px;font-size:6px}.walker-weapon b{font-size:6px}}

@@ -34,7 +34,7 @@ export class SiegeWeakPoints {
  stop(){this.phase='dead';this.discharge.visible=false;this.burstRemaining=0;for(const p of this.points)p.root.visible=false;}
  generate(){
   this.clear();this.cycle++;this.phase='active';const c=this.config,groups=new Map();
-  for(const s of shuffle(c.locations,this.random)){if(!this.robot.nodes[s.part])continue;if(!groups.has(s.region))groups.set(s.region,[]);groups.get(s.region).push(s);}
+  for(const s of shuffle(c.locations,this.random)){if(!this.robot.nodes[s.part]||this.robot.isPartAvailable?.(s.part)===false)continue;if(!groups.has(s.region))groups.set(s.region,[]);groups.get(s.region).push(s);}
   const queues=shuffle([...groups.values()],this.random),candidates=[];
   // Round-robin regions before considering a second socket in any region.
   while(queues.some(g=>g.length))for(const g of queues)if(g.length)candidates.push(g.shift());
@@ -50,6 +50,15 @@ export class SiegeWeakPoints {
    if(this.points.length>=count)break;
   }
   this.total=this.points.length;this.updateVisuals(0);
+ }
+ relocatePart(part,replacement){
+  const socket=this.config.locations.find(s=>s.part===replacement)||WEAK_POINT_LOCATIONS.find(s=>s.part===replacement);if(!socket)return;
+  const box=this.robot.boxes[replacement];
+  for(const p of this.points.filter(p=>p.part===part)){
+   p.part=replacement;p.location=socket.id;this.robot.nodes[replacement].add(p.root);
+   p.root.position.copy(box.center).add(new THREE.Vector3(box.size.x*socket.x,box.size.y*socket.y,box.size.z/2+this.config.radius*.65));
+  }
+  this.robot.root.updateMatrixWorld(true);
  }
  get remaining(){return this.points.filter(p=>p.health>0).length;}
  trace(from,to,radius=0){

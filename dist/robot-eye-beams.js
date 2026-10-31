@@ -18,7 +18,8 @@ export class RobotEyeBeams{
   const robot=this.getRobot(),runner=this.getRunner(),alive=!robot.dead&&!!robot.combatUnit?.alive,enabled=runner&&runner.enabled!==false;
   if(!alive){this.cycle.cancel();this.bolts=[];robot.eyeTarget=null;this.render(time,[]);return;}
   const muzzles=this.muzzles(),target=enabled?runner.root.position.clone().addScaledVector(runner.bodyUp,1.25):null,origin=muzzles[0],direction=new THREE.Vector3(0,0,1).transformDirection(robot.nodes.head.matrixWorld),desired=this.cycle.target?new THREE.Vector3(this.cycle.target.x,this.cycle.target.y,this.cycle.target.z).sub(origin).normalize():direction;
-  const aims=this.cycle.step(dt,{alive,target,origin,velocity:runner?.motion.velocity,allowed:this.canAttack(),aligned:direction.dot(desired)>.82});robot.eyeTarget=this.cycle.target;
+  if(robot.isWeaponWorking?.('eyes')===false)this.cycle.cancel();
+  const aims=this.cycle.step(dt,{alive,target,origin,velocity:runner?.motion.velocity,allowed:robot.isWeaponWorking?.('eyes')!==false&&this.canAttack(),aligned:direction.dot(desired)>.82});robot.eyeTarget=this.cycle.target;
   for(const aim of aims)for(const from of muzzles){if(this.bolts.length>=EYE_BEAMS.maxBolts)break;const dir=new THREE.Vector3(aim.x,aim.y,aim.z).sub(from).normalize();this.bolts.push({id:++this.sequence,position:from.clone(),dir,age:0});this.history.push({from:from.toArray(),target:{...aim},time});this.onLaunch(from);}
   this.history=this.history.slice(-12);const centers=enabled?this.centers(runner):[],previous=this.previousCenters||centers;
   for(let i=this.bolts.length-1;i>=0;i--){const b=this.bolts[i],from=b.position.clone(),to=from.clone().addScaledVector(b.dir,EYE_BEAMS.speed*dt);const transit=this.redirect(b,from,to);if(transit){b.position.copy(transit.position);b.dir.copy(transit.direction);b.age+=dt;continue;}let hit=this.traceWorld(from,to,EYE_BEAMS.radius);

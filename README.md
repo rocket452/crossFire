@@ -27,6 +27,12 @@ Click an aircraft or its PILOT tag to enter. Desktop W/S move, A/D strafe, Q/E t
 
 Choose **Rift Warden escort** to watch the third CPU hero teleport, fire through stationary five-second portals, and evacuate threatened friendly armor/infantry.
 
+## Destroying Siege Walker weapons
+
+Focus fire on the beam forearm, shoulder rocket pod, shoulder plasma cannon or eye emitters to wear down that weapon independently. Initial durability is 1,800 / 1,600 / 1,800 / 700 HP respectively, configured in `dist/walker-weapons.js`. Compact meters beneath the boss health bar show each weapon's remaining durability.
+
+Destroyed weapons explode, detach as smoking physics wreckage and remain offline until City Rebuild. The Walker cycles through its surviving main weapons. Losing a mount cancels charging and unlaunched shots; projectiles already airborne remain dangerous. Ordinary hits still damage the hull once, with no extra break-damage bonus. Existing weak cores keep their separate damage/stun rules; an arm core moves to the intact shoulder if the cannon falls off.
+
 ## Runtime source
 - dist/battle.js: city rendering, armies, weapons, camera, effects, UI.
 - dist/combat-collision.js: shared reticle/missile sweeps and unit durability.
@@ -37,6 +43,7 @@ Choose **Rift Warden escort** to watch the third CPU hero teleport, fire through
 - dist/violet-flight.js: bounded acceleration, persistent momentum and Violet combat tuning.
 - dist/runner-charge.js: half-second wind-up and damage-time accounting for player/CPU electricity.
 - dist/runner-rooftops.js: CPU speedster roof selection, facade approaches, supported rooftop attacks and departure.
+- dist/walker-weapons.js: individual weapon durability, part bindings and one-time destruction events.
 - dist/robot-arsenal.js: five-second initial/rebuild grace, beam → missiles → plasma rotation, five-second weapon changes and pre-launch warning.
 - dist/shield-shake.js: shield forward offset and damage recoil.
 - dist/portal-hero.js: portal hero articulation, teleport/attack/rescue effects and pooled projectiles.
