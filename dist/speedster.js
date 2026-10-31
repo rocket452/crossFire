@@ -28,26 +28,37 @@ export class Speedster {
   window.addEventListener('keyup',e=>this.keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>this.clearInput());document.addEventListener('visibilitychange',()=>{if(document.hidden)this.clearInput();});
   const look=(dx,dy)=>{if(this.settingsOpen)return;dx*=this.preferences.sensitivity;dy*=this.preferences.sensitivity;const turn=-dx*.005;if(dx||dy)this.heading.manual(turn);this.yaw+=turn;this.pitch=THREE.MathUtils.clamp(this.pitch-dy*.004,-1.0,1.0);};
   const canUse=()=>this.active&&!this.settingsOpen&&!this.isPaused()&&!document.querySelector('dialog[open]');
-  const lockMouse=()=>{if(document.pointerLockElement===this.canvas)return;try{this.canvas.requestPointerLock?.()?.catch?.(()=>{});}catch{}};
   this.canvas.addEventListener('contextmenu',e=>{if(this.active)e.preventDefault();});
+  // Mouse buttons use their own events so left/right chords work in either order.
+  // Pointer events only send pointerdown/up for the first/last mouse button.
+  this.canvas.addEventListener('mousedown',e=>{
+   if(!canUse()||!inputMode.desktop||(e.button!==0&&e.button!==2))return;
+   e.preventDefault();this.canvas.focus({preventScroll:true});this.touchAim=false;
+   if(e.button===0){this.feedback.unlock();this.mouseFire=true;this.pulse=Math.max(this.pulse,this.charge.burstSeconds+.04);}
+   else{this.pointer={id:this.mousePointerId,x:e.clientX,y:e.clientY,type:'mouse',button:2};if(this.mousePointerId!=null)this.canvas.setPointerCapture(this.mousePointerId);}
+  });
+  window.addEventListener('mousemove',e=>{
+   if(!canUse()||this.pointer?.type!=='mouse')return;
+   if(!(e.buttons&2)){this.pointer=null;return;}
+   look(e.clientX-this.pointer.x,e.clientY-this.pointer.y);this.pointer.x=e.clientX;this.pointer.y=e.clientY;
+  });
+  window.addEventListener('mouseup',e=>{
+   if(e.button===0)this.mouseFire=false;
+   if(e.button===2&&this.pointer?.type==='mouse'){const id=this.pointer.id;this.pointer=null;if(id!=null&&this.canvas.hasPointerCapture(id))this.canvas.releasePointerCapture(id);}
+  });
   this.canvas.addEventListener('pointerdown',e=>{
    if(!canUse())return;this.touchAim=e.pointerType==='touch';
-   if(inputMode.desktop&&e.pointerType==='mouse'){
-    if(e.button!==0&&e.button!==2)return;e.preventDefault();this.canvas.focus({preventScroll:true});
-    if(e.button===2){this.dashPending=true;return;}
-    this.feedback.unlock();this.mouseFire=true;this.pulse=Math.max(this.pulse,this.charge.burstSeconds+.04);
-    if(document.pointerLockElement!==this.canvas){this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY,type:'mouse',button:0};this.canvas.setPointerCapture(e.pointerId);lockMouse();}return;
-   }
+   if(e.pointerType==='mouse'){this.mousePointerId=e.pointerId;return;}
    if(this.pointer)return;e.preventDefault();this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY,type:e.pointerType,button:e.button};this.canvas.setPointerCapture(e.pointerId);
   });
   this.canvas.addEventListener('pointermove',e=>{
-   if(!canUse())return;
-   if(document.pointerLockElement===this.canvas&&e.pointerType==='mouse'){look(e.movementX,e.movementY);return;}
-   if(this.pointer?.id!==e.pointerId)return;look(e.clientX-this.pointer.x,e.clientY-this.pointer.y);this.pointer.x=e.clientX;this.pointer.y=e.clientY;
+   if(!canUse()||e.pointerType==='mouse'||this.pointer?.id!==e.pointerId)return;
+   look(e.clientX-this.pointer.x,e.clientY-this.pointer.y);this.pointer.x=e.clientX;this.pointer.y=e.clientY;
   });
-  const endLook=e=>{if(e.button===0||e.type==='pointercancel')this.mouseFire=false;if(this.pointer?.id===e.pointerId)this.pointer=null;if(e.type==='pointercancel')this.pulse=0;};
+  const endLook=e=>{if(e.type==='pointercancel'){if(this.active)this.clearInput();return;}if(e.pointerType!=='mouse'&&this.pointer?.id===e.pointerId)this.pointer=null;};
   for(const name of ['pointerup','pointercancel'])window.addEventListener(name,endLook);
-  this.canvas.addEventListener('lostpointercapture',e=>{if(document.pointerLockElement!==this.canvas&&this.pointer?.id===e.pointerId){this.pointer=null;this.mouseFire=false;}});
+  // Chord release can drop pointer capture while RMB is still held; window mousemove keeps that drag alive.
+  this.canvas.addEventListener('lostpointercapture',e=>{if(this.pointer?.id!==e.pointerId)return;if(e.pointerType==='mouse'&&(e.buttons&2))return;this.pointer=null;if(!(e.buttons&1))this.mouseFire=false;});
   this.mouseLocked=false;document.addEventListener('pointerlockchange',()=>{const locked=document.pointerLockElement===this.canvas;if(this.mouseLocked&&!locked)this.clearInput();this.mouseLocked=locked;});
   inputMode.subscribe(mode=>{this.touchAim=mode==='touch';if(this.active)this.clearInput();if(inputMode.mode==='touch'&&document.pointerLockElement===this.canvas)document.exitPointerLock();});
   this.moveStick=new TouchStick(document.getElementById('runner-stick'),document.getElementById('runner-thumb'),{enabled:()=>this.active&&!this.settingsOpen&&!inputMode.desktop});this.stick=this.moveStick.value;
@@ -64,7 +75,7 @@ export class Speedster {
  }
  savePreferences(){try{localStorage.setItem('crossfire-runner-controls',JSON.stringify(this.preferences));}catch{}}
  setSettings(open){if(open&&document.pointerLockElement===this.canvas)document.exitPointerLock();this.settingsOpen=open;document.getElementById('runner-settings').hidden=!open;document.getElementById('runner-settings-toggle').setAttribute('aria-expanded',String(open));}
- clearInput(){this.dashRequestRemaining=0;this.root.visible=this.enabled!==false;this.stunPending=false;this.stunFlash=0;this.dash?.cancel();this.dashPending=false;this.charge?.cancel();this.charging=false;this.firing=false;this.damageClock=0;this.fx?.clear();this.keys.clear();this.moveStick?.reset();this.stick.x=this.stick.y=0;this.heldFire=this.mouseFire=false;this.jumpPending=false;if(this.motion)this.motion.jumpBuffer=0;this.pointer=this.firePointer=null;this.assistedAim=null;this.pulse=0;this.heading.reset(this.yaw);const thumb=document.getElementById('runner-thumb');if(thumb)thumb.style.transform='';}
+ clearInput(){const captured=this.pointer?.id;this.dashRequestRemaining=0;this.root.visible=this.enabled!==false;this.stunPending=false;this.stunFlash=0;this.dash?.cancel();this.dashPending=false;this.charge?.cancel();this.charging=false;this.firing=false;this.damageClock=0;this.fx?.clear();this.keys.clear();this.moveStick?.reset();this.stick.x=this.stick.y=0;this.heldFire=this.mouseFire=false;this.jumpPending=false;if(this.motion)this.motion.jumpBuffer=0;this.pointer=this.firePointer=null;this.mousePointerId=null;if(captured!=null&&this.canvas.hasPointerCapture(captured))this.canvas.releasePointerCapture(captured);this.assistedAim=null;this.pulse=0;this.heading.reset(this.yaw);const thumb=document.getElementById('runner-thumb');if(thumb)thumb.style.transform='';}
  setEnabled(enabled){this.enabled=!!enabled;this.reset();this.root.visible=this.fx.root.visible=this.enabled;}
  enter(){if(this.active||this.enabled===false)return;this.feedback.unlock();this.onEnter();this.saved={position:this.camera.position.clone(),target:this.controls.target.clone(),fov:this.camera.fov,near:this.camera.near};this.active=true;this.ai.suspend();this.firing=false;this.damageClock=0;this.fx.clear();this.motion.velocity.x=this.motion.velocity.z=0;this.motion.speed=0;this.boost=false;document.getElementById('runner-boost').classList.remove('active');document.getElementById('runner-boost').setAttribute('aria-pressed','false');this.clearInput();this.controls.enabled=false;this.hud.hidden=false;this.viewer.classList.add('is-running');this.camera.fov=65;this.camera.near=.08;this.camera.updateProjectionMatrix();this.canvas.focus({preventScroll:true});if(this.motion.mode==='wall')this.yaw=Math.atan2(-this.motion.normal.x,-this.motion.normal.z);this.updateCamera(1,true);}
  exit(){if(!this.active)return;this.active=false;if(document.pointerLockElement===this.canvas)document.exitPointerLock();this.viewer.classList.remove('runner-eye-hit');this.setSettings(false);this.feedback.clear();this.firing=false;this.ai.resume(this.motion.position);this.fx.clear();this.clearInput();this.hud.hidden=true;this.viewer.classList.remove('is-running');this.controls.enabled=true;this.camera.position.copy(this.saved.position);this.controls.target.copy(this.saved.target);this.camera.fov=this.saved.fov;this.camera.near=this.saved.near;this.camera.up.set(0,1,0);this.camera.updateProjectionMatrix();this.controls.update();this.onExit();}
@@ -95,7 +106,7 @@ export class Speedster {
   // Primary clicks fire immediately; locomotion remains independent of the beam.
   const requested=this.stunFlash<=0&&(this.active?!dialog&&(this.heldFire||this.mouseFire||k.has('f')||this.pulse>0):!!cpu?.fire);
   this.pulse=Math.max(0,this.pulse-dt);const charge=this.charge.step(dt,requested&&!dashing,this.energy);this.charging=false;this.firing=charge.phase==='firing';
-  this.pose(dt);this.root.visible=this.enabled!==false&&!this.dash.active;if(this.active)this.yaw=this.heading.follow(this.yaw,dt,{input,mode:this.motion.mode,velocity:this.motion.velocity,heading:Math.atan2(this.bodyForward.x,this.bodyForward.z),aiming:requested||this.charging||this.firing,blocked:dialog||dashing});if(dashing){this.nodes.chest.rotation.x+=.2;this.nodes.upperarm_l.rotation.x=.5;this.nodes.upperarm_r.rotation.x=.5;}let beam=null;
+  this.pose(dt);this.root.visible=this.enabled!==false&&!this.dash.active;if(this.active)this.yaw=this.heading.follow(this.yaw,dt,{input,mode:this.motion.mode,velocity:this.motion.velocity,heading:Math.atan2(this.bodyForward.x,this.bodyForward.z),aiming:requested||this.charging||this.firing||this.pointer?.type==='mouse',blocked:dialog||dashing});if(dashing){this.nodes.chest.rotation.x+=.2;this.nodes.upperarm_l.rotation.x=.5;this.nodes.upperarm_r.rotation.x=.5;}let beam=null;
   if(this.firing){
    let target;
    if(this.active){this.updateCamera(dt);const direction=this.camera.getWorldDirection(new THREE.Vector3()),far=this.camera.position.clone().addScaledVector(direction,110),aim=this.traceAim(this.camera.position,far);target=aim?new THREE.Vector3(aim.point.x,aim.point.y,aim.point.z):far;const assisted=aim?.weakPoint?null:selectRunnerAim(this.camera.position,direction,this.getAimTargets(),{enabled:this.touchAim&&this.preferences.aimAssist,trace:(a,b)=>this.traceAim(a,b),previous:this.aimTargetId});this.assistedAim=assisted;this.aimTargetId=assisted?.id||null;if(assisted)target.copy(assisted.point);}

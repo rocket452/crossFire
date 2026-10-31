@@ -21,7 +21,7 @@ const harness=`window.__qaStopRender=true;window.qa={
   const center=async id=>{const r=await page.locator(id).boundingBox();return{x:r.x+r.width/2,y:r.y+r.height/2};};
   const forward=async(boost=false)=>{if(mobile){if(boost)await page.locator('#runner-boost').tap();const p=await center('#runner-stick');await touch('touchStart',[...contacts,{id:1,x:p.x,y:p.y-28}]);}else{await page.locator('canvas').focus();await page.keyboard.down('w');if(boost)await page.keyboard.down('Shift');}};
   const fire=async()=>{if(mobile)await touch('touchStart',[...contacts,{id:2,...await center('#runner-fire')}]);else{const p=await center('canvas');await page.mouse.move(p.x,p.y);await page.mouse.down();}};
-  const release=async(unlock=true)=>{if(mobile){if(contacts.length)await touch('touchEnd',[]);}else{await page.mouse.up();await page.keyboard.up('w');await page.keyboard.up('Shift');await page.keyboard.up('d');if(unlock){await page.evaluate(()=>qa.unlock());await page.waitForTimeout(100);}}};
+  const release=async(unlock=true)=>{if(mobile){if(contacts.length)await touch('touchEnd',[]);}else{await page.mouse.up();await page.mouse.up({button:'right'});await page.keyboard.up('w');await page.keyboard.up('Shift');await page.keyboard.up('d');if(unlock){await page.evaluate(()=>qa.unlock());await page.waitForTimeout(100);}}};
   const immediate=s=>{assert(s.firing&&s.electricity.firing,'beam visible on first 120Hz update');assert(!s.charging&&!s.electricity.charging&&!s.chargeBall,'no wind-up animation');assert.equal(s.charge.seconds,0);assert.equal(s.energy.spent,25);assert(s.character.weighted);};
   // Same real street and inputs: firing must not slow the runner or freeze weighted legs.
   for(const boost of[false,true]){
@@ -31,7 +31,7 @@ const harness=`window.__qaStopRender=true;window.qa={
    assert(Math.abs(s.distance-baseline.distance)<.15,'fire preserves running distance');assert(Math.abs(s.speed-baseline.speed)<.2,'fire preserves movement speed');if(boost)assert(s.speed>30);
    const oldYaw=s.yaw;
    if(mobile){const r=await page.locator('canvas').boundingBox(),p={id:3,x:r.x+r.width*.7,y:r.y+r.height*.45};await touch('touchStart',[...contacts,p]);await touch('touchMove',contacts.map(a=>a.id===3?{...a,x:a.x+30,y:a.y-10}:a));}
-   else await page.mouse.move((await center('canvas')).x+30,(await center('canvas')).y-10);
+   else{await page.mouse.down({button:'right'});await page.mouse.move((await center('canvas')).x+30,(await center('canvas')).y-10);}
    await step(1);s=await state();assert(Math.abs(s.yaw-oldYaw)>.05,'aim can turn during a moving shot');assert(s.firing&&s.speed>5);
    if(boost){await page.evaluate(()=>qa.render());await page.locator('#viewport').screenshot({path:'/tmp/instant-lightning63-'+(mobile?'phone':'desktop')+'.png'});}
    await step(23);s=await state();assert.equal(s.ticks,5,'full beam retains five damage samples');assert.equal(s.charge.bursts,1);assert.equal(s.energy.spent,25);await step(72);assert.equal((await state()).charge.bursts,1,'held fire respects recovery');
