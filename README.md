@@ -49,6 +49,10 @@ Values live in `dist/ninja-motion.js`. Character geometry/weights and clips reus
 
 A civilian group's small yellow dot flashes red while an enemy beam, missile, plasma landing zone or drone attack threatens the group. The flag follows current rescue groups and clears when the threat ends, is intercepted or the civilians leave a marked blast zone. The minimap reads combat state without selecting targets or changing the battle. Reduced-motion displays use a steady red dot. Policy and browser validation are documented in `QA/civilian-warning-validation.md`.
 
+## Tracked drone projectiles
+
+The small robots fire energy bolts with a 0.66m radius (three times their original diameter) at 18m/s, 50% faster than before. Swept cover/unit/shield collision and incoming-attack predictions use the same size and speed. Damage, firing cadence and targeting ranges stay unchanged. Tuning lives in `RAIDER_COMBAT` in `dist/evac-raider.js`.
+
 ## Runtime source
 - dist/ninja-hero.js: ninja rig accessories/animation, player/CPU control, real-hand shurikens, effects and camera.
 - dist/ninja-motion.js: shared city collision, high/double/wall jumps, aerial strike, confirmed-kill resets and slow fall.

@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider} from './evac-raider.js?v=robot-death-80';
+import {EvacRaider} from './evac-raider.js?v=raider-bolts-85';
 import {ESCORT_APPROACH} from './evac-approach.js?v=drone-squad-65';
 export class EvacRaiderSquad {
  constructor(scene,damage,{landing,getHelicopter,getTargets,visible,trace,isPathClear,redirect,onHeroHit=()=>{},onDebris=()=>null,onRemoveDebris=()=>{},onDeath=()=>{},onWreck=()=>{},onEvent=()=>{}}){
