@@ -76,3 +76,6 @@ Seven small robots arrive in a staggered 3/3/1 formation with the second civilia
 - dist/city-assets/README.md: physics scope, limitations, import/download notes.
 
 Prior project assets remain in version history and their existing local files; the main page now opens the city battle.
+
+
+Volt’s energy rescue dash travels up to **30 metres** (triple its former 10m range) at 36m/s, taking about 0.83 seconds on a clear route. It collects allies along the way and reforms them safely at the end; buildings, ledges and map boundaries still shorten the dash. Pickup radius, five-second cooldown and zero charge cost remain unchanged. Range tuning: `DASH.range` in `dist/runner-dash.js`.

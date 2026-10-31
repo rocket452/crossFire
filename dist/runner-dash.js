@@ -2,7 +2,7 @@ import {segmentBoxFraction,traceImpact} from './combat-collision.js?v=wave-dash-
 import {terrainHeight,terrainNormal} from './runner-motion.js?v=runner-6';
 import {findPortalRescue} from './portal-policy.js?v=evacuation-57';
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z),copy=p=>({x:p.x,y:p.y,z:p.z});
-export const DASH={range:10,radius:5,speed:36,cooldown:5,contactRadius:2.4,inputBuffer:.2};
+export const DASH={range:30,radius:5,speed:36,cooldown:5,contactRadius:2.4,inputBuffer:.2};
 const friendly=u=>['tank','infantry','civilian'].includes(u.kind);
 const segmentDistance=(p,a,b)=>{const x=b.x-a.x,z=b.z-a.z,t=Math.max(0,Math.min(1,((p.x-a.x)*x+(p.z-a.z)*z)/(x*x+z*z||1)));return Math.hypot(p.x-a.x-x*t,p.z-a.z-z*t);};
 const foot=u=>u.entity.root?copy(u.entity.root.position):{x:u.entity.x,y:u.entity.y,z:u.entity.z};
