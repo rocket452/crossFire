@@ -1,14 +1,14 @@
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider} from './evac-raider.js?v=drone-squad-65';
+import {EvacRaider} from './evac-raider.js?v=drone-heroes-79';
 import {ESCORT_APPROACH} from './evac-approach.js?v=drone-squad-65';
 export class EvacRaiderSquad {
- constructor(scene,damage,{landing,getHelicopter,getTargets,visible,trace,isPathClear,redirect,onEvent=()=>{}}){
+ constructor(scene,damage,{landing,getHelicopter,getTargets,visible,trace,isPathClear,redirect,onHeroHit=()=>{},onEvent=()=>{}}){
   this.landing=landing;this.onEvent=onEvent;
   this.members=ESCORT_APPROACH.lanes.map((lane,i)=>new EvacRaider(scene,damage,{
    id:'evac-raider-'+i,spawnPosition:{x:landing.x+lane,y:.1,z:ESCORT_APPROACH.spawnZ},
    objective:()=>new THREE.Vector3(landing.x+lane,.1,ESCORT_APPROACH.stopZ),moveSpeed:ESCORT_APPROACH.speed,initialCooldown:4+i*.35,
-   getTargets:()=>{const heli=getHelicopter();return[...(heli?.alive&&heli.entity.root.position.y<12?[heli]:[]),...getTargets()];},
-   visible,trace,isPathClear,redirect,onEvent:message=>{if(!message.startsWith('Raider robot approaching'))onEvent(message);}
+   getTargets:origin=>{const heli=getHelicopter();return[...(heli?.alive&&heli.entity.root.position.y<12?[heli]:[]),...getTargets(origin)];},
+   visible,trace,isPathClear,redirect,onHeroHit,onEvent:message=>{if(!message.startsWith('Raider robot approaching'))onEvent(message);}
   }));this.spawned=false;
  }
  spawn(){if(this.spawned)return false;this.spawned=true;for(const r of this.members)r.spawn();this.onEvent('Drone squad inbound · 3 tracked raiders advancing down the outer boulevard.');return true;}

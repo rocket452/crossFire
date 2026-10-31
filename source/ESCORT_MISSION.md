@@ -21,3 +21,13 @@ Volt's run boundary extends to Z=104 and electric-wave boundary to Z=103 only in
 - `dist/battle.js`: escort-only ground size, camera/shadows, player movement limits, squad combat adapters and threat ownership.
 
 The drone movement is intentionally a simple, predictable three-lane approach. Major debris can halt a lane until cleared; no full pathfinding or destructible new buildings were added to the extension.
+
+## Drone torso tracking and hero targets — revision 79
+
+Tracked raiders now prioritize visible, enabled heroes within 30 m, including the player and flying heroes. Each selects independently and retains its current hero unless another is at least 5 m closer, avoiding constant target flicker. Disabled, phased or occluded heroes are excluded. With no nearby visible hero, the previous low-altitude Chinook/civilian targeting order remains.
+
+The upper body turns independently of the chassis, and the right cannon pitches toward elevated targets. Treads continue along their existing landing-zone lanes. `RAIDER_COMBAT` in `dist/evac-raider.js` configures 120°/s waist and cannon tracking, 7° firing alignment, 30 m hero range, 34 m weapon range, 1 s aligned windup, 2.5 s recovery and 5 m target-switch margin. Cannon pitch spans 85° upward to 75° downward. A target change restarts the windup; cover, stun or misalignment prevents firing. Existing three-second arrival grace, per-drone initial cooldowns, 12 m/s bolts, squad size and wave-two spawn remain.
+
+Upper-body collision rotates with the torso while tread collision follows the chassis. `EvacuationScene.heroUnits()` supplies shared hero proxies in their actual support orientation. Raider projectile sweeps include those proxies, keep portal redirection and Mochi bubbles, and can hit Violet's existing barrier. Volt's active electric wave is excluded from both targeting and collision.
+
+Hero impacts use the prototype's existing feedback (Volt's hit reaction and contact sparks/flashes). Heroes still have no health/death system; hero proxies are deliberately never passed into `UnitDamage.hurt`. No new hero abilities or escort requirements are added.
