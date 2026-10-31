@@ -1,3 +1,4 @@
+export const WALKER_TURN_SPEED=.34;
 // World-space foot plants and an analytic two-bone solve; independent of rendering.
 const TAU=Math.PI*2;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -16,7 +17,7 @@ export class WalkerGait {
  update(dt,time,desiredYaw=this.yaw){
   const previousYaw=this.yaw;
   // The pelvis turns deliberately while the waist aims independently.
-  this.yaw+=clamp(angleDelta(desiredYaw,this.yaw),-.34*dt,.34*dt);
+  this.yaw+=clamp(angleDelta(desiredYaw,this.yaw),-WALKER_TURN_SPEED*dt,WALKER_TURN_SPEED*dt);
   this.turnRate=dt>0?angleDelta(this.yaw,previousYaw)/dt:0;
   const landings=[];
   for(const foot of this.feet){

@@ -85,3 +85,6 @@ Detached building fragments become visible, non-blocking rubble on first ground/
 
 
 Violet’s absorbed-energy force beam has a **two-second charge-up** before its four-second sustained attack. He holds position, braces, gathers his hands around a growing purple core, then extends into the firing pose. Spiraling particles, rotating rings and force arcs build at his real rigged hands. The HUD counts down the charge; no beam damage occurs during buildup. Shield-energy cost (1,200), beam damage (420/s) and self-defense interruption are retained. Tune `VIOLET_BEAM.chargeDuration` in `dist/hero-powers.js`.
+
+
+In Civilian evacuation, plasma artillery leads visible civilian groups along their street routes, accounting for warning, body-turn and flight time. One locked ground target per group preserves rescue counterplay. Red minimap crosshairs show impending plasma landing points through warning and flight, clearing when the shell ends. The map’s civilian warning also accounts for projected danger.

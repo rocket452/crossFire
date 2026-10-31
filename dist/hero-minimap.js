@@ -34,10 +34,11 @@ export class HeroMinimap {
   const data=this.getSnapshot(),people=data.civilians||[],enemies=data.enemies||[];
   this.counts={civilians:people.length,enemies:enemies.length};this.civilianCount.textContent=people.length;this.enemyCount.textContent=enemies.length;
   const entries=[...this.staticMarkers,...civilianClusters(people).map(g=>({...g,id:'group-'+g.id,kind:'civilian',label:g.count+' civilians'+(g.targeted?' — targeted by enemy attack':'')})),...enemies.map(e=>({...e,kind:e.boss?'boss':'enemy',label:e.boss?'Siege Walker':'Robot drone'})),...(data.allies||[]).map(a=>({...a,kind:'ally',label:'Allied hero'}))];
+  for(const p of data.plasma||[])entries.push({...p,id:'impact-'+p.id,kind:'plasma',label:'Plasma impact in '+Math.max(0,p.eta).toFixed(1)+' seconds'});
   if(data.helicopter)entries.push({...data.helicopter,id:'evac-helicopter',kind:'helicopter',label:'Evacuation helicopter'});
   const live=new Set(entries.map(e=>e.id));for(const[id,m]of this.nodes)if(!live.has(id)){m.node.remove();this.nodes.delete(id);}
   for(const entry of entries){let marker=this.nodes.get(entry.id);if(!marker){marker=this.makeMarker(entry);this.nodes.set(entry.id,marker);}marker.entry=entry;marker.title.textContent=entry.label;marker.node.classList.toggle('targeted',entry.kind==='civilian'&&!!entry.targeted);marker.node.setAttribute('data-targeted',String(!!entry.targeted));}
-  this.root.setAttribute('aria-label',`Rotating hero minimap. ${people.length} civilians on the ground; ${enemies.length} enemies. Small yellow circles show civilian groups; flashing red circles warn of targeted groups; red diamonds show enemies; green H marks evacuation. Up follows the camera. Distant groups stay at the rim; arrows mark other distant units.`);
+  this.root.setAttribute('aria-label',`Rotating hero minimap. ${people.length} civilians on the ground; ${enemies.length} enemies. Small yellow circles show civilian groups; flashing red circles warn of targeted groups; red diamonds show enemies; red crosshairs show impending plasma impacts; green H marks evacuation. Up follows the camera. Distant groups stay at the rim; arrows mark other distant units.`);
  }
  makeMarker(entry){
   const node=svg('g',{'data-kind':entry.kind,'data-id':entry.id,class:'minimap-marker '+entry.kind},this.markers),title=svg('title',{},node);title.textContent=entry.label;
@@ -45,6 +46,7 @@ export class HeroMinimap {
   if(entry.kind==='civilian')svg('circle',{r:4,class:'minimap-symbol'},node);
   else if(entry.kind==='boss'){svg('circle',{r:8,class:'minimap-boss-ring'},node);svg('path',{d:'M0 -6L6 0L0 6L-6 0Z',class:'minimap-symbol'},node);}
   else if(entry.kind==='enemy'){svg('path',{d:'M0 -5.5L5.5 0L0 5.5L-5.5 0Z',class:'minimap-symbol'},node);svg('circle',{r:1.2,class:'minimap-enemy-core'},node);}
+  else if(entry.kind==='plasma'){const d='M-10 0H-3M3 0H10M0 -10V-3M0 3V10M5.5 0A5.5 5.5 0 1 0 -5.5 0A5.5 5.5 0 1 0 5.5 0';svg('path',{d,class:'minimap-plasma-outline'},node);svg('path',{d,class:'minimap-plasma-crosshair'},node);}
   else if(entry.kind==='ally')svg('circle',{r:2.6,class:'minimap-symbol'},node);
   else if(entry.kind==='helicopter')svg('path',{d:'M-5 0H5M0 -4V4M-6 -4H6',class:'minimap-helicopter'},node);
   else{svg('rect',{x:-5.5,y:-5.5,width:11,height:11,rx:2,class:'minimap-symbol'},node);const text=svg('text',{'text-anchor':'middle','dominant-baseline':'central',class:'minimap-map-label'},node);text.textContent=entry.kind==='landing'?'H':'S';}
@@ -62,5 +64,5 @@ export class HeroMinimap {
    marker.arrow?.setAttribute('transform',`rotate(${Math.atan2(p.y,p.x)*180/Math.PI+90})`);
   }
  }
- diagnostics(){return{visible:this.visible,heading:this.heading,center:{...this.center},range:MINIMAP.range,counts:{...this.counts},markers:[...this.nodes.values()].map(m=>({id:m.entry.id,kind:m.entry.kind,count:m.entry.count||1,targeted:!!m.entry.targeted,world:{x:m.entry.x,z:m.entry.z},...m.projected}))};}
+ diagnostics(){return{visible:this.visible,heading:this.heading,center:{...this.center},range:MINIMAP.range,counts:{...this.counts},markers:[...this.nodes.values()].map(m=>({id:m.entry.id,kind:m.entry.kind,count:m.entry.count||1,targeted:!!m.entry.targeted,eta:m.entry.eta,blastRadius:m.entry.blastRadius,world:{x:m.entry.x,z:m.entry.z},...m.projected}))};}
 }

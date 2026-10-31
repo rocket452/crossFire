@@ -53,3 +53,12 @@ Smoke remains capped at 48 emitters and 240 puffs, so seven drones plus the Walk
 ## Faster small-robot projectiles — revision 87 (current)
 
 `RAIDER_COMBAT.projectileSpeed` is now 36m/s, double the previous 18m/s. Actual movement and incoming-threat prediction read the same per-shot speed. The seven-robot formation, 1.32m hit radius, energy effects, damage, firing cadence and four-second lifetime are unchanged. Maximum unobstructed flight distance consequently doubles to 144m; acquisition/firing range remains 30m/34m.
+
+
+## Predictive civilian plasma targets — revision 91
+
+Plasma prioritizes visible civilian groups and predicts their route positions at impact, including warning, current turn time and ballistic flight. Candidates are deduplicated by cohort, with at most two separated groups per volley. The forecast follows existing routes rather than inventing straight paths through buildings, and respects current queue, blocked and dash-carry states. Fixed warnings give heroes time to rescue people; a later route change or extra firing delay can cause the shot to miss. Civilian spawning, movement authority, weapon rotation and hero abilities are unchanged.
+
+`civilian-prediction.js` implements the read-only route forecast, exposed through `EvacuationScene.predictCivilian`. `PlasmaArtillery.aimTarget` solves arrival time with `PLASMA.leadIterations` (10) and `maxLeadSeconds` (24). The existing turn speed is exported as `WALKER_TURN_SPEED` (0.34 rad/s); movement behavior is unchanged. Each shell’s `aim` diagnostics record original group center, chosen point, unit and predicted seconds.
+
+The minimap consumes live shell ground points, renders red crosshairs with ETA titles, and follows actual redirect/cleanup events. Existing civilian-dot warnings include the predicted danger and clear after a safe rescue. Display code does not advance combat or navigation.

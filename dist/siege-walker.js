@@ -3,7 +3,7 @@ import {CannonTracking,CANNON_TRACKING} from './cannon-tracking.js?v=beam-tracki
 import * as THREE from './vendor/three.module.js';
 import {trackedBeamWarningPlan} from './beam-aim.js?v=beam-tracking-61';
 import {BeamCycle} from './beam-cycle.js?v=beam-3';
-import {WalkerGait,solveLegKnee,angleDelta} from './walker-gait.js?v=walk-2';
+import {WalkerGait,solveLegKnee,angleDelta,WALKER_TURN_SPEED} from './walker-gait.js?v=plasma-lead-91';
 
 // Blender-built rigid components retain hull health plus independently destructible weapons.
 export class SiegeWalker {
@@ -153,7 +153,7 @@ export class SiegeWalker {
   this.plasmaAim={...target};const node=this.nodes.plasma_cannon;node.parent.updateWorldMatrix(true,false);
   // Hold the gun above the torso's forward axis; aiming turns the robot, never the mount sideways.
   const forward=new THREE.Vector3(0,0,1).transformDirection(node.parent.matrixWorld);forward.y=0;forward.normalize();const yaw=Math.atan2(forward.x,forward.z),world=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/4,yaw,0,'YXZ')),parent=node.parent.getWorldQuaternion(new THREE.Quaternion());node.quaternion.copy(parent.invert()).multiply(world);node.updateWorldMatrix(false,true);
-  const position=node.localToWorld(new THREE.Vector3(0,1.4,3.35)),direction=new THREE.Vector3(0,0,1).transformDirection(node.matrixWorld),to=new THREE.Vector3(target.x-position.x,0,target.z-position.z).normalize();return{position,direction,aligned:forward.dot(to)>=Math.cos(.012)};
+  const position=node.localToWorld(new THREE.Vector3(0,1.4,3.35)),direction=new THREE.Vector3(0,0,1).transformDirection(node.matrixWorld),to=new THREE.Vector3(target.x-position.x,0,target.z-position.z).normalize();return{position,direction,aligned:forward.dot(to)>=Math.cos(.012),alignmentSeconds:Math.max(0,Math.abs(angleDelta(Math.atan2(to.x,to.z),yaw))-.012)/WALKER_TURN_SPEED};
  }
  updatePlasmaWarning(active,time=0){if(!this.isWeaponWorking('plasma'))return;this.plasmaCharging=active;const m=this.meshes.plasma_cannon?.material;if(m){m.emissive.set('#18f3a3');m.emissiveIntensity=active?(.45+.4*Math.sin(time*15)**2):0;}}
  updatePodWarning(state){if(!this.isWeaponWorking('missiles'))return;this.podWarning={...state};const m=this.meshes.rocket_pod?.material;if(!m)return;m.emissive.set('#ff3b0c');m.emissiveIntensity=state.active?(state.pulse?4.2:.1):0;}

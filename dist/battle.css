@@ -88,3 +88,5 @@ html[data-input-mode=desktop] .ninja-mobile{display:none!important}@media(max-wi
 @media(max-height:500px) and (pointer:coarse){.ninja-mobile{flex-direction:row;align-items:end;bottom:32px;gap:12px}.ninja-actions{order:1}.ninja-actions button{height:40px}#ninja-stick{width:85px;height:85px}#ninja-thumb{left:25px;top:25px}#ninja-ability-meter{top:73px;width:145px}.is-ninja .runner-telemetry{display:none}}
 /* Civilian groups keep their small dot; only threatened groups alternate red/yellow. */
 .minimap-marker.civilian.targeted .minimap-symbol{animation:civilian-target-warning .55s steps(1,end) infinite}@keyframes civilian-target-warning{0%,100%{fill:#ff334b}50%{fill:#ffdf57}}@media(prefers-reduced-motion:reduce){.minimap-marker.civilian.targeted .minimap-symbol{animation:none;fill:#ff334b}}
+
+.minimap-marker.plasma{color:#ff4354}.minimap-plasma-outline,.minimap-plasma-crosshair{fill:none;stroke-linecap:round;stroke-linejoin:round}.minimap-plasma-outline{stroke:#091720;stroke-width:4}.minimap-plasma-crosshair{stroke:#ff4354;stroke-width:1.8}
