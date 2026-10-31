@@ -1,4 +1,4 @@
-import {traceImpact} from './combat-collision.js?v=robot-1';
+import {traceImpact} from './combat-collision.js?v=ground-rubble-89';
 export const RUNNER_FORGIVENESS={coyoteSeconds:.12,jumpBufferSeconds:.15,landingReach:.28,mantleRise:1.05};
 export const RUNNER_CONTROL={radius:.34,skin:.015,stepHeight:.46,wallIntentSeconds:.10,wallReleaseLock:.3,playerWallSpeed:12,playerWallBoost:24,airWallMinNormalSpeed:3,airWallMinInto:.18,stickyMinClimb:.65};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -61,7 +61,7 @@ export class RunnerMotion {
  }
  step(input,dt,sections=[]){
   if(!(dt>0))return;this.player=!!input.player;if(!this.player)this.stickyWall=false;dt=Math.min(dt,.15);if(input.jump)this.jumpBuffer=RUNNER_FORGIVENESS.jumpBufferSeconds;const start={...this.position},margin=(input.boost?this.boostSpeed:this.runSpeed)*dt+3;
-  this.near=sections.filter(c=>!c.hidden&&(c.state==='intact'||c.state==='settled')&&Math.abs((c.body?.position.x??c.x)-this.position.x)<Math.hypot(...c.size)/2+margin&&Math.abs((c.body?.position.z??c.z)-this.position.z)<Math.hypot(...c.size)/2+margin&&Math.abs((c.body?.position.y??c.y)-this.position.y)<Math.hypot(...c.size)/2+margin+2);
+  this.near=sections.filter(c=>!c.hidden&&!c.collisionDisabled&&(c.state==='intact'||c.state==='settled')&&Math.abs((c.body?.position.x??c.x)-this.position.x)<Math.hypot(...c.size)/2+margin&&Math.abs((c.body?.position.z??c.z)-this.position.z)<Math.hypot(...c.size)/2+margin&&Math.abs((c.body?.position.y??c.y)-this.position.y)<Math.hypot(...c.size)/2+margin+2);
   let forward=clamp(input.forward||0,-1,1),strafe=clamp(input.strafe||0,-1,1),magnitude=Math.hypot(forward,strafe);if(magnitude>1){forward/=magnitude;strafe/=magnitude;}magnitude=Math.min(1,magnitude);
   const speed=input.boost?this.boostSpeed:this.runSpeed,steps=Math.max(1,Math.ceil(dt/.008)),h=dt/steps;
   for(let i=0;i<steps;i++){

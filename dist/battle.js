@@ -1,6 +1,6 @@
 import {RAIDER_COMBAT} from './evac-raider.js?v=raider-speed-87';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=civilian-warning-83';
-import {NinjaHero} from './ninja-hero.js?v=ninja-tuning-84';
+import {NinjaHero} from './ninja-hero.js?v=ground-rubble-89';
 import {RobotDeathEffects} from './robot-death-effects.js?v=robot-death-80';
 import {shieldBeamIntersection} from './hero-defense.js?v=hero-5';
 import {EnemyDamageFlash} from './enemy-damage-flash.js?v=ninja-82';
@@ -16,25 +16,25 @@ import {EvacuationScene} from './evacuation.js?v=drone-heroes-79';
 import * as THREE from 'three';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {OrbitControls} from './vendor/OrbitControls.js';
-import {DestructionWorld} from './destruction.js?v=robot-death-80';
+import {DestructionWorld} from './destruction.js?v=ground-rubble-89';
 import {InfantryCrowd} from './infantry.js?v=wave-dash-62';
 import {HelicopterPilot} from './helicopter-pilot.js?v=device-controls-59';
-import {traceImpact,UnitDamage} from './combat-collision.js?v=weapon-break-81';
+import {traceImpact,UnitDamage} from './combat-collision.js?v=ground-rubble-89';
 import {SiegeWalker} from './siege-walker.js?v=ninja-82';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
-import {BeamCombat} from './beam-combat.js?v=wave-dash-62';
+import {BeamCombat} from './beam-combat.js?v=ground-rubble-89';
 import {VioletHero} from './violet-hero.js?v=ninja-82';
-import {Speedster} from './speedster.js?v=rescue-range-88';
-import {RobotMissiles} from './robot-missiles.js?v=silhouette-49';
+import {Speedster} from './speedster.js?v=ground-rubble-89';
+import {RobotMissiles} from './robot-missiles.js?v=ground-rubble-89';
 import {MissileExplosions} from './missile-explosions.js?v=robot-death-80';
 import {PortalHero} from './portal-hero.js?v=rift-trace-60';
-import {SolaraHero} from './solara-hero.js?v=rift-47';
+import {SolaraHero} from './solara-hero.js?v=ground-rubble-89';
 import {HeroRoster} from './hero-roster.js?v=ninja-82';
-import {segmentBoxFraction} from './combat-collision.js?v=weapon-break-81';
-import {PlasmaArtillery} from './plasma-artillery.js?v=weapon-break-81';
+import {segmentBoxFraction} from './combat-collision.js?v=ground-rubble-89';
+import {PlasmaArtillery} from './plasma-artillery.js?v=ground-rubble-89';
 import {RobotEyeBeams} from './robot-eye-beams.js?v=weapon-break-81';
 import {RobotArsenal} from './robot-arsenal.js?v=weapon-break-81';
-import {terrainHeight,traceTerrain} from './runner-motion.js?v=runner-6';
+import {terrainHeight,traceTerrain} from './runner-motion.js?v=ground-rubble-89';
 const evacuationMode=new URLSearchParams(location.search).get('scene')==='evacuation';let evacuation=null;
 const $=id=>document.getElementById(id),viewport=$('viewport');
 const minimap=new HeroMinimap($('hero-minimap'),{getSnapshot:minimapSnapshot,getStructureAlive:id=>physics?.buildings.get(id)?.chunks.some(c=>c.state==='intact'&&c.hp>0)??true});
@@ -181,11 +181,11 @@ let evacBlockTime=-1,evacBlockers=[];
 function evacuationPathClear(a,b){
  const from={x:a.x,y:1,z:a.z},to={x:b.x,y:1,z:b.z};
  for(const block of layout.buildings)if(segmentBoxFraction(from,to,{x:block.x,y:block.floors*1.5,z:block.z},{x:5,y:block.floors*1.5,z:5},undefined,1.8)!==null)return false;
- if(evacBlockTime<0||simTime-evacBlockTime>.5){evacBlockTime=simTime;evacBlockers=physics.chunks.filter(c=>c.hasDetached&&!c.hidden&&c.body.position.y<5&&c.body.position.y+Math.max(...c.size)/2>.5&&Math.max(...c.size)>2);}
+ if(evacBlockTime<0||simTime-evacBlockTime>.5){evacBlockTime=simTime;evacBlockers=physics.chunks.filter(c=>c.hasDetached&&!c.hidden&&!c.collisionDisabled&&c.body.position.y<5&&c.body.position.y+Math.max(...c.size)/2>.5&&Math.max(...c.size)>2);}
  const sections=evacBlockers.filter(c=>{const p=c.body.position,r=Math.max(...c.size)/2+2;return p.x>=Math.min(a.x,b.x)-r&&p.x<=Math.max(a.x,b.x)+r&&p.z>=Math.min(a.z,b.z)-r&&p.z<=Math.max(a.z,b.z)+r;});
  return !traceImpact(from,to,{sections,ground:false,radius:1.8});
 }
-function maintainEvacPad(center,radius){for(const c of physics.chunks){if(!c.hasDetached||c.hidden||c.body.position.y>5||Math.abs(c.body.position.x-center.x)>radius-1||Math.abs(c.body.position.z-center.z)>radius-1)continue;const side=c.body.position.z<center.z?-1:1;physics.freeze(c);c.body.position.x=center.x;c.body.position.z=center.z+side*(10+Math.max(...c.size)/2);c.body.aabbNeedsUpdate=true;syncChunk(c);}physics.world.broadphase.markStaticsDirty();evacBlockTime=-1;}
+function maintainEvacPad(center,radius){for(const c of physics.chunks){if(!c.hasDetached||c.hidden||c.collisionDisabled||c.body.position.y>5||Math.abs(c.body.position.x-center.x)>radius-1||Math.abs(c.body.position.z-center.z)>radius-1)continue;const side=c.body.position.z<center.z?-1:1;physics.freeze(c);c.body.position.x=center.x;c.body.position.z=center.z+side*(10+Math.max(...c.size)/2);c.body.aabbNeedsUpdate=true;syncChunk(c);}physics.world.broadphase.markStaticsDirty();evacBlockTime=-1;}
 function evacuationTargets(select=false){const candidates=evacuation.targets(robot.root.position.clone().add(new THREE.Vector3(0,18,0)),[runner,hero,solara,portalHero,mochi,ninja]);const chosen=select?evacuation.pick(candidates):null;return select?(chosen?[chosen]:[]):candidates;}
 function updateCombat(dt){
  enemyDamageFlash.beginFrame();

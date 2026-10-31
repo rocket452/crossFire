@@ -79,3 +79,6 @@ Prior project assets remain in version history and their existing local files; t
 
 
 Volt’s energy rescue dash travels up to **30 metres** (triple its former 10m range) at 36m/s, taking about 0.83 seconds on a clear route. It collects allies along the way and reforms them safely at the end; buildings, ledges and map boundaries still shorten the dash. Pickup radius, five-second cooldown and zero charge cost remain unchanged. Range tuning: `DASH.range` in `dist/runner-dash.js`.
+
+
+Detached building fragments become visible, non-blocking rubble on first ground/terrain contact. Their landed pose is retained while physics, movement, projectile and navigation collisions are disabled. Rebuilding restores their original colliders. Intact buildings and pieces still airborne or resting on elevated structures retain collision.

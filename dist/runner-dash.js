@@ -1,5 +1,5 @@
-import {segmentBoxFraction,traceImpact} from './combat-collision.js?v=wave-dash-62';
-import {terrainHeight,terrainNormal} from './runner-motion.js?v=runner-6';
+import {segmentBoxFraction,traceImpact} from './combat-collision.js?v=ground-rubble-89';
+import {terrainHeight,terrainNormal} from './runner-motion.js?v=ground-rubble-89';
 import {findPortalRescue} from './portal-policy.js?v=evacuation-57';
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z),copy=p=>({x:p.x,y:p.y,z:p.z});
 export const DASH={range:30,radius:5,speed:36,cooldown:5,contactRadius:2.4,inputBuffer:.2};
@@ -26,7 +26,7 @@ export class RunnerDash {
 
  allies(motion){return this.getUnits().filter(u=>u.alive&&friendly(u)&&!u.dashCarried&&Math.abs(foot(u).y-motion.position.y)<=2&&dist(foot(u),motion.position)<=DASH.radius);}
  actors(motion){return[{position:copy(motion.position),half:{x:.38,y:1.3,z:.38}},...this.allies(motion).map(u=>this.actor(u))];}
- nearby(actors){return this.getSections().filter(c=>!c.hidden&&['intact','settled','dynamic'].includes(c.state)&&actors.some(a=>{const p=c.body?.position||c;return Math.abs(p.x-a.position.x)<DASH.range+Math.hypot(...c.size)/2+4&&Math.abs(p.z-a.position.z)<DASH.range+Math.hypot(...c.size)/2+4&&Math.abs(p.y-a.position.y)<Math.hypot(...c.size)/2+5;}));}
+ nearby(actors){return this.getSections().filter(c=>!c.hidden&&!c.collisionDisabled&&['intact','settled','dynamic'].includes(c.state)&&actors.some(a=>{const p=c.body?.position||c;return Math.abs(p.x-a.position.x)<DASH.range+Math.hypot(...c.size)/2+4&&Math.abs(p.z-a.position.z)<DASH.range+Math.hypot(...c.size)/2+4&&Math.abs(p.y-a.position.y)<Math.hypot(...c.size)/2+5;}));}
  next(actors,direction,length,sections,ignoreFriendly=true){
   const result=[],group=new Set(actors.map(v=>v.unit));for(const a of actors){const p=a.position,q={x:p.x+direction.x*length,y:p.y,z:p.z+direction.z*length};if(q.x<this.bounds.minX||q.x>this.bounds.maxX||q.z<this.bounds.minZ||q.z>this.bounds.maxZ)return null;
    const ground=terrainHeight(q.x,q.z);let support=traceImpact({x:q.x,y:p.y+.35,z:q.z},{x:q.x,y:p.y-.5,z:q.z},{sections,ground:false,radius:0});if(!support&&p.y-ground>.1&&p.y-ground<=.6){for(const x of [-a.half.x,a.half.x])for(const z of [-a.half.z,a.half.z]){const edge=traceImpact({x:q.x+x,y:p.y+.35,z:q.z+z},{x:q.x+x,y:p.y-.5,z:q.z+z},{sections,ground:false,radius:0});if(edge&&(!support||edge.point.y>support.point.y))support=edge;}}let floor=Math.max(ground,support?.point.y??-Infinity);

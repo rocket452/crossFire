@@ -1,4 +1,4 @@
-import {RunnerMotion,terrainHeight} from './runner-motion.js?v=ninja-82';
+import {RunnerMotion,terrainHeight} from './runner-motion.js?v=ground-rubble-89';
 export const NINJA=Object.freeze({runSpeed:46,airSpeed:32.2,wallPushSpeed:12.6,jumpSpeed:30,doubleJumpSpeed:27,gravity:25,dashRange:24,dashSpeed:64.4,dashCooldown:6,dashDamage:320,slowFallSeconds:2,slowFallGravity:.12,slowFallSpeed:3,shurikenDamage:55,throwInterval:.22,shurikenSpeed:59.5,shurikenScale:2,shurikenRadius:.24,shurikenRange:127.5,maxProjectiles:36});
 const normalize=v=>{const n=Math.hypot(v.x,v.y,v.z);return n>1e-6?{x:v.x/n,y:v.y/n,z:v.z/n}:null;};
 // Uses the same swept walls, roofs, terrain and overlap recovery as Volt, without wall running.
