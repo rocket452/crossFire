@@ -45,6 +45,10 @@ Choose Kage in **Heroes** (up to three active defenders), deploy, then choose **
 
 Values live in `dist/ninja-motion.js`. Character geometry/weights and clips reuse the supplied private humanoid; mask, headband, scarf, throwing star, sword and bounded effects are original runtime attachments. Violet now always shields himself against the boss beam, including interrupting his own force beam to defend. Weapon damage flashes preserve current warning lights.
 
+## Civilian minimap warnings
+
+A civilian group's small yellow dot flashes red while an enemy beam, missile, plasma landing zone or drone attack threatens the group. The flag follows current rescue groups and clears when the threat ends, is intercepted or the civilians leave a marked blast zone. The minimap reads combat state without selecting targets or changing the battle. Reduced-motion displays use a steady red dot. Policy and browser validation are documented in `QA/civilian-warning-validation.md`.
+
 ## Runtime source
 - dist/ninja-hero.js: ninja rig accessories/animation, player/CPU control, real-hand shurikens, effects and camera.
 - dist/ninja-motion.js: shared city collision, high/double/wall jumps, aerial strike, confirmed-kill resets and slow fall.

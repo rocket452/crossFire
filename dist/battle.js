@@ -1,8 +1,9 @@
+import {targetedCivilianGroups} from './civilian-targeting.js?v=civilian-warning-83';
 import {NinjaHero} from './ninja-hero.js?v=ninja-82';
 import {RobotDeathEffects} from './robot-death-effects.js?v=robot-death-80';
 import {shieldBeamIntersection} from './hero-defense.js?v=hero-5';
 import {EnemyDamageFlash} from './enemy-damage-flash.js?v=ninja-82';
-import {HeroMinimap} from './hero-minimap.js?v=civilian-dots-74';
+import {HeroMinimap} from './hero-minimap.js?v=civilian-warning-83';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import {projectileSilhouette} from './projectile-silhouette.js?v=silhouette-49';
 import {EvacRaiderSquad} from './evac-raider-squad.js?v=robot-death-80';
@@ -234,7 +235,8 @@ minimap.setWorld({bounds:evacuationMode?ESCORT_APPROACH:{minX:-60,maxX:60,minZ:-
 function controlledHero(){return[runner,hero,portalHero,solara,mochi,ninja].find(h=>h?.active===true&&h.enabled!==false)||null;}
 function minimapSnapshot(){
  const player=controlledHero(),point=(id,p,extra={})=>({id,x:p.x,z:p.z,...extra});
- const civilians=(evacuation?.civilians||[]).filter(c=>c.unit.alive).map(c=>point(c.unit.id,c.root.position));
+ const people=(evacuation?.civilians||[]).filter(c=>c.unit.alive),targeted=targetedCivilianGroups(people,{walker:robot,missiles:robotMissiles?.missiles,plasma:plasmaArtillery?.shells,raiders:evacuation?.raider?.members});
+ const civilians=people.map(c=>point(c.unit.id,c.root.position,{targeted:targeted.has(c.group||c)}));
  const enemies=(unitDamage?.units||[]).filter(u=>u.alive&&u.kind==='robot').map(u=>point(u.id,u.entity.root.position,{boss:u.entity===robot}));
  const allies=[runner,hero,portalHero,solara,mochi,ninja].filter(h=>h&&h!==player&&h.enabled!==false).map((h,i)=>point('hero-'+i,h.root.position));
  const e=evacuation,heli=e?.aircraft,helicopter=e?.heli.alive&&heli.visible&&(heli.position.y>5||Math.hypot(heli.position.x-e.landing.x,heli.position.z-e.landing.z)>8)?point('evac-helicopter',heli.position):null;

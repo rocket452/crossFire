@@ -5,7 +5,7 @@ export function projectMinimap(point,center,yaw,range=MINIMAP.range){
  return{x:(-dx*c+dz*s)*scale,y:(-dx*s-dz*c)*scale,distance,edge:distance>range};
 }
 export function civilianClusters(people,radius=4){
- const groups=[];for(const p of people){let group=groups.find(g=>Math.hypot(g.x-p.x,g.z-p.z)<=radius);if(!group){groups.push({id:p.id,x:p.x,z:p.z,count:1});continue;}group.x=(group.x*group.count+p.x)/(group.count+1);group.z=(group.z*group.count+p.z)/(group.count+1);group.count++;}return groups;
+ const groups=[];for(const p of people){let group=groups.find(g=>Math.hypot(g.x-p.x,g.z-p.z)<=radius);if(!group){groups.push({id:p.id,x:p.x,z:p.z,count:1,targeted:!!p.targeted});continue;}group.x=(group.x*group.count+p.x)/(group.count+1);group.z=(group.z*group.count+p.z)/(group.count+1);group.count++;group.targeted||=!!p.targeted;}return groups;
 }
 function svg(name,attributes={},parent=null){const node=document.createElementNS(NS,name);for(const[k,v]of Object.entries(attributes))node.setAttribute(k,v);parent?.append(node);return node;}
 export class HeroMinimap {
@@ -33,11 +33,11 @@ export class HeroMinimap {
  refresh(){
   const data=this.getSnapshot(),people=data.civilians||[],enemies=data.enemies||[];
   this.counts={civilians:people.length,enemies:enemies.length};this.civilianCount.textContent=people.length;this.enemyCount.textContent=enemies.length;
-  const entries=[...this.staticMarkers,...civilianClusters(people).map(g=>({...g,id:'group-'+g.id,kind:'civilian',label:g.count+' civilians'})),...enemies.map(e=>({...e,kind:e.boss?'boss':'enemy',label:e.boss?'Siege Walker':'Robot drone'})),...(data.allies||[]).map(a=>({...a,kind:'ally',label:'Allied hero'}))];
+  const entries=[...this.staticMarkers,...civilianClusters(people).map(g=>({...g,id:'group-'+g.id,kind:'civilian',label:g.count+' civilians'+(g.targeted?' — targeted by enemy attack':'')})),...enemies.map(e=>({...e,kind:e.boss?'boss':'enemy',label:e.boss?'Siege Walker':'Robot drone'})),...(data.allies||[]).map(a=>({...a,kind:'ally',label:'Allied hero'}))];
   if(data.helicopter)entries.push({...data.helicopter,id:'evac-helicopter',kind:'helicopter',label:'Evacuation helicopter'});
   const live=new Set(entries.map(e=>e.id));for(const[id,m]of this.nodes)if(!live.has(id)){m.node.remove();this.nodes.delete(id);}
-  for(const entry of entries){let marker=this.nodes.get(entry.id);if(!marker){marker=this.makeMarker(entry);this.nodes.set(entry.id,marker);}marker.entry=entry;marker.title.textContent=entry.label;}
-  this.root.setAttribute('aria-label',`Rotating hero minimap. ${people.length} civilians on the ground; ${enemies.length} enemies. Small yellow circles show civilian groups; red diamonds show enemies; green H marks evacuation. Up follows the camera. Distant groups stay at the rim; arrows mark other distant units.`);
+  for(const entry of entries){let marker=this.nodes.get(entry.id);if(!marker){marker=this.makeMarker(entry);this.nodes.set(entry.id,marker);}marker.entry=entry;marker.title.textContent=entry.label;marker.node.classList.toggle('targeted',entry.kind==='civilian'&&!!entry.targeted);marker.node.setAttribute('data-targeted',String(!!entry.targeted));}
+  this.root.setAttribute('aria-label',`Rotating hero minimap. ${people.length} civilians on the ground; ${enemies.length} enemies. Small yellow circles show civilian groups; flashing red circles warn of targeted groups; red diamonds show enemies; green H marks evacuation. Up follows the camera. Distant groups stay at the rim; arrows mark other distant units.`);
  }
  makeMarker(entry){
   const node=svg('g',{'data-kind':entry.kind,'data-id':entry.id,class:'minimap-marker '+entry.kind},this.markers),title=svg('title',{},node);title.textContent=entry.label;
@@ -62,5 +62,5 @@ export class HeroMinimap {
    marker.arrow?.setAttribute('transform',`rotate(${Math.atan2(p.y,p.x)*180/Math.PI+90})`);
   }
  }
- diagnostics(){return{visible:this.visible,heading:this.heading,center:{...this.center},range:MINIMAP.range,counts:{...this.counts},markers:[...this.nodes.values()].map(m=>({id:m.entry.id,kind:m.entry.kind,count:m.entry.count||1,world:{x:m.entry.x,z:m.entry.z},...m.projected}))};}
+ diagnostics(){return{visible:this.visible,heading:this.heading,center:{...this.center},range:MINIMAP.range,counts:{...this.counts},markers:[...this.nodes.values()].map(m=>({id:m.entry.id,kind:m.entry.kind,count:m.entry.count||1,targeted:!!m.entry.targeted,world:{x:m.entry.x,z:m.entry.z},...m.projected}))};}
 }
