@@ -20,3 +20,9 @@ Implementation uses one SVG with reused marker nodes and static world geometry. 
 Screenshots reviewed at `/tmp/minimap69-desktop.png`, `/tmp/minimap69-phone.png`, `/tmp/minimap69-narrow-phone.png` and `/tmp/minimap69-landscape.png`. The minimap styles reserve space below the top hero controls and shrink on narrow layouts.
 
 Runtime files: `dist/hero-minimap.js` (new), `dist/battle.js`, `dist/battle.css`, `dist/index.html`. QA: the new projection and gameplay suites plus this report. Current controls are documented in `source/CONTROLS.md`. Range/refresh constants are in `MINIMAP` in the module. Units beyond range show direction rather than their full distance; civilian counts cluster within four metres to keep crowds readable.
+
+## Civilian marker simplification — revision 74
+
+Civilian groups now use a plain filled yellow circle of radius 4 SVG units (previously 9), without a number, outline or rim arrow. Distant groups remain clamped to the rim as the same small circles. Total civilian counts, clustering, world positions, rotation and enemy markers remain unchanged. Group titles retain current headcounts for accessibility.
+
+The existing minimap browser suite's desktop/phone visual scenarios passed again (1100×1000 and emulated 390×844): real evacuation groups, 30-second waves, drone markers, camera rotation, input passthrough and HUD layout, with no browser errors. Inspected phone screenshot `/tmp/minimap74-phone.png`; desktop `/tmp/minimap74-desktop.png`. This pass excludes the suite's longer destruction/boarding scenarios because this change only adjusts marker presentation. Syntax and whitespace checks pass.

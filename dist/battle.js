@@ -1,4 +1,4 @@
-import {HeroMinimap} from './hero-minimap.js?v=hero-minimap-69';
+import {HeroMinimap} from './hero-minimap.js?v=civilian-dots-74';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import {SiegeWeakPoints} from './weak-points.js?v=weakpoints-58';
 import {projectileSilhouette} from './projectile-silhouette.js?v=silhouette-49';
