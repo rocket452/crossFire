@@ -18,7 +18,7 @@ import {SiegeWalker} from './siege-walker.js?v=wave-dash-62';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=wave-dash-62';
 import {VioletHero} from './violet-hero.js?v=violet-orbs-58';
-import {Speedster} from './speedster.js?v=mouse-drag-66';
+import {Speedster} from './speedster.js?v=sustained-lightning-67';
 import {RobotMissiles} from './robot-missiles.js?v=silhouette-49';
 import {MissileExplosions} from './missile-explosions.js?v=solara-defense-44';
 import {PortalHero} from './portal-hero.js?v=rift-trace-60';
@@ -137,7 +137,7 @@ function phaseDashAlly(unit,phased){
 }
 function electricAttack(from,target,damageSeconds,{cpu=false}={}){
  const hit=traceWorld(from,target,{radius:.10,allied:cpu}),end=hit?.point||target;let damage=0;
- if(hit&&damageSeconds>0){weaponImpacts.electric++;if(hit.missile){damage+=robotMissiles.hurt(hit.missile,150*damageSeconds,'volt');return{end,kind:'missile',damage};}if(hit.weakPoint)return{end,kind:'weak-point',damage:damageRobotHit(hit,150*damageSeconds,'electric',!cpu)};if(hit.section)physics.impact(end,12,1.4,hit.section,{player:!cpu,source:'volt-rush'});const results=unitDamage.blast(end,{direct:hit.unit||null,power:150*damageSeconds,radius:1.3,filter:u=>!cpu||u.kind==='robot'});for(const d of results){damage+=d.damage;if(d.unit.kind==='robot')d.unit.entity.recordHit('electric',null,d.damage);}}
+ if(hit&&damageSeconds>0){weaponImpacts.electric++;if(hit.missile){damage+=robotMissiles.hurt(hit.missile,150*damageSeconds,'volt');return{end,kind:'missile',damage};}if(hit.weakPoint)return{end,kind:'weak-point',damage:damageRobotHit(hit,150*damageSeconds,'electric',!cpu)};if(hit.section)physics.impact(end,12*damageSeconds/.08,1.4,hit.section,{player:!cpu,source:'volt-rush'});const results=unitDamage.blast(end,{direct:hit.unit||null,power:150*damageSeconds,radius:1.3,filter:u=>!cpu||u.kind==='robot'});for(const d of results){damage+=d.damage;if(d.unit.kind==='robot')d.unit.entity.recordHit('electric',null,d.damage);}}
  return{end,kind:hit?.unit?.kind||hit?.kind||null,damage};
 }
 function updateCannonBeam(payload){
