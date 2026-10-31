@@ -37,9 +37,9 @@ Destroyed weapons explode, detach as smoking physics wreckage and remain offline
 
 Choose Kage in **Heroes** (up to three active defenders), deploy, then choose **Play Kage**. The existing starting lineup stays Volt / Violet / Rift. Kage also fights automatically when not controlled.
 
-- Run: 46m/s, matching Volt's boosted speed. Space / JUMP launches at 30m/s; a second jump launches at 27m/s. An airborne jump within 1.55m of an intact building wall kicks away at 18m/s and upward at 36m/s, restoring one air jump. A short contact lock prevents repeated kicks against the same surface.
-- Primary: hold left-click / F / SHURIKEN; 55-damage stars every 0.22s at 85m/s, launched from the real weighted character's right hand. Stars share normal collision, damage, missile and portal systems.
-- Air strike: E / right-click / AIR DASH, up to 24m at 92m/s toward the camera reticle, 320 damage. Six-second cooldown. A confirmed **dash** kill on an enemy or missile resets it immediately; ordinary primary kills do not. Solid cover stops the dash. Dead enemies do not obstruct subsequent ninja attacks.
+- Run: 46m/s on the ground, matching Volt's boosted speed; 32.2m/s air steering. Space / JUMP launches at 30m/s; a second jump launches at 27m/s. An airborne jump within 1.55m of an intact building wall kicks away at 12.6m/s and upward at 36m/s, restoring one air jump. A short contact lock prevents repeated kicks against the same surface.
+- Primary: hold left-click / F / SHURIKEN; 55-damage stars every 0.22s at 59.5m/s with doubled diameter, launched from the real weighted character's right hand. Stars share normal collision, damage, missile and portal systems.
+- Air strike: E / right-click / AIR DASH, up to 24m at 64.4m/s toward the camera reticle, 320 damage. Six-second cooldown. A confirmed **dash** kill on an enemy or missile resets it immediately; ordinary primary kills do not. Solid cover stops the dash. Dead enemies do not obstruct subsequent ninja attacks.
 - After dashing: two-second slow fall, gravity ×0.12 and downward speed capped at 3m/s. Ground contact ends this window. Double/wall jumps and dash resets remain distinct resources.
 - Desktop: pointer-lock mouse look, WASD, Space and the above attacks. Escape releases the mouse; again exits. Phone: left movement stick and jump/fire/dash buttons; drag the scene to aim. The minimap follows the ninja camera too.
 

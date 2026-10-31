@@ -1,5 +1,5 @@
 import {targetedCivilianGroups} from './civilian-targeting.js?v=civilian-warning-83';
-import {NinjaHero} from './ninja-hero.js?v=ninja-82';
+import {NinjaHero} from './ninja-hero.js?v=ninja-tuning-84';
 import {RobotDeathEffects} from './robot-death-effects.js?v=robot-death-80';
 import {shieldBeamIntersection} from './hero-defense.js?v=hero-5';
 import {EnemyDamageFlash} from './enemy-damage-flash.js?v=ninja-82';

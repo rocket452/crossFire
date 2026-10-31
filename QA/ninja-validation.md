@@ -1,5 +1,7 @@
 # Kage and defender combat updates — revision 82
 
+Revision 84 reduces Kage air speeds and enlarges/slows the projectiles. See `ninja-tuning-validation.md` for current values; numbers below describe the earlier revision.
+
 Kage is a sixth roster choice, with the existing three-defender limit and Volt / Violet / Rift defaults preserved. The new hero uses the supplied 1,256-triangle, 53-bone weighted humanoid and its real run, directional run, jump and fall clips. Original runtime accessories add a mask, headband, scarf, held shuriken and dash blade. Double jumps roll around a hip-height pivot; wall springs, throws and slow-fall poses modify the actual weighted skeleton. Player and CPU use the existing city collision/damage/portal systems.
 
 ## Abilities and controls

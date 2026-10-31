@@ -1,5 +1,5 @@
 import {RunnerMotion,terrainHeight} from './runner-motion.js?v=ninja-82';
-export const NINJA=Object.freeze({runSpeed:46,jumpSpeed:30,doubleJumpSpeed:27,gravity:25,dashRange:24,dashSpeed:92,dashCooldown:6,dashDamage:320,slowFallSeconds:2,slowFallGravity:.12,slowFallSpeed:3,shurikenDamage:55,throwInterval:.22,shurikenSpeed:85,maxProjectiles:36});
+export const NINJA=Object.freeze({runSpeed:46,airSpeed:32.2,wallPushSpeed:12.6,jumpSpeed:30,doubleJumpSpeed:27,gravity:25,dashRange:24,dashSpeed:64.4,dashCooldown:6,dashDamage:320,slowFallSeconds:2,slowFallGravity:.12,slowFallSpeed:3,shurikenDamage:55,throwInterval:.22,shurikenSpeed:59.5,shurikenScale:2,shurikenRadius:.24,shurikenRange:127.5,maxProjectiles:36});
 const normalize=v=>{const n=Math.hypot(v.x,v.y,v.z);return n>1e-6?{x:v.x/n,y:v.y/n,z:v.z/n}:null;};
 // Uses the same swept walls, roofs, terrain and overlap recovery as Volt, without wall running.
 export class NinjaMotion {
@@ -18,7 +18,7 @@ export class NinjaMotion {
   const p=this.position,from={x:p.x,y:p.y+1.2,z:p.z};let best=null;
   for(let i=0;i<8;i++){const a=i*Math.PI/4,hit=this.body.trace(from,{x:p.x+Math.sin(a)*1.55,y:from.y,z:p.z+Math.cos(a)*1.55},.12);if(hit&&Math.abs(hit.normal.y)<.25&&(!best||hit.t<best.t))best=hit;}
   if(!best)return false;
-  this.wallNormal={...best.normal};this.body.mode='air';this.body.support=null;this.body.normal={x:0,y:1,z:0};this.body.velocity={x:best.normal.x*18,y:36,z:best.normal.z*18};this.jumps=1;this.jumpCount++;this.wallJumps++;this.wallKick=.22;this.wallJumpLock=.35;this.slowFall=0;return true;
+  this.wallNormal={...best.normal};this.body.mode='air';this.body.support=null;this.body.normal={x:0,y:1,z:0};this.body.velocity={x:best.normal.x*NINJA.wallPushSpeed,y:36,z:best.normal.z*NINJA.wallPushSpeed};this.jumps=1;this.jumpCount++;this.wallJumps++;this.wallKick=.22;this.wallJumpLock=.35;this.slowFall=0;return true;
  }
  finishDash(){if(!this.dash)return;this.dash=null;this.slowFall=NINJA.slowFallSeconds;this.body.velocity={x:0,y:1.5,z:0};this.onDashEnd({...this.position});}
  step(input,dt,sections=[]){
@@ -36,7 +36,8 @@ export class NinjaMotion {
   if(this.jumpRequested&&this.wallJump(sections)){this.jumpRequested=false;}
   if(this.jumpRequested&&this.jumps<2){const second=this.jumps>0;this.body.velocity.y=second?NINJA.doubleJumpSpeed:NINJA.jumpSpeed;this.body.mode='air';this.body.normal={x:0,y:1,z:0};this.body.support=null;this.body.jumpBuffer=this.body.coyote=0;this.jumps++;this.jumpCount++;if(second)this.doubleJumps++;this.slowFall=0;}
   this.jumpRequested=false;
-  if(this.wallKick>0){this.wallKick=Math.max(0,this.wallKick-dt);this.body.yaw=Math.atan2(this.wallNormal.x,this.wallNormal.z);input={forward:18/NINJA.runSpeed,strafe:0};}
+  this.body.runSpeed=this.body.boostSpeed=this.mode==='air'?NINJA.airSpeed:NINJA.runSpeed;
+  if(this.wallKick>0){this.wallKick=Math.max(0,this.wallKick-dt);this.body.yaw=Math.atan2(this.wallNormal.x,this.wallNormal.z);input={forward:NINJA.wallPushSpeed/NINJA.airSpeed,strafe:0};}
   this.body.step({...input,player:true,jump:false,gravityScale:NINJA.gravity/25*(this.slowFall>0?NINJA.slowFallGravity:1),fallSpeed:this.slowFall>0?NINJA.slowFallSpeed:45},dt,sections);
   if(this.mode==='ground'){this.jumps=0;this.slowFall=0;}
  }
