@@ -1,4 +1,4 @@
-import {RAIDER_COMBAT} from './evac-raider.js?v=raider-bolts-85';
+import {RAIDER_COMBAT} from './evac-raider.js?v=raider-energy-86';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=civilian-warning-83';
 import {NinjaHero} from './ninja-hero.js?v=ninja-tuning-84';
 import {RobotDeathEffects} from './robot-death-effects.js?v=robot-death-80';
@@ -7,8 +7,8 @@ import {EnemyDamageFlash} from './enemy-damage-flash.js?v=ninja-82';
 import {HeroMinimap} from './hero-minimap.js?v=civilian-warning-83';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import {projectileSilhouette} from './projectile-silhouette.js?v=silhouette-49';
-import {EvacRaiderSquad} from './evac-raider-squad.js?v=raider-bolts-85';
-import {ESCORT_APPROACH,addEscortApproach} from './evac-approach.js?v=drone-squad-65';
+import {EvacRaiderSquad} from './evac-raider-squad.js?v=raider-energy-86';
+import {ESCORT_APPROACH,addEscortApproach} from './evac-approach.js?v=raider-energy-86';
 import {MochiHero,MOCHI} from './mochi-hero.js?v=mochi-56';
 import {VOLT_STUN} from './hero-powers.js?v=powers-48';
 import {RobotStunEffect} from './hero-power-effects.js?v=mochi-56';

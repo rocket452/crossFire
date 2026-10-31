@@ -51,7 +51,7 @@ A civilian group's small yellow dot flashes red while an enemy beam, missile, pl
 
 ## Tracked drone projectiles
 
-The small robots fire energy bolts with a 0.66m radius (three times their original diameter) at 18m/s, 50% faster than before. Swept cover/unit/shield collision and incoming-attack predictions use the same size and speed. Damage, firing cadence and targeting ranges stay unchanged. Tuning lives in `RAIDER_COMBAT` in `dist/evac-raider.js`.
+Seven small robots arrive in a staggered 3/3/1 formation with the second civilian wave. They fire energy bolts with a 1.32m radius (twice revision 85’s diameter) at 18m/s. Bright cores, pulsing halos, rotating energy rings, spark wakes and expanding impact discharges share three bounded instanced effect pools. Swept cover/unit/shield collision and incoming-attack predictions use the same size and speed. Damage, firing cadence and targeting ranges stay unchanged. Projectile tuning lives in `RAIDER_COMBAT` in `dist/evac-raider.js`, visual budgets in `RAIDER_ENERGY`, and wave size/row spacing in `ESCORT_APPROACH`.
 
 ## Runtime source
 - dist/ninja-hero.js: ninja rig accessories/animation, player/CPU control, real-hand shurikens, effects and camera.

@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-export const ESCORT_APPROACH=Object.freeze({minX:-60,maxX:60,minZ:-60,maxZ:108,spawnZ:102,stopZ:36,speed:3.2,lanes:Object.freeze([-4,0,4])});
+export const ESCORT_APPROACH=Object.freeze({minX:-60,maxX:60,minZ:-60,maxZ:108,spawnZ:102,stopZ:36,speed:3.2,squadSize:7,rowSpacing:6,lanes:Object.freeze([-4,0,4])});
 // Open boulevard beyond the original city: no new buildings on the squad's approach.
 export function addEscortApproach(scene){
  const root=new THREE.Group();root.name='Evacuation outer boulevard';scene.add(root);
