@@ -1,6 +1,6 @@
 import {VioletOrbEffects} from './violet-orb-effects.js?v=violet-orbs-58';
 import * as THREE from './vendor/three.module.js';
-import {BarrierCapacitor,VIOLET_BEAM} from './hero-powers.js?v=powers-48';
+import {BarrierCapacitor,VIOLET_BEAM} from './hero-powers.js?v=violet-charge-90';
 import {violetBeamEffect} from './hero-power-effects.js?v=powers-48';
 import {ShieldShake,SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
 import {advanceVioletFlight,VIOLET_TUNING} from './violet-flight.js?v=violet-inertia-11';
@@ -42,7 +42,7 @@ export class VioletHero {
   if(this.enabled===false)return;
   const targetRobot=this.getRobot();
   if(this.capacitor.remaining>0){if(targetRobot?.combatUnit?.alive){this.updatePowerBeam(dt,time,targetRobot);return;}this.capacitor.cancel();this.powerEffect.clear();this.mode='patrol';}
-  if(this.capacitor.ready&&!this.isShielding()&&!this.threat&&targetRobot?.combatUnit?.alive){const from=this.root.position.clone().add(new THREE.Vector3(0,1.5,0)),target=targetRobot.aimPoint(from),hit=this.traceOrb(from,target);if(hit?.unit===targetRobot.combatUnit&&this.capacitor.start()){this.charging=false;this.chargeTime=0;this.defenseCharge=0;this.threat=null;this.velocity.set(0,0,0);this.onEvent('Violet releases absorbed barrier energy — force beam!');this.updatePowerBeam(dt,time,targetRobot);return;}}
+  if(this.capacitor.ready&&!this.isShielding()&&!this.threat&&targetRobot?.combatUnit?.alive){const from=this.root.position.clone().add(new THREE.Vector3(0,1.5,0)),target=targetRobot.aimPoint(from),hit=this.traceOrb(from,target);if(hit?.unit===targetRobot.combatUnit&&this.capacitor.start()){this.charging=false;this.chargeTime=0;this.defenseCharge=0;this.threat=null;this.velocity.set(0,0,0);this.onEvent('Violet gathers absorbed barrier energy — force beam charging!');this.updatePowerBeam(dt,time,targetRobot);return;}}
   const shake=this.shieldShake.step(dt);const robot=this.getRobot(),alive=!!robot?.combatUnit?.alive;this.hitGlow=Math.max(0,this.hitGlow-dt*2.3);
   this.attackCooldown=Math.max(0,this.attackCooldown-dt);this.defenseTarget=this.getMissileTarget(this.root.position);if(this.defenseTarget){this.charging=false;this.chargeTime=0;}
   if(this.threat&&alive&&this.shieldEnergy>0){
@@ -92,16 +92,26 @@ export class VioletHero {
   this.light.position.copy(this.shield.visible?this.shield.position: this.chargeOrb.visible?this.chargeOrb.position:center);this.light.intensity=this.shield.visible?25+this.hitGlow*65:this.charging?15+this.chargeTime*15:5;
  }
  updatePowerBeam(dt,time,robot){
-  this.mode='force-beam';this.velocity.set(0,0,0);this.shield.visible=false;this.shieldDeploy=0;this.contact.visible=false;this.chargeOrb.visible=false;this.charging=false;this.defenseTarget=null;
+  const wasCharging=this.capacitor.phase==='charging',damageSeconds=this.capacitor.step(dt),charging=this.capacitor.phase==='charging',progress=this.capacitor.chargeProgress;
+  if(wasCharging&&!charging)this.onEvent('Violet releases the force beam!');
+  this.mode=charging?'force-charge':'force-beam';this.velocity.set(0,0,0);this.shield.visible=false;this.shieldDeploy=0;this.contact.visible=false;this.chargeOrb.visible=false;this.charging=false;this.defenseTarget=null;
   const target=robot.aimPoint(this.root.position),yaw=Math.atan2(target.x-this.root.position.x,target.z-this.root.position.z);this.root.rotation.set(0,yaw,0);
-  this.flightPose.step(dt,this.velocity,yaw,{raised:true});this.flightPose.applyVisual(this.root,this.visual);this.pose(time);this.root.updateMatrixWorld(true);
-  for(const side of['l','r']){const aim=this.nodes.chest.worldToLocal(target.clone()).sub(this.nodes['upperarm_'+side].position).normalize();this.nodes['upperarm_'+side].quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),aim);this.nodes['forearm_'+side].rotation.set(0,0,0);}
+  this.flightPose.step(dt,this.velocity,yaw,{raised:true});this.flightPose.applyVisual(this.root,this.visual);if(charging)this.visual.rotateX(-.10*Math.sin(progress*Math.PI));this.pose(time);this.root.updateMatrixWorld(true);
+  if(charging)this.posePowerCharge(time,progress);
+  else for(const side of['l','r']){const aim=this.nodes.chest.worldToLocal(target.clone()).sub(this.nodes['upperarm_'+side].position).normalize();this.nodes['upperarm_'+side].quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),aim);this.nodes['forearm_'+side].rotation.set(0,0,0);}
   this.root.updateMatrixWorld(true);if(this.character)this.flightPose.applyCharacter(this.character,this.nodes,dt);
+  if(charging&&this.character){const reach=THREE.MathUtils.smoothstep(progress,.55,1);for(const[side,sign]of[['L',-1],['R',1]]){const hand=this.root.localToWorld(new THREE.Vector3(sign*(.34-.12*progress),1.55+.25*reach+Math.sin(time*15+sign)*.025*progress,.45+.65*reach));this.character.arm(side,hand);}}
   const left=this.character?this.character.hand('L'):this.nodes.forearm_l.getWorldPosition(new THREE.Vector3()),right=this.character?this.character.hand('R'):this.nodes.forearm_r.getWorldPosition(new THREE.Vector3()),from=left.add(right).multiplyScalar(.5),hit=this.traceOrb(from,target),end=hit?new THREE.Vector3(hit.point.x,hit.point.y,hit.point.z):target;
-  const damageSeconds=this.capacitor.step(dt);if(hit&&damageSeconds>0)this.powerDamage+=this.onPowerHit(hit,end,VIOLET_BEAM.damagePerSecond*damageSeconds)||0;
-  this.powerEffect.update({phase:'firing',charge:1},from,end.clone().sub(from).normalize(),end,time);this.aura.position.copy(this.root.position).y+=1.5;this.aura.scale.setScalar(7.5);this.light.intensity=0;
-  this.advanceOrbs(dt,time,robot.combatUnit.alive);this.emit(end,2,3);this.renderParticles(dt);
+  if(hit&&damageSeconds>0)this.powerDamage+=this.onPowerHit(hit,end,VIOLET_BEAM.damagePerSecond*damageSeconds)||0;
+  this.powerEffect.update({phase:charging?'charging':'firing',charge:charging?progress:1},from,end.clone().sub(from).normalize(),end,time);this.aura.position.copy(this.root.position).y+=1.5;this.aura.scale.setScalar(7.5);this.light.intensity=0;
+  this.advanceOrbs(dt,time,robot.combatUnit.alive);if(!charging)this.emit(end,2,3);this.renderParticles(dt);
   if(this.capacitor.remaining===0){this.powerEffect.clear();this.mode='patrol';this.attackCooldown=VIOLET_TUNING.normalCooldown;}
+ }
+ posePowerCharge(time,progress){
+  const reach=THREE.MathUtils.smoothstep(progress,.55,1),tremor=Math.sin(time*(12+progress*16))*.018*progress;
+  this.nodes.chest.rotation.x=-.10*Math.sin(progress*Math.PI)+tremor;
+  for(const[side,sign]of[['l',-1],['r',1]]){this.nodes['upperarm_'+side].rotation.set(-.85-.65*reach+tremor,sign*.18*(1-reach),sign*(.45-.25*reach));this.nodes['forearm_'+side].rotation.set(-1.25*(1-reach)-.12,0,0);this.nodes['thigh_'+side].rotation.x=(side==='l'?-.28:.12)*Math.sin(progress*Math.PI);this.nodes['shin_'+side].rotation.x=.20+.20*Math.sin(progress*Math.PI);}
+  this.nodes.cape_mid.rotation.x+=Math.sin(time*13)*.08*progress;this.nodes.cape_tail.rotation.z+=Math.sin(time*16)*.12*progress;
  }
  pose(time){this.flightPose.pose(this.nodes,time);}
  isShielding(){return this.mode==='blocking'||this.shield.visible||this.shieldDeploy>.015;}

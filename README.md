@@ -82,3 +82,6 @@ Volt’s energy rescue dash travels up to **30 metres** (triple its former 10m r
 
 
 Detached building fragments become visible, non-blocking rubble on first ground/terrain contact. Their landed pose is retained while physics, movement, projectile and navigation collisions are disabled. Rebuilding restores their original colliders. Intact buildings and pieces still airborne or resting on elevated structures retain collision.
+
+
+Violet’s absorbed-energy force beam has a **two-second charge-up** before its four-second sustained attack. He holds position, braces, gathers his hands around a growing purple core, then extends into the firing pose. Spiraling particles, rotating rings and force arcs build at his real rigged hands. The HUD counts down the charge; no beam damage occurs during buildup. Shield-energy cost (1,200), beam damage (420/s) and self-defense interruption are retained. Tune `VIOLET_BEAM.chargeDuration` in `dist/hero-powers.js`.
