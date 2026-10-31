@@ -11,7 +11,7 @@ import {RunnerBeam,RUNNER_BEAM} from './runner-beam.js?v=no-fire-lock-68';
 import {RunnerCharge} from './runner-charge.js?v=instant-lightning-63';
 import {RunnerDash,DASH} from './runner-dash.js?v=drone-squad-65';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
-import {selectRunnerAim} from './runner-aim.js?v=runner-feel-23';
+import {selectRunnerAim} from './runner-aim.js?v=light-aim-70';
 import {RunnerFeedback} from './runner-feedback.js?v=wave-dash-62';
 import {HumanoidCharacter} from './humanoid-character.js?v=characters-24';
 export class Speedster {
@@ -110,7 +110,7 @@ export class Speedster {
   this.pose(dt);this.root.visible=this.enabled!==false&&!this.dash.active;if(this.active)this.yaw=this.heading.follow(this.yaw,dt,{input,mode:this.motion.mode,velocity:this.motion.velocity,heading:Math.atan2(this.bodyForward.x,this.bodyForward.z),aiming:requested||this.charging||this.firing||this.pointer?.type==='mouse',blocked:dialog||dashing});if(dashing){this.nodes.chest.rotation.x+=.2;this.nodes.upperarm_l.rotation.x=.5;this.nodes.upperarm_r.rotation.x=.5;}let beam=null;
   if(this.firing){
    let target;
-   if(this.active){this.updateCamera(dt);const direction=this.camera.getWorldDirection(new THREE.Vector3()),far=this.camera.position.clone().addScaledVector(direction,110),aim=this.traceAim(this.camera.position,far);target=aim?new THREE.Vector3(aim.point.x,aim.point.y,aim.point.z):far;const assisted=aim?.weakPoint?null:selectRunnerAim(this.camera.position,direction,this.getAimTargets(),{enabled:this.touchAim&&this.preferences.aimAssist,trace:(a,b)=>this.traceAim(a,b),previous:this.aimTargetId});this.assistedAim=assisted;this.aimTargetId=assisted?.id||null;if(assisted)target.copy(assisted.point);}
+   if(this.active){this.updateCamera(dt);const direction=this.camera.getWorldDirection(new THREE.Vector3()),far=this.camera.position.clone().addScaledVector(direction,110),aim=this.traceAim(this.camera.position,far);target=aim?new THREE.Vector3(aim.point.x,aim.point.y,aim.point.z):far;const directEnemy=aim?.weakPoint||aim?.missile||aim?.unit?.kind==='robot',assisted=directEnemy?null:selectRunnerAim(this.camera.position,direction,this.getAimTargets(),{enabled:this.preferences.aimAssist,trace:(a,b)=>this.traceAim(a,b),previous:this.aimTargetId});this.assistedAim=assisted;this.aimTargetId=assisted?.id||null;if(assisted)target.copy(assisted.point);}
    else target=new THREE.Vector3(cpu.target.x,cpu.target.y,cpu.target.z);
    this.root.updateMatrixWorld(true);const local=this.nodes.chest.worldToLocal(target.clone()).sub(this.nodes.upperarm_r.position).normalize();this.nodes.upperarm_r.quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),local);this.nodes.forearm_r.rotation.set(0,0,0);
    this.root.updateMatrixWorld(true);this.character?.syncArms(this.nodes);const from=this.character?this.character.hand('R'):this.nodes.forearm_r.localToWorld(new THREE.Vector3(0,-.47,.05));
