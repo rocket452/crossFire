@@ -31,3 +31,11 @@ The upper body turns independently of the chassis, and the right cannon pitches 
 Upper-body collision rotates with the torso while tread collision follows the chassis. `EvacuationScene.heroUnits()` supplies shared hero proxies in their actual support orientation. Raider projectile sweeps include those proxies, keep portal redirection and Mochi bubbles, and can hit Violet's existing barrier. Volt's active electric wave is excluded from both targeting and collision.
 
 Hero impacts use the prototype's existing feedback (Volt's hit reaction and contact sparks/flashes). Heroes still have no health/death system; hero proxies are deliberately never passed into `UnitDamage.hurt`. No new hero abilities or escort requirements are added.
+
+## Exploding robot wrecks — revision 80
+
+Small raiders now explode at their reactor and split into five physical pieces: head, both arms, torso/reactor and the tracked chassis. The original meshes stay intact inside the pieces and keep their death pose as they detach. The pieces receive outward/upward velocity and angular motion, collide through the existing Cannon world and settle. Their armor darkens, their powered lights go out and smoke rises from each moving wreck.
+
+The Siege Walker keeps its existing collapse and eighteen-part breakup, with a large reactor blast on death, a second explosion during breakup and stronger outward motion. Each of its eighteen real wreck bodies also emits smoke. Smoke follows the bodies while new puffs drift upward; emitted puffs stay in the world.
+
+`ROBOT_DEATH` in `dist/robot-death-effects.js` controls 24 seconds of emission, 3.2-second puffs, roughly 0.55–0.65 s between puffs per part, 48 emitter slots and 240 puff slots. All three raiders plus the Walker create 33 physics pieces. The visual layer adds at most three pooled effect draws and no lights or textures. Death blasts reuse the existing explosion renderer in a separate pool and do not change missile statistics or add collateral damage. Actor/city reset restores original hierarchy, materials and poses, removes wreck physics and clears smoke/explosions.

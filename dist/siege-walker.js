@@ -6,8 +6,8 @@ import {WalkerGait,solveLegKnee,angleDelta} from './walker-gait.js?v=walk-2';
 
 // Blender-built rigid components share one health pool and explicit collision boxes.
 export class SiegeWalker {
- constructor(scene,gltf,spec,{onFire,onDebris,onEffect,onFootfall=()=>{},onBeam=()=>{}}){
-  Object.assign(this,{scene,spec,onFire,onDebris,onEffect,onFootfall,onBeam});
+ constructor(scene,gltf,spec,{onFire,onDebris,onEffect,onFootfall=()=>{},onBeam=()=>{},onDeath=null,onWreck=()=>{},onRemoveDebris=()=>{}}){
+  Object.assign(this,{scene,spec,onFire,onDebris,onEffect,onFootfall,onBeam,onWreck,onRemoveDebris});this.onDeath=onDeath||((p)=>this.onEffect(p,false));
   this.root=new THREE.Group();this.root.name='Siege Walker';scene.add(this.root);
   this.nodes={};this.meshes={};this.boxes={};this.restPositions={};this.wrecks=[];this.gait=new WalkerGait();this.cannonTracking=new CannonTracking();this.weapon=new BeamCycle();
   this.ik={hip:new THREE.Vector3(),upper:new THREE.Vector3(),lower:new THREE.Vector3(),down:new THREE.Vector3(0,-1,0),axis:new THREE.Vector3(0,1,0),parent:new THREE.Quaternion(),yaw:new THREE.Quaternion(),rotation:new THREE.Quaternion()};
@@ -30,7 +30,7 @@ export class SiegeWalker {
   this.reset();
  }
  reset(){
-  for(const w of this.wrecks){w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
+  for(const w of this.wrecks){this.onRemoveDebris(w.body);w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
   this.wrecks=[];this.staggerPose=null;this.stunRemaining=0;this.stunKind=null;this.stuns=0;this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;this.plasmaRecoil=0;this.plasmaCharging=false;this.plasmaAim=null;this.beamAllowed=true;this.podWarning={active:false,progress:0,pulse:false};
   this.cannonTracking.reset();this.weapon.reset();this.eyeTarget=null;this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
   for(const [name,n]of Object.entries(this.nodes)){n.rotation.set(0,0,0);n.position.copy(this.restPositions[name]);}
@@ -45,7 +45,7 @@ export class SiegeWalker {
   return new THREE.Vector3(p.x+(variant%3-1)*.65,from.y>20?15:12.8,p.z);
  }
  recordHit(kind,team,amount){if(amount<=0)return;this.hits[kind]=(this.hits[kind]||0)+1;if(team===0||team===1)this.damageByTeam[team]+=amount;else this.heroDamage+=amount;this.flash=.14;}
- destroy(){this.restoreStagger();this.stunRemaining=0;this.weapon.stop();this.onBeam(null);this.dead=true;this.deathTime=0;this.deathPose={y:this.root.position.y,chest:this.nodes.chest.rotation.x,head:this.nodes.head.rotation.x,thigh:this.nodes.thigh_l.rotation.x,shin:this.nodes.shin_l.rotation.x};this.onEffect(this.root.position.clone().add(new THREE.Vector3(0,14,0)),false);}
+ destroy(){if(this.dead)return;this.restoreStagger();this.stunRemaining=0;this.weapon.stop();this.onBeam(null);this.dead=true;this.deathTime=0;this.deathPose={y:this.root.position.y,chest:this.nodes.chest.rotation.x,head:this.nodes.head.rotation.x,thigh:this.nodes.thigh_l.rotation.x,shin:this.nodes.shin_l.rotation.x};this.onDeath(this.meshes.reactor.localToWorld(this.boxes.reactor.center.clone().add(new THREE.Vector3(0,0,this.boxes.reactor.size.z*.5+.4))),{large:true});}
  restoreStagger(){if(!this.staggerPose)return;for(const [name,q]of Object.entries(this.staggerPose))this.nodes[name].quaternion.copy(q);this.staggerPose=null;this.root.updateMatrixWorld(true);}
  stun(seconds=1,kind='electric'){
   if(this.dead)return false;
@@ -182,15 +182,15 @@ export class SiegeWalker {
   }
  }
  breakApart(){
-  this.broken=true;this.root.updateMatrixWorld(true);
-  this.onEffect(this.root.position.clone().add(new THREE.Vector3(0,11,0)),false);
+  if(this.broken)return;this.broken=true;this.root.updateMatrixWorld(true);
+  this.onDeath(this.root.position.clone().add(new THREE.Vector3(0,11,0)),{large:true,secondary:true});
   for(const p of this.spec.parts){
    const mesh=this.meshes[p.name],box=this.boxes[p.name],center=mesh.localToWorld(box.center.clone()),rotation=mesh.getWorldQuaternion(new THREE.Quaternion());
    const group=new THREE.Group();group.position.copy(center);group.quaternion.copy(rotation);this.scene.add(group);
    mesh.removeFromParent();mesh.position.copy(box.center).negate();group.add(mesh);
    const body=this.onDebris({position:center,quaternion:rotation,size:box.size.toArray().map(v=>Math.max(.18,v*.93)),mass:Math.max(40,box.size.x*box.size.y*box.size.z*110)});
-   body.velocity.set((p.name.endsWith('l')?-1:1)*1.1,1.3,1.4);body.angularVelocity.set(.15,.1,.28);
-   this.wrecks.push({name:p.name,mesh,group,body,half:{x:box.size.x/2,y:box.size.y/2,z:box.size.z/2}});
+   const angle=this.wrecks.length*2.399,dx=center.x-this.root.position.x,dz=center.z-this.root.position.z,length=Math.hypot(dx,dz);body.velocity.set(length>.5?dx/length*3.4:Math.cos(angle)*2.4,2.8,length>.5?dz/length*3.4:Math.sin(angle)*2.4);body.angularVelocity.set(Math.sin(angle)*.8,.35,Math.cos(angle)*.8);mesh.material.color.multiplyScalar(.48);if(mesh.material.emissive)mesh.material.emissiveIntensity=0;
+   const wreck={name:p.name,mesh,group,body,size:box.size.toArray(),half:{x:box.size.x/2,y:box.size.y/2,z:box.size.z/2}};this.wrecks.push(wreck);this.onWreck(wreck);
   }
  }
  syncWrecks(){for(const w of this.wrecks){w.group.position.copy(w.body.position);w.group.quaternion.copy(w.body.quaternion);}}

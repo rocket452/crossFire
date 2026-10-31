@@ -14,7 +14,7 @@ export class MissileExplosions{
   this.smoke=make(MISSILE_EXPLOSIONS.limit*MISSILE_EXPLOSIONS.smokePerBurst,true);this.fire=make(MISSILE_EXPLOSIONS.limit*MISSILE_EXPLOSIONS.firePerBurst,false);this.reset();
  }
  reset(){this.bursts=[];this.total=0;this.interceptions=0;this.impacts=0;this.fire.count=this.smoke.count=0;this.root.visible=false;}
- burst(position,{air=false}={}){if(this.bursts.length>=MISSILE_EXPLOSIONS.limit)this.bursts.shift();this.bursts.push({position:new THREE.Vector3().copy(position),age:0,scale:air?1:1.25,seed:++this.total});if(air)this.interceptions++;else this.impacts++;this.render();}
+ burst(position,{air=false,scale=air?1:1.25}={}){if(this.bursts.length>=MISSILE_EXPLOSIONS.limit)this.bursts.shift();this.bursts.push({position:new THREE.Vector3().copy(position),age:0,scale:Math.max(.1,Math.min(4,scale)),seed:++this.total});if(air)this.interceptions++;else this.impacts++;this.render();}
  update(dt){for(const b of this.bursts)b.age+=dt;this.bursts=this.bursts.filter(b=>b.age<MISSILE_EXPLOSIONS.lifetime);this.render();}
  render(){let fire=0,smoke=0;
   const put=(mesh,index,position,size,age,kind,stretch=1)=>{this.dummy.position.copy(position);this.dummy.scale.set(size,size*stretch,size);this.dummy.updateMatrix();mesh.setMatrixAt(index,this.dummy.matrix);mesh.geometry.attributes.blastAge.setX(index,age);mesh.geometry.attributes.blastKind.setX(index,kind);};
