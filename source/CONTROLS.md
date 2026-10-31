@@ -1,4 +1,4 @@
-# Crossfire controls — revision 67
+# Crossfire controls — revision 68
 
 `dist/input-mode.js` chooses the layout from pointer capabilities and actual input, independently of viewport width. Fine-pointer desktops use keyboard/mouse reminders; coarse-pointer phones/tablets use touch controls. Touch/pen selects touch mode, mouse or gameplay keyboard selects desktop. Switching modes clears held input. Observer and helicopter controls retain their existing bindings.
 
@@ -25,7 +25,7 @@ The beam drains **25 charge per second** and deals the existing **150 damage per
 
 Running and wall-running still earn charge from actual surface distance at `100 / (46 × 6)` per metre. While firing, real movement offsets part of the drain. At steady 46 m/s, net drain is about 8.33 charge/s, so a full bar can sustain about 12 seconds before emptying. Dash, falling, teleporting and pushing walls do not earn charge. No idle drain.
 
-At exhaustion the beam stops. Release FIRE/left-click/F to rearm, then press again with any positive reserve; there is no timer or minimum 25-charge gate. A held empty trigger does not stutter-fire tiny recharge amounts. The HUD shows gradual drain, hold instructions and release-to-rearm feedback. Stun, dash and input clearing cancel the beam safely; the electric wave cannot fire during transit.
+At zero charge the beam stops consuming energy and dealing damage. Holding FIRE/left-click/F resumes it on the first update with any positive charge, including new charge earned by running. There is no cooldown, rearm lock, required trigger release or minimum 25-charge gate. Damage remains proportional to energy actually consumed, so running income cannot produce free full-strength damage. The HUD shows gradual drain and hold instructions. Ready sounds do not repeat while held fire immediately consumes newly earned energy. Stun, dash and input clearing cancel the beam safely; the electric wave cannot fire during transit.
 
 Autonomous Volt retains the previous paced 0.4-second, 25-charge burst and 1.5-second recovery, preserving the existing CPU combat/recharge balance. Player and CPU share the same stored energy and damage/collision routing; control handoff preserves the resource. `RunnerBeam` handles the manual sustained trigger, while `RunnerCharge` retains CPU burst cadence.
 
