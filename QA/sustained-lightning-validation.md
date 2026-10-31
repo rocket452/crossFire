@@ -20,3 +20,11 @@ Browser suites use deterministic simulation stepping and actual mouse/keyboard/C
 ## Modified files
 
 Runtime: `dist/runner-beam.js` (new), `dist/runner-energy.js`, `dist/speedster.js`, `dist/battle.js`, `dist/index.html`. Documentation: `source/CONTROLS.md`, this report. QA: `runner-beam-test.mjs`, `sustained-lightning-browser.cjs`, `instant-lightning-browser.cjs`, `device-controls-browser.cjs`, `runner-energy-browser.cjs`, `weak-points-browser.cjs`.
+
+## Weapon energy reduction — revision 77
+
+Normal weapon costs are 30% lower: manual drain is **17.5 charge/s**, CPU burst cost is **17.5 charge**. A stationary 100-point bar sustains **100/17.5 ≈ 5.714 s** of player fire at the same 150 DPS. Capacity, distance recharge, CPU burst/recovery timing and 50-charge overload are unchanged. HUD/ARIA text reads live tuning values; the field guide is updated.
+
+Updated existing `runner-beam-test.mjs` and `runner-energy-test.mjs` pass 30/60/120 Hz and existing long-frame cases: full-bar duration, tiny partial reserve, held-trigger refill, no cooldown, movement-energy conservation, five affordable CPU bursts from a stationary bar, unchanged recharge/cancellation and no overdraw. `runner-charge-test.mjs` passes the existing CPU cadence and trail checks.
+
+The existing `runner-hit-effect-browser.cjs` passes on desktop and emulated phone with actual held fire: exactly 150 enemy damage for 17.5 charge in one second, with impact feedback and reset still working. Current desktop-control tap/hold expectations are updated to 1.4 charge per 80 ms tap and 57.75 charge over 3.3 seconds. The control harness waits for its pointer-lock event handler before issuing follow-up input so capture/escape checks do not race browser event delivery. Earlier revision values above describe the prior 25 charge/s balance.

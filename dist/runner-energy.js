@@ -1,4 +1,4 @@
-export const RUNNER_ENERGY=Object.freeze({capacity:100,attackCost:25,beamDrainPerSecond:25,perMetre:100/(46*6)});
+export const RUNNER_ENERGY=Object.freeze({capacity:100,attackCost:17.5,beamDrainPerSecond:17.5,perMetre:100/(46*6)});
 export class RunnerEnergy {
  constructor(){this.reset();}
  reset(){this.amount=0;this.gained=0;this.spent=0;this.discharges=0;this.beamSpent=0;}

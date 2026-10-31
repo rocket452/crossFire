@@ -1,4 +1,4 @@
-import {RUNNER_ENERGY} from './runner-energy.js?v=sustained-lightning-67';
+import {RUNNER_ENERGY} from './runner-energy.js?v=weapon-drain-77';
 export const RUNNER_BEAM=Object.freeze({drainPerSecond:RUNNER_ENERGY.beamDrainPerSecond,tapSeconds:.08});
 // Manual trigger: no wind-up, minimum reserve or recovery between activations.
 export class RunnerBeam {

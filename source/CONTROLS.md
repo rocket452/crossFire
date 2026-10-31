@@ -1,4 +1,4 @@
-# Crossfire controls — revision 73
+# Crossfire controls — revision 77
 
 `dist/input-mode.js` chooses the layout from pointer capabilities and actual input, independently of viewport width. Fine-pointer desktops use keyboard/mouse reminders; coarse-pointer phones/tablets use touch controls. Touch/pen selects touch mode, mouse or gameplay keyboard selects desktop. Switching modes clears held input. Observer and helicopter controls retain their existing bindings.
 
@@ -24,13 +24,13 @@ Escape releases the cursor and clears held actions; Escape again exits the hero.
 
 Pressing primary starts the beam and damage on the next gameplay update, with no wind-up, 25-charge entry fee or shot recovery. Any positive stored charge can fire. Hold to sustain; release stops firing. An extremely quick click/tap is buffered for 80 ms so it still produces a visible, paid hit rather than disappearing between frames.
 
-The beam drains **25 charge per second** and deals the existing **150 damage per second**. A stationary full 100-point bar lasts **4 seconds**, for 600 direct damage. Partial charge produces proportional duration/damage, including the final fraction of a frame. Damage to building panels is scaled by firing time so changing from batched bursts to per-frame hits does not multiply damage at higher frame rates; the existing 90% non-robot building protection remains in place.
+The beam drains **17.5 charge per second** and deals the existing **150 damage per second**. A stationary full 100-point bar lasts **about 5.7 seconds**, for about 857 direct damage. Partial charge produces proportional duration/damage, including the final fraction of a frame. Damage to building panels is scaled by firing time so changing from batched bursts to per-frame hits does not multiply damage at higher frame rates; the existing 90% non-robot building protection remains in place.
 
-Running and wall-running still earn charge from actual surface distance at `100 / (46 × 6)` per metre. While firing, real movement offsets part of the drain. At steady 46 m/s, net drain is about 8.33 charge/s, so a full bar can sustain about 12 seconds before emptying. Dash, falling, teleporting and pushing walls do not earn charge. No idle drain.
+Running and wall-running still earn charge from actual surface distance at `100 / (46 × 6)` per metre. While firing, real movement offsets part of the drain. At steady 46 m/s, net drain is about 0.83 charge/s, so a full bar can sustain about 120 seconds before emptying. Dash, falling, teleporting and pushing walls do not earn charge. No idle drain.
 
 At zero charge the beam stops consuming energy and dealing damage. Holding FIRE/left-click/F resumes it on the first update with any positive charge, including new charge earned by running. There is no cooldown, rearm lock, required trigger release or minimum 25-charge gate. Damage remains proportional to energy actually consumed, so running income cannot produce free full-strength damage. The HUD shows gradual drain and hold instructions. Ready sounds do not repeat while held fire immediately consumes newly earned energy. Stun, dash and input clearing cancel the beam safely; the electric wave cannot fire during transit.
 
-Autonomous Volt retains the previous paced 0.4-second, 25-charge burst and 1.5-second recovery, preserving the existing CPU combat/recharge balance. Player and CPU share the same stored energy and damage/collision routing; control handoff preserves the resource. `RunnerBeam` handles the manual sustained trigger, while `RunnerCharge` retains CPU burst cadence.
+Autonomous Volt retains the paced 0.4-second, 17.5-charge burst and 1.5-second recovery. CPU burst timing is unchanged. Player and CPU share the same stored energy and damage/collision routing; control handoff preserves the resource. `RunnerBeam` handles the manual sustained trigger, while `RunnerCharge` retains CPU burst cadence.
 
 Tuning: `RUNNER_ENERGY.beamDrainPerSecond` in `dist/runner-energy.js`, `RUNNER_BEAM.tapSeconds` in `dist/runner-beam.js`, and existing lightning DPS in `dist/battle.js`.
 
@@ -72,4 +72,8 @@ During player control, Volt's lower body follows his movement even while firing;
 
 Confirmed lightning damage to robots and weak points now creates a larger cyan-white contact flash, expanding energy ring, branching surface arcs and short flying sparks. Armor briefly pulses cyan and returns to its previous emissive state after the hit fades; reactor/weapon warning glows and weak-point colors are preserved. Contact effects follow the struck part. Misses and cover hits retain the existing beam endpoint effect without the enemy-damage burst. Overload stun remains its separate full-body effect.
 
-`LIGHTNING_HIT` in `dist/runner-hit-effect.js` caps feedback at four targets, 72 sparks and 96 arc segments, with 0.26-second contact persistence and at most one six-spark burst per target every 0.10 seconds. Six pooled instanced meshes add at most six active draws and zero draws when inactive. Existing beam light moves to a confirmed impact; no extra lights or textures are added. Held lightning still deals 150 damage/s for 25 charge/s, and this visual layer adds no damage, stun, targeting or camera shake.
+`LIGHTNING_HIT` in `dist/runner-hit-effect.js` caps feedback at four targets, 72 sparks and 96 arc segments, with 0.26-second contact persistence and at most one six-spark burst per target every 0.10 seconds. Six pooled instanced meshes add at most six active draws and zero draws when inactive. Existing beam light moves to a confirmed impact; no extra lights or textures are added. Held lightning still deals 150 damage/s for 17.5 charge/s, and this visual layer adds no damage, stun, targeting or camera shake.
+
+## Weapon efficiency — revision 77
+
+Normal lightning energy costs are reduced by 30%: manual sustained drain is 17.5 charge/s, and each CPU burst costs 17.5 charge. Damage remains 150/s; a full stationary bar lasts about 5.71 seconds. Capacity, running recharge, attack timing and the 50-charge overload stun remain unchanged. The live HUD reads both weapon costs from `RUNNER_ENERGY`.
