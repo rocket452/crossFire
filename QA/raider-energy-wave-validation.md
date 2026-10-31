@@ -17,3 +17,8 @@
 - Syntax checks and `git diff --check` pass. Physical-phone FPS/thermal performance has not been measured. Historical unrelated portal-test limitations are documented in `QA/raider-projectile-validation.md`; this is not a claim that every historical suite passes.
 
 The encounter fixture now shoots/stuns the front row from clear angles and runs the movement check alongside the formation: a second row correctly blocks attacks/dashes fired directly through it. The desktop fixture releases mouse lock before returning to menu controls. These are QA placement/input updates, not hero ability changes.
+
+
+## Revision 87 speed follow-up
+
+Small-robot projectile speed doubles from 18 to 36m/s; size, seven-unit formation, energy effects, damage, targeting and firing cadence are unchanged. Existing node aiming, low-civilian contact, energy-wave, civilian-targeting and combat-collision suites pass. Focused Chromium checks pass on desktop and touch-phone emulation: actual shot moves 3.6m in 100ms, threat velocity/speed matches 36m/s, real hero collision produces an energy burst, grazing contact uses radius 1.32m, Violet blocks a shot for 14 damage, and rebuild clears all effects while retaining the seven-robot wave and 30-second civilian schedule. Screenshots: `/tmp/drone-speed87-desktop.png`, `/tmp/drone-speed87-phone.png`. Physical-phone performance was not measured.

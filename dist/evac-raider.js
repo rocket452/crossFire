@@ -3,7 +3,7 @@ import * as THREE from './vendor/three.module.js';
 import {DroneTracks} from './drone-tracks.js?v=tracked-drones-64';
 import {EVACUATION_CONFIG} from './evacuation-config.js?v=evacuation-57';
 import {projectileSilhouette} from './projectile-silhouette.js?v=silhouette-49';
-export const RAIDER_COMBAT=Object.freeze({heroRange:30,weaponRange:34,turnRate:120*Math.PI/180,pitchRate:120*Math.PI/180,alignment:7*Math.PI/180,switchMargin:5,windup:1,cooldown:2.5,projectileSpeed:18,projectileRadius:1.32});
+export const RAIDER_COMBAT=Object.freeze({heroRange:30,weaponRange:34,turnRate:120*Math.PI/180,pitchRate:120*Math.PI/180,alignment:7*Math.PI/180,switchMargin:5,windup:1,cooldown:2.5,projectileSpeed:36,projectileRadius:1.32});
 const angleDelta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 export class EvacRaider {
  constructor(scene,damage,{getTargets,visible,trace,redirect=()=>null,onEvent=()=>{},onHeroHit=()=>{},onDebris=()=>null,onRemoveDebris=()=>{},onDeath=()=>{},onWreck=()=>{},id='evac-raider',spawnPosition=null,objective=null,moveSpeed=1.6,initialCooldown=4,isPathClear=()=>true,energyEffects=null}){

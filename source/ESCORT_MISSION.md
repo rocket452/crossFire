@@ -41,10 +41,15 @@ The Siege Walker keeps its existing collapse and eighteen-part breakup, with a l
 `ROBOT_DEATH` in `dist/robot-death-effects.js` controls 24 seconds of emission, 3.2-second puffs, roughly 0.55–0.65 s between puffs per part, 48 emitter slots and 240 puff slots. All three raiders plus the Walker create 33 physics pieces. The visual layer adds at most three pooled effect draws and no lights or textures. Death blasts reuse the existing explosion renderer in a separate pool and do not change missile statistics or add collateral damage. Actor/city reset restores original hierarchy, materials and poses, removes wreck physics and clears smoke/explosions.
 
 
-## Seven-drone energy wave — revision 86 (current)
+## Seven-drone energy wave — revision 86
 
 The second civilian wave still triggers exactly one squad per rebuild at 30 seconds. `ESCORT_APPROACH.squadSize=7` uses the existing three boulevard lanes in rows of 3/3/1, separated by `rowSpacing=6` m. Front/middle/rear spawn at Z=90/96/102 and stage at Z=36/42/48; the final single robot uses the center lane. Followers hold at least 3.6m behind a stopped or stunned robot in the same lane, preventing track stacking. No map or subway changes are needed. Each robot retains 1,000 HP, independent combat and staggered firing cooldowns. Squad HUD/diagnostic totals derive from actual member count (7,000 maximum HP).
 
 Bolts now have a 1.32m core/hit radius, double revision 85’s 0.66m radius, and retain 18m/s speed, four-second life and existing damage. The radius reaches scenery, units, barriers and threat prediction. `RaiderEnergyEffects` adds pulsing orange halos, two rotating energy rings, bright spark wakes and an expanding spark/ring impact discharge. One shared squad pool uses at most three extra instanced draws, 384 sparks, 96 rings and 64 halos; no lights, textures, dependencies or additional damage. Reset clears live shots and all effects; gateway travel starts its wake at the exit instead of drawing a line across the map.
 
 Smoke remains capped at 48 emitters and 240 puffs, so seven drones plus the Walker remain within the existing bounded visual budget even though their total possible physical wreck pieces rise to 53.
+
+
+## Faster small-robot projectiles — revision 87 (current)
+
+`RAIDER_COMBAT.projectileSpeed` is now 36m/s, double the previous 18m/s. Actual movement and incoming-threat prediction read the same per-shot speed. The seven-robot formation, 1.32m hit radius, energy effects, damage, firing cadence and four-second lifetime are unchanged. Maximum unobstructed flight distance consequently doubles to 144m; acquisition/firing range remains 30m/34m.

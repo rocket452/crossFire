@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import * as THREE from '../dist/vendor/three.module.js';
 import {EvacRaiderSquad} from '../dist/evac-raider-squad.js';
 import {UnitDamage} from '../dist/combat-collision.js';
+import {RAIDER_COMBAT} from '../dist/evac-raider.js';
 import {RAIDER_ENERGY} from '../dist/raider-energy-effects.js';
 
 for(const dt of[1/30,1/60,1/120,.075]){
@@ -17,7 +18,7 @@ for(const dt of[1/30,1/60,1/120,.075]){
  }
  assert(squad.members.every(r=>r.root.position.z>=36&&r.root.position.z<=49.1));
  const effects=squad.energyEffects,bolt={mesh:new THREE.Mesh(),dir:new THREE.Vector3(0,0,-1),radius:1.32};bolt.mesh.position.set(0,4,60);
- for(let i=0;i<100;i++){bolt.mesh.position.addScaledVector(bolt.dir,18*dt);effects.update(dt,[bolt]);}
+ for(let i=0;i<100;i++){bolt.mesh.position.addScaledVector(bolt.dir,RAIDER_COMBAT.projectileSpeed*dt);effects.update(dt,[bolt]);}
  assert(effects.diagnostics().sparks>0&&effects.rings.count===2&&effects.halos.count===2);
  const p=bolt.mesh.position.clone();effects.impact(p,bolt.dir,1.32);effects.update(dt,[]);assert(effects.diagnostics().bursts===1&&effects.rings.count===1);
  for(let i=0;i<80;i++)effects.impact(p,bolt.dir,1.32);
