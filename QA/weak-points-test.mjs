@@ -10,7 +10,7 @@ import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
 const bytes=fs.readFileSync('dist/city-assets/siege-walker.glb'),spec=JSON.parse(fs.readFileSync('dist/city-assets/siege-walker.json'));
 const gltf=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
 const robot=new SiegeWalker(new THREE.Scene(),gltf,spec,{onEffect:()=>{}}),damage=new UnitDamage(()=>robot.destroy());damage.add('siege-walker','robot',robot,14400);
-let seed=41,completes=0;const weak=new SiegeWeakPoints(robot,{random:()=>{seed=(seed*1664525+1013904223)>>>0;return seed/2**32;},onComplete:({burst,seconds})=>{completes++;robot.stun(seconds,'weakpoint');return damage.hurt(robot.combatUnit,burst);}});
+let seed=41,completes=0,damageNotices=0;const weak=new SiegeWeakPoints(robot,{onDamage:(unit,amount)=>{assert.equal(unit,robot.combatUnit);assert(amount>0);damageNotices++;},random:()=>{seed=(seed*1664525+1013904223)>>>0;return seed/2**32;},onComplete:({burst,seconds})=>{completes++;robot.stun(seconds,'weakpoint');return damage.hurt(robot.combatUnit,burst);}});
 for(let n=0;n<100;n++){
  weak.reset();assert.equal(weak.points.length,4);assert.equal(new Set(weak.points.map(p=>p.region)).size,4);
  for(const p of weak.points){const center=p.root.getWorldPosition(new THREE.Vector3()),from=center.clone().add(new THREE.Vector3(0,0,16)),hit=weak.trace(from,center,.1);assert.equal(hit?.weakPoint,p);const body=traceImpact(from,center,{targets:[{...robot.combatUnit,shapes:robot.shapes()}]});assert(!body||hit.t<body.t,'core projects outside armor collision');}
@@ -18,9 +18,9 @@ for(let n=0;n<100;n++){
 }
 weak.reset();const original=robot.combatUnit.health;
 assert.equal(weak.hurt(weak.points[0],60,{player:true}),60);assert.equal(weak.points[0].health,120);assert.equal(robot.combatUnit.health,original);
-for(const p of weak.points.slice(0,3))weak.hurt(p,1000,{player:false});const final=weak.points[3];assert(final.final);assert.equal(weak.remaining,1);assert.equal(weak.hurt(final,10000),0);
+for(const p of weak.points.slice(0,3))weak.hurt(p,1000,{player:false});const final=weak.points[3];const beforeBlockedNotices=damageNotices;assert(final.final);assert.equal(weak.remaining,1);assert.equal(weak.hurt(final,10000),0);assert.equal(damageNotices,beforeBlockedNotices,'blocked AI final-core hits do not notify damage');
 for(let n=0;n<600;n++)weak.update(.5,n*.5);assert.equal(weak.remaining,1);assert.equal(weak.phase,'active');assert.equal(final.health,180);assert.equal(completes,0);
-weak.hurt(final,180,{player:true});assert.equal(completes,1);assert.equal(original-robot.combatUnit.health,1152);assert.equal(robot.stunRemaining,5);assert.equal(weak.hurt(final,180,{player:true}),0);assert.equal(completes,1);
+weak.hurt(final,180,{player:true});assert.equal(damageNotices,beforeBlockedNotices+1);assert.equal(completes,1);assert.equal(original-robot.combatUnit.health,1152);assert.equal(robot.stunRemaining,5);assert.equal(weak.hurt(final,180,{player:true}),0);assert.equal(completes,1);
 const position=robot.root.position.clone(),pose=robot.nodes.chest.quaternion.clone();robot.update(.25,1,[]);assert(robot.nodes.chest.quaternion.angleTo(pose)>.2);assert(robot.root.position.equals(position));
 for(let n=0;n<285;n++){robot.update(1/60,n/60,[]);weak.update(1/60,n/60);}assert.equal(robot.stunRemaining,0);assert.equal(weak.phase,'cooldown');assert(Math.abs(weak.cooldownRemaining-12)<.02);assert(robot.nodes.chest.quaternion.angleTo(pose)<1e-6);
 weak.update(11.9,10);assert.equal(weak.phase,'cooldown');robot.stun(1);weak.update(1,11);assert.equal(weak.phase,'cooldown');robot.update(1,11,[]);weak.update(.11,11);assert.equal(weak.phase,'active');assert.equal(weak.cycle,2);assert.equal(weak.remaining,4);

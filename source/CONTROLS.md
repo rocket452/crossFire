@@ -1,4 +1,4 @@
-# Crossfire controls — revision 77
+# Crossfire controls — revision 78
 
 `dist/input-mode.js` chooses the layout from pointer capabilities and actual input, independently of viewport width. Fine-pointer desktops use keyboard/mouse reminders; coarse-pointer phones/tablets use touch controls. Touch/pen selects touch mode, mouse or gameplay keyboard selects desktop. Switching modes clears held input. Observer and helicopter controls retain their existing bindings.
 
@@ -70,10 +70,16 @@ During player control, Volt's lower body follows his movement even while firing;
 
 ## Lightning damage feedback — revision 76
 
-Confirmed lightning damage to robots and weak points now creates a larger cyan-white contact flash, expanding energy ring, branching surface arcs and short flying sparks. Armor briefly pulses cyan and returns to its previous emissive state after the hit fades; reactor/weapon warning glows and weak-point colors are preserved. Contact effects follow the struck part. Misses and cover hits retain the existing beam endpoint effect without the enemy-damage burst. Overload stun remains its separate full-body effect.
+Confirmed lightning damage to robots and weak points now creates a larger cyan-white contact flash, expanding energy ring, branching surface arcs and short flying sparks. The shared enemy hit layer briefly flashes armor warm white and restores its previous emissive state after the hit fades; reactor/weapon warning glows and weak-point colors are preserved. Contact effects follow the struck part. Misses and cover hits retain the existing beam endpoint effect without the enemy-damage burst. Overload stun remains its separate full-body effect.
 
 `LIGHTNING_HIT` in `dist/runner-hit-effect.js` caps feedback at four targets, 72 sparks and 96 arc segments, with 0.26-second contact persistence and at most one six-spark burst per target every 0.10 seconds. Six pooled instanced meshes add at most six active draws and zero draws when inactive. Existing beam light moves to a confirmed impact; no extra lights or textures are added. Held lightning still deals 150 damage/s for 17.5 charge/s, and this visual layer adds no damage, stun, targeting or camera shake.
 
 ## Weapon efficiency — revision 77
 
 Normal lightning energy costs are reduced by 30%: manual sustained drain is 17.5 charge/s, and each CPU burst costs 17.5 charge. Damage remains 150/s; a full stationary bar lasts about 5.71 seconds. Capacity, running recharge, attack timing and the 50-charge overload stun remain unchanged. The live HUD reads both weapon costs from `RUNNER_ENERGY`.
+
+## Shared enemy hit flash — revision 78
+
+The Siege Walker and every tracked drone briefly flash warm white when they take real damage from any weapon. Normal health damage uses the shared `UnitDamage` notification; successful weak-point damage uses the core damage callback. Zero/blocked hits and CPU-protected final cores do not flash. Friendly soldiers, tanks and civilians are excluded. A killing blow can flash before the enemy's death animation.
+
+`ENEMY_FLASH` in `dist/enemy-damage-flash.js`: 0.18 s fade, 0.12 s minimum retrigger interval during sustained fire, intensity 1.05, color `#fff4dc`, maximum 16 simultaneous targets. It adjusts existing armor emission, adds no geometry/lights/draws, and restores the prior state afterward or on rebuild. Reactors, weapon warning lights and core colors retain their existing animation. This shared layer owns armor flashing; Volt's separate arcs, sparks and contact flashes remain, and clearing his effects cannot erase another weapon's hit flash.

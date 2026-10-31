@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import * as THREE from '../dist/vendor/three.module.js';
+import {EnemyDamageFlash,ENEMY_FLASH} from '../dist/enemy-damage-flash.js';
+import {UnitDamage} from '../dist/combat-collision.js';
+import {RunnerHitEffect} from '../dist/runner-hit-effect.js';
+const make=(kind='robot')=>{const root=new THREE.Group(),armor=new THREE.MeshStandardMaterial({color:'#666677',emissive:'#000000',emissiveIntensity:1}),light=new THREE.MeshStandardMaterial({emissive:'#ff3010',emissiveIntensity:2}),warning=new THREE.MeshStandardMaterial({emissive:'#000000',emissiveIntensity:0}),mesh=new THREE.Mesh(new THREE.BoxGeometry(2,4,2),armor),lamp=new THREE.Mesh(new THREE.BoxGeometry(.2,.2,.2),light),pod=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),warning);root.add(mesh,lamp,pod);return{root,armor,light,warning,meshes:{rocket_pod:pod}};};
+for(const dt of[1/30,1/60,1/120]){
+ const flash=new EnemyDamageFlash(),disabled=[],damage=new UnitDamage(u=>disabled.push(u.id),(u,amount)=>flash.hit(u,amount)),robots=Array.from({length:4},(_,i)=>{const e=make(),u=damage.add('robot-'+i,'robot',e,1000);u.shapes=[{center:{x:i*10,y:0,z:0},half:{x:1,y:1,z:1}}];return u;}),friend=damage.add('friend','tank',make());
+ damage.hurt(robots[0],0);damage.hurt(friend,1);assert.equal(flash.states.size,0);robots[0].dashPhased=true;assert.equal(damage.hurt(robots[0],10),0);assert.equal(flash.states.size,0);robots[0].dashPhased=false;
+ for(const u of robots){assert.equal(damage.hurt(u,10),10);assert.equal(u.health,990);assert.equal(u.entity.armor.emissive.getHexString(),'fff4dc');assert.equal(u.entity.armor.emissiveIntensity,ENEMY_FLASH.intensity);assert.equal(u.entity.light.emissive.getHexString(),'ff3010');assert.equal(u.entity.warning.emissive.getHex(),0);}assert.equal(flash.states.size,4);
+ let peaks=0,previous=2;for(let i=0;i<Math.round(1/dt);i++){damage.hurt(robots[0],dt);flash.update(dt);const intensity=robots[0].entity.armor.emissiveIntensity;if(intensity>previous+.2)peaks++;previous=intensity;}assert(peaks>=5&&peaks<=9,'continuous attacks visibly retrigger, not one permanent tint');assert.equal(flash.states.size,1);
+ const root=new THREE.Group(),electric=new RunnerHitEffect(root),unit=robots[0];electric.update(dt,1,[{unit,damage:1,point:{x:0,y:2,z:1}}],new THREE.Vector3(0,2,10));assert.equal(unit.entity.armor.emissive.getHexString(),'fff4dc');electric.clear();assert.equal(unit.entity.armor.emissive.getHexString(),'fff4dc','lightning cleanup cannot erase global flash');
+ for(let i=0;i<Math.ceil(.3/dt);i++)flash.update(dt);assert.equal(flash.states.size,0);for(const u of robots){assert.equal(u.entity.armor.emissive.getHex(),0);assert.equal(u.entity.armor.emissiveIntensity,1);}
+ damage.blast({x:10,y:0,z:0},{direct:robots[1],power:20,radius:3});assert(flash.states.has('robot-1'));damage.hurt(robots[2],9999);assert(disabled.includes('robot-2'));assert(flash.states.has('robot-2'),'killing blow flashes');const hits=flash.hits;assert.equal(damage.hurt(robots[2],1),0);assert.equal(flash.hits,hits);flash.clear();assert(robots.every(u=>u.entity.armor.emissive.getHex()===0));assert.equal(flash.states.size,0);
+ console.log('PASS',dt,'all four enemies/direct and splash damage, no false or phased/friendly hits, repeated pulse/fade, killing blow, preserved warning lights, shared lightning ownership and reset');
+}

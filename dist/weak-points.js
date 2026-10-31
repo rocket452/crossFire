@@ -20,8 +20,8 @@ function sphereFraction(a,b,c,r){const x=a.x-c.x,y=a.y-c.y,z=a.z-c.z,dx=b.x-a.x,
 
 // One authority for health, final-point ownership and cycle completion. Not an aim target.
 export class SiegeWeakPoints {
- constructor(robot,{config={},random=Math.random,onComplete=()=>{},onBreak=()=>{}}={}){
-  Object.assign(this,{robot,random,onComplete,onBreak});this.config={...WEAK_POINTS,...config};
+ constructor(robot,{config={},random=Math.random,onComplete=()=>{},onBreak=()=>{},onDamage=()=>{}}={}){
+  Object.assign(this,{robot,random,onComplete,onBreak,onDamage});this.config={...WEAK_POINTS,...config};
   this.coreGeometry=new THREE.IcosahedronGeometry(this.config.radius,1);
   this.ringGeometry=new THREE.TorusGeometry(this.config.radius*1.28,.055,4,24);
   this.haloGeometry=new THREE.TorusGeometry(this.config.radius*1.65,.035,4,24);
@@ -61,7 +61,7 @@ export class SiegeWeakPoints {
   if(this.phase!=='active'||this.robot.dead||!this.robot.combatUnit?.alive||!this.points.includes(point)||point.health<=0||!Number.isFinite(power)||power<=0)return 0;
   // CPU splash, beams and in-flight bolts cannot spend the player's final stun.
   if(!player&&this.remaining===1){this.blockedAIHits++;return 0;}
-  const damage=Math.min(point.health,power);point.health=Math.max(0,point.health-damage);this.hits++;
+  const damage=Math.min(point.health,power);point.health=Math.max(0,point.health-damage);this.hits++;this.onDamage(this.robot.combatUnit,damage);
   if(point.health===0){point.root.visible=false;point.root.getWorldPosition(point.position);this.onBreak(point.position.clone());
    if(this.remaining===0){this.burstRemaining=.65;this.discharge.position.copy(this.robot.root.position).y+=12;this.discharge.scale.setScalar(2);this.dischargeMaterial.opacity=.75;this.discharge.visible=true;this.phase='stunned';this.completions++;const burst=this.robot.combatUnit.maxHealth*this.config.burstFraction;this.totalBurst+=this.onComplete({burst,seconds:this.config.stunDuration,cycle:this.cycle})||0;}
   }

@@ -1,4 +1,4 @@
-import {RunnerHitEffect} from './runner-hit-effect.js?v=lightning-hits-76';
+import {RunnerHitEffect} from './runner-hit-effect.js?v=enemy-flash-78';
 import {RunnerWave} from './runner-wave.js?v=wave-dash-62';
 import * as THREE from './vendor/three.module.js';
 export class RunnerElectric {

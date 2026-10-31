@@ -16,9 +16,9 @@ export function traceImpact(from,to,{sections=[],targets=[],ignoreUnit=null,radi
  if(!hit)return null;hit.t=nearest;hit.point={x:from.x+(to.x-from.x)*nearest,y:from.y+(to.y-from.y)*nearest,z:from.z+(to.z-from.z)*nearest};return hit;
 }
 export class UnitDamage {
- constructor(onDisabled=()=>{}){this.units=[];this.onDisabled=onDisabled;this.damageEvents=0;this.disabledEvents=0;}
+ constructor(onDisabled=()=>{},onDamaged=()=>{}){this.units=[];this.onDisabled=onDisabled;this.onDamaged=onDamaged;this.damageEvents=0;this.disabledEvents=0;}
  add(id,kind,entity,maxHealth=kind==='tank'?100:kind==='helicopter'?90:35){const unit={id,kind,entity,maxHealth,health:maxHealth,alive:true,shapes:[]};this.units.push(unit);entity.combatUnit=unit;return unit;}
- hurt(unit,power,point){if(!unit?.alive||unit.dashPhased||power<=0)return 0;const damage=Math.min(unit.health,power);unit.health=Math.max(0,unit.health-damage);this.damageEvents++;if(unit.health===0){unit.alive=false;this.disabledEvents++;this.onDisabled(unit,point);}return damage;}
+ hurt(unit,power,point){if(!unit?.alive||unit.dashPhased||power<=0)return 0;const damage=Math.min(unit.health,power);unit.health=Math.max(0,unit.health-damage);this.damageEvents++;if(damage>0)this.onDamaged(unit,damage,point);if(unit.health===0){unit.alive=false;this.disabledEvents++;this.onDisabled(unit,point);}return damage;}
  blast(point,{direct=null,radius=5,power=65,exclude=null,filter=()=>true}={}){const results=[];for(const unit of this.units){if(!unit.alive||unit.dashPhased||unit.id===exclude||!unit.shapes.length||!filter(unit))continue;const distance=Math.min(...unit.shapes.map(s=>Math.max(0,Math.hypot(s.center.x-point.x,s.center.y-point.y,s.center.z-point.z)-Math.max(s.half.x,s.half.y,s.half.z))));let damage=unit===direct?power:distance<radius?power*.65*(1-distance/radius):0;if(damage<=0)continue;damage=this.hurt(unit,damage,point);results.push({unit,damage,disabled:!unit.alive});}return results;}
  reset(){for(const u of this.units){u.health=u.maxHealth;u.alive=true;}this.damageEvents=this.disabledEvents=0;}
  stats(){return{damageEvents:this.damageEvents,disabled:this.disabledEvents,units:this.units.map(u=>({id:u.id,kind:u.kind,health:Math.round(u.health),alive:u.alive,stance:u.kind==='infantry'?u.entity.clip:undefined,position:u.shapes[0]?.center}))};}
