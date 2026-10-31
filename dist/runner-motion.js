@@ -77,7 +77,7 @@ export class RunnerMotion {
     else{this.releaseWall(this.player?desired:{x:0,z:0},this.player?speed:0,Math.min(2,Math.max(0,this.lastClimbSpeed)*.2));continue;}
     if(this.mode==='wall'&&climb<-.05&&p.y<=terrainHeight(p.x,p.z)+.16){this.releaseWall({x:n.x,z:n.z},1,0);this.mode='ground';this.position.y=terrainHeight(this.position.x,this.position.z);this.normal=terrainNormal(this.position.x,this.position.z);this.velocity.y=0;}
    }else{
-    const sy=Math.sin(this.yaw),cy=Math.cos(this.yaw),desired={x:sy*forward+cy*strafe,z:cy*forward-sy*strafe};if(this.player&&this.mode==='air'&&this.wallLock>.12&&this.escapeNormal){const n=this.escapeNormal,into=desired.x*n.x+desired.z*n.z;if(into<0){desired.x-=into*n.x;desired.z-=into*n.z;}}const tx=desired.x*speed,tz=desired.z*speed,blend=1-Math.exp(-(magnitude?20:26)*h);
+    const sy=Math.sin(this.yaw),cy=Math.cos(this.yaw),desired={x:sy*forward+cy*strafe,z:cy*forward-sy*strafe};if(this.player&&this.mode==='air'&&this.wallLock>.12&&this.escapeNormal){const n=this.escapeNormal,into=desired.x*n.x+desired.z*n.z;if(into<0){desired.x-=into*n.x;desired.z-=into*n.z;}}const tx=desired.x*speed,tz=desired.z*speed,air=this.mode==='air',response=magnitude?(air?input.airAcceleration??20:20):(air?input.airDrag??26:26),blend=1-Math.exp(-response*h);
     this.velocity.x+=(tx-this.velocity.x)*blend;this.velocity.z+=(tz-this.velocity.z)*blend;
     if(this.jumpBuffer>0&&(this.mode==='ground'||this.coyote>0)){this.mode='air';this.velocity.y=9;this.support=null;this.departedSupportY=null;this.jumpBuffer=this.coyote=0;}
     if(this.player)this.recoverOverlap(p,desired);const incoming={x:this.velocity.x,z:this.velocity.z},hit=this.slide(p,{x:this.velocity.x*h,z:this.velocity.z*h},this.player);
@@ -93,7 +93,8 @@ export class RunnerMotion {
      const floor=this.floor(p.x,p.z,p.y+RUNNER_CONTROL.stepHeight,p.y-.65);if(floor){this.departedSupportY=null;if(floor.height-p.y>.12)this.stepUps++;p.y=floor.height;this.normal=floor.normal;this.support=floor.section;this.velocity.y=0;}else{this.departedSupportY=p.y;this.mode='air';this.normal={x:0,y:1,z:0};this.support=null;}
     }
     if(this.mode==='air'){
-     const oldY=p.y;this.velocity.y=Math.max(-(input.fallSpeed??45),this.velocity.y-25*(input.gravityScale??1)*h);let nextY=p.y+this.velocity.y*h;if(this.player&&this.velocity.y>0){const ceiling=this.trace({x:p.x,y:p.y+2.3,z:p.z},{x:p.x,y:nextY+2.3,z:p.z},.26);if(ceiling&&ceiling.normal.y<-.45){nextY=Math.min(nextY,ceiling.point.y-2.3-.015);this.velocity.y=0;this.jumpBuffer=0;}}p.y=nextY;
+     // Optional falling gravity blends through the apex; existing runners retain their gravity.
+     const oldY=p.y,riseGravity=input.gravityScale??1,gravity=riseGravity+((input.fallGravityScale??riseGravity)-riseGravity)*clamp(-this.velocity.y/8,0,1);this.velocity.y=Math.max(-(input.fallSpeed??45),this.velocity.y-25*gravity*h);let nextY=p.y+this.velocity.y*h;if(this.player&&this.velocity.y>0){const ceiling=this.trace({x:p.x,y:p.y+2.3,z:p.z},{x:p.x,y:nextY+2.3,z:p.z},.26);if(ceiling&&ceiling.normal.y<-.45){nextY=Math.min(nextY,ceiling.point.y-2.3-.015);this.velocity.y=0;this.jumpBuffer=0;}}p.y=nextY;
      if(this.velocity.y<=0){const floor=this.landing(p.x,p.z,oldY+.25,p.y-.08);if(floor){p.x=floor.x;p.z=floor.z;if(floor.assisted)this.assistedLandings++;p.y=floor.height;this.normal=floor.normal;this.support=floor.section;this.velocity.y=0;this.mode='ground';}}
     }
    }

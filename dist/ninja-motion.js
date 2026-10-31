@@ -1,16 +1,16 @@
-import {RunnerMotion,terrainHeight} from './runner-motion.js?v=ground-rubble-89';
-export const NINJA=Object.freeze({runSpeed:46,airSpeed:32.2,wallPushSpeed:12.6,jumpSpeed:30,doubleJumpSpeed:27,gravity:25,dashRange:24,dashSpeed:64.4,dashCooldown:6,dashDamage:320,slowFallSeconds:2,slowFallGravity:.12,slowFallSpeed:3,shurikenDamage:55,throwInterval:.22,shurikenSpeed:59.5,shurikenScale:2,shurikenRadius:.24,shurikenRange:127.5,maxProjectiles:36});
+import {RunnerMotion,terrainHeight} from './runner-motion.js?v=kage-jump-93';
+export const NINJA=Object.freeze({runSpeed:46,airSpeed:32.2,airAcceleration:5,airDrag:.15,wallPushSpeed:12.6,wallJumpSpeed:40,jumpSpeed:34,doubleJumpSpeed:30,gravity:32,fallGravity:44,terminalSpeed:52,coyoteSeconds:.1,jumpBufferSeconds:.15,dashRange:24,dashSpeed:64.4,dashCooldown:6,dashDamage:320,slowFallSeconds:2,slowFallGravity:.12,slowFallSpeed:3,shurikenDamage:55,throwInterval:.22,shurikenSpeed:59.5,shurikenScale:2,shurikenRadius:.24,shurikenRange:127.5,maxProjectiles:36});
 const normalize=v=>{const n=Math.hypot(v.x,v.y,v.z);return n>1e-6?{x:v.x/n,y:v.y/n,z:v.z/n}:null;};
 // Uses the same swept walls, roofs, terrain and overlap recovery as Volt, without wall running.
 export class NinjaMotion {
  constructor({sweep=()=>null,onHit=()=>({killed:false}),onDashEnd=()=>{}}={}){Object.assign(this,{sweep,onHit,onDashEnd});this.body=new RunnerMotion({runSpeed:NINJA.runSpeed,boostSpeed:NINJA.runSpeed,wallRun:false});this.reset();}
  get position(){return this.body.position;}get velocity(){return this.body.velocity;}get mode(){return this.body.mode;}get active(){return this.dash!==null;}
- reset(){this.body.reset({x:0,y:.08,z:27});this.jumps=0;this.jumpCount=0;this.doubleJumps=0;this.dash=null;this.cooldown=0;this.slowFall=0;this.dashes=0;this.resets=0;this.jumpRequested=false;this.lastResult=null;this.wallJumps=0;this.wallKick=0;this.wallJumpLock=0;this.wallNormal=null;}
+ reset(){this.body.reset({x:0,y:.08,z:27});this.jumps=0;this.jumpCount=0;this.doubleJumps=0;this.dash=null;this.cooldown=0;this.slowFall=0;this.dashes=0;this.resets=0;this.jumpRequested=false;this.jumpBuffer=0;this.coyote=0;this.airAge=0;this.lastResult=null;this.wallJumps=0;this.wallKick=0;this.wallJumpLock=0;this.wallNormal=null;}
  jump(){this.jumpRequested=true;}
  startDash(target){
   if(this.mode!=='air'||this.dash||this.cooldown>1e-8)return false;
   const p=this.position,direction=normalize({x:target.x-p.x,y:target.y-(p.y+1.2),z:target.z-p.z});if(!direction)return false;
-  this.dash={direction,remaining:NINJA.dashRange,origin:{...p}};this.cooldown=NINJA.dashCooldown;this.slowFall=0;this.dashes++;this.body.support=null;this.body.mode='air';return true;
+  this.dash={direction,remaining:NINJA.dashRange,origin:{...p}};this.cooldown=NINJA.dashCooldown;this.slowFall=0;this.jumpBuffer=this.coyote=0;this.dashes++;this.body.support=null;this.body.mode='air';return true;
  }
  wallJump(sections){
   if(this.mode!=='air'||this.wallJumpLock>0)return false;
@@ -18,7 +18,7 @@ export class NinjaMotion {
   const p=this.position,from={x:p.x,y:p.y+1.2,z:p.z};let best=null;
   for(let i=0;i<8;i++){const a=i*Math.PI/4,hit=this.body.trace(from,{x:p.x+Math.sin(a)*1.55,y:from.y,z:p.z+Math.cos(a)*1.55},.12);if(hit&&Math.abs(hit.normal.y)<.25&&(!best||hit.t<best.t))best=hit;}
   if(!best)return false;
-  this.wallNormal={...best.normal};this.body.mode='air';this.body.support=null;this.body.normal={x:0,y:1,z:0};this.body.velocity={x:best.normal.x*NINJA.wallPushSpeed,y:36,z:best.normal.z*NINJA.wallPushSpeed};this.jumps=1;this.jumpCount++;this.wallJumps++;this.wallKick=.22;this.wallJumpLock=.35;this.slowFall=0;return true;
+  this.wallNormal={...best.normal};this.body.mode='air';this.body.support=null;this.body.normal={x:0,y:1,z:0};this.body.velocity={x:best.normal.x*NINJA.wallPushSpeed,y:NINJA.wallJumpSpeed,z:best.normal.z*NINJA.wallPushSpeed};this.jumps=1;this.jumpCount++;this.wallJumps++;this.wallKick=.22;this.wallJumpLock=.35;this.slowFall=0;this.airAge=0;return true;
  }
  finishDash(){if(!this.dash)return;this.dash=null;this.slowFall=NINJA.slowFallSeconds;this.body.velocity={x:0,y:1.5,z:0};this.onDashEnd({...this.position});}
  step(input,dt,sections=[]){
@@ -32,14 +32,17 @@ export class NinjaMotion {
    if(p.y<terrainHeight(p.x,p.z)){p.y=terrainHeight(p.x,p.z);this.body.mode='ground';this.jumps=0;this.slowFall=0;}
    this.jumpRequested=false;return;
   }
-  const wasGround=this.mode==='ground';if(wasGround)this.jumps=0;else if(this.jumps===0)this.jumps=1;
-  if(this.jumpRequested&&this.wallJump(sections)){this.jumpRequested=false;}
-  if(this.jumpRequested&&this.jumps<2){const second=this.jumps>0;this.body.velocity.y=second?NINJA.doubleJumpSpeed:NINJA.jumpSpeed;this.body.mode='air';this.body.normal={x:0,y:1,z:0};this.body.support=null;this.body.jumpBuffer=this.body.coyote=0;this.jumps++;this.jumpCount++;if(second)this.doubleJumps++;this.slowFall=0;}
+  // Keep a short ledge grace window and retain an early jump press through touchdown.
+  const wasGround=this.mode==='ground';this.airAge=wasGround?0:this.airAge+dt;this.coyote=wasGround?NINJA.coyoteSeconds:Math.max(0,this.coyote-dt);if(wasGround)this.jumps=0;else if(this.jumps===0&&this.coyote<=0)this.jumps=1;
+  if(this.jumpRequested)this.jumpBuffer=NINJA.jumpBufferSeconds;
+  if(this.jumpBuffer>0&&this.wallJump(sections)){this.jumpBuffer=this.coyote=0;}
+  if(this.jumpBuffer>0&&this.jumps<2){const second=this.jumps>0;this.body.velocity.y=second?NINJA.doubleJumpSpeed:NINJA.jumpSpeed;this.body.mode='air';this.body.normal={x:0,y:1,z:0};this.body.support=null;this.body.departedSupportY=null;this.body.jumpBuffer=this.body.coyote=this.jumpBuffer=this.coyote=0;this.jumps++;this.jumpCount++;if(second)this.doubleJumps++;this.slowFall=0;this.airAge=0;}
   this.jumpRequested=false;
   this.body.runSpeed=this.body.boostSpeed=this.mode==='air'?NINJA.airSpeed:NINJA.runSpeed;
   if(this.wallKick>0){this.wallKick=Math.max(0,this.wallKick-dt);this.body.yaw=Math.atan2(this.wallNormal.x,this.wallNormal.z);input={forward:NINJA.wallPushSpeed/NINJA.airSpeed,strafe:0};}
-  this.body.step({...input,player:true,jump:false,gravityScale:NINJA.gravity/25*(this.slowFall>0?NINJA.slowFallGravity:1),fallSpeed:this.slowFall>0?NINJA.slowFallSpeed:45},dt,sections);
+  this.body.step({...input,player:true,jump:false,airAcceleration:NINJA.airAcceleration,airDrag:NINJA.airDrag,gravityScale:this.slowFall>0?NINJA.slowFallGravity:NINJA.gravity/25,fallGravityScale:this.slowFall>0?NINJA.slowFallGravity:NINJA.fallGravity/25,fallSpeed:this.slowFall>0?NINJA.slowFallSpeed:NINJA.terminalSpeed},dt,sections);
+  this.jumpBuffer=Math.max(0,this.jumpBuffer-dt);
   if(this.mode==='ground'){this.jumps=0;this.slowFall=0;}
  }
- diagnostics(){return{...this.body.diagnostics(),wallJumps:this.wallJumps,wallKick:this.wallKick,jumpsUsed:this.jumps,jumpsRemaining:2-this.jumps,jumpCount:this.jumpCount,doubleJumps:this.doubleJumps,dashing:this.active,dashCooldown:this.cooldown,slowFall:this.slowFall,dashes:this.dashes,killResets:this.resets,dash:this.dash?{direction:{...this.dash.direction},remaining:this.dash.remaining}:null,config:{...NINJA}};}
+ diagnostics(){return{...this.body.diagnostics(),jumpBuffer:this.jumpBuffer,coyote:this.coyote,airAge:this.airAge,wallJumps:this.wallJumps,wallKick:this.wallKick,jumpsUsed:this.jumps,jumpsRemaining:2-this.jumps,jumpCount:this.jumpCount,doubleJumps:this.doubleJumps,dashing:this.active,dashCooldown:this.cooldown,slowFall:this.slowFall,dashes:this.dashes,killResets:this.resets,dash:this.dash?{direction:{...this.dash.direction},remaining:this.dash.remaining}:null,config:{...NINJA}};}
 }
