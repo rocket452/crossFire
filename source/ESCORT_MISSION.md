@@ -62,3 +62,10 @@ Plasma prioritizes visible civilian groups and predicts their route positions at
 `civilian-prediction.js` implements the read-only route forecast, exposed through `EvacuationScene.predictCivilian`. `PlasmaArtillery.aimTarget` solves arrival time with `PLASMA.leadIterations` (10) and `maxLeadSeconds` (24). The existing turn speed is exported as `WALKER_TURN_SPEED` (0.34 rad/s); movement behavior is unchanged. Each shell’s `aim` diagnostics record original group center, chosen point, unit and predicted seconds.
 
 The minimap consumes live shell ground points, renders red crosshairs with ETA titles, and follows actual redirect/cleanup events. Existing civilian-dot warnings include the predicted danger and clear after a safe rescue. Display code does not advance combat or navigation.
+
+
+## Three robots with burst weapons — revision 92 (current)
+
+`ESCORT_APPROACH.squadSize=3` restores one row at X=-4/0/4, Z=102, staging at Z=36. The squad still spawns once on the second civilian wave (30s), with 1,000 HP per robot and derived 3,000 HP total. Existing street bounds, movement, targets and civilian schedule are retained.
+
+`RAIDER_COMBAT.burstSize=3` and `burstInterval=0.5` create three-round volleys. After the normal one-second aligned windup, rounds fire half a second apart with fresh aim; the existing 2.5-second recovery starts after the last round. Losing the target, range, line of sight or firing alignment cancels queued rounds, as do stun, death and rebuild. Already airborne rounds retain their physics. Pending bursts count as civilian danger between rounds. Projectile speed 36m/s, radius 1.32m, damage, portals, shields and energy effects remain unchanged.

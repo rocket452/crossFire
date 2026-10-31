@@ -8,7 +8,7 @@ export function targetedCivilianGroups(civilians,{walker=null,missiles=[],plasma
  for(const missile of missiles){if(!missile.alive)continue;if(!missile.lockLost&&!missile.riftPair)mark(missile.target);area(missile.targetPoint,3.8);}
  for(const shell of plasma)if(['warning','flying'].includes(shell.state)){area(shell.target,7);const civilian=byId.get(shell.aim?.unitId),future=civilian&&predictCivilian?.(civilian.unit,Math.max(0,shell.impactAt-plasmaClock));if(future&&Math.hypot(future.x-shell.target.x,future.z-shell.target.z)<=8)groups.add(civilian.group||civilian);}
  for(const raider of raiders){
-  if(!raider.dead&&!raider.stunRemaining&&raider.windup>0)mark(raider.target);
+  if(!raider.dead&&!raider.stunRemaining&&(raider.windup>0||raider.burstRemaining>0))mark(raider.target);
   for(const bolt of raider.bolts||[])if(bolt.life>0&&!bolt.riftPair){const c=byId.get(bolt.target),p=c?.root.position,from=bolt.mesh?.position;if(c&&p&&from&&(!bolt.dir||(p.x-from.x)*bolt.dir.x+(p.y+.9-from.y)*bolt.dir.y+(p.z-from.z)*bolt.dir.z>=-1))mark(bolt.target);}
  }
  return groups;
