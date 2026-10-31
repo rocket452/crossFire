@@ -78,3 +78,5 @@ html[data-input-mode=touch] .runner-mobile,html[data-input-mode=touch] .mobile-f
 @media(max-width:360px){#hero-minimap{width:110px}}
 
 .minimap-enemy-core{fill:#fff0eb;stroke:none}
+
+#runner-resume{position:absolute;z-index:4;top:calc(50% + 58px);left:50%;transform:translateX(-50%);max-width:calc(100% - 32px);padding:13px 18px;border:1px solid #a0e9ed99;border-radius:6px;background:#102e3df2;color:#e3ffff;font:600 11px "DM Sans",sans-serif;letter-spacing:.6px;pointer-events:auto;cursor:pointer;box-shadow:0 3px 20px #082a3655}#runner-resume:disabled{opacity:.7;cursor:wait}

@@ -1,4 +1,4 @@
-# Crossfire controls — revision 68
+# Crossfire controls — revision 73
 
 `dist/input-mode.js` chooses the layout from pointer capabilities and actual input, independently of viewport width. Fine-pointer desktops use keyboard/mouse reminders; coarse-pointer phones/tablets use touch controls. Touch/pen selects touch mode, mouse or gameplay keyboard selects desktop. Switching modes clears held input. Observer and helicopter controls retain their existing bindings.
 
@@ -12,10 +12,13 @@
 | Defense | E electric rescue wave | DASH |
 | Boost | Hold Shift | BOOST toggle |
 | Overload stun | Q; 50 charge, 15-second cooldown | STUN |
-| Look | Hold right-click and drag; release to stop | Drag open scene or FIRE |
-| Exit | Escape or Exit hero | Exit hero |
+| Look | Move mouse; cursor locks to the game | Drag open scene or FIRE |
+| Settings | Tab (releases mouse); close to resume | Gear button |
+| Release mouse / exit | Escape releases cursor; Escape again or Exit hero exits | Exit hero |
 
-Right-click only looks. Left/right mouse buttons work in either press/release order, so aiming and firing can continue independently. No persistent mouse lock is requested. Right drags continue off the canvas through pointer capture/window handlers. Blur, pointer cancellation, menus, hero exit and device switching release held input. Automatic camera follow yields while aiming. Touch scene drags only aim, never attack.
+Entering Volt control on desktop requests Pointer Lock. Relative mouse movement turns yaw/pitch continuously without holding a button, including at screen edges. Left-click/F sustains lightning while moving and looking; right-click has no hero action. Locked desktop aim disables automatic strafe-camera recentering; touch retains camera follow.
+
+Escape releases the cursor and clears held actions; Escape again exits the hero. Tab opens settings and frees the cursor; closing settings requests capture again. Click the resume prompt or the game to reacquire after unlocking. That first capture click does not fire. Keyboard gameplay input waits for capture on desktop. Blur, hidden tabs, hero exit and switching to touch release capture and clear held controls. Browser denial is handled with a retry prompt rather than an unhandled error or a hidden drag fallback. Touch scene drags only aim, never attack.
 
 ## Sustained player lightning
 
@@ -41,13 +44,13 @@ QA: `QA/sustained-lightning-browser.cjs`, `QA/runner-beam-test.mjs`, `QA/device-
 
 ## Hero minimap (revision 69)
 
-The corner radar appears during hero control, follows the hero and rotates with the actual camera heading. The white center arrow points along the view; N rotates around the rim. Gold circles show nearby civilian groups with headcounts, red diamonds show the Siege Walker and drones, cyan dots show allied heroes, green H marks the evacuation zone and S marks the existing subways. Ground civilian and enemy totals appear below the map. Boarding/death remove markers; teleports and the electric wave move them with their real positions. Units outside the 90 m range remain as rim arrows. Destroyed buildings dim to rubble footprints. Mouse/touch gestures pass through the map, including right-drag aiming, and it occupies space separate from desktop/mobile buttons. See `QA/hero-minimap-validation.md` for tests and tuning.
+The corner radar appears during hero control, follows the hero and rotates with the actual camera heading. The white center arrow points along the view; N rotates around the rim. Gold circles show nearby civilian groups with headcounts, red diamonds show the Siege Walker and drones, cyan dots show allied heroes, green H marks the evacuation zone and S marks the existing subways. Ground civilian and enemy totals appear below the map. Boarding/death remove markers; teleports and the electric wave move them with their real positions. Units outside the 90 m range remain as rim arrows. Destroyed buildings dim to rubble footprints. Mouse/touch gestures pass through the map, including mouse movement while locked, and it occupies space separate from desktop/mobile buttons. See `QA/hero-minimap-validation.md` for tests and tuning.
 
 ## Light lightning aim assistance (revision 70)
 
 Beam aim assistance now works on desktop and touch, enabled by the existing setting by default. It corrects only near-misses within 2.5° of visible robot armor or 3° of a live missile, up to the existing 110 m beam range. Large/rotated armor uses a nearby point just inside its hitbox rather than pulling toward the robot's center. The camera, movement reference and minimap heading remain under player control. A small existing cyan marker indicates when the beam is assisted.
 
-Direct hits on robots/missiles and deliberate weak-point rays keep their manual endpoint. Weak points are not aim candidates; a body-assistance ray that intersects one is rejected. Scenery and other units still block target selection, and the actual muzzle-to-endpoint collision remains authoritative. Previous-target preference cannot extend the narrow acquisition cone. Turn off **Beam aim assistance** in the ⚙ settings for fully manual fire; that preference persists on both input modes. Charge drain, sustained fire/no cooldown, E dash and right-drag look are unchanged. Tune `RUNNER_AIM` in `dist/runner-aim.js`.
+Direct hits on robots/missiles and deliberate weak-point rays keep their manual endpoint. Weak points are not aim candidates; a body-assistance ray that intersects one is rejected. Scenery and other units still block target selection, and the actual muzzle-to-endpoint collision remains authoritative. Previous-target preference cannot extend the narrow acquisition cone. Turn off **Beam aim assistance** in the ⚙ settings for fully manual fire; that preference persists on both input modes. Charge drain, sustained fire/no cooldown, E dash and sustained fire are unchanged. Tune `RUNNER_AIM` in `dist/runner-aim.js`.
 
 ## Boosted airborne wall catch (revision 71)
 
