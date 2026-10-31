@@ -47,3 +47,11 @@ The first jump now uses `34 * Math.sqrt(0.7)` (approximately 28.446m/s) launch s
 Current `ninja-jump-feel-test.mjs` measurements across 30/60/120Hz and 75ms frames: apex 12.614–12.664m, time to apex 0.883–0.900s, airtime 1.675–1.725s. A comparison with the previous 34m/s jump using the same collision/gravity controller measured 30.055–30.112% lower height above takeoff; the small difference comes from discrete integration. Existing jump/landing-buffer fixtures and browser height expectations were adjusted for the requested height. `ninja-motion-test.mjs` still passes double jumps, wall springs, roof landings, dash/slow-fall/kill-reset behavior at all four timings.
 
 `ninja-jump-browser.cjs` passes with actual desktop keyboard and emulated phone touch input: lower first jump, double jump, nonlooping weighted animation, upright camera, landing recovery, 75ms frames and resumed city combat. Physical-phone performance was not measured.
+
+## Revision 96 — lower ground run speed
+
+Ground running is now 32.2m/s, down 30% from 46m/s, for both player and CPU Kage. Air steering remains 32.2m/s and the air dash remains 64.4m/s. The lowered initial jump, double jump, wall spring, gravity, cooldowns and weapons retain their existing values. Ground run animation playback also scales down 30% (1.5 to 1.05) to match the slower travel, and scarf motion uses the configured ground speed. The guide no longer claims Kage runs as fast as boosted Volt.
+
+`ninja-motion-test.mjs` passes at 30/60/120Hz and 75ms frames: 32.2m/s ground travel, unchanged Volt speeds, air movement, high/double/wall jumps, roof landings and dash lifecycle. `ninja-jump-feel-test.mjs` passes with the same 12.6m first-jump apex and airborne momentum retention. Existing browser fixtures now expect the reduced ground speed.
+
+`ninja-jump-browser.cjs` passes desktop keyboard and emulated phone touch input with an explicit 32.2m/s ground-speed check, preserved airborne travel, weighted jump poses, camera, landing recovery and resumed city combat.

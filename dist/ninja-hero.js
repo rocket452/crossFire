@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=ninja-82';
-import {NinjaMotion,NINJA} from './ninja-motion.js?v=kage-height-95';
+import {NinjaMotion,NINJA} from './ninja-motion.js?v=kage-run-96';
 import {terrainHeight} from './runner-motion.js?v=kage-jump-93';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
 import {inputMode} from './input-mode.js?v=device-controls-59';
@@ -65,14 +65,14 @@ export class NinjaHero {
   const delta=Math.atan2(Math.sin(yaw-this.root.rotation.y),Math.cos(yaw-this.root.rotation.y));this.root.rotation.y+=delta*(dt?1-Math.exp(-18*dt):1);let clip=m.mode==='air'?(m.velocity.y>1?'Jump':'Fall'):moving?'Run':'Idle';if(moving&&m.mode==='ground'){const local=new THREE.Vector3(m.velocity.x,0,m.velocity.z).applyQuaternion(this.root.quaternion.clone().invert());if(local.z< -Math.abs(local.x)*.7)clip='RunBack';else if(Math.abs(local.x)>Math.abs(local.z)*.8)clip=local.x>0?'RunRight':'RunLeft';}
   // Scrub a single airborne pose through takeoff/apex/fall, rather than looping a full jump.
   const airborne=m.mode==='air',duration=this.character.clips.get(clip)?.duration||1,airProgress=clip==='Jump'?Math.min(.58,this.motion.airAge/.32*.58):Math.min(.7,Math.max(0,-m.velocity.y)/NINJA.terminalSpeed*.7);
-  this.character.update(clip,dt,{rate:clip.startsWith('Run')?1.5:1,loop:!airborne,time:airborne?duration*airProgress:null});const n=this.character.nodes;
+  this.character.update(clip,dt,{rate:clip.startsWith('Run')?1.5*NINJA.runSpeed/46:1,loop:!airborne,time:airborne?duration*airProgress:null});const n=this.character.nodes;
   if(moving&&m.mode==='ground')n.B_Spine1?.rotateX(-.16);if(this.motion.active){n.B_Spine1?.rotateX(.4);n.B_L_Thigh.rotateX(-.8);n.B_R_Thigh.rotateX(.3);n.B_L_Calf.rotateX(.9);n.B_R_Calf.rotateX(.5);}
   if(this.motion.slowFall>0&&!this.motion.active){n.B_L_Thigh.rotateX(-.4);n.B_R_Thigh.rotateX(.25);n.B_L_Calf.rotateX(.65);n.B_L_UpperArm.rotateZ(-.7);n.B_R_UpperArm.rotateZ(.7);}
   const tuck=this.airTuck>0?Math.sin((1-this.airTuck/.34)*Math.PI):0,land=this.landing>0?Math.sin((1-this.landing/.24)*Math.PI)*this.landingStrength:0;
   if(airborne&&!this.motion.active){n.B_L_Thigh.rotateX(-.35*tuck);n.B_R_Thigh.rotateX(-.2*tuck);n.B_L_Calf.rotateX(.6*tuck);n.B_R_Calf.rotateX(.4*tuck);}
   if(land>0){n.B_L_Thigh.rotateX(-.3*land);n.B_R_Thigh.rotateX(-.3*land);n.B_L_Calf.rotateX(.5*land);n.B_R_Calf.rotateX(.5*land);n.B_Spine1?.rotateX(-.1*land);}
   const pitch=this.motion.active?.35:this.wallPose>0?-.2*Math.sin(this.wallPose/.35*Math.PI):airborne?-.06*Math.min(1,speed/NINJA.airSpeed)-.1*tuck:0,blend=dt?1-Math.exp(-16*dt):1;
-  this.visual.rotation.z+=(.05*tuck-this.visual.rotation.z)*blend;this.visual.rotation.x+=(pitch-this.visual.rotation.x)*blend;this.visual.position.y=1.1-.13*land;this.scarf.rotation.x=-.2-Math.min(1,speed/46)*.65+Math.sin(this.time*17)*.1;this.scarf.rotation.y=Math.sin(this.time*10)*.18;
+  this.visual.rotation.z+=(.05*tuck-this.visual.rotation.z)*blend;this.visual.rotation.x+=(pitch-this.visual.rotation.x)*blend;this.visual.position.y=1.1-.13*land;this.scarf.rotation.x=-.2-Math.min(1,speed/NINJA.runSpeed)*.65+Math.sin(this.time*17)*.1;this.scarf.rotation.y=Math.sin(this.time*10)*.18;
   this.root.updateMatrixWorld(true);if(this.throwPose>0&&target){const handTarget=this.root.position.clone().add(new THREE.Vector3(0,1.5,0)).lerp(target,.1);this.character.arm('R',handTarget);}if(this.motion.active){const point=this.root.localToWorld(new THREE.Vector3(-.5,1.7,1));this.character.arm('L',point);}this.heldStar.visible=this.throwPose<=0;this.blade.visible=this.motion.active;this.root.updateMatrixWorld(true);
  }
  renderEffects(dt){
