@@ -55,3 +55,9 @@ Ground running is now 32.2m/s, down 30% from 46m/s, for both player and CPU Kage
 `ninja-motion-test.mjs` passes at 30/60/120Hz and 75ms frames: 32.2m/s ground travel, unchanged Volt speeds, air movement, high/double/wall jumps, roof landings and dash lifecycle. `ninja-jump-feel-test.mjs` passes with the same 12.6m first-jump apex and airborne momentum retention. Existing browser fixtures now expect the reduced ground speed.
 
 `ninja-jump-browser.cjs` passes desktop keyboard and emulated phone touch input with an explicit 32.2m/s ground-speed check, preserved airborne travel, weighted jump poses, camera, landing recovery and resumed city combat.
+
+## Revision 103 — double-jump somersault
+
+Double jumps now play one 0.5-second forward somersault with a knee tuck. A separate waist-height presentation pivot rotates smoothly through 360 degrees around the character's local X axis and returns upright; this replaces the earlier tuck-only double-jump presentation. Landing or dashing cancels the flip in favor of that pose. Collision, root motion, camera orientation, jump impulses and weapon controls are unchanged. Both CPU and player double-jump events trigger the animation.
+
+`ninja-motion-test.mjs` passes existing movement/ground/air dash behavior at 30/60/120Hz and 75ms frames. `ninja-jump-browser.cjs` checks actual keyboard and emulated touch double jumps, forward rotation past upside-down and through a complete turn, upright camera, finite weighted poses, return to upright airborne/landing poses, movement and resumed combat. Source mesh/rig and geometry remain unchanged. Physical-phone performance remains unmeasured.
