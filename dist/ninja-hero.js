@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=ninja-82';
-import {NinjaMotion,NINJA} from './ninja-motion.js?v=kage-ground-dash-97';
+import {NinjaMotion,NINJA} from './ninja-motion.js?v=kage-dash-104';
 import {terrainHeight} from './runner-motion.js?v=kage-jump-93';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
 import {inputMode} from './input-mode.js?v=device-controls-59';

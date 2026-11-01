@@ -1,6 +1,6 @@
 import {RunnerMotion,terrainHeight} from './runner-motion.js?v=kage-jump-93';
 // Jump height scales with launch speed squared: sqrt(0.7) lowers only the first jump by 30%.
-export const NINJA=Object.freeze({runSpeed:32.2,airSpeed:32.2,airAcceleration:5,airDrag:.15,wallPushSpeed:12.6,wallJumpSpeed:40,jumpSpeed:34*Math.sqrt(.7),doubleJumpSpeed:30,gravity:32,fallGravity:44,terminalSpeed:52,coyoteSeconds:.1,jumpBufferSeconds:.15,dashRange:24,dashSpeed:64.4,dashCooldown:6,dashDamage:320,slowFallSeconds:2,slowFallGravity:.12,slowFallSpeed:3,shurikenDamage:55,throwInterval:.22,shurikenSpeed:59.5,shurikenScale:2,shurikenRadius:.24,shurikenRange:127.5,maxProjectiles:36});
+export const NINJA=Object.freeze({runSpeed:32.2,airSpeed:32.2,airAcceleration:5,airDrag:.15,wallPushSpeed:12.6,wallJumpSpeed:40,jumpSpeed:34*Math.sqrt(.7),doubleJumpSpeed:30,gravity:32,fallGravity:44,terminalSpeed:52,coyoteSeconds:.1,jumpBufferSeconds:.15,dashRange:48,dashSpeed:128.8,dashCooldown:6,dashDamage:320,slowFallSeconds:2,slowFallGravity:.12,slowFallSpeed:3,shurikenDamage:55,throwInterval:.22,shurikenSpeed:59.5,shurikenScale:2,shurikenRadius:.24,shurikenRange:127.5,maxProjectiles:36});
 const normalize=v=>{const n=Math.hypot(v.x,v.y,v.z);return n>1e-6?{x:v.x/n,y:v.y/n,z:v.z/n}:null;};
 // Uses the same swept walls, roofs, terrain and overlap recovery as Volt, without wall running.
 export class NinjaMotion {
@@ -25,7 +25,7 @@ export class NinjaMotion {
  stepGroundDash(dt,sections){
   // Keep real floor/roof support, step handling and gravity. Short sweeps also catch
   // enemies at dash speed without treating the walkable floor as an attack hit.
-  const steps=Math.ceil(dt/.008),h=dt/steps;
+  const steps=Math.ceil(dt/Math.min(.008,.5/NINJA.dashSpeed)),h=dt/steps;
   for(let i=0;i<steps&&this.active;i++){
    const d=this.dash.direction,from={...this.position},length=Math.min(this.dash.remaining,NINJA.dashSpeed*h),to={x:from.x+d.x*length,y:from.y,z:from.z+d.z*length},hit=this.sweep(from,to,true),fraction=hit?Math.max(0,hit.t-.025/Math.max(length,.001)):1,travel=length*fraction;
    this.body.yaw=Math.atan2(d.x,d.z);this.body.runSpeed=this.body.boostSpeed=NINJA.dashSpeed;this.velocity.x=d.x*NINJA.dashSpeed;this.velocity.z=d.z*NINJA.dashSpeed;

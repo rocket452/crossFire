@@ -13,3 +13,11 @@ Validation:
 - `node QA/ninja-browser.cjs`: desktop keyboard and emulated phone touch exercise the real DASH/E control while grounded, cooldown blocking, 24m street travel without hopping, actual drone kill/reset with the ground dash, plus the existing air-dash missile chains, shuriken hand origins, high/double/wall jumps, weighted deformation, CPU and combat checks. Ground-dash screenshots: `/tmp/kage97-ground-desktop.png` and `/tmp/kage97-ground-phone.png`.
 
 Browser QA uses Chromium software WebGL with emulated touch input. Physical-phone performance is not measured.
+
+## Revision 104 — double dash speed and distance
+
+Ground and airborne dashes now use `NINJA.dashSpeed=128.8` m/s and `dashRange=48` m. Both doubled, so unobstructed duration remains about 0.373s. Damage (320), cooldown (6s), kill resets and airborne slow fall (2s) stay unchanged. Ground substeps are additionally bounded to 0.5m of travel to preserve terrain/step handling at the higher speed.
+
+The motion and ground-dash suites pass at 30/60/120Hz and 75ms frames with the new exact 48m range, terrain, wall/roof/bounds behavior and swept kill resets. Browser fixtures use the open evacuation approach for the longer ground dash and expect a full 48m aerial dash. The long-roof and hill fixtures were resized/repositioned so they still test supported travel and sample the hill crest rather than accidentally testing a newly out-of-range roof or aliasing past the crest.
+
+`ninja-browser.cjs` passes actual desktop and emulated phone controls, 48m ground/air travel at the new speed, drone kill/reset, missile interception chains, shuriken hits and CPU behavior.
