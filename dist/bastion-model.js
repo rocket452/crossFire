@@ -1,4 +1,4 @@
-import {BastionArt} from './bastion-art.js?v=bastion-gatling-124';
+import {BastionArt} from './bastion-art.js?v=bastion-rain-125';
 import * as THREE from './vendor/three.module.js';
 const V=(a)=>new THREE.Vector3(...a);
 export class BastionModel {

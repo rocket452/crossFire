@@ -186,13 +186,18 @@
     ],
     "openingPattern": "gatling",
     "pool": [
-      "gatling"
+      "gatling",
+      "skyfall"
     ],
     "maxProjectiles": 240,
     "safeRadius": 1.45,
     "greedyRadius": 0.45,
     "safeStartRadius": 30,
-    "greedyEntryHeight": 16
+    "greedyEntryHeight": 16,
+    "attackSequence": [
+      "gatling",
+      "skyfall"
+    ]
   },
   "projectiles": {
     "speed": 36,
@@ -341,5 +346,35 @@
     "directPerGroup": 2,
     "groupSize": 4,
     "trailLength": 1.8
+  },
+  "rain": {
+    "count": 7,
+    "launchInterval": 0.12,
+    "riseSeconds": 0.8,
+    "riseSpeed": 58,
+    "arcSeconds": 0.65,
+    "arcLift": 14,
+    "apexHeight": 100,
+    "fallSeconds": 1.4,
+    "projectileRadius": 0.8,
+    "trailLength": 8,
+    "blastRadius": 3.4,
+    "blastHeight": 4,
+    "damage": 65,
+    "scatterRadius": 23,
+    "minimumSpacing": 8,
+    "bossClearance": 8,
+    "placementAttempts": 48,
+    "bounds": [
+      -52,
+      52
+    ],
+    "leadSeconds": 0.35,
+    "maxLeadDistance": 10,
+    "markerHeight": 0.12,
+    "urgentSeconds": 0.65,
+    "burstSeconds": 0.7,
+    "armLift": 0.16,
+    "muzzleExtension": 0.8
   }
 }

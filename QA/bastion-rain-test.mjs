@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import * as THREE from '../dist/vendor/three.module.js';
+import {Bastion} from '../dist/bastion.js';
+import {UnitDamage} from '../dist/combat-collision.js';
+const config=JSON.parse(fs.readFileSync(new URL('../dist/bastion-config.json',import.meta.url)));config.barrage.attackSequence=['skyfall','gatling'];
+const b=new Bastion(new THREE.Scene(),new UnitDamage(),config),player={position:new THREE.Vector3(-10,.08,20),motion:{mode:'ground',normal:{x:0,y:1,z:0},velocity:{x:0,y:0,z:0}},phased:false};let time=0,impacts=0;b.onRainImpact=()=>impacts++;
+const step=()=>{time+=1/120;b.updateWorld(1/120,time,player);};while(!b.coreOpen)step();assert.deepEqual(b.state.patterns,['skyfall']);assert.equal(b.projectiles.barragePlanned,0);assert.equal(b.rain.pending.length+b.rain.shells.length,7);assert(b.model.art.gunDirection().dot(new THREE.Vector3(0,1,0))>.99,'gun physically aims vertically');const locked=b.rain.shells[0].target.clone(),beforeHits=b.state.hitsTaken;
+while(b.rain.launched<7){step();for(const s of b.rain.shells){assert(b.rain.markers[s.index].root.visible);if(s.phase==='rising'){assert.equal(s.position.x,s.origin.x);assert.equal(s.position.z,s.origin.z);assert(s.position.y>s.origin.y);}}}
+const targets=b.rain.shells.map(s=>s.target.clone());assert.equal(new Set(targets.map(p=>p.toArray().join(','))).size,7);for(let i=0;i<targets.length;i++)for(let j=0;j<i;j++)assert(targets[i].distanceTo(targets[j])>=config.rain.minimumSpacing);assert.equal(b.rain.impacts,0);assert.equal(b.state.hitsTaken,beforeHits,'warnings cause no damage');assert(b.rain.duration>=2.8);
+// Targets stay locked even if the hero changes direction/location.
+player.position.set(45,.08,-45);while(b.rain.impacts===0)step();assert(locked.equals(targets[0]));assert.equal(b.state.hitsTaken,beforeHits,'leaving the circles avoids rain damage');while(b.rain.impacts<7)step();assert.equal(impacts,7);for(let i=0;i<120;i++)step();assert(b.rain.markers.every(m=>!m.root.visible));while(b.state.cycle<2||!b.coreOpen)step();assert.deepEqual(b.state.patterns,['gatling']);
+// Only blast proximity hurts the player, once per shell; shields intercept the descending shot.
+b.reset();b.state.enter('windup');b.state.enter('barrage');b.player=player;const s={index:0,position:player.position.clone(),target:player.position.clone(),impacted:false};b.rain.impact(s,player.position.clone());assert.equal(b.state.damageTaken,config.rain.damage);b.rain.impact(s,player.position.clone());assert.equal(b.rain.impacts,1);b.reset();b.player=player;let shieldHits=0;const shield={barrier:{onHit:()=>shieldHits++}},shielded={index:0,position:player.position.clone(),impacted:false};b.rain.impact(shielded,player.position.clone(),shield);assert.equal(shieldHits,1);assert.equal(b.state.hitsTaken,0);assert.equal(b.rain.interceptions,1);
+b.reset();assert.equal(b.rain.pending.length,0);assert.equal(b.rain.shells.length,0);assert(b.rain.markers.every(m=>!m.root.visible));assert.equal(b.rain.core.count,0);
+console.log('PASS alternating rain/Gatling attacks, vertical launch and gun aim, seven spaced locked warning zones, delayed impact, dodge/no early damage, one-shot blast damage, shield interception and complete reset.');

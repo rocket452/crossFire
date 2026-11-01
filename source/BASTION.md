@@ -18,14 +18,25 @@ The original low-poly model uses chamfered armour, separate breastplates, knee/s
 
 Animation includes a subtle torso idle, head tracking, shoulder bracing, a bent Gatling forearm, accelerating/decelerating six-barrel rotation, per-shot barrel recoil and muzzle flashes. Core armour opens with two sliding shutters instead of simply disappearing. Gun aim follows its articulated forearm. Body traversal and player movement remain unchanged.
 
-The old spiral/lattice/mine/curve orb-pattern barrage is replaced by a **plasma Gatling stream**. The gun uses the Bruiser's 36 m/s projectile speed and existing pooled `RaiderEnergyEffects` for energy rings, trailing sparks and impacts. Bolts are narrower (0.62 m radius) and slightly elongated. There is no active projectile splitting, mine planting or mid-flight homing in the default encounter.
+The old spiral/lattice/mine/curve orb-pattern barrage is replaced by a **plasma Gatling stream** and an alternating **plasma rain** attack. The gun uses the Bruiser's 36 m/s projectile speed and existing pooled `RaiderEnergyEffects` for energy rings, trailing sparks and impacts. Bolts are narrower (0.62 m radius) and slightly elongated. There is no active projectile splitting, mine planting or mid-flight homing in the default encounter. Odd cycles use Gatling; even cycles use plasma rain. `barrage.attackSequence` controls that order.
+
+## Plasma rain
+
+On alternate cycles the Bastion lifts/extends its weapon arm, points the rotating cannon vertically and launches up to seven plasma shells 0.12 seconds apart. They rise straight upward for 0.8 seconds, fan out high above the city over 0.65 seconds, then descend over 1.4 seconds with long comet trails. The total warning per shell is about 2.85 seconds. Gatling fire does not run during this attack.
+
+Each shell locks its landing point at launch. Orange/red ground circles, crosshairs and shrinking countdown rings appear immediately; they flash red during the final 0.65 seconds. Targets never follow the player after locking. Placement prefers open ground, rejects buildings with projectile clearance, keeps centres at least eight metres apart and inside the playable bounds. A cluttered edge may produce fewer than seven safe targets. The minimap reuses the existing red impact crosshairs.
+
+Impacts produce expanding plasma bursts/sparks and damage within a 3.4-metre radius and four-metre vertical reach. Leaving a circle avoids damage. Defensive barriers can intercept descending shots or block the blast trace. Existing city damage handles the explosions; the player uses the existing hurt feedback/hit counter. No movement cost, speed limit or slowdown is added. World slowdown scales shells and warning countdowns together. Reset, preset switching and boss defeat clear every shell, warning marker and burst.
+
+`rain` in `dist/bastion-config.json` exposes count, launch spacing, ascent speed/time, arc/apex height, descent time, projectile/trail size, blast radius/height/damage, target scatter/spacing/lead/limits, warning flash, burst lifetime and arm pose. Defaults: 7 shells; 0.12 s launch interval; 58 m/s ascent; 100 m apex; 2.85 s total flight; 3.4 m blast radius; 65 damage.
 
 ## Encounter
 
 1. **Reset, 3.2 seconds:** core shut, weapon modules vulnerable. Reposition or break a power bank or the cannon.
 2. **Wind-up, 1 second:** the upcoming chest/back plate glows amber and vents sparks. A rising cue warns of the pulse.
 3. **Pulse, 2.6 seconds:** ground/body rings sweep out with a narrow gap and 0.8-second lingering damage. Leaving the body or threading its gap remains valid. A successful body-gap crossing extends the next exposure by 40%. The Gatling starts spinning in the last 0.65 seconds of the pulse.
-4. **Gatling barrage, 3.6 seconds normally / 5.04 after a gap:** the core opens. The cannon fires 36 / 44 / 52 nominal shots in cycles 1 / 2 / 3+, paced across the window. Four-shot groups contain two direct and two leading shots in seeded random order, like the Bruiser. Small spread and limited-rate aiming make steering matter. Misaligned shots are skipped rather than queued into an instantaneous burst.
+4. **Attack barrage, 3.6 seconds normally / 5.04 after a gap:** the core opens. On Gatling cycles the cannon fires the configured 36 / 44 / 52 nominal shots by escalation tier, paced across the window. Four-shot groups contain two direct and two leading shots in seeded random order, like the Bruiser. Small spread and limited-rate aiming make steering matter. Misaligned shots are skipped rather than queued into an instantaneous burst.
+On plasma-rain cycles the cannon instead launches the telegraphed skyward cluster described above.
 5. Repeat, rotating among four chest/back core positions. Cycle 3+ adds two overlapping pulses during the barrage. Defeat stops emissions and clears hazards; reset restores poses, spin, banks and cannon.
 
 Six destructible modules are retained. Module 3 (zero-based) is the forearm Gatling cannon; destroying it disables later gun barrages. Other modules are power banks; breaking them removes their scheduled shots. All modules are armoured during the barrage, and core hits only damage main health during exposure. Power-bank damage never also reduces main HP.
@@ -60,7 +71,7 @@ All values live in `dist/bastion-config.json`; reload after editing.
 | `dilation.scale` | 0.35 | World-only slowdown, player timing unchanged |
 | `arena.testingPosition` | [24, 0, -24] | Spawn clear of the existing buildings |
 
-Legacy pattern parameters remain in the data for compatibility, but the active pool contains only `gatling` and they do not generate the previous sphere patterns.
+Legacy pattern parameters remain in the data for compatibility, but the active pool contains `gatling` and `skyfall`; they do not generate the previous sphere patterns.
 
 ## Controls and milestone checks
 
@@ -81,7 +92,8 @@ Existing desktop controls: WASD, mouse look/pointer lock, Shift boost, Space jum
 ## Verification
 
 - `node QA/bastion-state-test.mjs`: Gatling-only encounter, regular 36-shot direct/lead cadence, bolt speed, protected corridor, six-barrel spin/recoil, animated muzzle, power-bank/cannon destruction, cover impacts, core armour, interrupt, graze cap, gap extension and reset.
-- `node QA/bastion-browser.cjs` against the local static server: desktop and touch preset selection, articulated traversal in the existing city, natural cycles, real primary/core damage, launcher removal, unchanged movement during slowdown, all six hero choices, switching back to Siege Walker/empty arena, and compatibility redirects. Screenshots are written under `/tmp/bastion-testing-*.png`.
+- `node QA/bastion-rain-test.mjs`: alternating attacks, vertical muzzle/shot motion, seven spaced locked warnings, delayed damage, dodging, single impact dispatch, shield interception and reset.
+- `node QA/bastion-browser.cjs` against the local static server: desktop and touch preset selection, articulated traversal in the existing city, natural cycles, real primary/core damage, launcher removal, upward rain launch, visible warning zones and real city impacts, unchanged movement during slowdown, all six hero choices, switching back to Siege Walker/empty arena, and compatibility redirects. Screenshots are written under `/tmp/bastion-testing-*.png`.
 - `node QA/combat-testing-browser.cjs`: desktop/touch combat arena, six existing hero choices, real player/enemy fire, plus preserved City Battle and escort layouts/roster/civilian wave size. Scene selector retains three maps.
 
 ## Prototype limits
