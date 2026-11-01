@@ -1,0 +1,53 @@
+import * as THREE from './vendor/three.module.js';
+// Original low-poly mechanical dressing. Shared geometry/materials; gameplay owns the stable climbable volumes.
+export class BastionArt {
+ constructor(model){
+  this.model=model;this.config=model.config;this.gunSpin=0;this.spinSpeed=0;this.recoil=0;this.shots=0;
+  const shape=new THREE.Shape();const b=.09;shape.moveTo(-.5+b,-.5);shape.lineTo(.5-b,-.5);shape.lineTo(.5,-.5+b);shape.lineTo(.5,.5-b);shape.lineTo(.5-b,.5);shape.lineTo(-.5+b,.5);shape.lineTo(-.5,.5-b);shape.lineTo(-.5,-.5+b);shape.closePath();
+  this.armourGeometry=new THREE.ExtrudeGeometry(shape,{depth:.82,bevelEnabled:true,bevelSize:.07,bevelThickness:.09,bevelSegments:1,steps:1,curveSegments:1});this.armourGeometry.translate(0,0,-.41);this.armourGeometry.scale(.5/.57,.5/.57,1);
+  this.cylinder=new THREE.CylinderGeometry(1,1,1,10,1);this.ring=new THREE.TorusGeometry(1,.11,4,16);this.sphere=new THREE.IcosahedronGeometry(1,1);
+  this.materials={armour:new THREE.MeshStandardMaterial({color:'#526b79',metalness:.48,roughness:.56}),light:new THREE.MeshStandardMaterial({color:'#92a5ad',metalness:.58,roughness:.42}),dark:new THREE.MeshStandardMaterial({color:'#1d303c',metalness:.5,roughness:.67}),gold:new THREE.MeshStandardMaterial({color:'#c08a4c',metalness:.55,roughness:.45}),energy:new THREE.MeshStandardMaterial({color:'#ffbe77',emissive:'#ff6c26',emissiveIntensity:2.5}),cool:new THREE.MeshStandardMaterial({color:'#7aeee3',emissive:'#22aca3',emissiveIntensity:1.2})};
+  for(const part of model.parts){part.section.mesh.geometry=this.armourGeometry;part.material.color.set('#354e5d');part.material.metalness=.4;}
+  const torso=model.torso,head=model.head;
+  for(const side of[-1,1]){
+   this.box(torso,[side*3.2,4.1,3.96],[5.7,3.7,.65],'armour').rotation.z=side*-.06;
+   this.box(torso,[side*3.8,-4.2,3.96],[4.5,2.9,.55],'armour');this.box(torso,[side*5.65,-.5,4],[1.1,6.2,.4],'light');
+   for(let i=0;i<4;i++)this.box(torso,[side*(1.4+i*.28),4,4.4],[.1,1.65,.08],'gold');
+   const shoulder=model.arms[side<0?0:1];this.box(shoulder,[side*.2,7,0],[5.5,3.5,8.5],'armour');this.box(shoulder,[side*.25,7.4,4.12],[4.1,1.25,.18],'light');
+   this.disc(shoulder,[side*2.05,5.7,0],1.5,.3,'gold','x');this.disc(shoulder,[0,-1.2,4.06],1.1,.18,'gold','z');
+   const forearm=new THREE.Group();forearm.name=side<0?'left-forearm':'right-forearm';forearm.position.y=-2.5;shoulder.add(forearm);(this.forearms??=[]).push(forearm);
+   this.box(forearm,[0,-2.8,3.9],[3.45,5.4,.35],'armour');this.box(forearm,[0,-5.8,0],[3.6,2,7.6],'dark');for(let j=0;j<3;j++)this.box(forearm,[(j-1)*.9,-6.3,3.94],[.65,1.1,.3],'light');
+   const leg=model.legs[side<0?0:1];this.box(leg,[0,4.7,3.92],[3.25,6,.3],'armour');this.box(leg,[0,-3.9,3.91],[3.35,5.9,.35],'armour');this.box(leg,[0,.1,4.04],[3.5,2.7,.32],'light');this.disc(leg,[side*1.86,.2,0],1.35,.24,'gold','x');
+   this.box(leg,[0,-7.5,.15],[4.2,2.3,8.4],'armour');for(let j=0;j<3;j++)this.box(leg,[(j-1)*1.1,-7.4,4.36],[.8,1.3,.16],'gold');
+   this.box(leg,[side*.8,-3.9,4.14],[.22,3.4,.08],'cool');
+  }
+  this.box(torso,[0,-5.8,4.08],[2.3,1.3,.2],'gold');for(let i=0;i<5;i++)this.box(torso,[0,(i-2)*1.6,-4.08],[1.5,.6,.2],'light');
+  this.disc(head,[0,-3.1,0],1.8,1.5,'dark');this.box(head,[0,.1,3.07],[4.9,1.6,.18],'dark');this.box(head,[0,.7,3.2],[5.1,.4,.18],'light');this.box(head,[0,-.1,3.22],[3.8,.34,.15],'energy');
+  for(const side of[-1,1]){this.box(head,[side*2.25,-1.45,2.95],[1.05,2.2,.45],'armour').rotation.z=side*.14;this.disc(head,[side*3.02,0,0],.9,.25,'gold','x');}this.box(head,[0,-2.2,3.06],[2.8,.65,.25],'gold');
+  this.box(head,[0,2.55,0],[2.4,.6,5.9],'light');
+ }
+ box(parent,p,size,material){const m=new THREE.Mesh(this.armourGeometry,this.materials[material]);m.position.fromArray(p);m.scale.fromArray(size);m.castShadow=m.receiveShadow=true;m.userData.bastionArmour=true;parent.add(m);return m;}
+ disc(parent,p,radius,length,material,axis='y'){const m=new THREE.Mesh(this.cylinder,this.materials[material]);m.position.fromArray(p);m.scale.set(radius,length,radius);if(axis==='x')m.rotation.z=Math.PI/2;if(axis==='z')m.rotation.x=Math.PI/2;m.castShadow=true;m.userData.bastionArmour=true;parent.add(m);return m;}
+ dressModules(){const m=this.model,g=this.config.gatling;for(let i=0;i<m.launchers.length;i++){const node=m.launchers[i];if(i===g.gunModule){const section=m.parts.find(p=>p.node===node).section;section.mesh.scale.set(3.8,4.6,2);section.mesh.position.z=-1.9;this.buildGun(node);continue;}this.box(node,[0,0,0],[2.6,3,2.7],'armour');const sign=this.config.launchers.positions[i][2]>0?1:-1;for(let j=0;j<4;j++)this.box(node,[0,(j-1.5)*.55,sign*1.39],[1.7,.23,.08],'energy');this.box(node,[0,1.55,0],[1.6,.25,2.5],'gold');}}
+ buildGun(node){const g=this.config.gatling;this.gunPivot=new THREE.Group();this.gunPivot.position.set(0,0,-1);node.add(this.gunPivot);this.box(this.gunPivot,[0,0,.6],[3.5,3.7,3.5],'dark');this.disc(this.gunPivot,[0,0,1.6],1.83,.45,'armour','z');
+  this.rotor=new THREE.Group();this.gunPivot.add(this.rotor);this.muzzles=[];const tip=3.45+g.barrelLength/2;
+  for(let i=0;i<g.barrels;i++){const a=i/g.barrels*Math.PI*2,x=Math.cos(a)*g.barrelRadius,y=Math.sin(a)*g.barrelRadius;this.disc(this.rotor,[x,y,3.45],.34,g.barrelLength,'light','z');this.disc(this.rotor,[x,y,tip],.4,.26,'dark','z');this.disc(this.rotor,[x,y,tip+.16],.24,.08,'energy','z');const muzzle=new THREE.Object3D();muzzle.position.set(x,y,tip+.28);this.rotor.add(muzzle);this.muzzles.push(muzzle);}
+  this.disc(this.rotor,[0,0,tip-.9],1.65,.38,'armour','z');this.disc(this.rotor,[0,0,2.2],1.65,.38,'gold','z');this.disc(this.rotor,[0,0,3.8],.35,4.4,'dark','z');
+  this.flash=new THREE.Mesh(this.sphere,new THREE.MeshBasicMaterial({color:'#fff3b4',transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending}));this.flash.visible=false;this.flash.scale.set(.7,.7,1.8);this.gunPivot.add(this.flash);this.flashAge=1;
+ }
+ muzzle(index=0){this.model.root.updateMatrixWorld(true);return this.muzzles[index%this.muzzles.length].getWorldPosition(new THREE.Vector3());}
+ gunDirection(){return new THREE.Vector3(0,0,1).transformDirection(this.gunPivot.matrixWorld);}
+ shot(index){this.recoil=this.config.animation.recoilDistance;this.flashAge=0;this.flash.position.copy(this.muzzles[index%this.muzzles.length].position).applyMatrix4(this.rotor.matrix);this.shots++;}
+ update(dt,time,player,state,stunned=false){const c=this.config,a=c.animation,g=c.gatling,dead=state?.phase==='defeated',firing=state?.phase==='barrage'&&!stunned&&!state.launchers[g.gunModule].destroyed,spinup=!stunned&&state?.phase==='pulse'&&state.elapsed>state.duration-g.spinupSeconds&&!state.launchers[g.gunModule].destroyed,brace=firing||spinup?1:0,blend=1-Math.exp(-a.poseResponse*dt),m=this.model;
+  this.spinSpeed=THREE.MathUtils.lerp(this.spinSpeed,brace?a.barrelSpin:0,1-Math.exp(-a.spinResponse*dt));this.gunSpin+=this.spinSpeed*dt;this.rotor.rotation.z=this.gunSpin;this.recoil*=Math.exp(-a.recoilRecovery*dt);this.rotor.position.z=-this.recoil;this.flashAge+=dt;this.flash.visible=firing&&this.flashAge<a.flashSeconds;this.flash.scale.setScalar(.8+Math.sin(time*70)**2*.4);
+  for(let i=0;i<2;i++){const side=i===0?-1:1;m.arms[i].rotation.z=THREE.MathUtils.lerp(m.arms[i].rotation.z,side*(.025+brace*a.armBrace+(dead?.14:0))+Math.sin(time*.9+i*Math.PI)*.015,blend);this.forearms[i].rotation.x=THREE.MathUtils.lerp(this.forearms[i].rotation.x,(dead?.18:brace*a.forearmBend),blend);}
+  m.torso.position.y=26+(dead?-.6:Math.sin(time*1.3)*a.idleBob-brace*a.braceDrop);this.materials.energy.emissiveIntensity=dead?.05:2.5;this.materials.cool.emissiveIntensity=dead?.05:1.2;
+  const headLocal=m.root.worldToLocal(new THREE.Vector3().copy(player)),headYaw=dead?0:THREE.MathUtils.clamp(Math.atan2(headLocal.x,headLocal.z),-a.headTurn,a.headTurn);m.head.rotation.y=THREE.MathUtils.lerp(m.head.rotation.y,headYaw,blend);m.head.rotation.x=THREE.MathUtils.lerp(m.head.rotation.x,dead?.4:0,blend);
+  m.root.updateMatrixWorld(true);if(this.aimPoint){const target=this.gunPivot.parent.worldToLocal(this.aimPoint.clone()).sub(this.gunPivot.position),yaw=THREE.MathUtils.clamp(Math.atan2(target.x,target.z),-g.yawLimit,g.yawLimit),pitch=THREE.MathUtils.clamp(-Math.atan2(target.y,Math.hypot(target.x,target.z)),-g.pitchLimit,g.pitchLimit),aimBlend=1-Math.exp(-g.aimResponse*dt);this.gunPivot.rotation.y=THREE.MathUtils.lerp(this.gunPivot.rotation.y,yaw,aimBlend);this.gunPivot.rotation.x=THREE.MathUtils.lerp(this.gunPivot.rotation.x,pitch,aimBlend);}
+  for(const p of m.plates){const open=p.index===state?.coreIndex&&state.exposed&&!stunned;for(const [i,door]of p.doors.entries())door.position.x=THREE.MathUtils.lerp(door.position.x,(i===0?-1:1)*(open?a.plateOpen:.72),blend);if(p.core.visible)p.core.rotation.z=time*.6;}
+ }
+ reset(){this.gunSpin=this.spinSpeed=this.recoil=this.shots=0;this.flashAge=1;this.flash.visible=false;this.rotor.rotation.set(0,0,0);this.rotor.position.z=0;this.gunPivot.rotation.set(0,0,0);this.aimPoint=null;this.materials.energy.emissiveIntensity=2.5;this.materials.cool.emissiveIntensity=1.2;this.model.torso.position.y=26;this.model.head.rotation.set(0,0,0);for(const n of this.forearms)n.rotation.set(0,0,0);for(const p of this.model.plates)for(const[i,d]of p.doors.entries())d.position.x=(i===0?-1:1)*.72;}
+ batch(){const parents=[];this.model.root.traverse(o=>{if(o.children?.length)parents.push(o);});for(const parent of parents){const groups=new Map();for(const child of parent.children){if(!child.userData.bastionArmour)continue;const key=child.geometry.uuid+child.material.uuid;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(child);}for(const items of groups.values()){if(items.length<2)continue;const mesh=new THREE.InstancedMesh(items[0].geometry,items[0].material,items.length);mesh.name='Bastion batched armour';mesh.castShadow=mesh.receiveShadow=true;items.forEach((item,i)=>{item.updateMatrix();mesh.setMatrixAt(i,item.matrix);parent.remove(item);});parent.add(mesh);}}
+  let triangles=0,meshes=0;this.model.root.traverse(o=>{if(o.isMesh&&!o.material?.wireframe&&!o.userData.actorSilhouette){meshes++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3*(o.isInstancedMesh?o.count:1);}});this.stats={meshes,triangles};}
+ diagnostics(){return{...this.stats,barrels:this.muzzles.length,spin:this.spinSpeed,rotation:this.gunSpin,shots:this.shots,recoil:this.recoil,gunYaw:this.gunPivot.rotation.y,gunPitch:this.gunPivot.rotation.x};}
+}

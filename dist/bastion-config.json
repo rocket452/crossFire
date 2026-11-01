@@ -102,7 +102,7 @@
       [
         8.2,
         18,
-        4.7
+        5.5
       ],
       [
         -4,
@@ -123,10 +123,42 @@
     "parents": [
       "left-arm",
       "right-arm",
-      "left-arm",
-      "right-arm",
+      "left-forearm",
+      "right-forearm",
       "torso",
       "torso"
+    ],
+    "sizes": [
+      [
+        2.4,
+        2.8,
+        2.5
+      ],
+      [
+        2.4,
+        2.8,
+        2.5
+      ],
+      [
+        2.4,
+        2.8,
+        2.5
+      ],
+      [
+        3.8,
+        4.6,
+        6.5
+      ],
+      [
+        2.4,
+        2.8,
+        2.5
+      ],
+      [
+        2.4,
+        2.8,
+        2.5
+      ]
     ]
   },
   "pulse": {
@@ -148,16 +180,13 @@
   },
   "barrage": {
     "countByCycle": [
-      30,
-      40,
-      48
+      36,
+      44,
+      52
     ],
-    "openingPattern": "spiral",
+    "openingPattern": "gatling",
     "pool": [
-      "spiral",
-      "lattice",
-      "mines",
-      "curve"
+      "gatling"
     ],
     "maxProjectiles": 240,
     "safeRadius": 1.45,
@@ -166,11 +195,11 @@
     "greedyEntryHeight": 16
   },
   "projectiles": {
-    "speed": 16,
+    "speed": 36,
     "speedScale": 1,
-    "radius": 0.38,
-    "life": 7,
-    "damage": 35,
+    "radius": 0.62,
+    "life": 5,
+    "damage": 18,
     "hitRadius": 0.5,
     "grazeMargin": 1.3,
     "grazePerOrb": 0.1,
@@ -278,5 +307,39 @@
     "life": 0.5,
     "speed": 4,
     "gravity": 4
+  },
+  "animation": {
+    "idleBob": 0.1,
+    "braceDrop": 0.25,
+    "armBrace": 0.06,
+    "forearmBend": 0.12,
+    "headTurn": 0.55,
+    "poseResponse": 6,
+    "barrelSpin": 32,
+    "spinResponse": 7,
+    "recoilDistance": 0.16,
+    "recoilRecovery": 18,
+    "flashSeconds": 0.07,
+    "plateOpen": 2.35
+  },
+  "gatling": {
+    "gunModule": 3,
+    "barrels": 6,
+    "barrelRadius": 1.02,
+    "barrelLength": 4.5,
+    "spinupSeconds": 0.65,
+    "speed": 36,
+    "radius": 0.62,
+    "spread": 0.018,
+    "leadSeconds": 0.65,
+    "maxLeadDistance": 18,
+    "maxTrackedSpeed": 65,
+    "yawLimit": 1.25,
+    "pitchLimit": 1.2,
+    "aimResponse": 4,
+    "alignment": 0.32,
+    "directPerGroup": 2,
+    "groupSize": 4,
+    "trailLength": 1.8
   }
 }
