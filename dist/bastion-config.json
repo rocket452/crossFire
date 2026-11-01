@@ -6,7 +6,8 @@
     "legSwing": 0.018,
     "armSwing": 0.028,
     "animationRate": 1.5,
-    "shadowSize": 1024
+    "shadowSize": 1024,
+    "pauseTurnAtGroundContact": true
   },
   "arena": {
     "radius": 56,
@@ -23,7 +24,12 @@
     ],
     "cameraClearance": 0.35,
     "cameraResolveIterations": 6,
-    "fillIntensity": 1.8
+    "fillIntensity": 1.8,
+    "testingPosition": [
+      24,
+      0,
+      -24
+    ]
   },
   "traversal": {
     "maxCarryDistance": 4,
@@ -156,7 +162,7 @@
     "maxProjectiles": 240,
     "safeRadius": 1.45,
     "greedyRadius": 0.45,
-    "safeStartRadius": 38,
+    "safeStartRadius": 30,
     "greedyEntryHeight": 16
   },
   "projectiles": {

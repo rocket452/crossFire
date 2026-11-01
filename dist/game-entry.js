@@ -1,3 +1,3 @@
-const scene=new URLSearchParams(location.search).get('scene');
-if(scene==='bastion')await import('./bastion-arena.js?v=bastion-122');
-else await import('./battle.js?v=bastion-menu-122');
+const url=new URL(location.href);
+if(url.searchParams.get('scene')==='bastion'){url.searchParams.set('scene','testing');url.searchParams.set('enemy','bastion');history.replaceState(null,'',url);}
+await import('./battle.js?v=bastion-testing-123');

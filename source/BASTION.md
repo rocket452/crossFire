@@ -1,14 +1,16 @@
 # The Bastion prototype
 
-Select **Bastion Arena** from the existing scene selector, or open `?scene=bastion`. Choose **Play Volt Rush**. This fourth scene is isolated; City Battle, Civilian Escort and Combat Testing still use `battle.js`.
+Select **Combat Testing**, choose **The Bastion — traversal boss** under **Enemy preset**, then press **Spawn / Reset enemies**. Pick a hero and choose **Play / Watch selected hero**. The Bastion is an opponent in the existing two-building city, not a separate map. Selecting it disables the Siege Walker checkbox and other enemy presets for that test. Old `?scene=bastion` links redirect to `?scene=testing&enemy=bastion`. The main mission roster is unchanged.
 
 ## Existing conventions retained
+
+`CombatTesting` owns a `BastionTesting` adapter that shares the existing scene, renderer, heroes, UnitDamage, minimap, silhouette pass and boss HP bar. It supplies climbable sections to the controllers and routes their damage into the existing Bastion implementation. Hidden/inactive Bastion instances have no collision targets or attacks. Switching presets or resetting restores the selected encounter.
 
 Crossfire is a static JavaScript ES-module game using Three.js and Cannon-es. The existing Speedster, RunnerMotion, RunnerHeading, weighted humanoid animations, weapon effects, hurt animation and controls are reused. The boss uses the existing `UnitDamage` and swept `traceImpact` OBB queries. There is no multiplayer layer in this prototype.
 
 No shared player movement files were changed. Existing movement is 14 m/s running, 46 m/s boosted and 12/24 m/s wall-running, with unlimited duration and no movement stamina. Those existing speeds were preserved rather than adding a new cap or replacing the controller. The old speed readout is hidden in this arena. The existing weapon-charge system still powers attacks only; it does not tax movement. An arena adapter carries the player and viewing heading with articulated support transforms, without changing acceleration, jump, boost or wall-running rules.
 
-The boss is stationary, with a limited-rate pivot and animated arms/legs. Six launchers inherit arm/torso transforms. The continuous limb/torso boxes have walkable caps so the unchanged controller can climb, crest and circle them. A camera-clearance adapter keeps the camera outside the larger body.
+The boss is stationary, with a limited-rate pivot and animated arms/legs. Six launchers inherit arm/torso transforms. The continuous limb/torso boxes have walkable caps so the unchanged controller can climb, crest and circle them. The boss briefly pauses its pivot at ground contact to allow the existing wall-grab intent check to complete at high frame rates; it pivots again once the player climbs. `arena.testingPosition` defaults to `[24, 0, -24]`, on the open boulevard clear of the two existing buildings. No buildings are moved. The cyan route starts 30 m away so it stays inside the existing arena bounds. A camera-clearance adapter keeps the camera outside the larger body.
 
 ## Encounter
 
@@ -60,11 +62,11 @@ All encounter tuning lives in `dist/bastion-config.json`; reload after editing.
 | `dilation.scale / minimum / maximum` | 0.35 / 0.3 / 1 | World-only slowdown; never a near-freeze |
 | `seed` | 2718 | Repeatable encounters |
 
-Additional JSON values expose pattern layout counts, heights, split angles/speeds, mine fuse/arming, collision sample count, radius/damage/cooldown, pulse tessellation, overlap count/timing, projectile/particle ceilings, audio envelope and debug colours. `greedyRadius` is a visual/debug reference, not immunity: only cyan has enforced protection. Arena floor size/camera/start, limb oscillation and feedback values are configurable as well.
+Additional JSON values expose pattern layout counts, heights, split angles/speeds, mine fuse/arming, collision sample count, radius/damage/cooldown, pulse tessellation, overlap count/timing, projectile/particle ceilings, audio envelope and debug colours. `greedyRadius` is a visual/debug reference, not immunity: only cyan has enforced protection. The combat-arena spawn position, limb oscillation and feedback values are configurable as well. Legacy standalone floor/camera/start fields are retained for data compatibility and do not replace the existing combat city.
 
 ## Controls and milestone checks
 
-Existing desktop controls: WASD, mouse look/pointer lock, Shift boost, Space jump, LMB primary, E held rescue dash, R whip and Q overload. Mobile retains the existing movement stick, camera drag and ability buttons. **T** toggles world slowdown; **F2** toggles debug. Encounter controls provide the same functions on touch, a 30–100% world-speed slider, seed input and reset. Escape releases the cursor, then exits the hero.
+Existing desktop controls: WASD, mouse look/pointer lock, Shift boost, Space jump, LMB primary, E held rescue dash, R whip and Q overload. Mobile retains the existing movement stick, camera drag and ability buttons. **T** toggles Bastion world slowdown; **F2** toggles debug. Encounter controls provide the same functions on touch, a 30–100% world-speed slider, seed input and reset. Escape releases the cursor, then exits the hero.
 
 1. **Body/surfaces:** boost into a leg, steer into its current face, climb past 20 m and crest the torso. F2 draws limb, launcher and core boxes plus orb/player collision spheres. Turn/jump to leave; observe moving support carry.
 2. **State loop:** watch reset → amber wind-up → red pulse → barrage → reset. The compact panel displays state and time remaining.
@@ -81,9 +83,9 @@ Existing desktop controls: WASD, mouse look/pointer lock, Shift boost, Space jum
 ## Verification
 
 - `node QA/bastion-state-test.mjs`: deterministic escalation, core rotation, gap extension once per cycle, graze uniqueness/cap/consumption, launcher/main-health separation, interrupt, all four safe corridors, relative swept hits, triggered lattice splits, mine warnings/bursts, curve warning/acceleration, deflected core damage and reset.
-- `node QA/bastion-browser.cjs` against the local static server: desktop and touch layouts, keyboard/touch movement with steering across articulated surfaces, complete natural encounter cycles, actual held primary/core damage, closed armour, launcher removal, escalation, identical movement with/without world slowdown, debug rendering and no browser exceptions. Screenshots are written under `/tmp/bastion-*.png`.
-- `node QA/combat-testing-browser.cjs`: desktop/touch combat arena, six existing hero choices, real player/enemy fire, plus preserved City Battle and escort layouts/roster/civilian wave size. Scene-selector assertion updated from three to four.
+- `node QA/bastion-browser.cjs` against the local static server: desktop and touch preset selection, articulated traversal in the existing city, natural cycles, real primary/core damage, launcher removal, unchanged movement during slowdown, all six hero choices, switching back to Siege Walker/empty arena, and compatibility redirects. Screenshots are written under `/tmp/bastion-testing-*.png`.
+- `node QA/combat-testing-browser.cjs`: desktop/touch combat arena, six existing hero choices, real player/enemy fire, plus preserved City Battle and escort layouts/roster/civilian wave size. Scene selector retains three maps.
 
 ## Prototype limits
 
-This is an isolated, single-player boss arena with placeholder primitive art and a simple oscillator cue. No ally squad, civilians or city destruction are duplicated into it; the existing missions keep those systems. The existing player has hurt feedback but no health/death system, so hits and damage taken are training metrics. The unchanged wall-run controller still requires steering into the surface and deliberately releases with a jump; traversing a pivoting body needs practice. The new boss uses kinematic OBB surfaces rather than a skinned-mesh physics collider. CPU combat in this arena is paused when the player exits. Physical-phone FPS, thermal behaviour and balance with human players remain unmeasured.
+This is a single-player combat-arena enemy with placeholder primitive art and a simple oscillator cue. It shares the arena’s existing destructible city and hero selection. No ally squad or civilians are added; the main missions keep those systems. The existing player has hurt feedback but no health/death system, so hits and damage taken are training metrics. The unchanged wall-run controller still requires steering into the surface and deliberately releases with a jump; traversing a pivoting body needs practice. The new boss uses kinematic OBB surfaces rather than a skinned-mesh physics collider. Exiting the hero returns to the arena’s existing CPU combat behavior. Physical-phone FPS, thermal behaviour and balance with human players remain unmeasured.
