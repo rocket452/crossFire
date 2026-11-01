@@ -1,14 +1,15 @@
+import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 import {HeroHurt} from './hero-hurt.js?v=hero-hurt-118';
 import * as THREE from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=ninja-82';
-import {NinjaMotion,NINJA} from './ninja-motion.js?v=robot-experiments-108';
+import {NinjaMotion,NINJA} from './ninja-motion.js?v=kage-phase-119';
 import {terrainHeight} from './runner-motion.js?v=robot-experiments-108';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 const UP=new THREE.Vector3(0,1,0),Z=new THREE.Vector3(0,0,1),$=id=>document.getElementById(id);
 export class NinjaHero {
- constructor({scene,model,camera,controls,canvas,getSections,traceWorld,onHit,getRobot,getMissile=()=>null,redirect=()=>null,isPaused,onEnter=()=>{},onExit=()=>{}}){
-  Object.assign(this,{scene,camera,controls,canvas,getSections,traceWorld,onHit,getRobot,getMissile,redirect,isPaused,onEnter,onExit});
+ constructor({scene,model,camera,controls,canvas,getSections,traceWorld,onHit,getRobot,getDashEnemies=()=>[],getMissile=()=>null,redirect=()=>null,isPaused,onEnter=()=>{},onExit=()=>{}}){
+  Object.assign(this,{scene,camera,controls,canvas,getSections,traceWorld,onHit,getRobot,getDashEnemies,getMissile,redirect,isPaused,onEnter,onExit});
   this.root=new THREE.Group();this.root.name='Kage / Shadow Ninja';scene.add(this.root);this.visual=new THREE.Group();this.visual.position.y=0;this.somersaultPivot=new THREE.Group();this.somersaultPivot.position.y=1.1;this.root.add(this.somersaultPivot);this.somersaultPivot.add(this.visual);
   this.character=new HumanoidCharacter(model,{variant:'ninja',height:2.25});this.character.root.position.y=-1.1;this.visual.add(this.character.root);this.bodyUp=UP.clone();this.velocity=new THREE.Vector3();
   this.motion=new NinjaMotion({sweep:(a,b,grounded)=>this.traceDash(a,b,grounded),onHit:hit=>this.hit(hit,NINJA.dashDamage,'ninja-dash'),onDashEnd:p=>this.burst(p,12)});this.keys=new Set();this.active=false;this.hud=$('ninja-hud');this.viewer=document.querySelector('.viewer');
@@ -46,7 +47,11 @@ export class NinjaHero {
  enter(){if(this.active||!this.enabled)return;this.onEnter();this.saved={position:this.camera.position.clone(),target:this.controls.target.clone(),fov:this.camera.fov,near:this.camera.near};this.active=true;this.clearInput();this.controls.enabled=false;this.viewer.classList.add('is-running','is-ninja');this.hud.hidden=false;this.camera.fov=65;this.camera.near=.08;this.camera.updateProjectionMatrix();this.updateCamera(1,true);this.updateHUD();this.requestLock();}
  exit(){if(!this.active)return;this.hurt.clear();this.active=false;if(this.locked())document.exitPointerLock();this.clearInput();this.hud.hidden=true;this.viewer.classList.remove('is-running','is-ninja');this.controls.enabled=true;this.camera.position.copy(this.saved.position);this.controls.target.copy(this.saved.target);this.camera.fov=this.saved.fov;this.camera.near=this.saved.near;this.camera.up.copy(UP);this.camera.updateProjectionMatrix();this.controls.update();this.onExit();}
  aim(){const c=Math.cos(this.pitch),dir=new THREE.Vector3(Math.sin(this.yaw)*c,Math.sin(this.pitch),Math.cos(this.yaw)*c),far=this.camera.position.clone().addScaledVector(dir,110),hit=this.traceWorld(this.camera.position,far,{allied:true});return hit?new THREE.Vector3().copy(hit.point):far;}
- traceDash(a,b,grounded=false){let nearest=null;for(const y of grounded?[.85,1.55,2.25]:[.3,1.3,2]){const hit=this.traceWorld(new THREE.Vector3(a.x,a.y+y,a.z),new THREE.Vector3(b.x,b.y+y,b.z),{allied:true,radius:.32,moving:true});if(hit&&(!nearest||hit.t<nearest.t))nearest=hit;}return nearest;}
+ traceDash(a,b,grounded=false){let nearest=null;const rays=(grounded?[.85,1.55,2.25]:[.3,1.3,2]).map(y=>[new THREE.Vector3(a.x,a.y+y,a.z),new THREE.Vector3(b.x,b.y+y,b.z)]);
+  for(const[from,to]of rays){const hit=this.traceWorld(from,to,{allied:true,radius:.32,moving:true,ignoreEnemies:true});if(hit&&(!nearest||hit.t<nearest.t))nearest=hit;}
+  const contacts=[];for(const unit of this.getDashEnemies()){if(!unit.alive||unit.dashPhased||this.motion.dash?.hitUnits.has(unit))continue;let contact=null;for(const[from,to]of rays){const hit=traceImpact(from,to,{targets:[unit],ground:false,radius:.32,movingTargets:true});if(hit&&(!contact||hit.t<contact.t))contact=hit;}if(contact&&contact.t<=(nearest?.t??1))contacts.push(contact);}
+  contacts.sort((a,b)=>a.t-b.t);return nearest?{...nearest,contacts}:contacts.length?{blocking:false,t:1,contacts}:null;
+ }
  hit(hit,power,kind){const result=this.onHit(hit,power,kind,this.active)||{damage:0,killed:false};this.damage+=result.damage||0;this.hitCount++;this.lastHit=hit.missile?'missile':hit.unit?.kind||hit.kind;if(result.killed){if(hit.missile)this.missileKills++;else this.kills++;}this.burst(hit.point||this.root.position,kind==='ninja-dash'?22:7);return result;}
  burst(point,count=5){for(let i=0;i<count;i++){if(this.particles.length>=120)this.particles.shift();const a=i*2.399+this.time;this.particles.push({p:new THREE.Vector3().copy(point),v:new THREE.Vector3(Math.sin(a)*3,Math.cos(a*1.7)*2+1,Math.cos(a)*3),life:.35,max:.35});}}
  throwAt(target){if(this.projectiles.length>=NINJA.maxProjectiles)return;const from=this.character.hand('R'),dir=target.clone().sub(from).normalize();this.projectiles.push({position:from.clone(),dir,age:0,life:NINJA.shurikenRange/NINJA.shurikenSpeed,owner:'kage',trailClock:0});this.lastThrowOrigin=from.toArray();this.shots++;}
