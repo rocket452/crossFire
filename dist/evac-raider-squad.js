@@ -1,6 +1,6 @@
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=raider-speed-115';
+import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=bruiser-name-116';
 import {ESCORT_APPROACH} from './evac-approach.js?v=raider-burst-92';
 export class EvacRaiderSquad {
  constructor(scene,damage,{landing,getHelicopter,getTargets,visible,trace,isPathClear,redirect,onHeroHit=()=>{},onDebris=()=>null,onRemoveDebris=()=>{},onDeath=()=>{},onWreck=()=>{},onEvent=()=>{}}){
@@ -12,10 +12,10 @@ export class EvacRaiderSquad {
    getTargets:origin=>{const heli=getHelicopter();return[...(heli?.alive&&heli.entity.root.position.y<12?[heli]:[]),...getTargets(origin)];},
    energyEffects:this.energyEffects,visible,trace,
    // Hold a row behind a blocked/stunned leader instead of stacking the tracks.
-   isPathClear:(a,b)=>isPathClear(a,b)&&!(this.members||[]).some(r=>r.id!==id&&r.combatUnit?.alive&&Math.abs(r.root.position.x-b.x)<2.9*RAIDER_COMBAT.modelScale+.1&&r.root.position.z<a.z&&b.z-r.root.position.z<3.6*RAIDER_COMBAT.modelScale),redirect,onHeroHit,onDebris,onRemoveDebris,onDeath,onWreck,onEvent:message=>{if(!message.startsWith('Raider robot approaching'))onEvent(message);}
+   isPathClear:(a,b)=>isPathClear(a,b)&&!(this.members||[]).some(r=>r.id!==id&&r.combatUnit?.alive&&Math.abs(r.root.position.x-b.x)<2.9*RAIDER_COMBAT.modelScale+.1&&r.root.position.z<a.z&&b.z-r.root.position.z<3.6*RAIDER_COMBAT.modelScale),redirect,onHeroHit,onDebris,onRemoveDebris,onDeath,onWreck,onEvent:message=>{if(!message.startsWith('Bruiser approaching'))onEvent(message);}
   });});this.spawned=false;
  }
- spawn(){if(this.spawned)return false;this.spawned=true;for(const r of this.members)r.spawn();this.onEvent('Drone squad inbound · '+this.members.length+' tracked raiders advancing down the outer boulevard.');return true;}
+ spawn(){if(this.spawned)return false;this.spawned=true;for(const r of this.members)r.spawn();this.onEvent('Bruiser squad inbound · '+this.members.length+' advancing down the outer boulevard.');return true;}
  reset(){this.spawned=false;for(const r of this.members)r.reset();this.energyEffects.reset();}
  update(dt,time){for(const r of this.members)r.update(dt,time);this.energyEffects.update(dt,this.bolts);}
  syncWrecks(){for(const r of this.members)r.syncWrecks();}
