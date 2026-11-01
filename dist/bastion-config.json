@@ -176,7 +176,18 @@
     "maxSurfaceSegments": 1200,
     "gapRequiresBody": true,
     "groundSegments": 96,
-    "sweepSamples": 8
+    "sweepSamples": 8,
+    "visual": {
+      "color": "#ff4b2d",
+      "edgeColor": "#ffe0a0",
+      "gapColor": "#7affec",
+      "opacity": 0.85,
+      "lineOpacity": 0.85,
+      "fadeSeconds": 0.5,
+      "segments": 48,
+      "rows": 24,
+      "groundOpacity": 0.75
+    }
   },
   "barrage": {
     "countByCycle": [

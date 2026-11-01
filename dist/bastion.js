@@ -1,10 +1,10 @@
-import {BastionRain} from './bastion-rain.js?v=bastion-tracking-126';
+import {BastionRain} from './bastion-rain.js?v=bastion-pulse-127';
 import * as THREE from './vendor/three.module.js';
-import {BastionModel} from './bastion-model.js?v=bastion-tracking-126';
-import {BastionState} from './bastion-state.js?v=bastion-tracking-126';
-import {BastionProjectiles} from './bastion-projectiles.js?v=bastion-tracking-126';
-import {BastionEffects} from './bastion-effects.js?v=bastion-tracking-126';
-import {angleDistance} from './bastion-geometry.js?v=bastion-tracking-126';
+import {BastionModel} from './bastion-model.js?v=bastion-pulse-127';
+import {BastionState} from './bastion-state.js?v=bastion-pulse-127';
+import {BastionProjectiles} from './bastion-projectiles.js?v=bastion-pulse-127';
+import {BastionEffects} from './bastion-effects.js?v=bastion-pulse-127';
+import {angleDistance} from './bastion-geometry.js?v=bastion-pulse-127';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 export class Bastion {
  constructor(scene,damage,config,{onEvent=()=>{},onPlayerHit=()=>{},onWindup=()=>{}}={}){Object.assign(this,{scene,damage,config,onEvent,onPlayerHit,onWindup});this.model=new BastionModel(scene,config);this.root=this.model.root;this.state=new BastionState(config);this.evac=true;this.projectiles=null;this.waves=[];this.stunRemaining=0;this.feedback='';this.hitCooldown=0;this.reset();this.effects=new BastionEffects(this);this.projectiles=new BastionProjectiles(this);this.rain=new BastionRain(this);}
@@ -19,7 +19,7 @@ export class Bastion {
   if(part==='core'&&this.coreOpen){this.feedback='CORE STRIKE';this.effects?.impact(point,'#6ffff0');return power*this.config.core.damageMultiplier*this.state.multiplier(this.attackKey);}this.feedback=this.coreOpen?'HIT THE GLOWING CORE':'CORE ARMOURED';return 0;}
  interrupt(seconds=1){if(this.dead)return false;this.stunRemaining=Math.max(this.stunRemaining,seconds);this.onEvent('Bastion interrupted · armour locked briefly.');return true;}
  defeat(){this.state.defeat();this.projectiles?.reset();this.rain?.reset();this.waves=[];this.effects?.impact(this.root.position.clone().add(new THREE.Vector3(0,25,0)),'#baffed',8);this.onEvent('BASTION DEFEATED · Reset to replay this seed.');}
- addWave(id){const core=this.config.core.locations[this.state.coreIndex].position;this.waves.push({id,age:0,angle:Math.atan2(core[0],core[2])});}
+ addWave(id){this.effects?.impact(this.root.position.clone().add(new THREE.Vector3(0,2,0)),'#ffb968',4);const core=this.config.core.locations[this.state.coreIndex].position;this.waves.push({id,age:0,angle:Math.atan2(core[0],core[2])});}
  checkWaves(player,previous){if(this.dead||player.phased)return;const c=this.config.pulse,body=this.onBody(player),current=this.root.worldToLocal(new THREE.Vector3().copy(player.position)),last=this.root.worldToLocal(new THREE.Vector3().copy(previous));for(const w of this.waves){for(let i=0;i<=c.sweepSamples;i++){const point=last.clone().lerp(current,i/c.sweepSamples),radius=Math.hypot(point.x,point.z),angle=Math.atan2(point.x,point.z),gap=angleDistance(angle,w.angle)<c.gapHalfAngle,surface=body&&point.y*this.config.body.height/40<=w.age*c.surfaceSpeed+c.surfaceWidth/2&&point.y*this.config.body.height/40>=w.age*c.surfaceSpeed-c.surfaceWidth/2-c.surfaceSpeed*c.linger,ground=point.y<=c.groundHitHeight&&radius<=Math.min(c.maxRadius,w.age*c.groundSpeed+c.groundWidth/2)&&radius>=w.age*c.groundSpeed-c.groundWidth/2-c.groundSpeed*c.linger;if(!(surface||ground))continue;if(gap){if((body||!c.gapRequiresBody)&&this.state.awardGap())this.onEvent('PULSE GAP THREADED · core window extended.');}else this.playerHit(player.position,c.damage);}}}
  safePaths(){const p=this.config.core.locations[this.state.coreIndex].position,sign=Math.sign(p[2]),height=this.config.projectiles.collisionHeight,wall=Math.abs(p[2])+height,near=[p[0],height+.08,sign*wall],l=Math.hypot(p[0],p[2]),far=[p[0]/l*this.config.barrage.safeStartRadius,height+.08,p[2]/l*this.config.barrage.safeStartRadius];return{safe:[far,near,[p[0],p[1],sign*wall]],greedy:[[-p[0],this.config.barrage.greedyEntryHeight,sign*wall],[-p[0],p[1],sign*wall],[p[0],p[1],sign*wall]]};}
  routeAt(position){const p=this.root.worldToLocal(new THREE.Vector3().copy(position));return(p.z>=0?'front-':'back-')+(p.x<0?'left':'right');}
@@ -30,5 +30,5 @@ export class Bastion {
  trace(a,b,radius=0,{sectionsOnly=false}={}){if(sectionsOnly)return traceImpact(a,b,{sections:this.sections,ground:false,radius});let hit=traceImpact(a,b,{targets:this.combatUnit.alive?[this.combatUnit]:[],ground:false,radius});const orb=this.projectiles?.trace(a,b,radius);if(orb&&(!hit||orb.t<hit.t))hit=orb;return hit;}
  paint(time){for(const {id,patch} of this.model.routePatches)patch.visible=id===this.state.markedRoute;for(const p of this.model.plates){const active=p.index===this.state.coreIndex;p.core.visible=active&&this.coreOpen;p.plate.visible=true;p.material.emissive.set(active&&['windup','pulse'].includes(this.state.phase)?'#ff9c31':'#102c35');p.material.emissiveIntensity=active&&this.state.phase==='windup'?1+Math.sin(time*18)**2*3:.4;}
   for(const p of this.model.parts){let marked=false;if(this.state.markedRoute){const left=this.state.markedRoute.includes('left');marked=p.id.includes(left?'left-':'right-');}p.material.emissive.set(marked?this.config.routes.warningColor:'#000000');p.material.emissiveIntensity=marked?.8:0;}}
- diagnostics(){return{...this.state.diagnostics(),health:this.combatUnit.health,maxHealth:this.combatUnit.maxHealth,coreOpen:this.coreOpen,stunned:this.stunRemaining,feedback:this.feedback,projectiles:this.projectiles?.diagnostics()||{},bodyHeight:this.config.body.height,model:this.model.art.diagnostics(),rain:this.rain?.diagnostics()||{}};}
+ diagnostics(){return{...this.state.diagnostics(),health:this.combatUnit.health,maxHealth:this.combatUnit.maxHealth,coreOpen:this.coreOpen,stunned:this.stunRemaining,feedback:this.feedback,projectiles:this.projectiles?.diagnostics()||{},bodyHeight:this.config.body.height,model:this.model.art.diagnostics(),rain:this.rain?.diagnostics()||{},pulseEffect:this.effects?.sphericalPulse.diagnostics()||{}};}
 }

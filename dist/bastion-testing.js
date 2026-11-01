@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {Bastion} from './bastion.js?v=bastion-tracking-126';
+import {Bastion} from './bastion.js?v=bastion-pulse-127';
 
 // Adapter for the existing combat arena: no scene, renderer or player controller of its own.
 export class BastionTesting {
@@ -8,7 +8,7 @@ export class BastionTesting {
   this.boss=new Bastion(scene,damage,config,{onEvent,onPlayerHit:p=>this.hero?.receiveEyeHit?.(p),onWindup:()=>this.windupSound()});
   this.boss.rainLanding=rainLanding;this.boss.onRainImpact=onRainImpact;this.boss.traceProjectile=traceProjectile;this.boss.onProjectileImpact=onProjectileImpact;this.boss.suppressDamageFlash=true;this.boss.recordHit=()=>{};this.boss.stun=seconds=>this.boss.interrupt(seconds);
   Object.defineProperty(this.boss,'windup',{get:()=>this.boss.state.phase==='windup'?this.boss.state.duration-this.boss.state.elapsed:0});
-  const css=document.createElement('link');css.rel='stylesheet';css.href='bastion-testing.css?v=bastion-tracking-126';document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href='bastion-testing.css?v=bastion-pulse-127';document.head.append(css);
   this.panel=document.createElement('div');this.panel.id='bastion-status';this.panel.hidden=true;
   this.panel.innerHTML='<b>THE BASTION</b><strong data-phase></strong><span data-core></span><span data-pattern></span><span data-rain></span><span data-graze></span><span data-route></span><details><summary>Boss controls</summary><label>Seed <input data-seed type="number"></label><button data-slow>World slowdown · T</button><label>Slow world <input data-scale type="range" min="30" max="100" step="5"></label><button data-debug>Debug · F2</button><small>Apply seed with Spawn / Reset enemies.</small></details><pre hidden></pre>';
   document.getElementById('viewport').append(this.panel);this.seedInput=this.panel.querySelector('[data-seed]');this.seedInput.value=config.seed;

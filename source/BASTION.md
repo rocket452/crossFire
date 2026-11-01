@@ -20,6 +20,12 @@ Animation includes a subtle torso idle, head tracking, shoulder bracing, a bent 
 
 The old spiral/lattice/mine/curve orb-pattern barrage is replaced by a **plasma Gatling stream** and an alternating **plasma rain** attack. The gun uses the Bruiser's 36 m/s projectile speed and existing pooled `RaiderEnergyEffects` for energy rings, trailing sparks and impacts. Bolts are narrower (0.62 m radius) and slightly elongated. There is no active projectile splitting, mine planting or mid-flight homing in the default encounter. Odd cycles use Gatling; even cycles use plasma rain. `barrage.attackSequence` controls that order.
 
+## Spherical pulse readability
+
+The close-range pulse now has a translucent spherical energy front, a bright Fresnel edge, sweeping surface bands and latitude arcs, cyan edges around the existing safe gap, and an origin spark burst. The existing ground ring is stronger as well. The sphere expands at the body-wave speed and fades with the existing pulse lifetime. This is visual feedback: ground/body damage, safe-gap rules, movement and timings are unchanged.
+
+`pulse.visual` configures warm/hot/gap colours, shell opacity, line opacity, fade time, sphere segments/rows and ground opacity. The shell uses one shared low-poly sphere, shared line geometry and disposable per-wave materials, with no extra textures, lights or physics colliders. Reset/defeat clears it with the existing waves. Browser verification captures desktop/touch screenshots and checks outward growth and shader compilation.
+
 ## Plasma rain
 
 On alternate cycles the Bastion lifts/extends its weapon arm, points the rotating cannon vertically and launches up to seven plasma shells 0.12 seconds apart. They rise straight upward for 0.8 seconds, fan out high above the city over 0.65 seconds, then descend over 1.4 seconds with long comet trails. The total warning per shell is about 2.85 seconds. Gatling fire does not run during this attack.
