@@ -24,7 +24,7 @@ export class RobotEyeBeams{
   this.history=this.history.slice(-12);const centers=enabled?this.centers(runner):[],previous=this.previousCenters||centers;
   for(let i=this.bolts.length-1;i>=0;i--){const b=this.bolts[i],from=b.position.clone(),to=from.clone().addScaledVector(b.dir,EYE_BEAMS.speed*dt);const transit=this.redirect(b,from,to);if(transit){b.position.copy(transit.position);b.dir.copy(transit.direction);b.age+=dt;continue;}let hit=this.traceWorld(from,to,EYE_BEAMS.radius);
    if(enabled)for(let j=0;j<centers.length;j++){const t=segmentSphereFraction(from,to,centers[j],.48+EYE_BEAMS.radius,previous[j]||centers[j]);if(t!==null&&(!hit||t<hit.t))hit={kind:'speedster',t,point:from.clone().lerp(to,t)};}
-   if(hit){b.position.set(hit.point.x,hit.point.y,hit.point.z);this.lastHit=hit.kind;if(hit.kind==='speedster'){this.hits++;runner.receiveEyeHit?.(b.position);}else this.coverHits++;this.onImpact(b.position.clone(),hit);this.bolts.splice(i,1);continue;}
+   if(hit){b.position.set(hit.point.x,hit.point.y,hit.point.z);this.lastHit=hit.kind;if(hit.kind==='speedster'){this.hits++;runner.receiveEyeHit?.(b.position);}else if(hit.unit?.kind==='hero'){this.hits++;hit.unit.entity.receiveEyeHit?.(b.position);}else this.coverHits++;this.onImpact(b.position.clone(),hit);this.bolts.splice(i,1);continue;}
    b.position.copy(to);b.age+=dt;if(b.age>EYE_BEAMS.range/EYE_BEAMS.speed){this.expired++;this.bolts.splice(i,1);}
   }
   this.previousCenters=centers.map(p=>p.clone());this.render(time,muzzles);
