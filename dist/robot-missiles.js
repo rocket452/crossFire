@@ -1,6 +1,6 @@
 import {projectileSilhouette} from './projectile-silhouette.js?v=silhouette-49';
 import * as THREE from './vendor/three.module.js';
-import {segmentBoxFraction} from './combat-collision.js?v=ground-rubble-89';
+import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 
 // Bounded, swept-collision missiles. An intercepted warhead has no damaging blast.
 export class RobotMissiles {

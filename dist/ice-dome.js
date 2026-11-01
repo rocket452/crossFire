@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {segmentBoxFraction} from './combat-collision.js?v=ground-rubble-89';
+import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 const clamp=THREE.MathUtils.clamp;
 // Distance to the formed elliptical arc, revolved about world Y. The arc ends at
 // the growing rim, so the unbuilt crown is a real opening, including sphere/rim contact.

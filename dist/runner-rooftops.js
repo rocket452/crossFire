@@ -1,4 +1,4 @@
-import {traceImpact} from './combat-collision.js?v=ground-rubble-89';
+import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 const angle=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const usable=c=>c?.type==='slab'&&c.state==='intact'&&!c.hasDetached&&c.hp!==0;

@@ -1,4 +1,4 @@
-import {RooftopTactics} from './runner-rooftops.js?v=ground-rubble-89';
+import {RooftopTactics} from './runner-rooftops.js?v=robot-experiments-108';
 const angle=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 export class RunnerAI {
  constructor(){this.rooftops=new RooftopTactics();this.route=[{x:0,z:12},{x:12,z:12},{x:24,z:12},{x:24,z:-24},{x:0,z:-24},{x:-24,z:-24},{x:-24,z:24},{x:0,z:24}];this.reset();}

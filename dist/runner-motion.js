@@ -1,4 +1,4 @@
-import {traceImpact} from './combat-collision.js?v=ground-rubble-89';
+import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 export const RUNNER_FORGIVENESS={coyoteSeconds:.12,jumpBufferSeconds:.15,landingReach:.28,mantleRise:1.05};
 export const RUNNER_CONTROL={radius:.34,skin:.015,stepHeight:.46,wallIntentSeconds:.10,wallReleaseLock:.3,playerWallSpeed:12,playerWallBoost:24,airWallMinNormalSpeed:3,airWallMinInto:.18,stickyMinClimb:.65};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));

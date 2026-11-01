@@ -1,6 +1,6 @@
 import {projectileSilhouette} from './projectile-silhouette.js?v=silhouette-49';
 import * as THREE from './vendor/three.module.js';
-import {segmentBoxFraction} from './combat-collision.js?v=ground-rubble-89';
+import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 export const PLASMA={gravity:5,warningSeconds:2.4,shotSpacing:1.6,blastRadius:7,projectileRadius:.65,maxShells:2,leadIterations:10,maxLeadSeconds:24};
 // Exact 45-degree ballistic solution, evaluated analytically so the ground aim never drifts.
 export function plasmaTrajectory(from,target,gravity=PLASMA.gravity){

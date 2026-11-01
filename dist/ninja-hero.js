@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=ninja-82';
-import {NinjaMotion,NINJA} from './ninja-motion.js?v=kage-dash-104';
-import {terrainHeight} from './runner-motion.js?v=kage-jump-93';
+import {NinjaMotion,NINJA} from './ninja-motion.js?v=robot-experiments-108';
+import {terrainHeight} from './runner-motion.js?v=robot-experiments-108';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 const UP=new THREE.Vector3(0,1,0),Z=new THREE.Vector3(0,0,1),$=id=>document.getElementById(id);
