@@ -18,3 +18,13 @@ Small robots now use 72m/s projectiles (previously 36), 0.25s burst intervals (p
 The burst and hero-aim tests pass across 30/60/120Hz and 75ms frames, checking the 2.25s cycle, 0.25s spacing, 72m/s physical travel, target hits and cancellation. `combat-testing-browser.cjs` passes desktop/touch, selected enemies returning real fire, player hits, reset, all hero choices and preserved original missions. The escort burst browser's observation windows were shortened to isolate one burst with the new faster cycle rather than accidentally sampling a second burst.
 
 `raider-burst-browser.cjs` also passes desktop and phone: exactly nine physical shots from the three escort drones at 0.25s spacing, 72m/s shots, player hits, Violet shield interception, stun cancellation and reset.
+
+## Mixed four-shot bursts — revision 112 (current)
+
+Basic tracked robots in both escort and Combat Testing now fire exactly four shots per completed burst: two `direct`, two `lead`, shuffled with Fisher–Yates for every burst (all six valid orders). Each round refreshes its aim; direct rounds use the current upper-body point, while predictive rounds solve projectile interception using recent smoothed target movement and the actual 72m/s bolt speed. Lead caps: 1 second / 24 metres, tracked speed 65m/s; abrupt teleport samples reset the motion estimate. Stationary targets naturally produce the same aim point for both modes.
+
+The normal .25s spacing, .5s opening windup, 1.25s recovery, 14 damage and 1.32m bolt radius are retained. Turning keeps its 120°/s cap: switching aim mode can delay a shot until the barrel aligns, rather than snapping or cancelling the burst. Cover, range, target changes, stuns, death and reset still cancel pending shots. Moving targets can dodge by changing direction after discharge; projectiles remain non-homing.
+
+Experimental Aegis retains its original three direct shots; Scythe and Breaker specials are unchanged. Shared base diagnostics expose shot mode counts, current/last burst order, target velocity and latest aim point.
+
+Checks: updated burst tests at 30/60/120Hz and 75ms steps cover two complete four-shot bursts, exact 2+2 counts, direct/intercept geometry, visible barrel alignment, all six randomized orders, teleport/retarget/reset and cancellation. The escort browser suite checks three robots / twelve real rounds, live player hits, Violet barrier interception, manual keyboard/touch strafing against direct/lead rounds, and reset. Existing hero-aim, experimental mechanics and Combat Testing browser checks remain relevant.
