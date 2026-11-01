@@ -1,4 +1,4 @@
-import {BastionTesting} from './bastion-testing.js?v=bastion-rain-125';
+import {BastionTesting} from './bastion-testing.js?v=bastion-tracking-126';
 import {ExperimentalRobot} from './experimental-robots.js?v=bruiser-name-116';
 import * as THREE from './vendor/three.module.js';
 import {EvacRaider} from './evac-raider.js?v=bruiser-name-116';

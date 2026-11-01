@@ -35,7 +35,7 @@ Impacts produce expanding plasma bursts/sparks and damage within a 3.4-metre rad
 1. **Reset, 3.2 seconds:** core shut, weapon modules vulnerable. Reposition or break a power bank or the cannon.
 2. **Wind-up, 1 second:** the upcoming chest/back plate glows amber and vents sparks. A rising cue warns of the pulse.
 3. **Pulse, 2.6 seconds:** ground/body rings sweep out with a narrow gap and 0.8-second lingering damage. Leaving the body or threading its gap remains valid. A successful body-gap crossing extends the next exposure by 40%. The Gatling starts spinning in the last 0.65 seconds of the pulse.
-4. **Attack barrage, 3.6 seconds normally / 5.04 after a gap:** the core opens. On Gatling cycles the cannon fires the configured 36 / 44 / 52 nominal shots by escalation tier, paced across the window. Four-shot groups contain two direct and two leading shots in seeded random order, like the Bruiser. Small spread and limited-rate aiming make steering matter. Misaligned shots are skipped rather than queued into an instantaneous burst.
+4. **Attack barrage:** Gatling lasts 7.2 seconds / 10.08 after a gap; plasma rain stays at 3.6 / 5.04 seconds. the core opens. On Gatling cycles the cannon fires the configured 72 / 88 / 104 nominal shots by escalation tier, paced across the window. Four-shot groups contain two direct and two leading shots in seeded random order, like the Bruiser. Small spread and limited-rate aiming make steering matter. Misaligned shots are skipped rather than queued into an instantaneous burst.
 On plasma-rain cycles the cannon instead launches the telegraphed skyward cluster described above.
 5. Repeat, rotating among four chest/back core positions. Cycle 3+ adds two overlapping pulses during the barrage. Defeat stops emissions and clears hazards; reset restores poses, spin, banks and cannon.
 
@@ -45,19 +45,21 @@ Cyan remains a protected projectile corridor, including ascent to the current co
 
 Combat Testing connects the stream to the existing city projectile trace: walls, ground and hero barriers can intercept it. Building impacts use the existing robot damage route. Existing hero damage callbacks still own attacks on the core and cannon.
 
+Gatling duration is configured independently with `gatling.barrageSeconds` (7.2 seconds). Shot counts doubled with duration, preserving the original firing cadence. Gun tracking response doubled from 4 to 8; chassis pivot speed doubled from 0.24 to 0.48 rad/s. Rain timing and player movement are unchanged.
+
 ## Highest-value tuning
 
 All values live in `dist/bastion-config.json`; reload after editing.
 
 | Setting | Initial value | Purpose |
 | --- | --- | --- |
-| `timings.reset / windup / pulse / barrage` | 3.2 / 1 / 2.6 / 3.6 s | Positioning, warning and firing windows |
-| `barrage.countByCycle` | 36 / 44 / 52 | About 10 / 12.2 / 14.4 shots per second |
+| `timings.reset / windup / pulse / barrage` | 3.2 / 1 / 2.6 / 3.6 s (rain) | Positioning, warning and firing windows |
+| `barrage.countByCycle` | 72 / 88 / 104 | About 10 / 12.2 / 14.4 shots per second |
 | `gatling.speed / radius / spread` | 36 m/s / 0.62 m / 0.018 | Bolt pacing, size and spread |
 | `gatling.spinupSeconds / alignment` | 0.65 s / 0.32 rad | Spin warning and firing alignment |
 | `gatling.directPerGroup / groupSize` | 2 / 4 | Direct versus leading shot mix |
 | `gatling.leadSeconds / maxLeadDistance` | 0.65 s / 18 m | Bounded prediction |
-| `gatling.aimResponse / yawLimit / pitchLimit` | 4 / 1.25 rad / 1.2 rad | Tracking and gun articulation |
+| `gatling.aimResponse / yawLimit / pitchLimit` | 8 / 1.25 rad / 1.2 rad | Tracking and gun articulation |
 | `gatling.gunModule / barrels` | 3 / 6 | Destructible weapon and barrel count |
 | `animation.barrelSpin / spinResponse` | 32 rad/s / 7 | Rotor animation |
 | `animation.recoilDistance / recoilRecovery` | 0.16 m / 18 | Per-shot recoil |
@@ -91,7 +93,7 @@ Existing desktop controls: WASD, mouse look/pointer lock, Shift boost, Space jum
 
 ## Verification
 
-- `node QA/bastion-state-test.mjs`: Gatling-only encounter, regular 36-shot direct/lead cadence, bolt speed, protected corridor, six-barrel spin/recoil, animated muzzle, power-bank/cannon destruction, cover impacts, core armour, interrupt, graze cap, gap extension and reset.
+- `node QA/bastion-state-test.mjs`: Gatling-only encounter, regular 72-shot direct/lead cadence, bolt speed, protected corridor, six-barrel spin/recoil, animated muzzle, power-bank/cannon destruction, cover impacts, core armour, interrupt, graze cap, gap extension and reset.
 - `node QA/bastion-rain-test.mjs`: alternating attacks, vertical muzzle/shot motion, seven spaced locked warnings, delayed damage, dodging, single impact dispatch, shield interception and reset.
 - `node QA/bastion-browser.cjs` against the local static server: desktop and touch preset selection, articulated traversal in the existing city, natural cycles, real primary/core damage, launcher removal, upward rain launch, visible warning zones and real city impacts, unchanged movement during slowdown, all six hero choices, switching back to Siege Walker/empty arena, and compatibility redirects. Screenshots are written under `/tmp/bastion-testing-*.png`.
 - `node QA/combat-testing-browser.cjs`: desktop/touch combat arena, six existing hero choices, real player/enemy fire, plus preserved City Battle and escort layouts/roster/civilian wave size. Scene selector retains three maps.

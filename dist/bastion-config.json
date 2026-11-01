@@ -2,7 +2,7 @@
   "seed": 2718,
   "body": {
     "height": 40,
-    "turnRate": 0.24,
+    "turnRate": 0.48,
     "legSwing": 0.018,
     "armSwing": 0.028,
     "animationRate": 1.5,
@@ -180,9 +180,9 @@
   },
   "barrage": {
     "countByCycle": [
-      36,
-      44,
-      52
+      72,
+      88,
+      104
     ],
     "openingPattern": "gatling",
     "pool": [
@@ -341,11 +341,12 @@
     "maxTrackedSpeed": 65,
     "yawLimit": 1.25,
     "pitchLimit": 1.2,
-    "aimResponse": 4,
+    "aimResponse": 8,
     "alignment": 0.32,
     "directPerGroup": 2,
     "groupSize": 4,
-    "trailLength": 1.8
+    "trailLength": 1.8,
+    "barrageSeconds": 7.2
   },
   "rain": {
     "count": 7,
