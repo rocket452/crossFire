@@ -1,0 +1,276 @@
+{
+  "seed": 2718,
+  "body": {
+    "height": 40,
+    "turnRate": 0.24,
+    "legSwing": 0.018,
+    "armSwing": 0.028,
+    "animationRate": 1.5,
+    "shadowSize": 1024
+  },
+  "arena": {
+    "radius": 56,
+    "playerStart": [
+      3.8,
+      0.08,
+      30
+    ],
+    "initialAttackCharge": 100,
+    "camera": [
+      65,
+      52,
+      70
+    ],
+    "cameraClearance": 0.35,
+    "cameraResolveIterations": 6,
+    "fillIntensity": 1.8
+  },
+  "traversal": {
+    "maxCarryDistance": 4,
+    "surfaceContactRadius": 0.7
+  },
+  "timings": {
+    "reset": 3.2,
+    "windup": 1,
+    "pulse": 2.6,
+    "barrage": 3.6,
+    "gapExtension": 0.4
+  },
+  "core": {
+    "health": 6000,
+    "damageMultiplier": 3,
+    "radius": 1.15,
+    "locations": [
+      {
+        "id": "chest-left",
+        "position": [
+          -3.8,
+          25,
+          4.45
+        ]
+      },
+      {
+        "id": "back-right",
+        "position": [
+          3.8,
+          25,
+          -4.45
+        ]
+      },
+      {
+        "id": "chest-right",
+        "position": [
+          3.8,
+          25,
+          4.45
+        ]
+      },
+      {
+        "id": "back-left",
+        "position": [
+          -3.8,
+          25,
+          -4.45
+        ]
+      }
+    ]
+  },
+  "launchers": {
+    "health": 360,
+    "positions": [
+      [
+        -7.5,
+        32,
+        4.7
+      ],
+      [
+        7.5,
+        32,
+        4.7
+      ],
+      [
+        -8.2,
+        18,
+        4.7
+      ],
+      [
+        8.2,
+        18,
+        4.7
+      ],
+      [
+        -4,
+        30,
+        -4.8
+      ],
+      [
+        4,
+        30,
+        -4.8
+      ]
+    ],
+    "size": [
+      2.4,
+      2.8,
+      2.5
+    ],
+    "parents": [
+      "left-arm",
+      "right-arm",
+      "left-arm",
+      "right-arm",
+      "torso",
+      "torso"
+    ]
+  },
+  "pulse": {
+    "gapHalfAngle": 0.24,
+    "groundSpeed": 30,
+    "maxRadius": 48,
+    "groundWidth": 1.5,
+    "groundHitHeight": 2.5,
+    "surfaceSpeed": 24,
+    "surfaceWidth": 1.25,
+    "linger": 0.8,
+    "damage": 50,
+    "hitInterval": 0.28,
+    "surfaceSegmentsPerFace": 8,
+    "maxSurfaceSegments": 1200,
+    "gapRequiresBody": true,
+    "groundSegments": 96,
+    "sweepSamples": 8
+  },
+  "barrage": {
+    "countByCycle": [
+      30,
+      40,
+      48
+    ],
+    "openingPattern": "spiral",
+    "pool": [
+      "spiral",
+      "lattice",
+      "mines",
+      "curve"
+    ],
+    "maxProjectiles": 240,
+    "safeRadius": 1.45,
+    "greedyRadius": 0.45,
+    "safeStartRadius": 38,
+    "greedyEntryHeight": 16
+  },
+  "projectiles": {
+    "speed": 16,
+    "speedScale": 1,
+    "radius": 0.38,
+    "life": 7,
+    "damage": 35,
+    "hitRadius": 0.5,
+    "grazeMargin": 1.3,
+    "grazePerOrb": 0.1,
+    "grazeCap": 1,
+    "collisionHeight": 1.3,
+    "trailSeconds": 0.3
+  },
+  "spiral": {
+    "arms": 3,
+    "angleStep": 0.42,
+    "ringRadius": 25,
+    "levels": 7,
+    "levelSpacing": 5
+  },
+  "lattice": {
+    "columns": 5,
+    "spacing": 3.4,
+    "radius": 15,
+    "rows": 7,
+    "heightStep": 4.5,
+    "passDistance": 0.7,
+    "splitProximity": 10,
+    "splitCount": 3,
+    "splitSpeed": 19,
+    "splitAngle": 0.55
+  },
+  "mines": {
+    "placementRadius": 12,
+    "heightStep": 6,
+    "levels": 5,
+    "armingSeconds": 0.9,
+    "triggerDistance": 5,
+    "triggerWindup": 0.6,
+    "fuse": 5.5,
+    "burstCount": 6,
+    "burstSpeed": 18,
+    "blastRadius": 2.3
+  },
+  "curve": {
+    "triggerDistance": 12,
+    "warningSeconds": 0.32,
+    "turnSeconds": 0.55,
+    "turnRate": 1.8,
+    "acceleration": 18,
+    "maxSpeed": 32,
+    "initialOffset": 4
+  },
+  "escalation": {
+    "combineFromCycle": 2,
+    "overlapFromCycle": 3,
+    "overlapDelay": 0.2,
+    "overlapInterval": 1.4,
+    "overlapPulses": 2
+  },
+  "routes": {
+    "ids": [
+      "front-left",
+      "front-right",
+      "back-left",
+      "back-right"
+    ],
+    "minimumSeconds": 1,
+    "dominance": 0.45,
+    "extraShots": 6,
+    "warningColor": "#7a2737",
+    "pressureHeights": [
+      8,
+      18,
+      27
+    ],
+    "patchSize": [
+      2.5,
+      3,
+      0.12
+    ]
+  },
+  "deflect": {
+    "enabled": true,
+    "speed": 35,
+    "damage": 180,
+    "coreHitRadius": 1.4
+  },
+  "dilation": {
+    "enabled": false,
+    "scale": 0.35,
+    "minimum": 0.3,
+    "maximum": 1
+  },
+  "audio": {
+    "enabled": true,
+    "startHz": 160,
+    "endHz": 1000,
+    "gain": 0.045
+  },
+  "debug": {
+    "enabled": false,
+    "hitboxColor": "#ff716c",
+    "safeColor": "#4cf6ed",
+    "greedyColor": "#d58aff"
+  },
+  "feedback": {
+    "sparks": 12,
+    "maxParticles": 180,
+    "size": 0.14,
+    "life": 0.5,
+    "speed": 4,
+    "gravity": 4
+  }
+}
