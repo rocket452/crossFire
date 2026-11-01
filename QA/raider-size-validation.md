@@ -1,0 +1,7 @@
+# Small robot size — revision 107
+
+`RAIDER_COMBAT.modelScale=1.3` enlarges the whole tracked robot uniformly, including torso, head, arms, cannon and treads. Upper/lower hitbox extents and vertical centers, aim anchor and physical wreck bounds match the scaled geometry. Weapon muzzle positions already follow the hierarchy. Tread travel is converted to local scaled distance to avoid spinning too quickly. Drone path-clearance radius and squad spacing checks account for the larger body.
+
+Through-cover enemy overlays now preserve instanced tread/wheel matrices, so their silhouettes follow the entire enlarged model correctly. Health stays 1,000; firing cadence, 72m/s projectile speed, projectile size, attack ranges and damage remain unchanged. This affects escort and Combat Testing drones; the Siege Walker and other actors retain their sizes.
+
+Validation passed: `raider-hero-aim-test.mjs` includes exact 1.3x dimensions across all axes, a ray hitting the newly enlarged outer body, scaled collision, five-part physical disassembly/reset and unchanged HP; existing tracking and physical projectile checks pass at 30/60/120Hz and 75ms frames. `raider-burst-test.mjs` retains the exact faster cadence and cancellation checks. `combat-testing-browser.cjs` and `raider-burst-browser.cjs` pass desktop and emulated touch phone: live player/enemy hits, shield interception, test configurations, all hero choices, deaths, resets and preserved missions. Screenshots from the existing browser suites were inspected. Physical-phone FPS/thermal performance remains unmeasured.

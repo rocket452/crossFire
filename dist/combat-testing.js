@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider} from './evac-raider.js?v=drone-fire-106';
+import {EvacRaider} from './evac-raider.js?v=drone-size-107';
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';
 // Reuses the live drone, projectile, damage and wreck systems; no mission spawning.
 export class CombatTesting {

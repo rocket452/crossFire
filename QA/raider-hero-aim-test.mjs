@@ -24,3 +24,10 @@ for(const dt of[1/30,1/60,1/120,.075]){
  assert.equal(civilian.health,86,'real 31m shot hits civilian before ground, with unchanged 14 damage');assert(r.energyEffects.bursts.length>0,'real physical impact emits an energy burst');
  console.log('PASS',dt,'large bolts clear ground and hit low targets; physical impacts trigger energy effects');
 }
+
+// Enlarged geometry, collision and physical disassembly use the same world scale.
+{
+ const CANNON=await import('../dist/vendor/cannon-es.js');const sized=new EvacRaider(new THREE.Scene(),new UnitDamage(),{getTargets:()=>[],visible:()=>true,trace:()=>null,onDebris:s=>{const body=new CANNON.Body({mass:s.mass});body.position.copy(s.position);return body;}});sized.spawn();
+ const dimensions=()=>new THREE.Box3().setFromObject(sized.root).getSize(new THREE.Vector3()),large=dimensions();sized.root.scale.setScalar(1);const base=dimensions();sized.root.scale.setScalar(1.3);sized.sync();for(const axis of['x','y','z'])assert(Math.abs(large[axis]/base[axis]-1.3)<1e-6);assert(Math.abs(sized.combatUnit.shapes[0].half.x-1.95)<1e-8);
+ assert(traceImpact({x:sized.root.position.x+1.8,y:3.8,z:sized.root.position.z-8},{x:sized.root.position.x+1.8,y:3.8,z:sized.root.position.z+8},{targets:[sized.combatUnit],ground:false,radius:0}),'new outer body region takes hits');sized.destroy();assert.equal(sized.wrecks.length,5);sized.reset();sized.spawn();assert(dimensions().distanceTo(large)<1e-6);assert.equal(sized.root.scale.x,1.3);assert.equal(sized.combatUnit.maxHealth,1000);console.log('PASS 1.3x model dimensions, scaled outer hitbox, five-part wreck/reset and unchanged HP');
+}
