@@ -98,3 +98,5 @@ html[data-input-mode=desktop] .ninja-mobile{display:none!important}@media(max-wi
 @media(max-width:700px){.viewer .boss-health-hud{top:62px}.viewer .robot-readout{top:130px}.viewer.is-running .runner-telemetry{top:105px}.viewer.is-running #runner-energy-meter{top:135px}.viewer.is-running .robot-readout{top:190px}}
 
 .viewer.is-escort .touch-height{bottom:76px}
+
+#test-controls{padding:16px;background:#19353b;color:#d1eee9;display:flex;align-items:center;flex-wrap:wrap;gap:14px}#test-controls[hidden]{display:none}#test-controls label{display:flex;gap:8px;align-items:center;font-size:12px}#test-controls select,#test-controls button{min-height:44px;border:1px solid #719d9a;border-radius:4px;background:#d4e6df;color:#17383d;padding:8px}#test-controls b{display:block;font-size:12px;letter-spacing:1px}#test-controls small{display:block;font-size:11px;color:#a5c7c2}#test-note{flex-basis:100%}.boss-health-hud[hidden]{display:none}
