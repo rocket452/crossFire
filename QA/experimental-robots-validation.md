@@ -30,3 +30,5 @@ Browser checks passed on both viewports: front 9 vs rear 90 damage; stationary s
 ## Limits
 
 Experimental types are test presets, not newly inserted mission waves. Existing heroes retain their current control support (Volt/Kage direct; other heroes CPU). Enemy hits use existing hero feedback rather than introducing a new hero health/death system. No multiplayer added. Capacitors require deliberate aim; no new capacitor aim assistance. Simple obstacle rejection reuses the existing drones' movement instead of adding navigation infrastructure. Browser mobile emulation does not establish physical-phone FPS, thermals or touch ergonomics. Procedural models/poses and shared explosion audio are prototype assets.
+
+Revision 111: shield contact brightens Aegis’s surface and local impact blue, suppresses/clears the red body flash for that hit, and retains 90% damage reduction. Subsequent exposed-hull damage still uses ordinary red feedback. Unit checks cover shield → hull → shield transitions; live desktop/touch fire checks confirm blue shield/no red body versus red rear-hit feedback.

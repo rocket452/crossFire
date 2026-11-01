@@ -9,6 +9,8 @@ export class EnemyDamageFlash {
  clear(){this.beginFrame();this.states.clear();this.hits=0;}
  hit(unit,damage,part=null){
   if(unit?.kind!=='robot'||!(damage>0)||unit.health<=0||!unit.entity?.root)return;
+  // Shield absorption owns its blue flash, including reduced hull damage.
+  if(unit.entity.suppressDamageFlash){const old=this.states.get(unit.id);if(old){this.restore(old);this.states.delete(unit.id);}return;}
   const walker=!!unit.entity.weapons,module=walker?unit.entity.weapons.forPart(part):null;if(walker&&(!module||module.destroyed))return;
   const id=unit.id+(walker?':'+part:''),root=walker?unit.entity.meshes[part]:unit.entity.root;
   let s=this.states.get(id);

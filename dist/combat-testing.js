@@ -1,4 +1,4 @@
-import {ExperimentalRobot} from './experimental-robots.js?v=robot-experiments-108';
+import {ExperimentalRobot} from './experimental-robots.js?v=aegis-shield-111';
 import * as THREE from './vendor/three.module.js';
 import {EvacRaider} from './evac-raider.js?v=robot-experiments-108';
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';
