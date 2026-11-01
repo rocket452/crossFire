@@ -1,6 +1,6 @@
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import * as THREE from './vendor/three.module.js';
-import {VOLT_STUN} from './hero-powers.js?v=violet-charge-90';
+import {VOLT_STUN} from './hero-powers.js?v=combat-hud-102';
 import {RunnerEnergy,RUNNER_ENERGY} from './runner-energy.js?v=weapon-drain-77';
 import {RunnerHeading} from './runner-heading.js?v=runner-camera-27';
 import {RunnerMotion,terrainHeight} from './runner-motion.js?v=kage-jump-93';

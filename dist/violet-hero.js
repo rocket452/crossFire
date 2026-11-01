@@ -1,6 +1,6 @@
 import {VioletOrbEffects} from './violet-orb-effects.js?v=violet-orbs-58';
 import * as THREE from './vendor/three.module.js';
-import {BarrierCapacitor,VIOLET_BEAM} from './hero-powers.js?v=violet-charge-90';
+import {BarrierCapacitor,VIOLET_BEAM} from './hero-powers.js?v=combat-hud-102';
 import {violetBeamEffect} from './hero-power-effects.js?v=powers-48';
 import {ShieldShake,SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
 import {advanceVioletFlight,VIOLET_TUNING} from './violet-flight.js?v=violet-inertia-11';
@@ -101,7 +101,8 @@ export class VioletHero {
   else for(const side of['l','r']){const aim=this.nodes.chest.worldToLocal(target.clone()).sub(this.nodes['upperarm_'+side].position).normalize();this.nodes['upperarm_'+side].quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),aim);this.nodes['forearm_'+side].rotation.set(0,0,0);}
   this.root.updateMatrixWorld(true);if(this.character)this.flightPose.applyCharacter(this.character,this.nodes,dt);
   if(charging&&this.character){const reach=THREE.MathUtils.smoothstep(progress,.55,1);for(const[side,sign]of[['L',-1],['R',1]]){const hand=this.root.localToWorld(new THREE.Vector3(sign*(.34-.12*progress),1.55+.25*reach+Math.sin(time*15+sign)*.025*progress,.45+.65*reach));this.character.arm(side,hand);}}
-  const left=this.character?this.character.hand('L'):this.nodes.forearm_l.getWorldPosition(new THREE.Vector3()),right=this.character?this.character.hand('R'):this.nodes.forearm_r.getWorldPosition(new THREE.Vector3()),from=left.add(right).multiplyScalar(.5),hit=this.traceOrb(from,target),end=hit?new THREE.Vector3(hit.point.x,hit.point.y,hit.point.z):target;
+  const left=this.character?this.character.hand('L'):this.nodes.forearm_l.getWorldPosition(new THREE.Vector3()),right=this.character?this.character.hand('R'):this.nodes.forearm_r.getWorldPosition(new THREE.Vector3()),hands=left.add(right).multiplyScalar(.5),forward=target.clone().sub(hands).normalize(),from=hands.clone().addScaledVector(forward,VIOLET_BEAM.originOffset),nearHit=this.traceOrb(hands,from),hit=nearHit||this.traceOrb(from,target),end=hit?new THREE.Vector3(hit.point.x,hit.point.y,hit.point.z):target;
+  if(nearHit)from.copy(hands);
   if(hit&&damageSeconds>0)this.powerDamage+=this.onPowerHit(hit,end,VIOLET_BEAM.damagePerSecond*damageSeconds)||0;
   this.powerEffect.update({phase:charging?'charging':'firing',charge:charging?progress:1},from,end.clone().sub(from).normalize(),end,time);this.aura.position.copy(this.root.position).y+=1.5;this.aura.scale.setScalar(7.5);this.light.intensity=0;
   this.advanceOrbs(dt,time,robot.combatUnit.alive);if(!charging)this.emit(end,2,3);this.renderParticles(dt);

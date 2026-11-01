@@ -1,5 +1,5 @@
 export const VOLT_STUN=Object.freeze({cost:50,cooldown:15,duration:1,damage:450,range:90});
-export const VIOLET_BEAM=Object.freeze({required:1200,chargeDuration:2,duration:4,damagePerSecond:420});
+export const VIOLET_BEAM=Object.freeze({required:1200,chargeDuration:2,duration:4,damagePerSecond:420,originOffset:.55});
 // Only confirmed shield absorption fills this resource. No passive regeneration.
 export class BarrierCapacitor {
  constructor(){this.reset();}
