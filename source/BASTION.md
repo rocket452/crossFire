@@ -30,13 +30,13 @@ The close-range pulse now has a translucent spherical energy front, a bright Fre
 
 ## Plasma rain
 
-On alternate cycles the Bastion lifts/extends its weapon arm, points the rotating cannon vertically and launches up to seven plasma shells 0.12 seconds apart. They rise straight upward for 0.8 seconds, fan out high above the city over 0.65 seconds, then descend over 1.4 seconds with long comet trails. The total warning per shell is about 2.85 seconds. Gatling fire does not run during this attack.
+On alternate cycles the Bastion lifts/extends its weapon arm, points the rotating cannon vertically and launches up to 21 plasma shells 0.036 seconds apart. They rise straight upward for 0.8 seconds, fan out high above the city over 0.65 seconds, then descend over 1.4 seconds with long comet trails. The total warning per shell is about 2.85 seconds. Gatling fire does not run during this attack.
 
-Each shell locks its landing point at launch. Orange/red ground circles, crosshairs and shrinking countdown rings appear immediately; they flash red during the final 0.65 seconds. Targets never follow the player after locking. Placement prefers open ground, rejects buildings with projectile clearance, keeps centres at least eight metres apart and inside the playable bounds. A cluttered edge may produce fewer than seven safe targets. The minimap reuses the existing red impact crosshairs.
+Each shell locks its landing point at launch. Orange/red ground circles, crosshairs and shrinking countdown rings appear immediately; they flash red during the final 0.65 seconds. Targets never follow the player after locking. Placement prefers open ground, rejects buildings with projectile clearance, keeps centres at least eight metres apart and inside the playable bounds. A cluttered edge uses a nearest-open-street grid fallback if random sampling cannot fit the full volley. The minimap reuses the existing red impact crosshairs.
 
 Impacts produce expanding plasma bursts/sparks and damage within a 3.4-metre radius and four-metre vertical reach. Leaving a circle avoids damage. Defensive barriers can intercept descending shots or block the blast trace. Existing city damage handles the explosions; the player uses the existing hurt feedback/hit counter. No movement cost, speed limit or slowdown is added. World slowdown scales shells and warning countdowns together. Reset, preset switching and boss defeat clear every shell, warning marker and burst.
 
-`rain` in `dist/bastion-config.json` exposes count, launch spacing, ascent speed/time, arc/apex height, descent time, projectile/trail size, blast radius/height/damage, target scatter/spacing/lead/limits, warning flash, burst lifetime and arm pose. Defaults: 7 shells; 0.12 s launch interval; 58 m/s ascent; 100 m apex; 2.85 s total flight; 3.4 m blast radius; 65 damage.
+`rain` in `dist/bastion-config.json` exposes count, launch spacing, ascent speed/time, arc/apex height, descent time, projectile/trail size, blast radius/height/damage, target scatter/spacing/lead/limits, warning flash, burst lifetime and arm pose. Defaults: 21 shells; 0.036 s launch interval; 40 m scatter radius (previously 23 m); 58 m/s ascent; 100 m apex; 2.85 s total flight; 3.4 m blast radius; 65 damage.
 
 ## Encounter
 
@@ -102,7 +102,7 @@ Existing desktop controls: WASD, mouse look/pointer lock, Shift boost, Space jum
 ## Verification
 
 - `node QA/bastion-state-test.mjs`: Gatling-only encounter, regular 72-shot direct/lead cadence, bolt speed, protected corridor, six-barrel spin/recoil, animated muzzle, power-bank/cannon destruction, cover impacts, core armour, interrupt, graze cap, gap extension and reset.
-- `node QA/bastion-rain-test.mjs`: alternating attacks, vertical muzzle/shot motion, seven spaced locked warnings, delayed damage, dodging, single impact dispatch, shield interception and reset.
+- `node QA/bastion-rain-test.mjs`: alternating attacks, vertical muzzle/shot motion, 21 spaced locked warnings, including crowded map corners, delayed damage, dodging, single impact dispatch, shield interception and reset.
 - `node QA/bastion-browser.cjs` against the local static server: desktop and touch preset selection, articulated traversal in the existing city, natural cycles, real primary/core damage, launcher removal, upward rain launch, visible warning zones and real city impacts, unchanged movement during slowdown, all six hero choices, switching back to Siege Walker/empty arena, and compatibility redirects. Screenshots are written under `/tmp/bastion-testing-*.png`.
 - `node QA/combat-testing-browser.cjs`: desktop/touch combat arena, six existing hero choices, real player/enemy fire, plus preserved City Battle and escort layouts/roster/civilian wave size. Scene selector retains three maps.
 

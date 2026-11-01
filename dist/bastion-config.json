@@ -360,8 +360,8 @@
     "barrageSeconds": 7.2
   },
   "rain": {
-    "count": 7,
-    "launchInterval": 0.12,
+    "count": 21,
+    "launchInterval": 0.036,
     "riseSeconds": 0.8,
     "riseSpeed": 58,
     "arcSeconds": 0.65,
@@ -373,10 +373,10 @@
     "blastRadius": 3.4,
     "blastHeight": 4,
     "damage": 65,
-    "scatterRadius": 23,
+    "scatterRadius": 40,
     "minimumSpacing": 8,
     "bossClearance": 8,
-    "placementAttempts": 48,
+    "placementAttempts": 128,
     "bounds": [
       -52,
       52
@@ -387,6 +387,7 @@
     "urgentSeconds": 0.65,
     "burstSeconds": 0.7,
     "armLift": 0.16,
-    "muzzleExtension": 0.8
+    "muzzleExtension": 0.8,
+    "fallbackGridStep": 8
   }
 }

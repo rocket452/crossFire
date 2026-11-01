@@ -1,10 +1,10 @@
-import {BastionRain} from './bastion-rain.js?v=bastion-pulse-127';
+import {BastionRain} from './bastion-rain.js?v=bastion-artillery-129';
 import * as THREE from './vendor/three.module.js';
-import {BastionModel} from './bastion-model.js?v=bastion-pulse-127';
-import {BastionState} from './bastion-state.js?v=bastion-pulse-127';
-import {BastionProjectiles} from './bastion-projectiles.js?v=bastion-pulse-127';
-import {BastionEffects} from './bastion-effects.js?v=bastion-pulse-127';
-import {angleDistance} from './bastion-geometry.js?v=bastion-pulse-127';
+import {BastionModel} from './bastion-model.js?v=bastion-artillery-129';
+import {BastionState} from './bastion-state.js?v=bastion-artillery-129';
+import {BastionProjectiles} from './bastion-projectiles.js?v=bastion-artillery-129';
+import {BastionEffects} from './bastion-effects.js?v=bastion-artillery-129';
+import {angleDistance} from './bastion-geometry.js?v=bastion-artillery-129';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 export class Bastion {
  constructor(scene,damage,config,{onEvent=()=>{},onPlayerHit=()=>{},onWindup=()=>{}}={}){Object.assign(this,{scene,damage,config,onEvent,onPlayerHit,onWindup});this.model=new BastionModel(scene,config);this.root=this.model.root;this.state=new BastionState(config);this.evac=true;this.projectiles=null;this.waves=[];this.stunRemaining=0;this.feedback='';this.hitCooldown=0;this.reset();this.effects=new BastionEffects(this);this.projectiles=new BastionProjectiles(this);this.rain=new BastionRain(this);}
