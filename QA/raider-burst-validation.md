@@ -28,3 +28,9 @@ The normal .25s spacing, .5s opening windup, 1.25s recovery, 14 damage and 1.32m
 Experimental Aegis retains its original three direct shots; Scythe and Breaker specials are unchanged. Shared base diagnostics expose shot mode counts, current/last burst order, target velocity and latest aim point.
 
 Checks: updated burst tests at 30/60/120Hz and 75ms steps cover two complete four-shot bursts, exact 2+2 counts, direct/intercept geometry, visible barrel alignment, all six randomized orders, teleport/retarget/reset and cancellation. The escort browser suite checks three robots / twelve real rounds, live player hits, Violet barrier interception, manual keyboard/touch strafing against direct/lead rounds, and reset. Existing hero-aim, experimental mechanics and Combat Testing browser checks remain relevant.
+
+## Half-speed basic projectiles — revision 115 (current)
+
+Basic tracked-robot projectile speed is now 36m/s, down from 72m/s. The four-shot randomized direct/direct/lead/lead pattern, timing, damage and radius remain unchanged. Intercept calculations use each robot's actual shot speed; if a faster target has no exact intercept solution, leading rounds retain a bounded estimated-flight-time lead instead of collapsing to direct aim. Existing one-second / 24m prediction caps remain. Aegis explicitly retains 72m/s ordinary bolts, and Breaker retains its 22m/s cannon balls.
+
+Updated burst/hero-aim checks verify 36m/s travel and intercept timing at several frame rates. Existing experimental mechanics checks pass. A direct calculation check confirms forward leading remains finite and bounded against a 46m/s target. The escort browser suite checks twelve real 36m/s shots, barriers, manual keyboard/touch movement and the exact two-direct/two-lead mix; its shield sample allows the extra flight time.

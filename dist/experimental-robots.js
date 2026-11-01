@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=raider-mixed-burst-112';
+import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=raider-speed-115';
 // Simulation seconds, metres and damage. Each type owns exactly one special.
 export const ROBOT_EXPERIMENTS=Object.freeze({
  aegis:{health:900,speed:1.5,turn:Math.PI/2,shieldReduction:.9,coverage:120,range:32,damage:14,cooldown:1.25},
@@ -9,7 +9,7 @@ export const ROBOT_EXPERIMENTS=Object.freeze({
 const delta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 const limit=(v,n)=>Math.max(-n,Math.min(n,v));
 export class ExperimentalRobot extends EvacRaider {
- constructor(scene,damage,options){super(scene,damage,{...options,shotModes:['direct','direct','direct']});this.type=options.type;this.config=ROBOT_EXPERIMENTS[this.type];this.root.clear();this.root.scale.setScalar(1);this.root.name=this.type.toUpperCase()+' experimental robot';this.parts={};this.legs=[];this.specialReady=true;this.phaseClock=0;this.overloads=0;this.specialShots=0;
+ constructor(scene,damage,options){super(scene,damage,{...options,shotModes:['direct','direct','direct'],projectileSpeed:options.type==='aegis'?72:RAIDER_COMBAT.projectileSpeed});this.type=options.type;this.config=ROBOT_EXPERIMENTS[this.type];this.root.clear();this.root.scale.setScalar(1);this.root.name=this.type.toUpperCase()+' experimental robot';this.parts={};this.legs=[];this.specialReady=true;this.phaseClock=0;this.overloads=0;this.specialShots=0;
   const color={aegis:'#30587a',scythe:'#643039',breaker:'#79502c'}[this.type],glow={aegis:'#36aeff',scythe:'#ff304b',breaker:'#ffac26'}[this.type];this.armor=new THREE.MeshStandardMaterial({color,roughness:.65,metalness:.55});this.steel=new THREE.MeshStandardMaterial({color:'#25343d',metalness:.7,roughness:.5});this.energy=new THREE.MeshStandardMaterial({color:glow,emissive:glow,emissiveIntensity:1.5});this.box=new THREE.BoxGeometry(1,1,1);this.ball=new THREE.IcosahedronGeometry(1,1);
   this.makeModel();if(this.type==='breaker'){this.overloadFx=new THREE.Group();this.root.add(this.overloadFx);this.overloadGeometry=new THREE.BufferGeometry();this.overloadGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(144),3));this.overloadFx.add(new THREE.LineSegments(this.overloadGeometry,new THREE.LineBasicMaterial({color:'#bdffff',toneMapped:false})));this.block(this.overloadFx,[0,1.5,0],[1.9,1.3,1.8],new THREE.MeshBasicMaterial({color:'#45bfff',wireframe:true,transparent:true,opacity:.55,depthWrite:false}),this.ball);}this.deathSparks=new THREE.InstancedMesh(this.ball,new THREE.MeshBasicMaterial({color:glow,transparent:true,opacity:.9,depthWrite:false}),24);this.deathSparks.frustumCulled=false;this.deathSparks.count=0;this.scene.add(this.deathSparks);this.sparkDummy=new THREE.Object3D();this.restMaterials=[];const seen=new Set();this.root.traverse(o=>{if(o.isMesh)for(const m of[].concat(o.material))if(!seen.has(m)&&m.emissive){seen.add(m);this.restMaterials.push({m,color:m.color.clone(),emissive:m.emissive.clone(),intensity:m.emissiveIntensity});}});this.reset();
  }

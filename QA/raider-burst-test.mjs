@@ -10,8 +10,8 @@ function fixture(){
 for(const dt of[1/30,1/60,1/120,.075]){
  const f=fixture(),r=f.robot;for(let i=0;i<Math.ceil(14/dt)&&f.fired.length<8;i++)r.update(dt,i*dt);assert.equal(f.fired.length,8);assert.equal(r.bursts,2);assert.equal(r.burstRemaining,0);
  for(const start of[0,4]){assert.deepEqual(f.fired.slice(start,start+4).map(s=>s.mode).sort(),['direct','direct','lead','lead']);}for(const start of[0,4])for(let i=start+1;i<start+4;i++)assert(Math.abs(f.fired[i].age-f.fired[i-1].age-.25)<=dt+1e-7,'quarter-second spacing with bounded frame quantization');
- assert(f.fired[4].age-f.fired[3].age>=RAIDER_COMBAT.cooldown+RAIDER_COMBAT.windup-2*dt-1e-7,'full recovery and fresh windup follow the last burst shot');assert(f.fired.every(s=>s.target==='first'&&s.speed===72&&s.radius===1.32));assert.equal(new Set(r.bolts.map(b=>b.id)).size,r.bolts.length);assert(Math.abs(f.fired[4].age-f.fired[0].age-2.5)<2*dt+1e-7,'four-shot burst cadence');
- console.log('PASS',dt,'two four-shot bursts, 0.25s shot spacing, post-burst recovery, unique real shots and 72m/s/1.32m projectiles');
+ assert(f.fired[4].age-f.fired[3].age>=RAIDER_COMBAT.cooldown+RAIDER_COMBAT.windup-2*dt-1e-7,'full recovery and fresh windup follow the last burst shot');assert(f.fired.every(s=>s.target==='first'&&s.speed===36&&s.radius===1.32));assert.equal(new Set(r.bolts.map(b=>b.id)).size,r.bolts.length);assert(Math.abs(f.fired[4].age-f.fired[0].age-2.5)<2*dt+1e-7,'four-shot burst cadence');
+ console.log('PASS',dt,'two four-shot bursts, 0.25s shot spacing, post-burst recovery, unique real shots and 36m/s/1.32m projectiles');
 }
 for(const reason of['cover','range','switch','stun','death','reset']){
  const f=fixture(),r=f.robot;for(let i=0;i<600&&!r.shots;i++)r.update(1/60,i/60);assert.equal(r.shots,1);assert.equal(r.burstRemaining,3);const firstBolt=r.bolts[0],position=firstBolt.mesh.position.clone();
@@ -27,7 +27,7 @@ for(const dt of[1/30,1/60,1/120,.075]){
  const f=fixture(),r=f.robot;let seed=12345;r.random=()=>((seed=(1664525*seed+1013904223)>>>0)/4294967296);
  for(let i=0;i<Math.ceil(18/dt)&&f.fired.length<4;i++){const t=i*dt;f.first.shapes[0].center.x=(t-4)*5;r.update(dt,t);}
  assert.equal(f.fired.length,4);assert.deepEqual(f.fired.map(s=>s.mode).sort(),['direct','direct','lead','lead']);
- for(const shot of f.fired){assert(shot.dir.dot(shot.forward)>=Math.cos(RAIDER_COMBAT.alignment+1e-7),'visible barrel aligns for every shot');if(shot.mode==='direct')assert(shot.point.distanceTo(shot.current)<1e-8);else{assert(shot.lead>0);assert(shot.point.x>shot.current.x+1);assert(Math.abs(shot.point.distanceTo(shot.from)/72-shot.lead)<1e-7,'intercept time matches actual projectile speed');const impact=shot.current.clone().addScaledVector(shot.velocity,shot.lead);assert(shot.point.distanceTo(impact)<1e-7);}}
+ for(const shot of f.fired){assert(shot.dir.dot(shot.forward)>=Math.cos(RAIDER_COMBAT.alignment+1e-7),'visible barrel aligns for every shot');if(shot.mode==='direct')assert(shot.point.distanceTo(shot.current)<1e-8);else{assert(shot.lead>0);assert(shot.point.x>shot.current.x+1);assert(Math.abs(shot.point.distanceTo(shot.from)/36-shot.lead)<1e-7,'intercept time matches actual projectile speed');const impact=shot.current.clone().addScaledVector(shot.velocity,shot.lead);assert(shot.point.distanceTo(impact)<1e-7);}}
  assert(r.directShots===2&&r.leadShots===2);console.log('PASS',dt,'moving target: exactly 2 live direct points + 2 physical intercepts, with barrel alignment');
  r.target=f.first;r.sampleTargetMotion(dt);f.first.shapes[0].center.x+=100;r.sampleTargetMotion(dt);assert.equal(r.targetMotion.velocity.length(),0,'teleports do not produce runaway leads');r.reset();assert.equal(r.targetMotion,null);assert.equal(r.directShots+r.leadShots,0);
 }

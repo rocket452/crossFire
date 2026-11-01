@@ -1,6 +1,6 @@
-import {ExperimentalRobot} from './experimental-robots.js?v=raider-mixed-burst-112';
+import {ExperimentalRobot} from './experimental-robots.js?v=raider-speed-115';
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider} from './evac-raider.js?v=raider-mixed-burst-112';
+import {EvacRaider} from './evac-raider.js?v=raider-speed-115';
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';
 // Reuses the live drone, projectile, damage and wreck systems; no mission spawning.
 export class CombatTesting {
