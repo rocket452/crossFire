@@ -45,7 +45,7 @@ Impacts produce expanding plasma bursts/sparks and damage within a 3.4-metre rad
 1. **Reset, 3.2 seconds:** core shut, weapon modules vulnerable. Reposition or break a power bank or the cannon.
 2. **Wind-up, 1 second:** the upcoming chest/back plate glows amber and vents sparks. A rising cue warns of the pulse.
 3. **Pulse, 2.6 seconds:** ground/body rings sweep out with a narrow gap and 0.8-second lingering damage. Leaving the body or threading its gap remains valid. A successful body-gap crossing extends the next exposure by 40%. The Gatling starts spinning in the last 0.65 seconds of the pulse.
-4. **Attack barrage:** Gatling lasts 7.2 seconds / 10.08 after a gap; plasma rain stays at 3.6 / 5.04 seconds. the core opens. On Gatling cycles the cannon fires the configured 72 / 88 / 104 nominal shots by escalation tier, paced across the window. Four-shot groups contain two direct and two leading shots in seeded random order, like the Bruiser. Small spread and limited-rate aiming make steering matter. Misaligned shots are skipped rather than queued into an instantaneous burst.
+4. **Attack barrage:** Gatling lasts 7.2 seconds / 10.08 after a gap; plasma rain stays at 3.6 / 5.04 seconds. the core opens. On Gatling cycles the cannon fires the configured 72 / 88 / 104 nominal shots by escalation tier, paced across the window. Each shot independently has a seeded one-in-three chance to lead the target using its recent velocity; otherwise it aims at the target’s current position. Small spread and limited-rate aiming make steering matter. Misaligned shots are skipped rather than queued into an instantaneous burst.
 On plasma-rain cycles the cannon instead launches the telegraphed skyward cluster described above.
 5. Repeat, rotating among four chest/back core positions. Cycle 3+ adds two overlapping pulses during the barrage. Defeat stops emissions and clears hazards; reset restores poses, spin, banks and cannon.
 
@@ -67,7 +67,7 @@ All values live in `dist/bastion-config.json`; reload after editing.
 | `barrage.countByCycle` | 72 / 88 / 104 | About 10 / 12.2 / 14.4 shots per second |
 | `gatling.speed / radius / spread` | 36 m/s / 2.48 m / 0.1404 | Bolt pacing, size and spread |
 | `gatling.spinupSeconds / alignment` | 0.65 s / 0.32 rad | Spin warning and firing alignment |
-| `gatling.directPerGroup / groupSize` | 2 / 4 | Direct versus leading shot mix |
+| `gatling.leadChance` | 0.3333333333333333 | Independent lead probability per shot; otherwise direct aim |
 | `gatling.leadSeconds / maxLeadDistance` | 0.65 s / 18 m | Bounded prediction |
 | `gatling.aimResponse / yawLimit / pitchLimit` | 8 / 1.25 rad / 1.2 rad | Tracking and gun articulation |
 | `gatling.gunModule / barrels` | 3 / 6 | Destructible weapon and barrel count |

@@ -355,13 +355,12 @@
     "pitchLimit": 1.2,
     "aimResponse": 8,
     "alignment": 0.32,
-    "directPerGroup": 2,
-    "groupSize": 4,
     "trailLength": 1.8,
     "barrageSeconds": 7.2,
     "outlineColor": "#241020",
     "outlineScale": 1.14,
-    "haloScale": 1.5
+    "haloScale": 1.5,
+    "leadChance": 0.3333333333333333
   },
   "rain": {
     "count": 21,

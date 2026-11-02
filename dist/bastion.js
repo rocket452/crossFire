@@ -2,7 +2,7 @@ import {BastionRain} from './bastion-rain.js?v=charged-shuriken-130';
 import * as THREE from './vendor/three.module.js';
 import {BastionModel} from './bastion-model.js?v=charged-shuriken-130';
 import {BastionState} from './bastion-state.js?v=charged-shuriken-130';
-import {BastionProjectiles} from './bastion-projectiles.js?v=gatling-indestructible-132';
+import {BastionProjectiles} from './bastion-projectiles.js?v=gatling-lead-chance-133';
 import {BastionEffects} from './bastion-effects.js?v=charged-shuriken-130';
 import {angleDistance} from './bastion-geometry.js?v=charged-shuriken-130';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
