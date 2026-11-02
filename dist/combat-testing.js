@@ -1,5 +1,5 @@
 import {COMBAT_ARENA} from './combat-arena-config.js?v=arena-spawns-144';
-import {BastionTesting} from './bastion-testing.js?v=bastion-arms-146';
+import {BastionTesting} from './bastion-testing.js?v=bastion-heavyarms-152';
 import {ExperimentalRobot} from './experimental-robots.js?v=charged-shuriken-130';
 import * as THREE from './vendor/three.module.js';
 import {EvacRaider} from './evac-raider.js?v=charged-shuriken-130';

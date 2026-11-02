@@ -1,6 +1,6 @@
 import {BastionRain} from './bastion-rain.js?v=charged-shuriken-130';
 import * as THREE from './vendor/three.module.js';
-import {BastionModel} from './bastion-model.js?v=bastion-arms-146';
+import {BastionModel} from './bastion-model.js?v=bastion-heavyarms-152';
 import {BastionState} from './bastion-state.js?v=charged-shuriken-130';
 import {BastionProjectiles} from './bastion-projectiles.js?v=bastion-tracks-lead-145';
 import {BastionEffects} from './bastion-effects.js?v=charged-shuriken-130';

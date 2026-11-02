@@ -7,48 +7,65 @@ export class BastionArt {
   const shape=new THREE.Shape();const b=.09;shape.moveTo(-.5+b,-.5);shape.lineTo(.5-b,-.5);shape.lineTo(.5,-.5+b);shape.lineTo(.5,.5-b);shape.lineTo(.5-b,.5);shape.lineTo(-.5+b,.5);shape.lineTo(-.5,.5-b);shape.lineTo(-.5,-.5+b);shape.closePath();
   this.armourGeometry=new THREE.ExtrudeGeometry(shape,{depth:.82,bevelEnabled:true,bevelSize:.07,bevelThickness:.09,bevelSegments:1,steps:1,curveSegments:1});this.armourGeometry.translate(0,0,-.41);this.armourGeometry.scale(.5/.57,.5/.57,1);
   this.cylinder=new THREE.CylinderGeometry(1,1,1,10,1);this.ring=new THREE.TorusGeometry(1,.11,4,16);this.sphere=new THREE.IcosahedronGeometry(1,1);
-  this.materials={armour:new THREE.MeshStandardMaterial({color:'#657a86',metalness:.28,roughness:.68}),light:new THREE.MeshStandardMaterial({color:'#b1bfbd',metalness:.32,roughness:.5}),dark:new THREE.MeshStandardMaterial({color:'#263b46',metalness:.22,roughness:.67}),gold:new THREE.MeshStandardMaterial({color:'#c8974e',metalness:.3,roughness:.45}),energy:new THREE.MeshStandardMaterial({color:'#ffbe77',emissive:'#ff6c26',emissiveIntensity:2.5}),cool:new THREE.MeshStandardMaterial({color:'#7aeee3',emissive:'#22aca3',emissiveIntensity:1.2})};
-  for(const part of model.parts){part.section.mesh.geometry=this.armourGeometry;part.material.color.set('#435d6b');part.material.metalness=.25;}
+  this.materials={armour:new THREE.MeshStandardMaterial({color:'#bf5a29',metalness:.28,roughness:.68}),light:new THREE.MeshStandardMaterial({color:'#e2dfd4',metalness:.32,roughness:.5}),dark:new THREE.MeshStandardMaterial({color:'#26303a',metalness:.22,roughness:.67}),gold:new THREE.MeshStandardMaterial({color:'#e6b64e',metalness:.3,roughness:.45}),energy:new THREE.MeshStandardMaterial({color:'#ffbe77',emissive:'#ff6c26',emissiveIntensity:2.5}),cool:new THREE.MeshStandardMaterial({color:'#8cf3b7',emissive:'#24bd79',emissiveIntensity:1.2})};
+  for(const part of model.parts){part.section.mesh.geometry=this.armourGeometry;part.material.color.set(part.id==='head'||part.id.includes('leg')||part.id.includes('upper-arm')||part.id.includes('forearm-body')||part.id.includes('shoulder')?'#d7d6cb':part.id==='hip'?'#7f3028':'#303945');part.material.metalness=.25;}
   const torso=model.torso,head=model.head;
   for(const side of[-1,1]){
    this.box(torso,[side*3.2,4.1,3.96],[5.7,3.7,.65],'armour').rotation.z=side*-.06;
    this.box(torso,[side*3.8,-4.2,3.96],[4.5,2.9,.55],'armour');this.box(torso,[side*5.65,-.5,4],[1.1,6.2,.4],'light');
    for(let i=0;i<4;i++)this.box(torso,[side*(1.4+i*.28),4,4.4],[.1,1.65,.08],'gold');
    const shoulder=model.arms[side<0?0:1],elbow=model.elbows[side<0?0:1],forearm=model.forearms[side<0?0:1];this.forearms=model.forearms;
-   this.box(shoulder,[side*.2,2.4,0],[6.6,.4,8.5],'armour');this.box(shoulder,[side*.25,.4,4.5],[4.1,1.25,.18],'light');this.disc(shoulder,[side*2.1,-.2,0],1.9,.45,'dark','x');this.disc(shoulder,[side*2.36,-.2,0],1.25,.22,'gold','x');
+   this.box(shoulder,[side*.2,2.25,0],[7.2,1,8.9],'light');this.box(shoulder,[side*.25,.1,4.5],[6.3,3.6,.35],'armour');this.disc(shoulder,[side*2.1,-.2,0],1.9,.45,'dark','x');this.disc(shoulder,[side*2.36,-.2,0],1.25,.22,'gold','x');
    // Separate upper armour, exposed elbow axle, forearm casing and wrist cuff.
-   this.box(shoulder,[0,-3.8,4.12],[3.5,4.8,.42],'armour');this.box(shoulder,[0,-3.7,-4.12],[3.45,4.5,.35],'dark');this.trim(shoulder,[side*1.45,-3.5,4.39],[.16,3.2,.06],'cool');
+   this.box(shoulder,[0,-3.8,4.12],[3.5,4.8,.42],'light');this.box(shoulder,[0,-3.7,-4.12],[3.45,4.5,.35],'dark');this.trim(shoulder,[side*1.45,-3.5,4.39],[.16,3.2,.06],'cool');
    this.disc(elbow,[side*2.25,0,0],1.55,.55,'dark','x');this.disc(elbow,[side*2.57,0,0],1.1,.2,'gold','x');this.disc(elbow,[side*2.7,0,0],.5,.15,'light','x');this.box(elbow,[0,0,4.01],[3.1,1.5,.25],'dark');for(let j=0;j<3;j++)this.trim(elbow,[(j-1)*.6,0,4.17],[.22,.65,.08],'gold');
-   this.box(forearm,[0,-2.75,4.34],[3.8,4.9,.45],'armour');this.box(forearm,[0,-2.7,-4.34],[3.8,4.7,.4],'dark');this.box(forearm,[0,-.3,0],[4.65,.7,8.7],'light');this.box(forearm,[0,-5.45,0],[4.7,.7,8.8],'dark');for(let j=0;j<3;j++){this.trim(forearm,[0,-1.6-j*.7,4.61],[2.8,.2,.1],'dark');this.box(forearm,[(j-1)*1.1,-6.65,4.52],[.8,.8,.3],'light');}
+   this.box(forearm,[0,-2.75,4.34],[3.8,4.9,.45],'light');this.box(forearm,[0,-2.7,-4.34],[3.8,4.7,.4],'dark');this.box(forearm,[0,-.3,0],[4.65,.7,8.7],'light');this.box(forearm,[0,-5.45,0],[4.7,.7,8.8],'dark');for(let j=0;j<3;j++){this.trim(forearm,[0,-1.6-j*.7,4.61],[2.8,.2,.1],'dark');this.box(forearm,[(j-1)*1.1,-6.65,4.52],[.8,.8,.3],'light');}
    const wristCollar=this.disc(forearm,[0,-6.6,0],2.4,.5,'gold');wristCollar.scale.z=4.2;
-   const leg=model.legs[side<0?0:1];this.box(leg,[0,1.4,4.75],[4.8,7.2,.4],'armour');this.box(leg,[0,-4.5,0],[5.5,1.3,9.6],'dark');this.box(leg,[0,3.9,0],[5.4,1.1,9.5],'armour');this.box(leg,[side*1.7,1.4,5],[.2,5.2,.08],'cool');
+   const leg=model.legs[side<0?0:1];this.box(leg,[0,1.4,4.75],[4.8,7.2,.4],'light');this.box(leg,[0,-4.5,0],[5.5,1.3,9.6],'dark');this.box(leg,[0,3.9,0],[5.4,1.1,9.5],'armour');this.box(leg,[side*1.7,1.4,5],[.2,5.2,.08],'cool');
 
   }
   this.box(torso,[0,-5.8,4.08],[2.3,1.3,.2],'gold');for(let i=0;i<5;i++)this.box(torso,[0,(i-2)*1.6,-4.08],[1.5,.6,.2],'light');
-  this.disc(head,[0,-3.1,0],1.8,1.5,'dark');this.box(head,[0,.1,3.07],[4.9,1.6,.18],'dark');this.box(head,[0,.7,3.2],[5.1,.4,.18],'light');this.box(head,[0,-.1,3.22],[3.8,.34,.15],'energy');
-  for(const side of[-1,1]){this.box(head,[side*2.25,-1.45,2.95],[1.05,2.2,.45],'armour').rotation.z=side*.14;this.disc(head,[side*3.02,0,0],.9,.25,'gold','x');}this.box(head,[0,-2.2,3.06],[2.8,.65,.25],'gold');
-  this.box(head,[0,2.25,0],[5.6,.5,6.3],'armour');this.heavyArmour();this.tracks=new DroneTracks(model.root,{armor:this.materials.armour,dark:this.materials.dark});this.tracks.root.name='Bastion twin tread base';this.tracks.root.scale.setScalar(5);this.tracks.root.position.y=-.4;for(const p of model.parts)if(p.node===model.chassis||model.feet.includes(p.node))p.section.mesh.visible=false;
+  this.helmet();this.heavyArmour();this.tracks=new DroneTracks(model.root,{armor:this.materials.armour,dark:this.materials.dark});this.tracks.root.name='Bastion twin tread base';this.tracks.root.scale.setScalar(5);this.tracks.root.position.y=-.4;for(const p of model.parts)if(p.node===model.chassis||model.feet.includes(p.node))p.section.mesh.visible=false;
+ }
+ helmet(){const h=this.model.head;
+  this.disc(h,[0,-2.8,0],1.85,1.1,'dark');
+  this.box(h,[0,.2,3.12],[5.1,2.05,.4],'dark');
+  this.box(h,[0,-1.4,3.38],[2.65,1.65,.55],'light');
+  this.box(h,[0,-2.15,3.75],[1.2,.95,.7],'armour');
+  this.box(h,[0,2.4,.15],[1.15,1.45,5.9],'light');
+  this.box(h,[0,2,3.28],[.75,.8,.2],'dark');this.trim(h,[0,2.03,3.43],[.45,.5,.08],'cool');
+  for(const side of[-1,1]){
+   this.box(h,[side*2.36,-.65,3.2],[1.05,2.75,.8],'light').rotation.z=side*-.16;
+   this.box(h,[side*1.25,.78,3.43],[2.05,.42,.28],'light').rotation.z=side*.12;
+   this.trim(h,[side*1.02,.22,3.48],[1.42,.32,.12],'cool').rotation.z=side*.08;
+   this.disc(h,[side*3.15,.2,.15],1.13,.42,'light','x');
+   this.disc(h,[side*3.4,.2,.15],.67,.12,'dark','x');
+   const fin=this.trim(h,[side*1.7,2.5,3.42],[.3,4.5,.3],'gold');fin.rotation.z=-side*1.03;
+   for(let i=0;i<2;i++)this.trim(h,[side*1.72,-1.05-i*.4,3.67],[.5,.13,.08],'dark');
+  }
  }
  box(parent,p,size,material){const m=new THREE.Mesh(this.armourGeometry,this.materials[material]);m.position.fromArray(p);m.scale.fromArray(size);m.castShadow=m.receiveShadow=true;m.userData.bastionArmour=true;parent.add(m);return m;}
  trim(parent,p,size,material='dark'){this.trimGeometry??=new THREE.BoxGeometry(1,1,1);const m=new THREE.Mesh(this.trimGeometry,this.materials[material]);m.position.fromArray(p);m.scale.fromArray(size);m.castShadow=m.receiveShadow=true;m.userData.bastionArmour=true;parent.add(m);return m;}
  heavyArmour(){const m=this.model,t=m.torso;this.pistons=[];this.ventDoors=[];this.armHydraulics=[];
   const collar=this.disc(m.root,[0,19.4,0],7.25,1.2,'dark');collar.scale.z=4.15;const rim=this.disc(m.root,[0,20,0],7.4,.3,'gold');rim.scale.z=4.25;
   // A broad, layered chest and skirt leave every exposed-core plate unobstructed.
-  for(const side of[-1,1]){this.box(t,[side*6.5,2.1,3.98],[2.2,8.2,.6],'armour').rotation.z=side*-.035;this.box(t,[side*5.6,-6.8,3.95],[3.4,3.5,.5],'dark');this.box(t,[side*6.4,5.7,1.1],[2.9,1.4,6.3],'armour');
-   this.box(t,[side*4.7,8.4,-3.4],[2.6,9,2.8],'dark');this.box(t,[side*4.7,13.2,-3.4],[3.1,1.5,3.1],'armour');for(let j=0;j<6;j++){this.trim(t,[side*4.7,6+j*.85,-4.86],[2,.24,.12],'light');this.trim(t,[side*4.7,6+j*.85,-4.96],[1.4,.07,.04],'energy');}
-   const door=new THREE.Group();door.position.set(side*4.7,11.8,-4.9);t.add(door);this.box(door,[0,.3,0],[2.2,1.6,.2],'armour');this.ventDoors.push(door);
+  for(const side of[-1,1]){this.box(t,[side*6.8,2.1,3.98],[2.8,8.2,.6],'light').rotation.z=side*-.035;this.box(t,[side*5.6,-6.8,3.95],[3.8,3.5,.7],'light');this.box(t,[side*6.4,5.7,1.1],[2.9,1.4,6.3],'armour');
+   this.box(t,[side*4.7,8,-3.4],[3.1,6.4,3.1],'dark');this.box(t,[side*4.7,11.7,-3.4],[3.5,1.5,3.5],'armour');for(let j=0;j<6;j++){this.trim(t,[side*4.7,6+j*.65,-4.86],[2,.24,.12],'light');this.trim(t,[side*4.7,6+j*.65,-4.96],[1.4,.07,.04],'energy');}
+   const door=new THREE.Group();door.position.set(side*4.7,10.8,-5.1);t.add(door);this.box(door,[0,.3,0],[2.2,1.6,.2],'armour');this.ventDoors.push(door);
    const shoulder=m.arms[side<0?0:1];this.box(shoulder,[side*2.7,0,1],[1.2,3.6,7.5],'dark');for(let j=0;j<4;j++)this.trim(shoulder,[side*.1,1-j*.5,-4.48],[4,.22,.13],'light');this.box(shoulder,[side*.2,1.1,4.55],[4.7,.55,.2],'gold');
-   const leg=m.legs[side<0?0:1];this.box(leg,[0,1,-4.75],[4.8,8.2,.45],'dark');for(const flank of[-1,1]){this.disc(leg,[flank*2.7,0,0],.27,8.4,'light');this.disc(leg,[flank*2.7,3.5,0],.5,2.2,'dark');this.disc(leg,[flank*2.7,-4.1,0],.6,.6,'gold');}this.box(leg,[0,-2.5,5],[2.4,1.25,.15],'dark');for(let j=0;j<5;j++)this.trim(leg,[(j-2)*.36,-2.5,5.1],[.16,1.02,.06],'gold').rotation.z=-.5;
+   this.disc(t,[side*3.3,4.1,4.48],1.15,.22,'gold','z');this.disc(t,[side*3.3,4.1,4.66],.91,.2,'dark','z');for(let k=0;k<4;k++){const a=k*Math.PI/2;this.disc(t,[side*3.3+Math.cos(a)*.48,4.1+Math.sin(a)*.48,4.79],.19,.09,'light','z');}
+   const leg=m.legs[side<0?0:1];this.box(leg,[0,2.7,5],[4.1,2.8,.45],'armour');this.box(leg,[0,1,-4.75],[4.8,8.2,.45],'dark');for(const flank of[-1,1]){this.disc(leg,[flank*2.7,0,0],.27,8.4,'light');this.disc(leg,[flank*2.7,3.5,0],.5,2.2,'dark');this.disc(leg,[flank*2.7,-4.1,0],.6,.6,'gold');}this.box(leg,[0,-2.5,5],[2.4,1.25,.15],'dark');for(let j=0;j<5;j++)this.trim(leg,[(j-2)*.36,-2.5,5.1],[.16,1.02,.06],'gold').rotation.z=-.5;
    const rod=this.disc(t,[side*6.8,-5.7,1],.23,3.4,'light');const sleeve=this.disc(t,[side*6.8,-4.4,1],.45,1.5,'dark');rod.userData.bastionArmour=sleeve.userData.bastionArmour=false;this.pistons.push(rod);
   }
   for(let i=0;i<2;i++){const side=i===0?-1:1;for(const z of[-2.8,2.8]){const barrel=this.disc(m.arms[i],[0,0,0],.36,1,'dark'),rod=this.disc(m.arms[i],[0,0,0],.18,1,'light');barrel.userData.bastionArmour=rod.userData.bastionArmour=false;this.armHydraulics.push({arm:m.arms[i],elbow:m.elbows[i],start:new THREE.Vector3(side*2.05,-2.2,z),end:new THREE.Vector3(side*2.1,-.4,z),barrel,rod});}}
   for(const side of[-1,1])this.trim(t,[side*.3,4.1,4.48],[.13,.9,.08],'gold').rotation.z=side*.6;this.trim(t,[0,3.15,4.5],[.7,.1,.07],'light');
   // Recess the sensor head in a protective armoured collar, rather than a mobile neck.
-  this.box(t,[0,8.3,2.55],[8.4,1.7,3.2],'dark');for(const side of[-1,1])this.box(t,[side*4.1,9.1,.3],[1.4,3.4,7.3],'armour');this.trim(m.head,[0,-.7,3.23],[3.5,.18,.08],'energy');
+  this.box(t,[0,7,2.55],[8.2,1.05,2.5],'dark');for(const side of[-1,1])this.box(t,[side*4.1,9.1,.3],[1.4,3.4,7.3],'armour');this.trim(m.head,[0,-.7,3.23],[3.5,.18,.08],'energy');
  }
  disc(parent,p,radius,length,material,axis='y'){const m=new THREE.Mesh(this.cylinder,this.materials[material]);m.position.fromArray(p);m.scale.set(radius,length,radius);if(axis==='x')m.rotation.z=Math.PI/2;if(axis==='z')m.rotation.x=Math.PI/2;m.castShadow=true;m.userData.bastionArmour=true;parent.add(m);return m;}
- dressModules(){const m=this.model,g=this.config.gatling;for(let i=0;i<m.launchers.length;i++){const node=m.launchers[i];if(i===g.gunModule){const section=m.parts.find(p=>p.node===node).section;section.mesh.scale.set(3.8,4.6,2);section.mesh.position.z=-1.9;this.buildGun(node);continue;}this.box(node,[0,0,0],[2.6,3,2.7],'armour');const sign=this.config.launchers.positions[i][2]>0?1:-1;for(let j=0;j<4;j++)this.box(node,[0,(j-1.5)*.55,sign*1.39],[1.7,.23,.08],'energy');this.box(node,[0,1.55,0],[1.6,.25,2.5],'gold');}}
+ dressModules(){const m=this.model,g=this.config.gatling;for(let i=0;i<m.launchers.length;i++){const node=m.launchers[i];if(i===g.gunModule){const section=m.parts.find(p=>p.node===node).section;section.mesh.scale.set(3.8,4.6,2);section.mesh.position.z=-1.9;this.buildGun(node);continue;}this.box(node,[0,0,0],[2.6,3,2.7],'light');const sign=this.config.launchers.positions[i][2]>0?1:-1;this.trim(node,[0,0,sign*1.39],[2.1,2.45,.08],'dark');for(let j=0;j<4;j++){const x=(j%2-.5)*.95,y=(Math.floor(j/2)-.5)*1.1;this.disc(node,[x,y,sign*1.49],.34,.15,'gold','z');this.disc(node,[x,y,sign*1.59],.23,.08,'energy','z');}this.box(node,[0,1.55,0],[1.6,.25,2.5],'gold');}}
  buildGun(node){const g=this.config.gatling;this.gunPivot=new THREE.Group();this.gunPivot.position.set(0,0,-1);node.add(this.gunPivot);this.box(this.gunPivot,[0,0,.6],[3.5,3.7,3.5],'dark');this.disc(this.gunPivot,[0,0,1.6],1.83,.45,'armour','z');
+  this.disc(this.gunPivot,[-2.05,0,.4],1.65,.95,'light','x');this.disc(this.gunPivot,[-2.6,0,.4],1.12,.12,'dark','x');for(let j=0;j<5;j++)this.trim(this.gunPivot,[-1.95,-.8+j*.38,1.4],[.65,.26,.38],'gold');
   this.rotor=new THREE.Group();this.gunPivot.add(this.rotor);this.muzzles=[];const tip=3.45+g.barrelLength/2;
   for(let i=0;i<g.barrels;i++){const a=i/g.barrels*Math.PI*2,x=Math.cos(a)*g.barrelRadius,y=Math.sin(a)*g.barrelRadius;this.disc(this.rotor,[x,y,3.45],.34,g.barrelLength,'light','z');this.disc(this.rotor,[x,y,tip],.4,.26,'dark','z');this.disc(this.rotor,[x,y,tip+.16],.24,.08,'energy','z');const muzzle=new THREE.Object3D();muzzle.position.set(x,y,tip+.28);this.rotor.add(muzzle);this.muzzles.push(muzzle);}
   this.disc(this.rotor,[0,0,tip-.9],1.65,.38,'armour','z');this.disc(this.rotor,[0,0,2.2],1.65,.38,'gold','z');this.disc(this.rotor,[0,0,3.8],.35,4.4,'dark','z');
