@@ -1,8 +1,8 @@
-import {BastionRain} from './bastion-rain.js?v=bastion-layout-154';
+import {BastionRain} from './bastion-rain.js?v=dual-gatling-156';
 import * as THREE from './vendor/three.module.js';
-import {BastionModel} from './bastion-model.js?v=bastion-layout-154';
+import {BastionModel} from './bastion-model.js?v=dual-gatling-156';
 import {BastionState} from './bastion-state.js?v=charged-shuriken-130';
-import {BastionProjectiles} from './bastion-projectiles.js?v=bastion-tracks-lead-145';
+import {BastionProjectiles} from './bastion-projectiles.js?v=dual-gatling-156';
 import {BastionEffects} from './bastion-effects.js?v=charged-shuriken-130';
 import {angleDistance} from './bastion-geometry.js?v=charged-shuriken-130';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
@@ -15,7 +15,7 @@ export class Bastion {
  reset(seed=this.config.seed){this.state.reset(seed);this.model.reset();this.damage.units=this.damage.units.filter(u=>u.entity!==this);this.combatUnit=this.damage.add('bastion','robot',this,this.config.core.health);this.player=null;this.attackKey='';this.stunRemaining=0;this.hitCooldown=0;this.feedback='';this.waves=[];this.projectiles?.reset();this.rain?.reset();this.effects?.reset();this.sync();}
  sync(){this.combatUnit.shapes=this.dead?[]:this.model.shapes(this.state);}
  applyHit(hit,power,key='strike'){if(hit?.orb){if(hit.orb.kind==='gatling')return 0;if(this.config.deflect.enabled&&this.coreOpen)this.projectiles?.deflect(hit.orb,this.aimPoint());else this.projectiles?.remove(hit.orb);return 0;}if(hit?.unit!==this.combatUnit)return 0;this.attackKey=String(key);const result=this.damage.hurt(this.combatUnit,power,hit.point,hit.part);this.sync();return result;}
- modifyDamage(power,point,part){if(part?.startsWith('launcher-')){const i=Number(part.split('-')[1]),dealt=this.state.hurtLauncher(i,power),l=this.state.launchers[i];if(dealt){this.feedback=l.destroyed?'WEAPON MODULE DESTROYED':'WEAPON MODULE HIT';this.effects?.impact(point,'#ffb151');if(l.destroyed){for(const s of this.sections)if(s.node===this.model.launchers[i])s.hidden=s.collisionDisabled=true;this.model.launchers[i].visible=false;this.onEvent((i===this.config.rain.module?'Shoulder artillery destroyed · bombardment offline.':i===this.config.gatling.gunModule?'Gatling cannon destroyed · weapon offline.':'Power bank '+(i+1)+' destroyed · thinner Gatling barrage.'));}}else this.feedback='WEAPON MODULES ARMOURED DURING BARRAGE';return 0;}
+ modifyDamage(power,point,part){if(part?.startsWith('launcher-')){const i=Number(part.split('-')[1]),dealt=this.state.hurtLauncher(i,power),l=this.state.launchers[i];if(dealt){this.feedback=l.destroyed?'WEAPON MODULE DESTROYED':'WEAPON MODULE HIT';this.effects?.impact(point,'#ffb151');if(l.destroyed){for(const s of this.sections)if(s.node===this.model.launchers[i])s.hidden=s.collisionDisabled=true;this.model.launchers[i].visible=false;this.onEvent((i===this.config.rain.module?'Shoulder artillery destroyed · bombardment offline.':(i===this.config.gatling.gunModule||i===this.config.gatling.secondGunModule)?'Gatling cannon destroyed · weapon offline.':'Power bank '+(i+1)+' destroyed · thinner Gatling barrage.'));}}else this.feedback='WEAPON MODULES ARMOURED DURING BARRAGE';return 0;}
   if(part==='core'&&this.coreOpen){this.feedback='CORE STRIKE';this.effects?.impact(point,'#6ffff0');return power*this.config.core.damageMultiplier*this.state.multiplier(this.attackKey);}this.feedback=this.coreOpen?'HIT THE GLOWING CORE':'CORE ARMOURED';return 0;}
  interrupt(seconds=1){if(this.dead)return false;this.stunRemaining=Math.max(this.stunRemaining,seconds);this.onEvent('Bastion interrupted · armour locked briefly.');return true;}
  defeat(){this.state.defeat();this.projectiles?.reset();this.rain?.reset();this.waves=[];this.effects?.impact(this.root.position.clone().add(new THREE.Vector3(0,25,0)),'#baffed',8);this.onEvent('BASTION DEFEATED · Reset to replay this seed.');}

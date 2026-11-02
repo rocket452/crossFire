@@ -140,14 +140,14 @@
         2.5
       ],
       [
-        2.4,
-        2.8,
-        2.5
+        5.4,
+        6.4,
+        9
       ],
       [
-        3.8,
-        4.6,
-        6.5
+        5.4,
+        6.4,
+        9
       ],
       [
         2.4,
@@ -201,7 +201,7 @@
       "gatling",
       "skyfall"
     ],
-    "maxProjectiles": 240,
+    "maxProjectiles": 480,
     "safeRadius": 1.45,
     "greedyRadius": 0.45,
     "safeStartRadius": 30,
@@ -365,7 +365,9 @@
     "haloScale": 1.5,
     "leadChance": 0.3333333333333333,
     "velocityResponse": 20,
-    "leadSpreadScale": 0.25
+    "leadSpreadScale": 0.25,
+    "secondGunModule": 2,
+    "visualScale": 1.4
   },
   "rain": {
     "count": 21,
