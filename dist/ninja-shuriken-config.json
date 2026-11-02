@@ -98,7 +98,7 @@
   },
   "kunai": {
     "cooldown": 1,
-    "storeSeconds": 1,
+    "storeSeconds": 0.5,
     "maxStored": 5,
     "burstInterval": 0.075,
     "speed": 110,
@@ -106,7 +106,10 @@
     "damage": 55,
     "radius": 0.18,
     "trailLength": 1.8,
-    "maxProjectiles": 40
+    "maxProjectiles": 40,
+    "shadowHeight": 0.85,
+    "shadowSpacing": 0.34,
+    "shadowScale": 0.8
   },
   "slash": {
     "cooldown": 1,
