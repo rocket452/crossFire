@@ -201,3 +201,7 @@ Diagonal projection extends wall width/travel to cover all arena corners, with e
 `beamWalls.gapShift` is now 40m (was 18m). The three gaps progress consistently to one side: adjacent gaps are 40m apart and the first/third are 80m apart. A seeded direction is chosen with room for the full sequence; edge starts reverse the progression inward instead of clamping successive gaps to the same location. Gap width, wall speed, wave interval and facing lock are retained.
 
 Node checks cover several seeds and starts at both edges, intermediate positions and the center, verifying exact spacing, no repeated gaps, in-bounds placement, swept hit/gap behavior and rotated facing. Desktop/touch visual browser checks verify sky charge, three rotated walls, completion and rebuild cleanup.
+
+## Wider safe openings (revision 162)
+
+`beamWalls.gapWidth` is now 18m, up from 12m (+50%). Beam omission, green warning corridors, edge posts and swept damage checks all use this shared width. Successive gap centers remain 40m apart. The beam-wall Node suite passes safe/damaging sweeps, fast crossings, facing directions, diagonal coverage, seeded edge placements and reset with the new width.
