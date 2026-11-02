@@ -1,5 +1,5 @@
 import {WalkerWeapons} from './walker-weapons.js?v=weapon-break-81';
-import {CannonTracking,CANNON_TRACKING} from './cannon-tracking.js?v=beam-tracking-61';
+import {CannonTracking,CANNON_TRACKING} from './cannon-tracking.js?v=beam-tracking-150';
 import * as THREE from './vendor/three.module.js';
 import {trackedBeamWarningPlan} from './beam-aim.js?v=beam-tracking-61';
 import {BeamCycle} from './beam-cycle.js?v=beam-3';

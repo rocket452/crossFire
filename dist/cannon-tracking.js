@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-export const CANNON_TRACKING=Object.freeze({acquireDegreesPerSecond:30,fireDegreesPerSecond:20,waistDegreesPerSecond:20,startErrorDegrees:7});
+export const CANNON_TRACKING=Object.freeze({acquireDegreesPerSecond:21,fireDegreesPerSecond:14,waistDegreesPerSecond:14,startErrorDegrees:7});
 // Keep aim in world space: rotating the pelvis/waist must not bypass the beam's turn cap.
 export class CannonTracking {
  constructor(config={}){this.config={...CANNON_TRACKING,...config};this.direction=new THREE.Vector3();this.desired=new THREE.Vector3();this.turn=new THREE.Quaternion();this.blend=new THREE.Quaternion();this.reset();}

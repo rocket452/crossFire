@@ -37,3 +37,7 @@ Validation passed:
 - `head-telegraph-test.mjs`, `energy-beam-test.mjs`, `robot-arsenal-test.mjs`, `walker-weapons-test.mjs`: head/warning alignment, seven-second damage, cover breach, pilot protection, weapon sequencing, shield behavior, disarming and rebuild continue passing.
 
 Physical phone performance remains unmeasured.
+
+## Revision 150 — tracking speed reduced 30%
+
+Cannon acquisition/charging slew is now 21°/s (was 30), firing slew 14°/s (was 20), and cannon waist follow 14°/s (was 20). Target commitment, warning alignment, damage, durations and chassis locomotion are unchanged. Updated turn-cap assertions to the new values. Node checks at 30/60/120 Hz pass for live/hidden original targets, decoy rejection, normal tracking, relocation dodges, stun and reset. Head/telegraph checks pass. Desktop/touch gameplay checks verify the lower measured slew caps, actual player strafing, continued pursuit behind cover, warning/barrel alignment and city reset.
