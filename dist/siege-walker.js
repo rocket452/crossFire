@@ -112,7 +112,7 @@ export class SiegeWalker {
   else if(!locked&&this.eyeTarget&&this.beamAllowed===false)center=this.eyeTarget;
   const origin=this.plasmaCharging?this.nodes.plasma_cannon.getWorldPosition(new THREE.Vector3()):this.root.position;const desiredYaw=center?Math.atan2(center.x-origin.x,center.z-origin.z):this.gait.yaw;
   this.walkPose=this.gait.update(dt,time,desiredYaw);this.applyWalkPose(this.walkPose);
-  for(const step of this.walkPose.landings)this.onFootfall(step);
+  for(const step of this.walkPose.landings)this.onFootfall({...step,x:step.x+(this.spawnOrigin?.x||0),z:step.z+(this.spawnOrigin?.z||0)});
   const swing=Math.sin(time*Math.PI*2/this.gait.cycle);
   this.nodes.upperarm_l.rotation.x=-.10+swing*.18;this.nodes.forearm_l.rotation.x=-.23-Math.max(0,swing)*.08;
   this.nodes.chest.rotation.x=.025+this.walkPose.compression*.015;
@@ -180,7 +180,7 @@ export class SiegeWalker {
   return{target,yaw:head.rotation.y,pitch:head.rotation.x,direction:direction.toArray(),errorDegrees:desired?THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp(direction.dot(desired),-1,1))):null};
  }
  applyWalkPose(pose){
-  this.root.position.set(pose.x,pose.y,pose.z);this.root.rotation.y=pose.yaw;
+  const origin=this.spawnOrigin||{x:0,z:0};this.root.position.set(pose.x+origin.x,pose.y,pose.z+origin.z);this.root.rotation.y=pose.yaw;
   this.nodes.pelvis.position.x=this.restPositions.pelvis.x+pose.sway;
   this.nodes.pelvis.rotation.set(0,pose.twist,pose.roll);
   this.root.updateMatrixWorld(true);
@@ -189,9 +189,10 @@ export class SiegeWalker {
    const thigh=this.nodes['thigh_'+foot.side],shin=this.nodes['shin_'+foot.side],ankle=this.nodes['foot_'+foot.side];
    thigh.getWorldPosition(k.hip);
    const heading=pose.yaw+angleDelta(foot.yaw,pose.yaw)*.5;
-   const knee=solveLegKnee(k.hip,foot.ankle,heading,shin.position.length(),ankle.position.length());
+   const targetAnkle={x:foot.ankle.x+origin.x,y:foot.ankle.y,z:foot.ankle.z+origin.z};
+   const knee=solveLegKnee(k.hip,targetAnkle,heading,shin.position.length(),ankle.position.length());
    k.upper.set(knee.x-k.hip.x,knee.y-k.hip.y,knee.z-k.hip.z).normalize();
-   k.lower.set(foot.ankle.x-knee.x,foot.ankle.y-knee.y,foot.ankle.z-knee.z).normalize();
+   k.lower.set(targetAnkle.x-knee.x,targetAnkle.y-knee.y,targetAnkle.z-knee.z).normalize();
    k.yaw.setFromAxisAngle(k.axis,heading);
    // Local down vectors retain a consistent knee bend plane during a turn.
    k.upper.applyQuaternion(k.rotation.copy(k.yaw).invert());

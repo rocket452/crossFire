@@ -14,3 +14,7 @@ Validation passed:
 - JavaScript syntax / whitespace checks. Screenshots reviewed at `/tmp/testing105-desktop.png`, `/tmp/testing105-phone.png` and `/tmp/testing105-setup-phone.png`.
 
 Physical-phone FPS/thermal performance remains unmeasured. Four heroes continue to be CPU-only because their existing game implementations have no player controller; this map does not add those controllers. Configuration resets the whole test rather than adding enemies to an ongoing encounter.
+
+## Expanded arena (revision 137)
+
+Combat Testing is now 240×240m (twice the former width and length). Movement bounds are ±116m; rescue-dash bounds are ±115m. The road grid extends across the new ground, the minimap uses the expanded bounds, and observer zoom/fog/shadows cover the larger field. The two existing 12-floor (36m) buildings stay at their existing central positions. Enemy presets spawn around the northeast corner (84, -84), with smaller robots spaced nearby. Reset preserves the same corner for Bastion and Siege Walker; the walker’s planted-foot animation translates with its spawn origin. Bastion rain can target the full field inside ±108m. Main city and evacuation dimensions/spawns are unchanged. Arena settings live in `dist/combat-arena-config.js`.

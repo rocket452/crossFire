@@ -10,7 +10,7 @@ Crossfire is a static JavaScript ES-module game using Three.js and Cannon-es. Th
 
 No shared player movement files were changed. Existing movement is 14 m/s running, 46 m/s boosted and 12/24 m/s wall-running, with unlimited duration and no movement stamina. Those existing speeds were preserved rather than adding a new cap or replacing the controller. The old speed readout is hidden in this arena. The existing weapon-charge system still powers attacks only; it does not tax movement. An arena adapter carries the player and viewing heading with articulated support transforms, without changing acceleration, jump, boost or wall-running rules.
 
-The boss is stationary, with a limited-rate pivot and animated arms/legs. Six launchers inherit arm/torso transforms. The continuous limb/torso boxes have walkable caps so the unchanged controller can climb, crest and circle them. The boss briefly pauses its pivot at ground contact to allow the existing wall-grab intent check to complete at high frame rates; it pivots again once the player climbs. `arena.testingPosition` defaults to `[24, 0, -24]`, on the open boulevard clear of the two existing buildings. No buildings are moved. The cyan route starts 30 m away so it stays inside the existing arena bounds. A camera-clearance adapter keeps the camera outside the larger body.
+The boss is stationary, with a limited-rate pivot and animated arms/legs. Six launchers inherit arm/torso transforms. The continuous limb/torso boxes have walkable caps so the unchanged controller can climb, crest and circle them. The boss briefly pauses its pivot at ground contact to allow the existing wall-grab intent check to complete at high frame rates; it pivots again once the player climbs. `arena.testingPosition` defaults to `[84, 0, -84]`, in the enlarged arena’s northeast corner, clear of the two existing buildings. No buildings are moved. The cyan route starts 30 m away; player movement and artillery targeting use the enlarged arena bounds. A camera-clearance adapter keeps the camera outside the larger body.
 
 ## Updated model and plasma Gatling attack
 
@@ -81,7 +81,7 @@ All values live in `dist/bastion-config.json`; reload after editing.
 | `timings.gapExtension` | 0.4 | Extra core exposure after threading gap |
 | `projectiles.speedScale / grazePerOrb / grazeCap` | 1 / 0.1 / 1 | Global travel scale and +100% graze cap |
 | `dilation.scale` | 0.35 | World-only slowdown, player timing unchanged |
-| `arena.testingPosition` | [24, 0, -24] | Spawn clear of the existing buildings |
+| `arena.testingPosition` | [84, 0, -84] | Spawn clear of the existing buildings |
 
 Legacy pattern parameters remain in the data for compatibility, but the active pool contains `gatling` and `skyfall`; they do not generate the previous sphere patterns.
 
