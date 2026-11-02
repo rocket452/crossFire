@@ -10,6 +10,8 @@ for(const [type,base] of [['wall',4],['slab',6],['column',10]]){
  world.damageChunk(c,base*1.1,{source:'siege-walker'});assert(c.hp>0);assert(c.scorch>.24);
 }
 world.reset();assert(world.chunks.every(c=>c.hp===c.maxHp&&c.scorch===0));
+// Keep this fixture below the whole-building 75% release threshold.
+for(let i=0;i<3;i++)world.addChunk({...spec('wall',100+i*5),building:world.chunks[0].building});
 const c=world.chunks[0],at={x:0,y:12,z:0};
 world.impact(at,4.5,.01,c,{player:true});assert.equal(c.state,'intact');assert(Math.abs(c.hp-4.75)<1e-9);assert(!world.pending.has(c));assert(changed.includes(c));
 const scorch=c.scorch;world.impact(at,.2,.01,c);assert(c.scorch>scorch);assert(Math.abs(c.hp-4.73)<1e-9,'direct damage applies exactly once');

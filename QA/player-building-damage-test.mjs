@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {DestructionWorld} from '../dist/destruction.js';
 const world=new DestructionWorld({maxDynamic:6,playerReserve:2});
+// These are individual panel strikes on larger, still-supported buildings.
+for(const building of ['old0','old1','old2','old3','target'])for(let i=0;i<3;i++)world.addChunk({type:'wall',building,floor:0,x:200+world.chunks.length*4,y:15,z:0,size:[2.5,2.72,.32]});
 for(let i=0;i<4;i++){const c=world.addChunk({type:'wall',building:'old'+i,floor:0,x:i*7,y:15,z:0,size:[2.5,2.72,.32]});world.queueDetach(c,{x:c.x-2,y:15,z:0},1);}
 world.step(1/60);assert.equal(world.dynamic.length,4);
 const hit=world.addChunk({type:'wall',building:'target',floor:0,x:60,y:15,z:0,size:[2.5,2.72,.32]});world.queueDetach(hit,{x:60,y:15,z:.16},1);world.step(1/60);assert.equal(hit.state,'intact');

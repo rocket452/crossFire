@@ -35,7 +35,7 @@ window.qa={
    await page.evaluate(()=>qa.weak(.2));const darker=await page.evaluate(()=>qa.sample());assert(darker.color.every((v,i)=>v<damaged.color[i]));
    const scorched=await page.evaluate(()=>qa.render());assert.equal(scorched.calls,clean.calls,'scorch requires no extra draw calls');
    await page.locator('#viewport').screenshot({path:'/tmp/armored-building-scorched'+(mobile?'-phone':'')+'.png'});
-   for(const [kind,expected]of Object.entries({shell:2.3,rocket:1.8,'ai-rocket':1.8,electric:1.2,'cpu-electric':1.2,force:2.6,rifle:.035,portal:.2,beam:35,'robot-rocket':18,plasma:32})){
+   for(const [kind,expected]of Object.entries({shell:2.3,rocket:1.8,'ai-rocket':1.8,electric:1.5,'cpu-electric':1.5,force:2.6,rifle:.035,portal:.2,beam:35,'robot-rocket':18,plasma:32})){
     await page.locator('#reset').click();const result=await page.evaluate(k=>qa.weapon(k),kind);assert(Math.abs(result.maxHp-result.hp-expected)<1e-6,kind+' source-aware damage must equal '+expected+' but was '+(result.maxHp-result.hp));assert(result.scorch>0,kind+' scorches its contacted panel');assert(result.color.every((v,i)=>v<result.original[i]),kind+' updates GPU instance tint');console.log('PASS',mobile?'phone':'desktop',kind,JSON.stringify(result));
    }
    assert(Math.abs(await page.evaluate(()=>qa.robotDamage())-15)<1e-8,'building armor does not reduce electricity damage to robot units');await page.evaluate(()=>qa.restore());
