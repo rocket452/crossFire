@@ -12,3 +12,7 @@ Verification:
 - Existing ninja motion, ground dash and jump-feel tests pass.
 
 Physical-phone performance has not been measured. Some earlier isolated motion fixtures still deliberately provide blocking mock contacts to test generic obstacle handling; live robot contacts now use the nonblocking path.
+
+## Revision 151 — Shift dash
+
+Kage's desktop ground/air dash is now bound to Shift (either Shift key); E no longer activates it. The desktop HUD and shuriken-lab help show Shift. Touch DASH, Volt Rush's bindings and dash movement/damage/cooldown behavior are unchanged. The phase browser suite checks the real Shift keyboard input, updated HUD reminder, E rejection, touch input, ground/air enemy pass-through, kill reset and building obstruction.
