@@ -411,7 +411,7 @@
     "max": 122,
     "height": 70,
     "gapWidth": 12,
-    "gapShift": 18,
+    "gapShift": 40,
     "spacing": 2,
     "radius": 0.28,
     "skyRadius": 1.5,

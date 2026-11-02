@@ -195,3 +195,9 @@ Artillery now fires 32 shots per barrage, up from 21 (50% increase rounded up). 
 Beam-wall travel now follows Bastion's world-facing direction captured when the sky-beam attack begins. All three waves, warning corridors and gap-edge posts share a locked horizontal attack frame; later body turning cannot move the advertised safe route. Player and previous-frame positions are transformed into that same frame for swept hit testing, and damage feedback uses the world-space crossing point.
 
 Diagonal projection extends wall width/travel to cover all arena corners, with exposure duration adjusted to let the longer sweep finish. Speed, three-wave count, gap width/spacing and damage are unchanged. Node checks pass forward/side/reverse/diagonal orientations, travel direction, locked yaw after body rotation, safe vs damaging high-speed crossings, full corner coverage and reset. Desktop/touch browser checks exercise a 60-degree facing attack with sky beam, all three active rotated rows, full completion and cleanup.
+
+## Wider successive gaps (revision 161)
+
+`beamWalls.gapShift` is now 40m (was 18m). The three gaps progress consistently to one side: adjacent gaps are 40m apart and the first/third are 80m apart. A seeded direction is chosen with room for the full sequence; edge starts reverse the progression inward instead of clamping successive gaps to the same location. Gap width, wall speed, wave interval and facing lock are retained.
+
+Node checks cover several seeds and starts at both edges, intermediate positions and the center, verifying exact spacing, no repeated gaps, in-bounds placement, swept hit/gap behavior and rotated facing. Desktop/touch visual browser checks verify sky charge, three rotated walls, completion and rebuild cleanup.

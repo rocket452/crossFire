@@ -1,9 +1,9 @@
-import {BastionBeamWalls} from './bastion-beam-walls.js?v=facing-walls-160';
-import {BastionRain} from './bastion-rain.js?v=facing-walls-160';
+import {BastionBeamWalls} from './bastion-beam-walls.js?v=wide-gaps-161';
+import {BastionRain} from './bastion-rain.js?v=wide-gaps-161';
 import * as THREE from './vendor/three.module.js';
-import {BastionModel} from './bastion-model.js?v=facing-walls-160';
-import {BastionState} from './bastion-state.js?v=facing-walls-160';
-import {BastionProjectiles} from './bastion-projectiles.js?v=facing-walls-160';
+import {BastionModel} from './bastion-model.js?v=wide-gaps-161';
+import {BastionState} from './bastion-state.js?v=wide-gaps-161';
+import {BastionProjectiles} from './bastion-projectiles.js?v=wide-gaps-161';
 import {BastionEffects} from './bastion-effects.js?v=charged-shuriken-130';
 import {angleDistance} from './bastion-geometry.js?v=charged-shuriken-130';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
