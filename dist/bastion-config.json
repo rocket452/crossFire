@@ -12,9 +12,9 @@
   "arena": {
     "radius": 116,
     "playerStart": [
-      3.8,
+      0,
       0.08,
-      30
+      104
     ],
     "initialAttackCharge": 100,
     "camera": [
@@ -26,9 +26,9 @@
     "cameraResolveIterations": 6,
     "fillIntensity": 1.8,
     "testingPosition": [
-      58.8,
       0,
-      -58.8
+      0,
+      0
     ]
   },
   "traversal": {

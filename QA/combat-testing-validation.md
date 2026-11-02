@@ -22,3 +22,9 @@ Combat Testing is now 240×240m (twice the former width and length). Movement bo
 ## Spawn contraction (revision 144)
 
 All Combat Testing enemy spawns are scaled to 70% of their former X/Z distance from map centre. Bastion/Siege Walker move from (84, -84) to (58.8, -58.8). Small-enemy formation offsets scale by 0.7 as well, so each enemy moves exactly 30% closer, while 4.9m lateral / 5.6m row spacing avoids starting overlap. The 240m ground, buildings, movement bounds, counts and original mission spawns are unchanged.
+
+## Centered combat layout (revision 159)
+
+Combat Testing keeps its 240m square bounds. Bastion and Siege Walker now spawn at (0,0); small enemy presets form a compact grid around that center. Four 12-storey buildings occupy the blocks at (±36,±36), preserving a clear central boss area and street approaches. The selected hero starts at (0,104), near the south edge, facing the center for controlled heroes. Shared reset/roster setup restores those positions for all six heroes. Main battle and evacuation layout filters are unchanged.
+
+`COMBAT_ARENA.heroStart` and `buildings` configure the layout; Bastion's arena testing position is centered as well. The HUD setup caption now describes four buildings. Desktop/touch `QA/arena-center-browser.cjs` passes all six hero selections and resets, centered Walker/Bastion/basic/mixed formations, four exact building positions, unobstructed hero spawn, and entering Kage control without moving the spawn. Screenshot `/tmp/arena159-desktop.png` visually reviewed; phone capture also saved. No page errors. Physical phone performance is unmeasured.
