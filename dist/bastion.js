@@ -1,5 +1,5 @@
 import {BastionBeamWalls} from './bastion-beam-walls.js?v=boss-building-damage-165';
-import {BastionRain} from './bastion-rain.js?v=gap-spacing-163';
+import {BastionRain} from './bastion-rain.js?v=artillery-buildings-166';
 import * as THREE from './vendor/three.module.js';
 import {BastionModel} from './bastion-model.js?v=gap-spacing-163';
 import {BastionState} from './bastion-state.js?v=gap-spacing-163';
