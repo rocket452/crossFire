@@ -339,7 +339,8 @@
     "flashSeconds": 0.07,
     "plateOpen": 2.35,
     "turnAcceleration": 0.5,
-    "headResponse": 1.8
+    "headResponse": 1.8,
+    "elbowBrace": 0.055
   },
   "gatling": {
     "gunModule": 3,
