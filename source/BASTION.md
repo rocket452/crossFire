@@ -10,7 +10,7 @@ Crossfire is a static JavaScript ES-module game using Three.js and Cannon-es. Th
 
 No shared player movement files were changed. Existing movement is 14 m/s running, 46 m/s boosted and 12/24 m/s wall-running, with unlimited duration and no movement stamina. Those existing speeds were preserved rather than adding a new cap or replacing the controller. The old speed readout is hidden in this arena. The existing weapon-charge system still powers attacks only; it does not tax movement. An arena adapter carries the player and viewing heading with articulated support transforms, without changing acceleration, jump, boost or wall-running rules.
 
-The boss is stationary, with a limited-rate pivot and animated arms/legs. Six launchers inherit arm/torso transforms. The continuous limb/torso boxes have walkable caps so the unchanged controller can climb, crest and circle them. The boss briefly pauses its pivot at ground contact to allow the existing wall-grab intent check to complete at high frame rates; it pivots again once the player climbs. `arena.testingPosition` defaults to `[84, 0, -84]`, in the enlarged arena’s northeast corner, clear of the two existing buildings. No buildings are moved. The cyan route starts 30 m away; player movement and artillery targeting use the enlarged arena bounds. A camera-clearance adapter keeps the camera outside the larger body.
+The boss is a stationary heavy weapons platform: broad feet and legs remain planted while the waist/weapon deck pivots with limited speed and acceleration. Six launchers inherit arm/torso transforms. The continuous limb/torso boxes have walkable caps so the unchanged controller can climb, crest and circle them. The boss briefly pauses its pivot at ground contact to allow the existing wall-grab intent check to complete at high frame rates; it pivots again once the player climbs. `arena.testingPosition` defaults to `[84, 0, -84]`, in the enlarged arena’s northeast corner, clear of the two existing buildings. No buildings are moved. The cyan route starts 30 m away; player movement and artillery targeting use the enlarged arena bounds. A camera-clearance adapter keeps the camera outside the larger body.
 
 ## Updated model and plasma Gatling attack
 
@@ -71,10 +71,10 @@ All values live in `dist/bastion-config.json`; reload after editing.
 | `gatling.leadSeconds / maxLeadDistance` | 0.65 s / 18 m | Bounded prediction |
 | `gatling.aimResponse / yawLimit / pitchLimit` | 8 / 1.25 rad / 1.2 rad | Tracking and gun articulation |
 | `gatling.gunModule / barrels` | 3 / 6 | Destructible weapon and barrel count |
-| `animation.barrelSpin / spinResponse` | 32 rad/s / 7 | Rotor animation |
-| `animation.recoilDistance / recoilRecovery` | 0.16 m / 18 | Per-shot recoil |
-| `animation.armBrace / forearmBend / braceDrop` | 0.06 rad / 0.12 rad / 0.25 m | Heavy firing pose |
-| `animation.headTurn / idleBob / plateOpen` | 0.55 rad / 0.1 m / 2.35 m | Head, idle and shutter motion |
+| `animation.barrelSpin / spinResponse` | 32 rad/s / 3.8 | Heavy rotor acceleration and coast-down |
+| `animation.recoilDistance / recoilRecovery` | 0.22 m / 9 | Per-shot recoil and slower mechanical recovery |
+| `animation.armBrace / forearmBend / braceDrop` | 0.045 rad / 0.065 rad / 0.18 m | Heavy firing pose |
+| `animation.headTurn / idleBob / plateOpen` | 0.38 rad / 0.015 m / 2.35 m | Head, idle and shutter motion |
 | `core.health / damageMultiplier / radius` | 6000 / 3 / 1.15 m | Fight length and aim target |
 | `launchers.health / positions / parents / sizes` | 360 / six attachment records | Cannon/power-bank health and colliders |
 | `pulse.gapHalfAngle / linger` | 0.24 rad / 0.8 s | Gap and lingering hazard |
@@ -115,3 +115,15 @@ This is a single-player combat-arena enemy with original procedural low-poly art
 Gatling plasma shots cannot be destroyed or deflected by hero attacks. Offensive collision traces pass through them, so they do not absorb attacks aimed at the boss. Defensive barriers and environmental cover still stop the shots; normal player-hit, graze, lifetime and safe-corridor behavior remains active. Other projectile types retain their existing interception rules.
 
 The floating Bastion status/control panel is hidden during normal combat. The top boss-health bar remains visible. F2 explicitly enables the developer overlay and its controls; disabling debug or resetting the arena hides it again.
+
+## Heavy chassis model and animation (revision 140)
+
+Bastion has a broader 15.2m chest, 5.2m-wide armoured legs, 6.4×9.4m planted feet and 7.2m-wide shoulder housings. Layered skirts, exposed leg hydraulics, guarded sensor head, rear reactor/exhaust towers, cooling louvers, hazard panels and muted industrial armour make it read as a fortified gun platform. Extra static pieces are batched by material and parent. The complete dressed model is 11,348 triangles / 130 render meshes before silhouettes; six-barrel gun, modules and cores retain their existing hierarchy.
+
+The lower chassis counter-transforms the weapon deck’s yaw so feet and leg colliders never skate around. Body turning is limited to 0.28rad/s with 0.5rad/s² acceleration. Walking sway is removed. Firing braces over a slower hydraulic response, with 1.5cm idle settling, 22cm barrel recoil, rotor inertia, opening cooling flaps and a restrained head look. Stun/death poses settle instead of flailing. Support carry uses the actual supporting section’s yaw, so a hero on a planted foot stays steady while one on the upper deck follows its turn. Repetition tracking uses the fixed chassis approach quadrants.
+
+Feet and shoulder volumes have matching climbable collision caps. Exposed-core locations, gun aiming, attack order/durations, damage, destructible modules, projectiles and the arena are retained. Reset closes the core visuals immediately. Hero movement settings are unchanged.
+
+Tune `body.turnRate`, `animation.turnAcceleration`, `poseResponse`, `headResponse`, `idleBob`, `braceDrop`, `armBrace`, `forearmBend`, `spinResponse`, `recoilDistance` and `recoilRecovery` in `bastion-config.json`. Model proportions and armour dressing are in `bastion-model.js` and `bastion-art.js`.
+
+`QA/bastion-heavy-test.mjs` verifies planted feet during a pivot, turn limits, planted versus rotating support carry, reset and the low-poly budget. Existing state/rain/proximity suites and the desktop/touch Bastion gameplay suite verify traversal, core/weapon damage, pulse, both ranged attacks, cycles and hero switching.

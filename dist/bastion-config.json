@@ -2,9 +2,9 @@
   "seed": 2718,
   "body": {
     "height": 40,
-    "turnRate": 0.48,
-    "legSwing": 0.018,
-    "armSwing": 0.028,
+    "turnRate": 0.28,
+    "legSwing": 0,
+    "armSwing": 0,
     "animationRate": 1.5,
     "shadowSize": 1024,
     "pauseTurnAtGroundContact": true
@@ -326,18 +326,20 @@
     "gravity": 4
   },
   "animation": {
-    "idleBob": 0.1,
-    "braceDrop": 0.25,
-    "armBrace": 0.06,
-    "forearmBend": 0.12,
-    "headTurn": 0.55,
-    "poseResponse": 6,
+    "idleBob": 0.015,
+    "braceDrop": 0.18,
+    "armBrace": 0.045,
+    "forearmBend": 0.065,
+    "headTurn": 0.38,
+    "poseResponse": 2.6,
     "barrelSpin": 32,
-    "spinResponse": 7,
-    "recoilDistance": 0.16,
-    "recoilRecovery": 18,
+    "spinResponse": 3.8,
+    "recoilDistance": 0.22,
+    "recoilRecovery": 9,
     "flashSeconds": 0.07,
-    "plateOpen": 2.35
+    "plateOpen": 2.35,
+    "turnAcceleration": 0.5,
+    "headResponse": 1.8
   },
   "gatling": {
     "gunModule": 3,
