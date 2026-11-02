@@ -2,14 +2,16 @@
 
 Available whenever Kage is player controlled. Select **Shuriken Lab** in the Scene menu for the isolated test scene, or `?scene=shuriken`. City Battle, Civilian Evacuation and Combat Testing retain their existing scenes and roster behavior.
 
-The implementation uses the existing Three.js JavaScript modules, `NinjaHero` aim ray/hand attachment, swept OBB collision queries and `UnitDamage` callbacks. `NinjaMotion` and `RunnerMotion` are unchanged. CPU Kage retains the previous automatic shuriken throws. Baseline running, air control, jump heights, dash distance/speed, wall jumps, kill resets and slow fall are unchanged.
+The implementation uses the existing Three.js JavaScript modules, `NinjaHero` aim ray/hand attachment, swept OBB collision queries and `UnitDamage` callbacks. `NinjaMotion` and `RunnerMotion` are unchanged. CPU Kage uses single kunai throws at the primary cooldown; charged teleport throws remain player controlled. Baseline running, air control, jump heights, dash distance/speed, wall jumps, kill resets and slow fall are unchanged.
 
 ## Controls
 
-- Hold **LMB / F** or the touch **HOLD / RELEASE** button, then release to throw.
+- **LMB / F / KUNAI:** tap for a fast kunai; hold to store up to five, release to throw a straight burst. One-second cooldown per release.
+- Hold **RMB / G / SHURIKEN**, then release for the existing charged teleport shuriken.
+- **R / SLASH:** short-range 180° melee sweep.
 - **Q / TELEPORT:** teleport to the full star's current position, including in flight.
 - **X / CANCEL:** dismiss the full star or cancel the current charge. Starting another charge also dismisses the previous full star.
-- **E / RMB / DASH:** the existing dash. Charge persists by default; `charge.dashCancels` switches cancellation on. The lab exposes this as a checkbox.
+- **E / DASH:** the existing dash. Charge persists by default; `charge.dashCancels` switches cancellation on. The lab exposes this as a checkbox.
 - **Space / JUMP:** existing high jump, double jump and wall kick. Charge persists through them.
 - **F3 / ◇:** landing debug points, chosen capsule location, space-check result and state.
 
@@ -83,3 +85,15 @@ The lab uses raised platforms to provide real gaps above the unchanged terrain b
 The visuals, oscillator audio, dummies and arrival strike pose are placeholders. The resolver deliberately uses conservative upright-capsule clearance against the project's OBB sections. There is no network layer or new movement system. Physical-phone thermal/FPS behavior remains unmeasured; touch browser simulation is not a physical-device benchmark.
 
 Kage’s dash also ignores live enemies’ climbable body sections while active, while its separate swept hit checks still deal 320 damage once per enemy. Normal movement restores those colliders, and city walls still stop the dash. Dash speed/range and kill resets are unchanged.
+
+## Kunai and slash loadout (revision 139)
+
+The charged shuriken is now the secondary attack. Its piercing, anchoring, Q teleport, X cancel, backstab and dash/jump refresh remain unchanged. Right click no longer dashes; E retains dash.
+
+The primary kunai loads one immediately on press, then one more per second while held (up to five after four seconds). Nothing fires while held. Release snapshots a straight aim line and fires the stored kunai 0.075s apart. A one-second cooldown starts on release; clicks during cooldown do not bypass it. Each kunai travels at 110m/s for up to 110m, deals 55 damage and stops at its first hit. Holding/charging never changes movement. CPU Kage also uses single kunai throws at the new cadence. Input loss cancels stored kunai and unlaunched burst shots without accidentally firing.
+
+R / SLASH applies 160 damage once to each enemy inside a 4.5m forward 180° sweep, with a one-second cooldown. It also intercepts destructible missiles and strikes nearby city panels through existing damage callbacks. Solid cover blocks the sweep. Boss armour and Aegis shield rules still apply; Bastion Gatling shots remain indestructible. A cyan arc and sword-arm swing show the melee area.
+
+Tune `kunai` and `slash` in `dist/ninja-shuriken-config.json`: cooldowns, store interval/cap, burst spacing, flight speed/range/damage/radius, pool cap, slash range/angle/vertical reach/damage and effect duration. `dist/kage-attacks.js` owns these attacks; `ninja-hero.js` handles their inputs and poses.
+
+`QA/kage-attacks-test.mjs` verifies cooldowns, five-stack release, straight volleys, first-hit damage, cancellation, melee multi-target damage, rear/range exclusions and cover. `QA/kage-loadout-browser.cjs` exercises mouse/touch attack mappings, stored burst, right-click teleport shuriken and R/touch slash in the live lab.

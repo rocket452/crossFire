@@ -95,5 +95,26 @@
     ],
     "hazardHeight": 6.1,
     "dummyHealth": 600
+  },
+  "kunai": {
+    "cooldown": 1,
+    "storeSeconds": 1,
+    "maxStored": 5,
+    "burstInterval": 0.075,
+    "speed": 110,
+    "range": 110,
+    "damage": 55,
+    "radius": 0.18,
+    "trailLength": 1.8,
+    "maxProjectiles": 40
+  },
+  "slash": {
+    "cooldown": 1,
+    "range": 4.5,
+    "arcDegrees": 180,
+    "verticalReach": 2.8,
+    "height": 1.2,
+    "damage": 160,
+    "effectSeconds": 0.24
   }
 }
