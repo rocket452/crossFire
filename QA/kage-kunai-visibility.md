@@ -1,0 +1,5 @@
+# Kunai visibility — revision 149
+
+Thrown kunai render at 2.75× their original size with an unlit pale-cyan blade and a dark back-face outline at 1.16× blade scale. The cyan trail is 4.5 m long and .10 m wide (previously 1.8 m / .035 m). These values are in the kunai section of `ninja-shuriken-config.json`. Held kunai, stored shadow markers, teleport shuriken and slash visuals are unchanged. Damage, 110 m/s flight speed, 110 m range, .18 m hit radius, one-second cooldown, .5-second stacking and five-kunai burst timing are unchanged. Outlines share the original low-poly geometry and use one additional instanced draw call, bounded to the existing 40-projectile limit.
+
+Passed Node `QA/kage-attacks-test.mjs` and Chromium `QA/kage-loadout-browser.cjs` on desktop and touch layouts. The latter verifies live blade instance scale, outline count, trail settings and unchanged collision radius/speed while in flight, plus taps, cooldown, five-stack release, first-hit damage, teleport shuriken, slash and input cancellation. Visually reviewed `/tmp/kage149-flight-desktop.png`; touch capture is `/tmp/kage149-flight-phone.png`. No page errors. Physical phone FPS unmeasured.

@@ -1,4 +1,4 @@
-import {KageAttacks} from './kage-attacks.js?v=shadow-kunai-143';
+import {KageAttacks} from './kage-attacks.js?v=visible-kunai-149';
 import {ChargedShuriken} from './charged-shuriken.js?v=shuriken-piercing-135';
 import {ShurikenWorld} from './shuriken-world.js?v=shuriken-piercing-135';
 import {ShurikenEffects} from './shuriken-effects.js?v=kage-loadout-139';
