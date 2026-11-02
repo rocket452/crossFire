@@ -2,7 +2,7 @@
   "seed": 2718,
   "body": {
     "height": 40,
-    "turnRate": 0.28,
+    "turnRate": 0.56,
     "legSwing": 0,
     "armSwing": 0,
     "animationRate": 1.5,
