@@ -187,7 +187,8 @@
       "segments": 48,
       "rows": 24,
       "groundOpacity": 0.75
-    }
+    },
+    "triggerDistance": 12
   },
   "barrage": {
     "countByCycle": [
@@ -213,7 +214,7 @@
   "projectiles": {
     "speed": 36,
     "speedScale": 1,
-    "radius": 1.24,
+    "radius": 2.48,
     "life": 5,
     "damage": 18,
     "hitRadius": 0.5,
@@ -345,8 +346,8 @@
     "barrelLength": 4.5,
     "spinupSeconds": 0.65,
     "speed": 36,
-    "radius": 1.24,
-    "spread": 0.054,
+    "radius": 2.48,
+    "spread": 0.108,
     "leadSeconds": 0.65,
     "maxLeadDistance": 18,
     "maxTrackedSpeed": 65,

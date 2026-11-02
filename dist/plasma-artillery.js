@@ -1,4 +1,4 @@
-import {projectileSilhouette} from './projectile-silhouette.js?v=silhouette-49';
+import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
 import * as THREE from './vendor/three.module.js';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 export const PLASMA={gravity:5,warningSeconds:2.4,shotSpacing:1.6,blastRadius:7,projectileRadius:.65,maxShells:2,leadIterations:10,maxLeadSeconds:24};

@@ -2,7 +2,7 @@ import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86
 import * as THREE from './vendor/three.module.js';
 import {DroneTracks} from './drone-tracks.js?v=tracked-drones-64';
 import {EVACUATION_CONFIG} from './evacuation-config.js?v=evacuation-57';
-import {projectileSilhouette} from './projectile-silhouette.js?v=silhouette-49';
+import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
 export const RAIDER_COMBAT=Object.freeze({modelScale:1.3,heroRange:42,weaponRange:47.6,turnRate:120*Math.PI/180,pitchRate:120*Math.PI/180,alignment:7*Math.PI/180,switchMargin:5,windup:.5,cooldown:1.25,burstSize:4,burstInterval:.25,maxLeadSeconds:1,maxLeadDistance:24,maxTrackedSpeed:65,projectileSpeed:36,projectileRadius:1.32});
 const angleDelta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 export class EvacRaider {

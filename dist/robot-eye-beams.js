@@ -1,4 +1,4 @@
-import {silhouetteMaterial,markVisibleProjectile} from './projectile-silhouette.js?v=silhouette-49';
+import {silhouetteMaterial,markVisibleProjectile} from './projectile-silhouette.js?v=charged-shuriken-130';
 import * as THREE from './vendor/three.module.js';
 import {EYE_BEAMS,RobotEyeCycle,segmentSphereFraction} from './robot-eye-cycle.js?v=eye-beams-33';
 export class RobotEyeBeams{
@@ -7,8 +7,8 @@ export class RobotEyeBeams{
   const material=(color,opacity)=>new THREE.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,toneMapped:false,blending:THREE.AdditiveBlending});
   const cylinder=new THREE.CylinderGeometry(1,1,1,5,1,true),ball=new THREE.IcosahedronGeometry(1,1);
   this.core=new THREE.InstancedMesh(cylinder,material('#fff1d8',1),EYE_BEAMS.maxBolts);this.glow=new THREE.InstancedMesh(cylinder,material('#ff163c',.6),EYE_BEAMS.maxBolts);this.charges=new THREE.InstancedMesh(ball,material('#ff1737',.85),4);this.guides=new THREE.InstancedMesh(cylinder,material('#ff2548',.16),2);
-  this.core.material=markVisibleProjectile(this.core.material);
-  this.silhouettes=new THREE.InstancedMesh(cylinder,silhouetteMaterial('#ff688e'),EYE_BEAMS.maxBolts);this.silhouettes.renderOrder=100;
+  this.core.material=markVisibleProjectile(this.core.material);this.core.renderOrder=90;
+  this.silhouettes=new THREE.InstancedMesh(cylinder,silhouetteMaterial('#ff688e'),EYE_BEAMS.maxBolts);this.silhouettes.renderOrder=100;this.silhouettes.visible=false;
   for(const m of[this.core,this.glow,this.charges,this.guides,this.silhouettes]){m.count=0;m.frustumCulled=false;this.root.add(m);}this.reset();
  }
  reset(){this.cycle.reset();this.bolts=[];this.previousCenters=null;this.hits=0;this.coverHits=0;this.expired=0;this.sequence=0;this.lastHit=null;this.history=[];for(const m of[this.core,this.glow,this.charges,this.guides,this.silhouettes])m.count=0;const robot=this.getRobot();if(robot)robot.eyeTarget=null;}

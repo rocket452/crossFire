@@ -18,9 +18,11 @@ The original low-poly model uses chamfered armour, separate breastplates, knee/s
 
 Animation includes a subtle torso idle, head tracking, shoulder bracing, a bent Gatling forearm, accelerating/decelerating six-barrel rotation, per-shot barrel recoil and muzzle flashes. Core armour opens with two sliding shutters instead of simply disappearing. Gun aim follows its articulated forearm. Body traversal and player movement remain unchanged.
 
-The old spiral/lattice/mine/curve orb-pattern barrage is replaced by a **plasma Gatling stream** and an alternating **plasma rain** attack. The gun uses the Bruiser's 36 m/s projectile speed and existing pooled `RaiderEnergyEffects` for energy rings, trailing sparks and impacts. Bolts have a 1.24 m radius and are slightly elongated. Their width, length, energy rings and collision radius are twice the original Gatling bolt size. There is no active projectile splitting, mine planting or mid-flight homing in the default encounter. Odd cycles use Gatling; even cycles use plasma rain. `barrage.attackSequence` controls that order.
+The old spiral/lattice/mine/curve orb-pattern barrage is replaced by a **plasma Gatling stream** and an alternating **plasma rain** attack. The gun uses the Bruiser's 36 m/s projectile speed and existing pooled `RaiderEnergyEffects` for energy rings, trailing sparks and impacts. Bolts have a 2.48 m radius and are slightly elongated. Their width, length, energy rings and collision radius are four times the original Gatling bolt size. There is no active projectile splitting, mine planting or mid-flight homing in the default encounter. Odd cycles use Gatling; even cycles use plasma rain. `barrage.attackSequence` controls that order.
 
-Gatling spread is now 0.054 per axis (three times the original 0.018), producing a wider spray. Projectile speed, firing cadence, attack duration, damage and plasma-rain sizes are unchanged.
+Gatling spread is now 0.108 per axis (six times the original 0.018), producing a wider spray. Projectile speed, firing cadence, attack duration, damage and plasma-rain sizes are unchanged.
+
+Pulses now require an opponent within `pulse.triggerDistance` (12 m from a body part), or actively traversing the body. Distant targets skip the pulse phase and do not trigger overlap waves. Visible enemy projectile cores block actor x-ray overlays; projectiles themselves no longer receive through-cover overlays.
 
 ## Spherical pulse readability
 
@@ -63,7 +65,7 @@ All values live in `dist/bastion-config.json`; reload after editing.
 | --- | --- | --- |
 | `timings.reset / windup / pulse / barrage` | 3.2 / 1 / 2.6 / 3.6 s (rain) | Positioning, warning and firing windows |
 | `barrage.countByCycle` | 72 / 88 / 104 | About 10 / 12.2 / 14.4 shots per second |
-| `gatling.speed / radius / spread` | 36 m/s / 1.24 m / 0.054 | Bolt pacing, size and spread |
+| `gatling.speed / radius / spread` | 36 m/s / 2.48 m / 0.108 | Bolt pacing, size and spread |
 | `gatling.spinupSeconds / alignment` | 0.65 s / 0.32 rad | Spin warning and firing alignment |
 | `gatling.directPerGroup / groupSize` | 2 / 4 | Direct versus leading shot mix |
 | `gatling.leadSeconds / maxLeadDistance` | 0.65 s / 18 m | Bounded prediction |

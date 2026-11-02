@@ -1,7 +1,7 @@
-import {BastionTesting} from './bastion-testing.js?v=bastion-artillery-129';
-import {ExperimentalRobot} from './experimental-robots.js?v=bruiser-name-116';
+import {BastionTesting} from './bastion-testing.js?v=charged-shuriken-130';
+import {ExperimentalRobot} from './experimental-robots.js?v=charged-shuriken-130';
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider} from './evac-raider.js?v=bruiser-name-116';
+import {EvacRaider} from './evac-raider.js?v=charged-shuriken-130';
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';
 // Reuses the live drone, projectile, damage and wreck systems; no mission spawning.
 export class CombatTesting {

@@ -1,4 +1,4 @@
-import {projectileSilhouette} from './projectile-silhouette.js?v=silhouette-49';
+import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
 import * as THREE from './vendor/three.module.js';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 
