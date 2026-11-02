@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import {DestructionWorld,NON_ROBOT_BUILDING_DAMAGE_MULTIPLIER} from '../dist/destruction.js';
 const add=(w,type='wall',x=0,floor=0)=>w.addChunk({type,building:'B',floor,x,y:floor*3+12,z:0,size:[2.5,2.72,.32]});
 assert.equal(NON_ROBOT_BUILDING_DAMAGE_MULTIPLIER,.1);
-for(const source of [null,undefined,'unknown','tank-0-0','helicopter-1-1','infantry-0-3','volt-rush','violet-sentinel','rift-warden','siege-walker'])for(const type of ['wall','slab','column']){
- const w=new DestructionWorld(),direct=add(w,type),splash=add(w,type,2),debris=add(w,type,1);w.detach(debris,{x:0,y:12,z:0},0);const mult=source==='siege-walker'?1:.1;
+for(const source of [null,undefined,'unknown','tank-0-0','helicopter-1-1','infantry-0-3','volt-rush','violet-sentinel','rift-warden','siege-walker','bastion'])for(const type of ['wall','slab','column']){
+ const w=new DestructionWorld(),direct=add(w,type),splash=add(w,type,2),debris=add(w,type,1);w.detach(debris,{x:0,y:12,z:0},0);const mult=['siege-walker','bastion'].includes(source)?1:.1;
  const original=[direct,splash,debris].map(c=>c.hp);w.impact({x:0,y:12,z:0},1,3,direct,{source,player:true});
  assert(Math.abs(original[0]-direct.hp-mult)<1e-9,'direct damage scales once for '+source);
  const reach=3+2.72*.25,falloff=1-2/(reach+.1);assert(Math.abs(original[1]-splash.hp-mult*falloff)<1e-9,'splash retains falloff for '+source);

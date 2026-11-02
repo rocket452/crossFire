@@ -62,7 +62,7 @@ export class DestructionWorld {
  }
  // Every weapon shares health and persistent scorch, including nonlethal hits.
  damageChunk(c,amount,{source=null}={}){
-  amount*=source==='siege-walker'?1:NON_ROBOT_BUILDING_DAMAGE_MULTIPLIER;
+  amount*=(source==='siege-walker'||source==='bastion')?1:NON_ROBOT_BUILDING_DAMAGE_MULTIPLIER;
   if(!(amount>0)||c.collisionDisabled)return;
   c.hp=Math.max(0,c.hp-amount);
   const scorch=Math.min(.72,.24+.48*(1-c.hp/c.maxHp));
