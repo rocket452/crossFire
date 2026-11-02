@@ -327,11 +327,11 @@
   },
   "animation": {
     "idleBob": 0.015,
-    "braceDrop": 0.18,
-    "armBrace": 0.045,
-    "forearmBend": 0.065,
+    "braceDrop": 0.38,
+    "armBrace": 0.07,
+    "forearmBend": 0.11,
     "headTurn": 0.38,
-    "poseResponse": 2.6,
+    "poseResponse": 1.8,
     "barrelSpin": 32,
     "spinResponse": 3.8,
     "recoilDistance": 0.22,
@@ -340,7 +340,7 @@
     "plateOpen": 2.35,
     "turnAcceleration": 0.5,
     "headResponse": 1.8,
-    "elbowBrace": 0.055
+    "elbowBrace": 0.09
   },
   "gatling": {
     "gunModule": 3,
