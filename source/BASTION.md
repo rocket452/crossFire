@@ -205,3 +205,7 @@ Node checks cover several seeds and starts at both edges, intermediate positions
 ## Wider safe openings (revision 162)
 
 `beamWalls.gapWidth` is now 18m, up from 12m (+50%). Beam omission, green warning corridors, edge posts and swept damage checks all use this shared width. Successive gap centers remain 40m apart. The beam-wall Node suite passes safe/damaging sweeps, fast crossings, facing directions, diagonal coverage, seeded edge placements and reset with the new width.
+
+## Restore width; increase relocation (revision 163)
+
+Gap width returns to 12m. Successive gap centers now shift 60m, a 50% increase over 40m, so first/third positions are 120m apart. Direction and initial placement reserve enough room for the entire three-wave sequence, including edge and center starts; gaps never repeat or leave the sweep bounds. An initial gap may be slightly offset from the player's lateral position when needed to fit all three. Timing, speed and facing lock are unchanged. Node tests verify 60m/120m distances and bounded placement across seeds, plus rotated collision and safe crossings; desktop/touch visual checks cover all three rows and cleanup.
