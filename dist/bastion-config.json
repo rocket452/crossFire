@@ -345,7 +345,7 @@
     "barrelRadius": 1.02,
     "barrelLength": 4.5,
     "spinupSeconds": 0.65,
-    "speed": 36,
+    "speed": 72,
     "radius": 2.48,
     "spread": 0.1404,
     "leadSeconds": 0.65,
