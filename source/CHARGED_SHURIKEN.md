@@ -81,3 +81,5 @@ The lab uses raised platforms to provide real gaps above the unchanged terrain b
 - Existing ninja motion/jump/ground-dash/phase tests cover 30/60/120 Hz and long frames. Combat Testing browser regression covers all six heroes, real attacks and the preserved city/escort layouts.
 
 The visuals, oscillator audio, dummies and arrival strike pose are placeholders. The resolver deliberately uses conservative upright-capsule clearance against the project's OBB sections. There is no network layer or new movement system. Physical-phone thermal/FPS behavior remains unmeasured; touch browser simulation is not a physical-device benchmark.
+
+Kage’s dash also ignores live enemies’ climbable body sections while active, while its separate swept hit checks still deal 320 damage once per enemy. Normal movement restores those colliders, and city walls still stop the dash. Dash speed/range and kill resets are unchanged.
