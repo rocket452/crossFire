@@ -209,3 +209,9 @@ Node checks cover several seeds and starts at both edges, intermediate positions
 ## Restore width; increase relocation (revision 163)
 
 Gap width returns to 12m. Successive gap centers now shift 60m, a 50% increase over 40m, so first/third positions are 120m apart. Direction and initial placement reserve enough room for the entire three-wave sequence, including edge and center starts; gaps never repeat or leave the sweep bounds. An initial gap may be slightly offset from the player's lateral position when needed to fit all three. Timing, speed and facing lock are unchanged. Node tests verify 60m/120m distances and bounded placement across seeds, plus rotated collision and safe crossings; desktop/touch visual checks cover all three rows and cleanup.
+
+## Red damage flash (revision 164)
+
+Bastion now participates in the existing enemy damage-flash system instead of suppressing it. Successful core/main-health damage flashes his model red for the shared .20-second effect. Weapon modules notify the same damage-feedback callback when their separate health pool takes damage, without applying that damage to the boss's main health again. Armoured zero-damage hits do not flash. Existing frame restoration preserves animated material colours and emissive warnings; city rebuild clears the overlay.
+
+Bastion state tests pass. Desktop/touch `QA/bastion-flash-browser.cjs` verifies real core damage, separate module damage without main-HP loss, red material feedback, no flash for blocked hits, decay/restoration and reset with no page errors. `/tmp/bastion164-red-false.png` visually reviewed. Other enemy shield/Walker flash rules are unchanged.
