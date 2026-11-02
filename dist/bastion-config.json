@@ -392,8 +392,8 @@
       -108,
       108
     ],
-    "leadSeconds": 0.35,
-    "maxLeadDistance": 10,
+    "leadSeconds": 0,
+    "maxLeadDistance": 300,
     "markerHeight": 0.12,
     "urgentSeconds": 0.65,
     "burstSeconds": 0.7,
