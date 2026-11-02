@@ -185,3 +185,7 @@ Attack rotation is now Gatling → skyfall artillery → beam-wall. The shoulder
 All values are under `beamWalls` in `bastion-config.json`, including count, charge, interval, speed, extent, height, gap width/shift, beam spacing/radius, sky radius, damage and collision padding. State exposure duration covers all three passes. Close-range overlap pulses are suppressed during beam-wall barrages so the indicated gaps remain safe. The emitter's destruction, boss defeat or city reset removes the attack. Existing world slowdown and stun freeze its clock.
 
 `bastion-beam-walls-test.mjs` passes at 30/120Hz and 75ms frames: three damaging passes vs three safe passes, high-speed crossing, emitter destruction and reset. `bastion-beam-walls-browser.cjs` passes desktop/touch: visible sky charge, three simultaneous sweeping rows with seeded gaps, completion and rebuild cleanup, no page errors. Screenshots `/tmp/beam-wall157-{sky,waves}-{false,true}.png` reviewed. Existing desktop/touch arena combat suite, state and artillery checks pass. Instanced beam geometry keeps the effect bounded; physical phone FPS is unmeasured.
+
+## Artillery count (revision 158)
+
+Artillery now fires 32 shots per barrage, up from 21 (50% increase rounded up). Launch interval, projectile speed/damage, blast radius and target-spacing rules are unchanged. The existing configuration-sized shell/marker pools accommodate all 32 shots. Artillery and state tests pass, including all 32 locked, distinct impact zones, complete launches/impacts, corner placement, shields and reset.

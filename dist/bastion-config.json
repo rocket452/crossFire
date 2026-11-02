@@ -371,7 +371,7 @@
     "visualScale": 1.4
   },
   "rain": {
-    "count": 21,
+    "count": 32,
     "launchInterval": 0.036,
     "riseSeconds": 0.8,
     "riseSpeed": 58,
