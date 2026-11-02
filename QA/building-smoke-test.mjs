@@ -11,3 +11,5 @@ for(const c of a){c.hasDetached=true;c.body.position.y=1;}hits.length=0;tick(2);
 for(let i=0;i<30;i++)for(const c of add('B'+i))c.hp=0;
 hits.length=0;tick(5);assert(hits.length<=120,'global 24-puff/sec budget holds for a whole ruined city');assert(fx.activeBuildings===31);
 for(const b of buildings.values())for(const c of b.chunks){c.hp=c.maxHp;c.hasDetached=false;}fx.reset();hits.length=0;tick(2);assert.equal(fx.emitted,0);assert.equal(hits.length,0);assert.equal(fx.records.size,0);console.log('PASS significant-damage threshold, severity ramp, live rubble sources, global city budget and rebuild clearing');
+
+const tower=new Map([['tower',{chunks:Array.from({length:200},(_,i)=>({hp:i<4?3:10,maxHp:10,size:[2,3,.3],body:{position:{x:i%4*3,y:Math.floor(i/4)*3,z:0}}}))}]]),localHits=[];const local=new BuildingSmoke({getBuildings:()=>tower,emit:p=>localHits.push(p)});for(let i=0;i<12;i++)local.update(.25);assert(localHits.length>0,'four severely damaged panels smoke even on a tall building');assert(local.activeBuildings===1);console.log('PASS concentrated severe damage triggers smoke below whole-building threshold');
