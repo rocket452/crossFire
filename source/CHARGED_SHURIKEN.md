@@ -92,7 +92,7 @@ The charged shuriken is now the secondary attack. Its piercing, anchoring, Q tel
 
 The primary kunai loads one immediately on press, then one more per second while held (up to five after four seconds). Nothing fires while held. Release snapshots a straight aim line and fires the stored kunai 0.075s apart. A one-second cooldown starts on release; clicks during cooldown do not bypass it. Each kunai travels at 110m/s for up to 110m, deals 55 damage and stops at its first hit. Holding/charging never changes movement. CPU Kage also uses single kunai throws at the new cadence. Input loss cancels stored kunai and unlaunched burst shots without accidentally firing.
 
-R / SLASH applies 160 damage once to each enemy inside a 4.5m forward 180° sweep, with a one-second cooldown. It also intercepts destructible missiles and strikes nearby city panels through existing damage callbacks. Solid cover blocks the sweep. Boss armour and Aegis shield rules still apply; Bastion Gatling shots remain indestructible. A cyan arc and sword-arm swing show the melee area.
+R / SLASH applies 160 damage once to each enemy inside a 9m forward 180° sweep, with a one-second cooldown. It also intercepts destructible missiles and strikes nearby city panels through existing damage callbacks. Solid cover blocks the sweep. Boss armour and Aegis shield rules still apply; Bastion Gatling shots remain indestructible. A cyan arc and sword-arm swing show the melee area.
 
 Tune `kunai` and `slash` in `dist/ninja-shuriken-config.json`: cooldowns, store interval/cap, burst spacing, flight speed/range/damage/radius, pool cap, slash range/angle/vertical reach/damage and effect duration. `dist/kage-attacks.js` owns these attacks; `ninja-hero.js` handles their inputs and poses.
 

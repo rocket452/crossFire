@@ -110,7 +110,7 @@
   },
   "slash": {
     "cooldown": 1,
-    "range": 4.5,
+    "range": 9,
     "arcDegrees": 180,
     "verticalReach": 2.8,
     "height": 1.2,
