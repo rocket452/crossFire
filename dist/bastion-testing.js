@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {Bastion} from './bastion.js?v=plasma-outline-131';
+import {Bastion} from './bastion.js?v=gatling-indestructible-132';
 
 // Adapter for the existing combat arena: no scene, renderer or player controller of its own.
 export class BastionTesting {

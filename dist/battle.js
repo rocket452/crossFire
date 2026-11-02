@@ -1,5 +1,5 @@
 import {EnemySeparation} from './enemy-separation.js?v=enemy-spacing-121';
-import {CombatTesting} from './combat-testing.js?v=plasma-outline-131';
+import {CombatTesting} from './combat-testing.js?v=gatling-indestructible-132';
 import {ActorSilhouettes} from './actor-silhouettes.js?v=drone-size-107';
 import {RAIDER_COMBAT} from './evac-raider.js?v=charged-shuriken-130';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=raider-burst-92';
