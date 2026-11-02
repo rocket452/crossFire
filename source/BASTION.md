@@ -237,3 +237,9 @@ Barrage center is now the target's predicted horizontal position at the volley m
 ## Torso turning speed (revision 168)
 
 `body.turnRate` doubles from .28 to .56 rad/s (about 16 to 32 degrees/second). This is the upper weapon-deck/body pivot; tread and lower-chassis counter-rotation still keep the base planted. Existing acceleration and bracing remain in place. Heavy-frame and articulated-arm tests pass, including fixed tread/foot transforms, moving-deck rider carry, turn-rate bound, hydraulic/weapon attachments and reset.
+
+## Initial gap requires repositioning (revision 169)
+
+`beamWalls.firstGapOffset=40` places the first gap center 40m laterally from the player's position in the captured attack frame. Seeded left/right choices are filtered for arena bounds and room for the complete 60m-spaced three-wave sequence. Edge starts select a feasible inward layout instead of placing the first opening beside the hero. Gap width remains 12m, and warning positions remain locked after planning.
+
+Node gap tests now assert the initial separation across center/edge positions and seeds alongside successive spacing, facing directions, damage and bounds. Desktop/touch wall browser checks cover the revised planning, sky beam, all three walls and cleanup.
