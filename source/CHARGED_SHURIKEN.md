@@ -17,7 +17,7 @@ Input loss, pause/dialog interactions and pointer-lock release cancel an unfinis
 
 ## Throw and arrival behavior
 
-Early release throws a fast straight star that stops at the first enemy. Full charge produces one cyan teleport star, with a clear flash and two-tone chime. It travels straight without gravity, pierces each enemy at most once, stops on solid geometry, or hovers at max range. It remains available for teleport until its stationary timeout. The two tiers have independent `pierces` flags; setting full to non-piercing anchors it at its first enemy instead.
+Early release throws a fast straight star that stops at the first enemy. Full charge produces one cyan teleport star, with a clear flash and two-tone chime. It travels straight without gravity, damages and pierces each enemy at most once, stops on city geometry, or hovers at max range. Climbable enemy-body sections (such as Bastion’s limbs) are excluded from piercing flight/preview collisions; they remain solid for movement and teleport clearance. Existing boss armour and exposed-core damage rules still apply. It remains available for teleport until its stationary timeout. The two tiers have independent `pierces` flags; setting full to non-piercing anchors it at its first enemy instead.
 
 The charge preview extends from the current hand position along the existing aim direction to the predicted endpoint. It highlights intersected enemies and shows a ghost marker. The full tier previews enemies beyond the first target. Red marks an invalid/forbidden endpoint; a nearer in-flight teleport may still be usable.
 

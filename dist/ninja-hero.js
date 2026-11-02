@@ -1,5 +1,5 @@
-import {ChargedShuriken} from './charged-shuriken.js?v=charged-shuriken-130';
-import {ShurikenWorld} from './shuriken-world.js?v=charged-shuriken-130';
+import {ChargedShuriken} from './charged-shuriken.js?v=shuriken-piercing-135';
+import {ShurikenWorld} from './shuriken-world.js?v=shuriken-piercing-135';
 import {ShurikenEffects} from './shuriken-effects.js?v=charged-shuriken-130';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 import {HeroHurt} from './hero-hurt.js?v=hero-hurt-118';

@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {OrbitControls} from './vendor/OrbitControls.js';
-import {NinjaHero} from './ninja-hero.js?v=charged-shuriken-130';
+import {NinjaHero} from './ninja-hero.js?v=shuriken-piercing-135';
 import {traceImpact,UnitDamage} from './combat-collision.js?v=robot-experiments-108';
 const $=id=>document.getElementById(id),viewport=$('viewport');document.body.classList.add('shuriken-lab');const style=document.createElement('link');style.rel='stylesheet';style.href='ninja-lab.css?v=charged-shuriken-130';document.head.append(style);
 $('scene-select').value='shuriken';$('scene-select').onchange=e=>{const u=new URL(location.href);u.search='';if(e.target.value!=='battle')u.searchParams.set('scene',e.target.value);location.href=u;};document.querySelector('h1').innerHTML='Shadow <em>step.</em>';document.querySelector('.headline>p').innerHTML='CHARGED SHURIKEN LAB<br>Hold. Throw. Teleport. Chain.';$('choose-heroes').hidden=true;$('test-config-open').hidden=true;
