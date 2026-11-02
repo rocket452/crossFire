@@ -189,3 +189,9 @@ All values are under `beamWalls` in `bastion-config.json`, including count, char
 ## Artillery count (revision 158)
 
 Artillery now fires 32 shots per barrage, up from 21 (50% increase rounded up). Launch interval, projectile speed/damage, blast radius and target-spacing rules are unchanged. The existing configuration-sized shell/marker pools accommodate all 32 shots. Artillery and state tests pass, including all 32 locked, distinct impact zones, complete launches/impacts, corner placement, shields and reset.
+
+## Facing-aligned beam walls (revision 160)
+
+Beam-wall travel now follows Bastion's world-facing direction captured when the sky-beam attack begins. All three waves, warning corridors and gap-edge posts share a locked horizontal attack frame; later body turning cannot move the advertised safe route. Player and previous-frame positions are transformed into that same frame for swept hit testing, and damage feedback uses the world-space crossing point.
+
+Diagonal projection extends wall width/travel to cover all arena corners, with exposure duration adjusted to let the longer sweep finish. Speed, three-wave count, gap width/spacing and damage are unchanged. Node checks pass forward/side/reverse/diagonal orientations, travel direction, locked yaw after body rotation, safe vs damaging high-speed crossings, full corner coverage and reset. Desktop/touch browser checks exercise a 60-degree facing attack with sky beam, all three active rotated rows, full completion and cleanup.

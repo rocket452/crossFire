@@ -1,5 +1,5 @@
 import {COMBAT_ARENA} from './combat-arena-config.js?v=arena-center-159';
-import {BastionTesting} from './bastion-testing.js?v=beam-walls-157';
+import {BastionTesting} from './bastion-testing.js?v=facing-walls-160';
 import {ExperimentalRobot} from './experimental-robots.js?v=charged-shuriken-130';
 import * as THREE from './vendor/three.module.js';
 import {EvacRaider} from './evac-raider.js?v=charged-shuriken-130';
