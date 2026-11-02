@@ -26,9 +26,9 @@
     "cameraResolveIterations": 6,
     "fillIntensity": 1.8,
     "testingPosition": [
-      84,
+      58.8,
       0,
-      -84
+      -58.8
     ]
   },
   "traversal": {
@@ -350,19 +350,21 @@
     "speed": 72,
     "radius": 2.48,
     "spread": 0.1404,
-    "leadSeconds": 0.65,
-    "maxLeadDistance": 18,
-    "maxTrackedSpeed": 65,
+    "leadSeconds": 5,
+    "maxLeadDistance": 360,
+    "maxTrackedSpeed": 512,
     "yawLimit": 1.25,
     "pitchLimit": 1.2,
-    "aimResponse": 8,
+    "aimResponse": 12,
     "alignment": 0.32,
     "trailLength": 1.8,
     "barrageSeconds": 7.2,
     "outlineColor": "#241020",
     "outlineScale": 1.14,
     "haloScale": 1.5,
-    "leadChance": 0.3333333333333333
+    "leadChance": 0.3333333333333333,
+    "velocityResponse": 20,
+    "leadSpreadScale": 0.25
   },
   "rain": {
     "count": 21,

@@ -10,7 +10,7 @@ Crossfire is a static JavaScript ES-module game using Three.js and Cannon-es. Th
 
 No shared player movement files were changed. Existing movement is 14 m/s running, 46 m/s boosted and 12/24 m/s wall-running, with unlimited duration and no movement stamina. Those existing speeds were preserved rather than adding a new cap or replacing the controller. The old speed readout is hidden in this arena. The existing weapon-charge system still powers attacks only; it does not tax movement. An arena adapter carries the player and viewing heading with articulated support transforms, without changing acceleration, jump, boost or wall-running rules.
 
-The boss is a stationary heavy weapons platform: broad feet and legs remain planted while the waist/weapon deck pivots with limited speed and acceleration. Six launchers inherit arm/torso transforms. The continuous limb/torso boxes have walkable caps so the unchanged controller can climb, crest and circle them. The boss briefly pauses its pivot at ground contact to allow the existing wall-grab intent check to complete at high frame rates; it pivots again once the player climbs. `arena.testingPosition` defaults to `[84, 0, -84]`, in the enlarged arena’s northeast corner, clear of the two existing buildings. No buildings are moved. The cyan route starts 30 m away; player movement and artillery targeting use the enlarged arena bounds. A camera-clearance adapter keeps the camera outside the larger body.
+The boss is a stationary heavy weapons platform: broad feet and legs remain planted while the waist/weapon deck pivots with limited speed and acceleration. Six launchers inherit arm/torso transforms. The continuous limb/torso boxes have walkable caps so the unchanged controller can climb, crest and circle them. The boss briefly pauses its pivot at ground contact to allow the existing wall-grab intent check to complete at high frame rates; it pivots again once the player climbs. `arena.testingPosition` defaults to `[58.8, 0, -58.8]`, in the enlarged arena’s northeast quarter (30% closer to centre than the former corner spawn), clear of the two existing buildings. No buildings are moved. The cyan route starts 30 m away; player movement and artillery targeting use the enlarged arena bounds. A camera-clearance adapter keeps the camera outside the larger body.
 
 ## Updated model and plasma Gatling attack
 
@@ -68,8 +68,8 @@ All values live in `dist/bastion-config.json`; reload after editing.
 | `gatling.speed / radius / spread` | 72 m/s / 2.48 m / 0.1404 | Bolt pacing, size and spread |
 | `gatling.spinupSeconds / alignment` | 0.65 s / 0.32 rad | Spin warning and firing alignment |
 | `gatling.leadChance` | 0.3333333333333333 | Independent lead probability per shot; otherwise direct aim |
-| `gatling.leadSeconds / maxLeadDistance` | 0.65 s / 18 m | Bounded prediction |
-| `gatling.aimResponse / yawLimit / pitchLimit` | 8 / 1.25 rad / 1.2 rad | Tracking and gun articulation |
+| `gatling.leadSeconds / maxLeadDistance` | 5 s / 360 m | Intercept prediction bounded by projectile lifetime |
+| `gatling.aimResponse / yawLimit / pitchLimit` | 12 / 1.25 rad / 1.2 rad | Stabilized weapon tracking and gun articulation |
 | `gatling.gunModule / barrels` | 3 / 6 | Destructible weapon and barrel count |
 | `animation.barrelSpin / spinResponse` | 32 rad/s / 3.8 | Heavy rotor acceleration and coast-down |
 | `animation.recoilDistance / recoilRecovery` | 0.22 m / 9 | Per-shot recoil and slower mechanical recovery |
@@ -81,7 +81,7 @@ All values live in `dist/bastion-config.json`; reload after editing.
 | `timings.gapExtension` | 0.4 | Extra core exposure after threading gap |
 | `projectiles.speedScale / grazePerOrb / grazeCap` | 1 / 0.1 / 1 | Global travel scale and +100% graze cap |
 | `dilation.scale` | 0.35 | World-only slowdown, player timing unchanged |
-| `arena.testingPosition` | [84, 0, -84] | Spawn clear of the existing buildings |
+| `arena.testingPosition` | [58.8, 0, -58.8] | Spawn clear of the existing buildings |
 
 Legacy pattern parameters remain in the data for compatibility, but the active pool contains `gatling` and `skyfall`; they do not generate the previous sphere patterns.
 
@@ -118,7 +118,7 @@ The floating Bastion status/control panel is hidden during normal combat. The to
 
 ## Heavy chassis model and animation (revision 140)
 
-Bastion has a broader 15.2m chest, 5.2m-wide armoured legs, 6.4×9.4m planted feet and 7.2m-wide shoulder housings. Layered skirts, exposed leg hydraulics, guarded sensor head, rear reactor/exhaust towers, cooling louvers, hazard panels and muted industrial armour make it read as a fortified gun platform. Extra static pieces are batched by material and parent. The complete dressed model is 11,348 triangles / 130 render meshes before silhouettes; six-barrel gun, modules and cores retain their existing hierarchy.
+Bastion has a broader 15.2m chest, 5.2m-wide armoured legs, 6.4×9.4m planted feet and 7.2m-wide shoulder housings. Layered skirts, exposed leg hydraulics, guarded sensor head, rear reactor/exhaust towers, cooling louvers, hazard panels and muted industrial armour make it read as a fortified gun platform. Extra static pieces are batched by material and parent. The complete dressed model is 11,804 triangles / 128 render meshes before silhouettes; six-barrel gun, modules and cores retain their existing hierarchy.
 
 The lower chassis counter-transforms the weapon deck’s yaw so feet and leg colliders never skate around. Body turning is limited to 0.28rad/s with 0.5rad/s² acceleration. Walking sway is removed. Firing braces over a slower hydraulic response, with 1.5cm idle settling, 22cm barrel recoil, rotor inertia, opening cooling flaps and a restrained head look. Stun/death poses settle instead of flailing. Support carry uses the actual supporting section’s yaw, so a hero on a planted foot stays steady while one on the upper deck follows its turn. Repetition tracking uses the fixed chassis approach quadrants.
 
@@ -127,3 +127,15 @@ Feet and shoulder volumes have matching climbable collision caps. Exposed-core l
 Tune `body.turnRate`, `animation.turnAcceleration`, `poseResponse`, `headResponse`, `idleBob`, `braceDrop`, `armBrace`, `forearmBend`, `spinResponse`, `recoilDistance` and `recoilRecovery` in `bastion-config.json`. Model proportions and armour dressing are in `bastion-model.js` and `bastion-art.js`.
 
 `QA/bastion-heavy-test.mjs` verifies planted feet during a pivot, turn limits, planted versus rotating support carry, reset and the low-poly budget. Existing state/rain/proximity suites and the desktop/touch Bastion gameplay suite verify traversal, core/weapon damage, pulse, both ranged attacks, cycles and hero switching.
+
+## Twin treads and corrected predictive fire (revision 145)
+
+Bastion’s old boot/leg presentation is replaced by a Johnny 5-inspired twin-tread undercarriage and shorter mechanical support pylons. It reuses the low-poly `DroneTracks` belt, shoe and wheel meshes at a fivefold chassis scale: two continuous tracks, 48 tread plates and eight road wheels. New 6.8m-high tread collision/cap volumes and the central chassis keep the base climbable. The upper 40m weapons-platform silhouette is retained. The stationary base does not falsely scroll its belts when the upper deck turns. Total model budget is 11,804 triangles / 128 meshes, including the reused instanced undercarriage.
+
+Gatling prediction now solves constant-velocity projectile interception using the actual barrel origin and current target velocity. This replaces the old 0.65s / 18m capped estimate. Crucially, the emitted shot uses the calculated direction instead of merely following the visual barrel’s previous direction; the existing alignment check still prevents firing outside the gun’s aiming cone. There is no projectile homing. A teleport invalidates stale velocity, and prediction accounts for the existing world slowdown/speed scale without changing player movement.
+
+The one-in-three lead probability is unchanged. Direct shots retain the 0.1404 spread. Leading shots use `gatling.leadSpreadScale = 0.25` (0.0351 per axis) so prediction produces a meaningful threat while the direct stream remains wide. `leadSeconds=5` is bounded by the five-second projectile life, `maxLeadDistance=360`, `maxTrackedSpeed=512`, `velocityResponse=20`, and stabilized weapon `aimResponse=12`. Projectile speed, radius, damage, indestructibility, attack cadence and the slow heavy body pivot are unchanged.
+
+The arena’s enemy spawns also move 30% toward the map centre: boss position is now (58.8, -58.8), and all small-robot formation coordinates scale to 70% of their former distance. Map size and original mission spawns remain unchanged.
+
+Verification: `QA/bastion-leading-test.mjs` checks exact intercepts at 14/32.2/46m/s across 30/60/120m, high-speed approaches, impossible-intercept fallback, emitted direction despite barrel lag, world-speed scaling and teleport history reset. `QA/bastion-moving-target-browser.cjs` drives a real boosted player straight at 46m/s in desktop/touch views: the normal mixed stream hits, and an isolated predictive stream lands three hits in two seconds in the test seed. It also checks planted tread behavior. Existing Bastion browser tests pass traversal, core/weapon damage, both attacks, repeated cycles and all hero choices with the new base.

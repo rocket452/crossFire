@@ -18,3 +18,7 @@ Physical-phone FPS/thermal performance remains unmeasured. Four heroes continue 
 ## Expanded arena (revision 137)
 
 Combat Testing is now 240×240m (twice the former width and length). Movement bounds are ±116m; rescue-dash bounds are ±115m. The road grid extends across the new ground, the minimap uses the expanded bounds, and observer zoom/fog/shadows cover the larger field. The two existing 12-floor (36m) buildings stay at their existing central positions. Enemy presets spawn around the northeast corner (84, -84), with smaller robots spaced nearby. Reset preserves the same corner for Bastion and Siege Walker; the walker’s planted-foot animation translates with its spawn origin. Bastion rain can target the full field inside ±108m. Main city and evacuation dimensions/spawns are unchanged. Arena settings live in `dist/combat-arena-config.js`.
+
+## Spawn contraction (revision 144)
+
+All Combat Testing enemy spawns are scaled to 70% of their former X/Z distance from map centre. Bastion/Siege Walker move from (84, -84) to (58.8, -58.8). Small-enemy formation offsets scale by 0.7 as well, so each enemy moves exactly 30% closer, while 4.9m lateral / 5.6m row spacing avoids starting overlap. The 240m ground, buildings, movement bounds, counts and original mission spawns are unchanged.
