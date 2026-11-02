@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {Bastion} from './bastion.js?v=charged-shuriken-130';
+import {Bastion} from './bastion.js?v=plasma-outline-131';
 
 // Adapter for the existing combat arena: no scene, renderer or player controller of its own.
 export class BastionTesting {
@@ -21,7 +21,7 @@ export class BastionTesting {
  setDebug(value){this.debug=!!value;this.boss.model.setDebug(this.debug);this.boss.effects.setDebug(this.debug);this.panel.querySelector('pre').hidden=!this.debug;}
  slowLabel(){this.panel.querySelector('[data-slow]').textContent=this.scale===1?'World slowdown OFF · T':'World speed '+Math.round(this.scale*100)+'% · T';}
  toggleSlow(){this.scale=this.scale===1?THREE.MathUtils.clamp(this.config.dilation.scale,this.config.dilation.minimum,this.config.dilation.maximum):1;this.slowLabel();}
- reset(enabled){this.enabled=enabled;this.time=0;this.scale=this.config.dilation.enabled?THREE.MathUtils.clamp(this.config.dilation.scale,this.config.dilation.minimum,this.config.dilation.maximum):1;this.boss.reset(Number(this.seedInput.value));this.boss.root.position.fromArray(this.config.arena.testingPosition);this.boss.model.sync();this.boss.sync();this.boss.root.visible=enabled;this.boss.effects.group.visible=enabled;for(const m of[this.boss.projectiles.mesh,this.boss.projectiles.halo,this.boss.projectiles.debugMesh])m.visible=enabled;
+ reset(enabled){this.enabled=enabled;this.time=0;this.scale=this.config.dilation.enabled?THREE.MathUtils.clamp(this.config.dilation.scale,this.config.dilation.minimum,this.config.dilation.maximum):1;this.boss.reset(Number(this.seedInput.value));this.boss.root.position.fromArray(this.config.arena.testingPosition);this.boss.model.sync();this.boss.sync();this.boss.root.visible=enabled;this.boss.effects.group.visible=enabled;for(const m of[this.boss.projectiles.mesh,this.boss.projectiles.outline,this.boss.projectiles.halo,this.boss.projectiles.debugMesh])m.visible=enabled;
   if(!enabled){this.boss.combatUnit.alive=false;this.boss.combatUnit.health=0;this.boss.combatUnit.shapes=[];}this.setDebug(enabled&&this.config.debug.enabled);this.panel.hidden=!enabled;document.querySelector('.viewer').classList.toggle('has-bastion',enabled);this.slowLabel();this.hud();}
  get sections(){return this.enabled?this.boss.sections:[];}
  player(){const heroes=this.getHeroes();this.hero=heroes.find(h=>h.active&&h.enabled!==false)||heroes.find(h=>h.enabled!==false);const h=this.hero,motion=h?.motion?.body||h?.motion;return{position:h?.root.position.clone()||new THREE.Vector3(0,.08,30),motion:motion?.normal?motion:{mode:'air',normal:{x:0,y:1,z:0}},phased:!!h?.dash?.active||!!h?.motion?.dash};}
