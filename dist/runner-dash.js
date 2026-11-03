@@ -1,5 +1,5 @@
 import {segmentBoxFraction,traceImpact} from './combat-collision.js?v=robot-experiments-108';
-import {terrainHeight,terrainNormal} from './runner-motion.js?v=robot-experiments-108';
+import {terrainHeight,terrainNormal} from './runner-motion.js?v=pulse-knockback-173';
 import {findPortalRescue} from './portal-policy.js?v=evacuation-57';
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z),copy=p=>({x:p.x,y:p.y,z:p.z});
 export const DASH={range:30,radius:5,speed:36,cooldown:5,contactRadius:2.4,inputBuffer:.2,damage:200,damageRadius:1.25};

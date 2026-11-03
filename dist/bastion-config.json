@@ -164,7 +164,13 @@
       "rows": 24,
       "groundOpacity": 0.75
     },
-    "triggerDistance": 12
+    "triggerDistance": 12,
+    "knockback": {
+      "horizontalSpeed": 68,
+      "upwardSpeed": 22,
+      "duration": 1,
+      "drag": 1.4
+    }
   },
   "barrage": {
     "countByCycle": [

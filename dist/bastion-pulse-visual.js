@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 
-// Cosmetic spherical shock front. Existing ground/body bands still own damage and the safe gap.
+// Spherical shock front matches pulse shell damage; ground/body bands share its safe gap.
 export class BastionPulseVisual {
  constructor(boss,parent){
   this.boss=boss;this.parent=parent;this.config=boss.config.pulse.visual;this.waves=new Map();

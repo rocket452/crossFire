@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {traceImpact,segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
-import {terrainHeight,traceTerrain} from './runner-motion.js?v=robot-experiments-108';
+import {terrainHeight,traceTerrain} from './runner-motion.js?v=pulse-knockback-173';
 const v=p=>new THREE.Vector3().copy(p);
 export function tagged(object,tag){return object?.[tag]===true||object?.tags?.includes(tag)||object?.userData?.[tag]===true||object?.userData?.tags?.includes(tag);}
 export class ShurikenWorld {
