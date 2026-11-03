@@ -1,9 +1,9 @@
 import * as THREE from './vendor/three.module.js';
 import {EvacRaider} from './evac-raider.js?v=charged-shuriken-130';
 import {MIREGUARD} from './mireguard-config.js?v=mireguard-balance-189';
-import {MireguardModel} from './mireguard-model.js?v=mireguard-search-185';
+import {MireguardModel} from './mireguard-model.js?v=mireguard-squads-191';
 import {EvacuationNavigation} from './evacuation-navigation.js?v=evacuation-57';
-import {COMBAT_ARENA} from './combat-arena-config.js?v=outer-arena-190';
+import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-squads-191';
 import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
 const angle=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b)),limit=(v,max)=>THREE.MathUtils.clamp(v,-max,max);
 // Shares the existing unit damage, swept projectile, portal/barrier, wreck/smoke and hero-hit paths.

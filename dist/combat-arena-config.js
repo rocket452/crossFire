@@ -9,6 +9,8 @@ export const COMBAT_ARENA=Object.freeze({
  buildings:[{x:-36,z:-36},{x:36,z:-36},{x:-36,z:36},{x:36,z:36},
   {x:-84,z:-36,floors:8},{x:-84,z:36,floors:6},{x:84,z:-36,floors:6},{x:84,z:36,floors:8},
   {x:-36,z:-84,floors:10},{x:36,z:-84,floors:8},{x:-36,z:84,floors:8},{x:36,z:84,floors:10}],
+ mireguardSquads:[{x:-72,z:-72},{x:72,z:-72},{x:-72,z:72},{x:72,z:72},{x:0,z:-48}],
+ mireguardSquadSpacing:8,
  formationScale:.7,
  roadLanes:[-96,-72,-48,-24,0,24,48,72,96],
  roadLength:230

@@ -1,3 +1,4 @@
+import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 import * as THREE from './vendor/three.module.js';
 // Original hard-surface amphibian silhouette: olive plates, broad jaw, optic pods and an infantry rifle.
 export class MireguardModel {
@@ -14,8 +15,10 @@ export class MireguardModel {
   this.hitParts.push({id:'right-lower-arm',node:rifle,center:[0,0,1.7],size:[1.3,1.5,4.2]});
   this.flash=new THREE.Mesh(this.ball,new THREE.MeshBasicMaterial({color:'#e6fffa',toneMapped:false}));this.flash.scale.setScalar(.45);this.muzzle.add(this.flash);this.flash.visible=false;
   this.repairs=[];
-  this.bind=new Map();for(const p of Object.values(this.parts))this.bind.set(p,{p:p.position.clone(),q:p.quaternion.clone()});this.root.scale.setScalar(config.height/9.6);this.reset();
+  this.batch();this.bind=new Map();for(const p of Object.values(this.parts))this.bind.set(p,{p:p.position.clone(),q:p.quaternion.clone()});this.root.scale.setScalar(config.height/9.6);this.reset();
  }
+ // Keep articulated attachment nodes; merge only their static, same-material children.
+ batch(){for(const node of Object.values(this.parts)){const groups=new Map();for(const mesh of node.children){if(!mesh.isMesh||mesh===this.flash)continue;let list=groups.get(mesh.material);if(!list)groups.set(mesh.material,list=[]);list.push(mesh);}for(const [material,meshes]of groups){if(meshes.length<2)continue;const inputs=meshes.map(mesh=>{mesh.updateMatrix();const g=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry.clone();return g.applyMatrix4(mesh.matrix);}),geometry=mergeGeometries(inputs);for(const g of inputs)g.dispose();if(!geometry)continue;for(const mesh of meshes)node.remove(mesh);const batch=new THREE.Mesh(geometry,material);batch.castShadow=batch.receiveShadow=true;node.add(batch);}}}
  node(id,parent,position){const g=new THREE.Group();g.name=id;g.position.set(...position);parent.add(g);this.parts[id]=g;return g;}
  block(parent,position,size,material,geometry=this.box){const mesh=new THREE.Mesh(geometry,material);mesh.position.set(...position);mesh.scale.set(...size);mesh.castShadow=mesh.receiveShadow=true;parent.add(mesh);return mesh;}
  reset(){for(const [p,b]of this.bind){p.position.copy(b.p);p.quaternion.copy(b.q);p.scale.setScalar(1);p.visible=true;}this.flash.visible=false;for(const r of this.repairs)r.ring.visible=false;}
