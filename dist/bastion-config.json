@@ -48,35 +48,11 @@
     "radius": 1.15,
     "locations": [
       {
-        "id": "chest-left",
+        "id": "back-reactor",
         "position": [
-          -3.8,
+          0,
           25,
-          4.45
-        ]
-      },
-      {
-        "id": "back-right",
-        "position": [
-          3.8,
-          25,
-          -4.45
-        ]
-      },
-      {
-        "id": "chest-right",
-        "position": [
-          3.8,
-          25,
-          4.45
-        ]
-      },
-      {
-        "id": "back-left",
-        "position": [
-          -3.8,
-          25,
-          -4.45
+          -6
         ]
       }
     ]
@@ -419,5 +395,20 @@
     "playerRadius": 0.7,
     "damage": 95,
     "firstGapOffset": 40
+  },
+  "weakPoints": {
+    "armHealth": 1200,
+    "armBossDamageScale": 1,
+    "backDamageMultiplier": 2.5,
+    "armSize": [
+      2.6,
+      3.4,
+      1.2
+    ],
+    "backSize": [
+      6.2,
+      7,
+      1.4
+    ]
   }
 }
