@@ -170,7 +170,9 @@
       "upwardSpeed": 22,
       "duration": 1,
       "drag": 1.4
-    }
+    },
+    "proximityCooldown": 8,
+    "proximityWindup": 1
   },
   "barrage": {
     "countByCycle": [
