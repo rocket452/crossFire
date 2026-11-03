@@ -101,3 +101,7 @@ Tune `kunai` and `slash` in `dist/ninja-shuriken-config.json`: cooldowns, store 
 ## Stored shadow kunai (revision 143)
 
 Holding primary now adds a kunai every 0.5s, reaching five in 2s. One is still loaded immediately. Dark, violet-edged kunai with ring handles fan above Kage’s head, one for each stored throw. The visual follows his head/world position and faces the camera for readability while running/jumping, without rotating with somersaults. Release, cancellation, input loss, hero exit and reset clear the markers. They are depth-tested visual indicators, with no damage or collision. Five shared-geometry markers are pooled; `kunai.shadowHeight`, `shadowSpacing` and `shadowScale` tune placement. The one-second throw cooldown, volley spacing, damage and other abilities are unchanged.
+
+## Revision 179 — faster shuriken charging
+
+`charge.fullSeconds` is .375s, down from .75s: twice the charge rate for the right-click/G charged teleport shuriken. Primary kunai stacking, damage, teleport cooldown and movement are unchanged. The shared config applies in all scenes, including Shuriken Lab. Existing charged-shuriken tests pass.
