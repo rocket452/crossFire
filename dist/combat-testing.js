@@ -1,4 +1,4 @@
-import {Mireguard} from './mireguard.js?v=mireguard-flinch-184';
+import {Mireguard} from './mireguard.js?v=mireguard-search-185';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=arena-center-159';
 import {BastionTesting} from './bastion-testing.js?v=yellow-pulse-182';
 import {ExperimentalRobot} from './experimental-robots.js?v=charged-shuriken-130';
