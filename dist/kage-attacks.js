@@ -1,4 +1,5 @@
 import * as THREE from './vendor/three.module.js';
+export function kageHitPower(hit,power,kind){return hit.unit?.entity?.type==='mireguard'&&['ninja-slash','ninja-dash'].includes(kind)?hit.unit.maxHealth*hit.unit.entity.config.kageMeleeFraction:power;}
 const forward=new THREE.Vector3(0,0,1);
 // Player primary / melee; movement and the teleport shuriken remain independent.
 export class KageAttacks {
