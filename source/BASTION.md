@@ -249,3 +249,9 @@ Node gap tests now assert the initial separation across center/edge positions an
 Moving energy walls no longer query building sections or invoke structural damage. Their player damage, swept collision, gaps, facing lock and visuals remain in place. Removed the now-unused building-damage callbacks from the arena adapter. Gatling and artillery building damage continue through their existing impact paths.
 
 The beam-wall Node suite passes player damage/safe-gap, high-speed, facing and placement checks. Desktop/touch structural browser checks verify all 1,392 arena sections retain their health, scorch and structural state across three complete walls, with no queued detachments; projectile/plasma impacts still deliver 18/32 damage and scorch. No page errors.
+
+## Opposite-edge wall sweeps (revision 171)
+
+The beam-wall attack now chooses an arena axis from the player's position when charging begins. The most distant boundary is the starting edge: east-side players get a west-to-east sweep, west-side players east-to-west, and similarly for north/south. All three rows begin just beyond that boundary (-122 in the captured attack frame), span the arena width, and travel to the opposite boundary (+122). This replaces torso-facing/diagonal orientation; later movement or turning cannot flip the locked attack. Center/tie positions use a deterministic edge.
+
+Initial gap offset, subsequent spacing, opening width, speed and player damage remain intact. Node tests pass four opposite-edge cases, complete start/end coverage, direction lock after moving the target, safe-gap and fast crossings, and seeded gap placement in the new frame. Desktop/touch browser checks pass the full three-wave lifecycle with a player near the east edge and a deliberately different boss facing. Buildings remain unaffected.
