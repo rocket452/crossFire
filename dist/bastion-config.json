@@ -172,7 +172,10 @@
       "drag": 1.4
     },
     "proximityCooldown": 8,
-    "proximityWindup": 1
+    "proximityWindup": 1,
+    "warningColor": "#ffe24a",
+    "warningHz": 4,
+    "warningIntensity": 2.8
   },
   "barrage": {
     "countByCycle": [

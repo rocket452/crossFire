@@ -279,3 +279,9 @@ A hit launches Volt/Kage away from the boss with `pulse.knockback.horizontalSpee
 Previously proximity was sampled at fixed attack-cycle points; cycle-one barrages and beam-wall sequences could continue for a long time without a pulse after a hero approached. Bastion now starts an independent one-second proximity windup during any barrage, retaining the existing normal cycle pulse and opening delay. Vent sparks/light and the warning sound also reflect this windup. It fires only with an enemy still in range, cancels if they leave or stun the boss, and shares an eight-second cooldown with scheduled/overlap waves. Tune `pulse.proximityWindup` and `pulse.proximityCooldown`. Damage, knockback, safe gap and phase-dash immunity remain intact.
 
 Proximity Node checks cover approaches during Gatling, artillery and wall phases, distant-target rejection, cooldown and rebuild. Desktop/touch pulse gameplay tests now approach during a live beam-wall attack and verify both Volt/Kage receive 50 damage and >30m knockback without repeat hits. Existing state and permanent-arm weak-point tests pass.
+
+## Yellow pulse warning (revision 182)
+
+Bastion's armour flashes yellow during both scheduled and reactive close-range pulse windups. It covers primary body sections and decorative armour/tread materials, while preserving energy cores. Tune `pulse.warningColor`, `warningHz=4` and `warningIntensity=2.8`. The warning requires a nearby enemy and stops on release, stun, leaving range, death or reset. The existing red incoming-damage flash can briefly overlay it.
+
+Proximity tests verify scheduled windup color/modulation and cancellation/reset. Desktop/touch live beam-wall approach tests check the reactive yellow warning, then actual 50-damage knockback for both Volt and Kage. The warning screenshot was visually inspected. No attack damage, radius, timing or cooldown values changed.
