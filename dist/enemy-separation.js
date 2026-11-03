@@ -1,4 +1,4 @@
-export const ENEMY_SEPARATION=Object.freeze({gap:.15,slop:.03,stiffness:12,maxSpeed:3.2,iterations:3,verticalTolerance:2.5,radii:{bruiser:2.1,aegis:2.2,scythe:2.35,breaker:1.8,walker:7}});
+export const ENEMY_SEPARATION=Object.freeze({gap:.15,slop:.03,stiffness:12,maxSpeed:3.2,iterations:3,verticalTolerance:2.5,radii:{mireguard:2.8,bruiser:2.1,aegis:2.2,scythe:2.35,breaker:1.8,walker:7}});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function pairAngle(a,b){let h=2166136261;for(const c of a+'|'+b)h=Math.imul(h^c.charCodeAt(0),16777619);h=Math.imul(h^(h>>>16),2246822507);return(h>>>0)/4294967296*Math.PI*2;}
 // Horizontal soft contacts only. No rigid-body stack, vertical impulses or player collision.
