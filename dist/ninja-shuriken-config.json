@@ -124,9 +124,9 @@
     "effectSeconds": 0.24
   },
   "bomb": {
-    "cooldown": 4,
-    "speed": 28,
-    "lift": 11,
+    "cooldown": 1,
+    "speed": 56,
+    "lift": 22,
     "gravity": 26,
     "radius": 0.3,
     "restitution": 0.7,
@@ -136,8 +136,8 @@
     "damage": 300,
     "falloff": 0.65,
     "lifetime": 12,
-    "maxActive": 4,
+    "maxActive": 12,
     "maxStep": 0.008333333333333333,
-    "inheritVelocity": 0.25
+    "inheritVelocity": 0.5
   }
 }
