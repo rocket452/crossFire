@@ -6,7 +6,9 @@ export const COMBAT_ARENA=Object.freeze({
  dashBounds:{minX:-115,maxX:115,minZ:-115,maxZ:115},
  enemyCorner:{x:0,z:0},
  heroStart:{x:0,y:.08,z:104},
- buildings:[{x:-36,z:-36},{x:36,z:-36},{x:-36,z:36},{x:36,z:36}],
+ buildings:[{x:-36,z:-36},{x:36,z:-36},{x:-36,z:36},{x:36,z:36},
+  {x:-84,z:-36,floors:8},{x:-84,z:36,floors:6},{x:84,z:-36,floors:6},{x:84,z:36,floors:8},
+  {x:-36,z:-84,floors:10},{x:36,z:-84,floors:8},{x:-36,z:84,floors:8},{x:36,z:84,floors:10}],
  formationScale:.7,
  roadLanes:[-96,-72,-48,-24,0,24,48,72,96],
  roadLength:230

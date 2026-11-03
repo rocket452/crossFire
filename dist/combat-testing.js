@@ -1,5 +1,5 @@
-import {Mireguard} from './mireguard.js?v=mireguard-balance-189';
-import {COMBAT_ARENA} from './combat-arena-config.js?v=arena-center-159';
+import {Mireguard} from './mireguard.js?v=outer-arena-190';
+import {COMBAT_ARENA} from './combat-arena-config.js?v=outer-arena-190';
 import {BastionTesting} from './bastion-testing.js?v=yellow-pulse-182';
 import {ExperimentalRobot} from './experimental-robots.js?v=charged-shuriken-130';
 import * as THREE from './vendor/three.module.js';
