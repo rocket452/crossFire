@@ -36,3 +36,9 @@ Node checks pass permanent disarming and limb loss beyond the former repair wind
 ## Revision 181 — no evasive rolls
 
 Removed the damage-triggered evasive roll, its rapid lateral movement and full-body somersault animation. Mireguards continue walking or crawling, with normal small flinches and the stronger headshot recoil/flash. Permanent limb loss remains unchanged. Existing Mireguard tests pass, including a body-hit simulation asserting no roll or full-body rotation.
+
+## Revision 184 — articulated flinch animation
+
+Replaced the small global-time shaking with a hit-triggered recoil/recovery pose across the head, torso, shoulders, elbows, hips and knees. The first .065s snaps into recoil, holds briefly, then smoothly recovers over a .45s body-hit or .5s head-hit reaction. The gun follows the reacting arm instead of servo-aiming through the pose, and locomotion/firing pause for the reaction. Headshots use the stronger pose. Residual head/torso rotations are cleared on recovery/reset; crippled stances and permanent limb loss remain supported. Existing red damage-flash code is unchanged.
+
+Node tests verify articulated head/chest/weapon displacement and neutral-pose recovery alongside permanent damage, headshots, rifle behavior and no rolls. Desktop/touch gameplay tests verify the actual player-hit/flash path and capture the recoil pose, then continue through combat, navigation, death and reset.
