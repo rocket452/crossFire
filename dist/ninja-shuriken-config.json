@@ -126,7 +126,7 @@
   "bomb": {
     "cooldown": 1,
     "speed": 56,
-    "lift": 22,
+    "lift": 10.605473,
     "gravity": 26,
     "radius": 0.3,
     "restitution": 0.7,

@@ -123,3 +123,7 @@ Swept collision uses ShurikenWorld's enemy and building geometry. Floors/buildin
 ## Revision 187 — faster bomb and one-second cooldown
 
 Bomb cooldown is now 1s. Initial velocity doubles in full: speed 56m/s, upward lift 22m/s, movement inheritance .5. Gravity and bounce properties remain unchanged, so throws travel in a higher, longer arc. The active cap increases to 12 to support the new cadence throughout the existing 12-second lifetime. Damage and blast radius are unchanged. Collision fixtures now put targets closer so the higher arc intersects their hit boxes; physics/input tests verify the new trajectory and repeat throws after one second.
+
+## Revision 188 — half the bomb launch angle
+
+For level aim, the added launch angle is halved from about 21.45° to 10.72° by setting lift to `speed * tan(atan2(oldLift, speed) / 2)` (about 10.6m/s). Forward throw speed stays 56m/s; aim direction and inherited movement still affect the actual trajectory. The one-second cooldown, damage, gravity and bounce settings are unchanged. Existing bomb physics tests pass.
