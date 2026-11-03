@@ -106,3 +106,5 @@ html[data-input-mode=desktop] .ninja-mobile{display:none!important}@media(max-wi
 @media(max-width:700px),(pointer:coarse){.runner-actions #runner-stun{position:static}}
 
 #violet-energy-status.is-overloading{animation:violet-capacitor-warning .65s ease-in-out infinite}@keyframes violet-capacitor-warning{50%{opacity:.55}}@media(prefers-reduced-motion:reduce){#violet-energy-status.is-overloading{animation:none}}
+
+.hero-card-art.prism{background:linear-gradient(125deg,#fc6686,#f5c361 25%,#71e3b3 50%,#69b9f8 75%,#b485ec)}.prism .hero-portrait{background:#243d76;border-color:#f7df78}.prism .hero-portrait:before{background:#4d294e}.prism .hero-portrait:after{background:linear-gradient(90deg,#ff626e,#f1d668,#50dabb,#5da5f3);box-shadow:-30px 0 0 -3px #ff9c56,30px 0 0 -3px #62dcc4}
