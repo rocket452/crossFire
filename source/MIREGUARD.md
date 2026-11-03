@@ -32,3 +32,7 @@ Existing experimental-robot desktop/touch browser checks also pass all seven pre
 ## Revision 180 verification
 
 Node checks pass permanent disarming and limb loss beyond the former repair window, reset restoration, light headshot recoil/fire cancellation, fatal head damage, and existing rifle/collision behavior at 30/60/120Hz and long frames. Desktop/touch gameplay checks pass actual hero headshot flinch/red flash, permanent severing, enemy fire, navigation, death debris, single/trio presets and full reset.
+
+## Revision 181 — no evasive rolls
+
+Removed the damage-triggered evasive roll, its rapid lateral movement and full-body somersault animation. Mireguards continue walking or crawling, with normal small flinches and the stronger headshot recoil/flash. Permanent limb loss remains unchanged. Existing Mireguard tests pass, including a body-hit simulation asserting no roll or full-body rotation.
