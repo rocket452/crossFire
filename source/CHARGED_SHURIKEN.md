@@ -105,3 +105,7 @@ Holding primary now adds a kunai every 0.5s, reaching five in 2s. One is still l
 ## Revision 179 — faster shuriken charging
 
 `charge.fullSeconds` is .375s, down from .75s: twice the charge rate for the right-click/G charged teleport shuriken. Primary kunai stacking, damage, teleport cooldown and movement are unchanged. The shared config applies in all scenes, including Shuriken Lab. Existing charged-shuriken tests pass.
+
+## Revision 183 — double shuriken charge rate again
+
+`charge.fullSeconds` is now .1875s, down from .375s. The charged teleport shuriken builds twice as quickly again in all scenes. Kunai stacking, damage and teleport cooldown are unchanged. Charged-shuriken tests pass.

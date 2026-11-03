@@ -1,6 +1,6 @@
 {
   "charge": {
-    "fullSeconds": 0.375,
+    "fullSeconds": 0.1875,
     "dashCancels": false
   },
   "early": {
