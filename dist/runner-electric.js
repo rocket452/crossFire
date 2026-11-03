@@ -1,4 +1,4 @@
-import {RunnerHitEffect} from './runner-hit-effect.js?v=enemy-flash-78';
+import {RunnerHitEffect} from './runner-hit-effect.js?v=lightning-impact-174';
 import {RunnerWave} from './runner-wave.js?v=wave-dash-62';
 import * as THREE from './vendor/three.module.js';
 export class RunnerElectric {
@@ -33,7 +33,7 @@ export class RunnerElectric {
   }
   if(beam){
    for(let branch=0;branch<3;branch++){let previous=beam.from.clone();for(let i=1;i<=24;i++){const t=i/24,p=beam.from.clone().lerp(beam.end,t);if(i<24){const amplitude=branch===0?.12:.30;p.x+=Math.sin(i*4.3+time*47+branch)*amplitude;p.y+=Math.cos(i*3.7-time*39+branch)*amplitude;p.z+=Math.sin(i*6.1+time*31)*amplitude;}segments.push({a:previous,b:p,fade:1,width:branch===0?.045:.023});previous=p;}}
-   this.flash.visible=this.impact.visible=true;this.flash.position.copy(beam.from);this.flash.scale.setScalar(.17);this.impact.position.copy(beam.end);this.impact.scale.setScalar(.23+.04*Math.sin(time*31));this.light.position.copy(beam.enemyHits?.length?beam.end:beam.from);this.light.intensity=beam.enemyHits?.length?40:25;
+   this.flash.visible=this.impact.visible=true;this.flash.position.copy(beam.from);this.flash.scale.setScalar(.17);this.impact.position.copy(beam.end);this.impact.scale.setScalar((beam.enemyHits?.length ? .42 : .3)+.06*Math.sin(time*31));this.light.position.copy(beam.enemyHits?.length?beam.end:beam.from);this.light.intensity=beam.enemyHits?.length?65:25;
   }else{this.flash.visible=this.impact.visible=false;if(!charge){this.light.position.copy(foot);this.light.intensity=(speed>18?7:0)+energy*3;}}
   this.trailExtent=this.trails.reduce((max,s)=>Math.max(max,position.distanceTo(s.a)),0);let count=0;const color=new THREE.Color();for(const s of segments.slice(-500)){this.direction.copy(s.b).sub(s.a);const l=this.direction.length();if(l<.002)continue;this.dummy.position.copy(s.a).add(s.b).multiplyScalar(.5);this.dummy.quaternion.setFromUnitVectors(this.up,this.direction.divideScalar(l));this.dummy.scale.set(s.width,l,s.width);this.dummy.updateMatrix();this.core.setMatrixAt(count,this.dummy.matrix);this.dummy.scale.set(s.width*3.6,l,s.width*3.6);this.dummy.updateMatrix();this.glow.setMatrixAt(count,this.dummy.matrix);color.setRGB(s.fade,s.fade,s.fade);this.core.setColorAt(count,color);this.glow.setColorAt(count,color);count++;}
   for(const m of [this.core,this.glow]){m.count=count;m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;}this.segmentCount=count;

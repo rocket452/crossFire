@@ -24,3 +24,9 @@
 Inspected `/tmp/lightning-hit76-boss-desktop.png` and `/tmp/lightning-hit76-drone-phone.png`; matching boss/drone captures exist for both layouts. Phone checks emulate input; physical-device FPS/thermal performance has not been measured. `runner-beam-test.mjs`, changed module syntax and `git diff --check` also pass.
 
 The existing death explosions, missile interception effects and overload/weak-point stun discharge are unchanged. The contact layer restores existing materials rather than replacing them, creates no extra lights and never changes health or enemy behavior.
+
+## Stronger contact effect — revision 174
+
+Enlarged the electrical contact radius to 1.55m for smaller robots and 2.6m for bosses (1.1m for explicitly tagged weak points). The contact now has two expanding cyan shock rings, thicker four-segment electrical branches, a brighter white core/blue halo, and twelve long warm-white spark streaks per timed burst. Sparks eject from the hit surface toward the shooter and around the contact, lasting .36s. The contact light is stronger; no new lights were added. Instances stay capped at four targets, 96 sparks, 96 arc segments and six draws, with bursts rate-limited to ten per second per target.
+
+The existing hit-effect and sustained-beam Node suites pass. Desktop and emulated-phone browser tests pass actual held-fire hits on Bruiser/Siege Walker, moving attachment, miss/cover rejection, expiry/reset and unchanged 150 DPS / 17.5 charge per second. Inspected the updated desktop/phone screenshots: the corona, rings and spark streaks remain visible around the crosshair at normal third-person distance. Enemy materials, shared red damage flashes, aim, damage and movement are unchanged. Physical-phone GPU/thermal performance remains unmeasured.
