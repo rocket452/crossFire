@@ -243,3 +243,9 @@ Barrage center is now the target's predicted horizontal position at the volley m
 `beamWalls.firstGapOffset=40` places the first gap center 40m laterally from the player's position in the captured attack frame. Seeded left/right choices are filtered for arena bounds and room for the complete 60m-spaced three-wave sequence. Edge starts select a feasible inward layout instead of placing the first opening beside the hero. Gap width remains 12m, and warning positions remain locked after planning.
 
 Node gap tests now assert the initial separation across center/edge positions and seeds alongside successive spacing, facing directions, damage and bounds. Desktop/touch wall browser checks cover the revised planning, sky beam, all three walls and cleanup.
+
+## Energy walls leave buildings intact (revision 170)
+
+Moving energy walls no longer query building sections or invoke structural damage. Their player damage, swept collision, gaps, facing lock and visuals remain in place. Removed the now-unused building-damage callbacks from the arena adapter. Gatling and artillery building damage continue through their existing impact paths.
+
+The beam-wall Node suite passes player damage/safe-gap, high-speed, facing and placement checks. Desktop/touch structural browser checks verify all 1,392 arena sections retain their health, scorch and structural state across three complete walls, with no queued detachments; projectile/plasma impacts still deliver 18/32 damage and scorch. No page errors.
