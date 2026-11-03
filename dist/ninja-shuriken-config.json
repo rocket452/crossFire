@@ -122,5 +122,22 @@
     "height": 1.2,
     "damage": 160,
     "effectSeconds": 0.24
+  },
+  "bomb": {
+    "cooldown": 4,
+    "speed": 28,
+    "lift": 11,
+    "gravity": 26,
+    "radius": 0.3,
+    "restitution": 0.7,
+    "friction": 0.85,
+    "skin": 0.025,
+    "blastRadius": 6,
+    "damage": 300,
+    "falloff": 0.65,
+    "lifetime": 12,
+    "maxActive": 4,
+    "maxStep": 0.008333333333333333,
+    "inheritVelocity": 0.25
   }
 }

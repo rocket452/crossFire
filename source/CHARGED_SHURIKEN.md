@@ -109,3 +109,13 @@ Holding primary now adds a kunai every 0.5s, reaching five in 2s. One is still l
 ## Revision 183 — double shuriken charge rate again
 
 `charge.fullSeconds` is now .1875s, down from .375s. The charged teleport shuriken builds twice as quickly again in all scenes. Kunai stacking, damage and teleport cooldown are unchanged. Charged-shuriken tests pass.
+
+## Revision 186 — bouncing bomb (C)
+
+Player Kage can press **C** or tap **BOMB** on mobile to throw from his real right-hand attachment toward the existing reticle. The throw adds upward velocity and a small share of his movement velocity; it never roots or changes movement. The existing throw pose and sound cue play. The weapon meter and mobile button show its four-second cooldown. One press throws once; key repeat, menus and loss of pointer lock follow the existing input rules.
+
+`bomb` in `dist/ninja-shuriken-config.json` exposes launch speed 28m/s, lift 11m/s, gravity 26m/s², .3m radius, .7 restitution, .85 tangential retention, .025m separation skin, 300 direct damage, 6m blast radius/falloff, four-second cooldown, four-active cap, 12-second lifetime, 1/120s collision substeps and .25 movement inheritance. `kage-bombs.js` owns ballistic simulation and visuals; `NinjaHero` only wires input and existing hit/aim callbacks.
+
+Swept collision uses ShurikenWorld's enemy and building geometry. Floors/buildings reflect velocity without detonating; terrain slopes currently use an upward bounce normal. Living enemy/missile contact causes a single blast; nearby enemies take falloff damage only with a clear path. Existing damage rules still apply, including Bastion armour. It does not damage allies or add structural blast damage. Missed bombs disappear harmlessly after 12s. Gateway redirection is supported. Existing explosion fire/smoke visuals are reused in an independent effect pool. Reset/deselection clears bombs and effects; bombs already thrown continue if Kage is simply released to CPU control.
+
+`QA/kage-bombs-test.mjs` passes at 30/60/120Hz and 75ms frames: arc, floor/wall ricochet, no detonation on scenery, target-only explosion, one damage application per target, area damage, cooldown, harmless timeout and reset. `QA/kage-bombs-browser.cjs` passes real desktop C and emulated mobile button input, hand launch, rising arc, real enemy damage/explosion, cooldown and rebuild. Flight/explosion screenshots were inspected. Existing charged-shuriken and Kage movement suites pass. Physical-phone performance remains unmeasured.
