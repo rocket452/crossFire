@@ -1,4 +1,6 @@
-# Mireguard — regenerative robotic rifle infantry (revision 175)
+# Mireguard — robotic rifle infantry
+
+Current behavior (revision 180): limb loss is permanent until scene reset. Headshots cause a .32s recoil/firing interruption with a .2s retrigger interval and a brighter, immediately retriggered red flash. Repair logic and repair-field visuals have been removed. The revision-175 notes below describe the original implementation.
 
 Select **Combat Testing → Enemy preset → 1 Mireguard** or **3 Mireguards**, then **Spawn / Reset enemies**. Use **Play / Watch selected hero** to fight as Volt or Kage, or watch the other existing CPU heroes. The city battle, escort spawning and their default enemies are unchanged. A direct launch is `?scene=testing&enemy=mireguard-1` or `enemy=mireguard-3`.
 
@@ -26,3 +28,7 @@ Navigation reuses `EvacuationNavigation` with the arena's street-grid waypoints 
 `QA/mireguard-test.mjs` covers 30/60/120Hz and long frames: burst fire, independent part HP, rifle shutdown, repair without main-health healing, collapse after leg destruction, fatal head damage, stun, traceable articulated hit boxes, reset and model budget. `QA/mireguard-browser.cjs` runs desktop/touch gameplay: actual rifle hits on the selected hero, hero lightning damage, disarming/repair, physical smoking wrecks/expiry, head kill, single/trio presets, full reset and switching back to Bruisers. It also routes around a real arena building using the shared street graph without crossing collision geometry.
 
 Existing experimental-robot desktop/touch browser checks also pass all seven presets, shield/flank/dash interactions, sweep evasion, capacitor interrupts, Violet/Rift combat and reset. The browser fixture’s readiness check now safely waits for the module-loaded diagnostics global. Existing experimental robot, enemy separation, Bruiser burst/lead, robot death, Bastion arm weak-point and damaging pulse Node suites pass. Desktop/touch screenshots were inspected for the full model, severed arm and crippled stance. Emulated phone input/layout is covered; physical-phone performance has not been measured.
+
+## Revision 180 verification
+
+Node checks pass permanent disarming and limb loss beyond the former repair window, reset restoration, light headshot recoil/fire cancellation, fatal head damage, and existing rifle/collision behavior at 30/60/120Hz and long frames. Desktop/touch gameplay checks pass actual hero headshot flinch/red flash, permanent severing, enemy fire, navigation, death debris, single/trio presets and full reset.
