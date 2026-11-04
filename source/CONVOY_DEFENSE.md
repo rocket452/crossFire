@@ -1,6 +1,6 @@
-# Convoy Defense — step 1 / revision 192
+# Convoy Defense — foundation and ARGUS integration
 
-Select **Convoy Defense** from Scene, or use `?scene=convoy`. This is a separate scenario in the existing city renderer/physics, not a replacement for City Battle, the Chinook evacuation, Combat Testing or Shuriken Lab. No ARGUS actor/attacks, repair drones, joint weak points, hero health/death or playable flight are implemented in this step.
+Select **Convoy Defense** from Scene, or use `?scene=convoy`. This is a separate scenario in the existing city renderer/physics, not a replacement for City Battle, the Chinook evacuation, Combat Testing or Shuriken Lab. The foundation below records step 1. Step 2 now adds moving ARGUS, four joint targets and bus stomps; see `source/ARGUS.md`. Flak/tethers/lance, repair drones, hero health/death and playable flight remain out of scope.
 
 ## Lifecycle and accounting
 
@@ -12,7 +12,7 @@ Boarding ends when the 35-second window expires, even if people are still approa
 
 Each bus separately counts its passengers as saved only when its center passes X=116: its rear is then beyond the playable east edge at X=108. Escaped buses disappear from combat/visibility. The convoy continues until all remaining buses escape or are destroyed. At least one escaped bus yields success; failure occurs only when every bus was destroyed without any escape. Saving an empty bus can still win with zero rescued civilians. Score is saved civilians, not bus HP or kills. The mission outcome and saved passengers persist until City Rebuild; ground civilians remain in the world.
 
-The map retains the existing sixteen destructible city buildings and adds open approach/exit road space. Bus routes never cross intact buildings. Movement is controlled/kinematic, not suspension-based vehicle physics. Wrecked buses remain charred/smoking and surviving buses bypass them on the south side of the boulevard. Settled loose building debris in the convoy corridor uses the existing collision-release method so it cannot permanently deadlock evacuation; intact structures are never erased. The new scene suppresses the original Walker and army pending ARGUS step 2.
+The map retains the existing sixteen destructible city buildings and adds open approach/exit road space. Bus routes never cross intact buildings. Movement is controlled/kinematic, not suspension-based vehicle physics. Wrecked buses remain charred/smoking and surviving buses bypass them on the south side of the boulevard. Settled loose building debris in the convoy corridor uses the existing collision-release method so it cannot permanently deadlock evacuation; intact structures are never erased. The new scene suppresses the original Walker and army; step 2 adds its own ARGUS actor.
 
 ## Files
 
@@ -56,4 +56,4 @@ The map retains the existing sixteen destructible city buildings and adds open a
 - Killing ARGUS does not win; surviving buses must exit.
 - Preserve the Chinook scenario without refactoring/extracting a shared civilian system in this pass.
 
-Stop after step 1. Step 2 is moving ARGUS/interception, leg-joint damage and damaged gait; it has not started.
+Step 1 was verified by the user. Step 2 is documented in `source/ARGUS.md` and stops before flak/tethers/lance or repair drones. Those require step 3 authorization.

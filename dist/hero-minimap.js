@@ -33,7 +33,7 @@ export class HeroMinimap {
  refresh(){
   const data=this.getSnapshot(),people=data.civilians||[],enemies=data.enemies||[];
   this.counts={civilians:people.length,enemies:enemies.length};this.civilianCount.textContent=people.length;this.enemyCount.textContent=enemies.length;
-  const entries=[...this.staticMarkers,...civilianClusters(people).map(g=>({...g,id:'group-'+g.id,kind:'civilian',label:g.count+' civilians'+(g.targeted?' — targeted by enemy attack':'')})),...enemies.map(e=>({...e,kind:e.boss?'boss':'enemy',label:e.boss?'Siege Walker':'Robot drone'})),...(data.allies||[]).map(a=>({...a,kind:'ally',label:'Allied hero'}))];
+  const entries=[...this.staticMarkers,...civilianClusters(people).map(g=>({...g,id:'group-'+g.id,kind:'civilian',label:g.count+' civilians'+(g.targeted?' — targeted by enemy attack':'')})),...enemies.map(e=>({...e,kind:e.boss?'boss':'enemy',label:e.name||(e.boss?'Siege Walker':'Robot drone')})),...(data.allies||[]).map(a=>({...a,kind:'ally',label:'Allied hero'}))];
   for(const p of data.plasma||[])entries.push({...p,id:'impact-'+p.id,kind:'plasma',label:'Plasma impact in '+Math.max(0,p.eta).toFixed(1)+' seconds'});
   for(const b of data.buses||[])entries.push({...b,kind:'bus',label:'Evacuation bus'});for(const p of data.pickups||[])entries.push({...p,kind:'pickup'});
   if(data.helicopter)entries.push({...data.helicopter,id:'evac-helicopter',kind:'helicopter',label:'Evacuation helicopter'});

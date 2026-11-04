@@ -19,3 +19,31 @@ export function validateConvoyConfig(c){
  if(c.map.pickups?.length!==2||c.map.pickups.some((p,i)=>!Number.isFinite(p.distance)||p.distance<=0||p.distance>=routeLength(route)||(i&&p.distance<=c.map.pickups[i-1].distance)||!p.sources?.length))throw Error('Invalid convoy pickups');
  return c;
 }
+
+// Project virtual endpoints onto the lane graph; replanning mid-edge never forces a return to its start.
+export function interceptionPath(map,from,to){
+ const {nodes,links}=map.interceptionLanes,points=nodes.map(([x,z])=>({x,z})),edges=points.map(()=>[]),distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+ const connect=(a,b)=>{const d=distance(points[a],points[b]);edges[a].push([b,d]);edges[b].push([a,d]);};for(const [a,b]of links)connect(a,b);
+ const attach=p=>{
+  let best=null;for(const [edge,[a,b]]of links.entries()){const A=points[a],B=points[b],dx=B.x-A.x,dz=B.z-A.z,t=Math.max(0,Math.min(1,((p.x-A.x)*dx+(p.z-A.z)*dz)/(dx*dx+dz*dz))),q={x:A.x+dx*t,z:A.z+dz*t},d=distance(p,q);if(!best||d<best.distance)best={edge,a,b,q,distance:d};}
+  const projection=points.length;points.push(best.q);edges.push([]);connect(projection,best.a);connect(projection,best.b);const endpoint=points.length;points.push({x:p.x,z:p.z});edges.push([]);connect(endpoint,projection);return{...best,projection,endpoint};
+ };
+ const start=attach(from),end=attach(to);if(start.edge===end.edge)connect(start.projection,end.projection);
+ const costs=points.map(()=>Infinity),previous=new Map(),pending=new Set(points.map((_,i)=>i));costs[start.endpoint]=0;
+ while(pending.size){let n=null;for(const i of pending)if(n===null||costs[i]<costs[n])n=i;if(!Number.isFinite(costs[n]))break;pending.delete(n);if(n===end.endpoint)break;for(const [j,d]of edges[n])if(costs[n]+d<costs[j]){costs[j]=costs[n]+d;previous.set(j,n);}}
+ if(!Number.isFinite(costs[end.endpoint]))throw Error('Disconnected ARGUS interception lanes');
+ const path=[];for(let n=end.endpoint;n!==undefined;n=previous.get(n))path.unshift({...points[n]});return{distance:costs[end.endpoint],points:path.filter((p,i)=>!i||distance(p,path[i-1])>.001).slice(1)};
+}
+
+// Read-only lead-bus forecast, including current startup/pickup remainder and all future pickup windows.
+export function predictConvoyDistance(mission,seconds){
+ let t=Math.max(0,seconds),d=mission.distance,index=mission.nextPickup;
+ if(mission.phase==='starting'){t-=mission.remaining;if(t<=0)return d;}
+ if(mission.phase==='pickup'){t-=mission.remaining;if(t<=0)return d;index++;}
+ for(;index<mission.config.map.pickups.length;index++){
+  const stop=mission.config.map.pickups[index],travel=Math.max(0,stop.distance-d)/mission.config.busSpeed;
+  if(t<=travel)return d+t*mission.config.busSpeed;t-=travel;d=stop.distance;
+  if(t<=mission.config.pickupDuration)return d;t-=mission.config.pickupDuration;
+ }
+ return d+t*mission.config.busSpeed;
+}

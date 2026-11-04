@@ -1,0 +1,26 @@
+{
+  "health": 10000,
+  "spawn": {"x": 36, "z": 54, "yaw": 3.141592653589793},
+  "movement": {"speed": 2.2, "turnSpeed": 0.48, "waypointRadius": 0.18, "arrivalRadius": 0.7},
+  "interception": {"replanInterval": 3, "predictionStep": 2, "maximumPrediction": 130, "minimumLead": 2, "breachAllowance": 3},
+  "gait": {"lateral": 1.75, "ankleHeight": 1.62, "pelvisHeight": -0.65, "stepTrigger": 0.95, "stepLead": 0.25, "swingDuration": 0.65, "stepLift": 0.8, "maxSupportReach": 2.55, "damagedStrideScale": 0.22, "damagedSwingExtra": 0.18, "limpDrop": 0.1, "sway": 0.12},
+  "joints": {
+    "health": 600,
+    "permanentDestruction": true,
+    "speedPenalty": 0.15,
+    "maximumSpeedPenalty": 0.6,
+    "hullDamageScale": 0.15,
+    "radius": 0.72,
+    "sparkInterval": 0.45,
+    "locations": [
+      {"id": "argus-hip-l", "node": "thigh_l", "side": "l", "offset": [-0.6, -0.15, 1.15]},
+      {"id": "argus-knee-l", "node": "shin_l", "side": "l", "offset": [-0.35, 0, 1.1]},
+      {"id": "argus-hip-r", "node": "thigh_r", "side": "r", "offset": [0.6, -0.15, 1.15]},
+      {"id": "argus-knee-r", "node": "shin_r", "side": "r", "offset": [0.35, 0, 1.1]}
+    ]
+  },
+  "armor": {"bodyDamageScale": 1, "coreDamageScale": 0},
+  "breach": {"interval": 0.3, "power": 24, "radius": 3.2, "contactsPerTick": 4, "skin": 0.02},
+  "melee": {"range": 7.5, "windup": 0.8, "recovery": 0.45, "cooldown": 3.5, "busDamage": 120, "impactRadius": 5, "footLift": 1.7, "telegraphRadius": 4.5, "flashHz": 5},
+  "death": {"collapseSeconds": 1.5}
+}
