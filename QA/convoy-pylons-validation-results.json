@@ -1,0 +1,267 @@
+{
+  "dateUTC": "2026-11-04",
+  "nodeSuites": [
+    {
+      "suite": "argus-pylons-test",
+      "passed": true
+    },
+    {
+      "suite": "argus-attacks-test",
+      "passed": true
+    },
+    {
+      "suite": "argus-test",
+      "passed": true
+    },
+    {
+      "suite": "convoy-test",
+      "passed": true
+    },
+    {
+      "suite": "convoy-results-test",
+      "passed": true
+    },
+    {
+      "suite": "walker-gait-test",
+      "passed": true
+    },
+    {
+      "suite": "walker-weapons-test",
+      "passed": true
+    },
+    {
+      "suite": "city-physics-test",
+      "passed": true
+    },
+    {
+      "suite": "building-damage-test",
+      "passed": true
+    },
+    {
+      "suite": "building-collision-release-test",
+      "passed": true
+    },
+    {
+      "suite": "combat-collision-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-state-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-heavy-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-arms-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-leading-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-rain-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-beam-walls-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-permanent-weakpoints-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-proximity-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-pulse-knockback-test",
+      "passed": true
+    },
+    {
+      "suite": "evacuation-lifecycle-test",
+      "passed": true
+    },
+    {
+      "suite": "evacuation-navigation-test",
+      "passed": true
+    },
+    {
+      "suite": "evacuation-policy-test",
+      "passed": true
+    },
+    {
+      "suite": "hero-minimap-test",
+      "passed": true
+    },
+    {
+      "suite": "runner-motion-test",
+      "passed": true
+    },
+    {
+      "suite": "runner-air-wall-test",
+      "passed": true
+    },
+    {
+      "suite": "ninja-motion-test",
+      "passed": true
+    },
+    {
+      "suite": "ninja-jump-feel-test",
+      "passed": true
+    },
+    {
+      "suite": "ninja-ground-dash-test",
+      "passed": true
+    },
+    {
+      "suite": "ninja-phase-test",
+      "passed": true
+    },
+    {
+      "suite": "charged-shuriken-test",
+      "passed": true
+    }
+  ],
+  "browserSuites": [
+    {
+      "suite": "argus-attacks-browser",
+      "passed": true
+    },
+    {
+      "suite": "argus-solo-browser",
+      "passed": true
+    },
+    {
+      "suite": "argus-hit-flash-browser",
+      "passed": true
+    },
+    {
+      "suite": "walker-weapons-browser",
+      "passed": true
+    },
+    {
+      "suite": "evacuation-cycle-browser",
+      "passed": true
+    },
+    {
+      "suite": "bastion-permanent-weakpoints-browser",
+      "passed": true
+    },
+    {
+      "suite": "bastion-beam-walls-browser",
+      "passed": true
+    },
+    {
+      "suite": "bastion-pulse-knockback-browser",
+      "passed": true
+    },
+    {
+      "suite": "arena-center-browser",
+      "passed": true
+    },
+    {
+      "suite": "charged-shuriken-browser",
+      "passed": true
+    },
+    {
+      "suite": "convoy-hud-browser",
+      "passed": true
+    },
+    {
+      "suite": "argus-pylons-browser",
+      "passed": true
+    },
+    {
+      "suite": "argus-browser",
+      "passed": true
+    }
+  ],
+  "browserConditions": "Installed Chromium/Playwright, desktop and touch emulation, instrumented actual game/controller/rendering, screenshots inspected. Physical phone FPS/thermal unmeasured.",
+  "unchangedSources": [
+    {
+      "file": "dist/siege-walker.js",
+      "sha256": "1392498aec93a567cf122231a64ba413e3585fa2488fab5805f25518ca315d2d",
+      "identicalToPrePylons": true
+    },
+    {
+      "file": "dist/walker-gait.js",
+      "sha256": "ebdfc40cc9f7624a8deaed53efc9c1ec15a249898de2e035927ed81044f86a28",
+      "identicalToPrePylons": true
+    },
+    {
+      "file": "dist/evacuation.js",
+      "sha256": "617ef7c189e14fa65b541ea4be64baed828749b92e77194918acfdf51c15cd46",
+      "identicalToPrePylons": true
+    },
+    {
+      "file": "dist/evacuation-navigation.js",
+      "sha256": "e821b6bc14f7c27db45d7dbfb9693ecb3a80f71c6c50a784d7b3b0b8fa042eee",
+      "identicalToPrePylons": true
+    },
+    {
+      "file": "dist/evacuation-config.js",
+      "sha256": "8bd6ca028486516a15a925a6afbbde5fc6b341f933ddcbe34163dfc951a02617",
+      "identicalToPrePylons": true
+    },
+    {
+      "file": "dist/destruction.js",
+      "sha256": "2adf2519c326b9de54bc17e0373e14efa54a35e1e013bbfcee208af98ec13849",
+      "identicalToPrePylons": true
+    },
+    {
+      "file": "dist/convoy-config.json",
+      "sha256": "9a85cb5f282f353305feb755f95b27cd43291f0b7f173ef06eb15d692640a4f5",
+      "identicalToPrePylons": true
+    },
+    {
+      "file": "dist/convoy-mission.js",
+      "sha256": "9edc233253428fa64b0d83a2dafe0c98589a3956615c0fa25e96e47b8fb94b7c",
+      "identicalToPrePylons": true
+    },
+    {
+      "file": "dist/evac-bus.js",
+      "sha256": "30d453a04ddd899422e086a612725c5ded54a7854cd46dae6c2c2fcfa73cc4bb",
+      "identicalToPrePylons": true
+    },
+    {
+      "file": "dist/bastion.js",
+      "sha256": "6073d3d5e86221f643ffa86debe31be5e2a974003e558b0478ed91395e028301",
+      "identicalToPrePylons": true
+    },
+    {
+      "file": "dist/bastion-config.json",
+      "sha256": "df74fe2d2ee503a7e0d87af3f8e7dd78017e7a79e70d6a3964e30552c9dd004a",
+      "identicalToPrePylons": true
+    }
+  ],
+  "tetherConfigUnchangedAndUnused": true,
+  "sharedCodeTouched": [
+    "battle.js: remove tether pre-hero adapter, register stakes instead of anchors for silhouettes, add pylon HUD count; cache imports.",
+    "runner-motion.js: remove externalSpeedScale reset and run/boost/wall multipliers.",
+    "ninja-motion.js: remove externalSpeedScale factors from ground/air dash.",
+    "speedster.js/ninja-hero.js and entry modules: cache versions for changed movement/ARGUS dependencies.",
+    "ninja-lab.js/game-entry.js: cache revision only, so standalone lab loads the cleaned movement controller."
+  ],
+  "newCoverage": [
+    "Natural route-biased pylon placement with warning, dropping stake and three-stake cap",
+    "Charge sound/glow and ground ring expansion, per-stake periodic pulses and phase3 scaling",
+    "Low/grounded hero feedback/outward impulse, high/wall/roof safety, fast swept motion and teleport bypass",
+    "Moving/stopped oriented bus footprint takes 60 once/ring; no civilian/boss/drone/other stake damage",
+    "Shootable 140-HP stake removes all its rings and shapes",
+    "Missing support callback, removed ground body and detached section cleanup",
+    "Boss stun cancels pending placement; deployed stakes remain autonomous",
+    "Death/reset/completion cleanup including lethal bus ring before result pause",
+    "Actual elapsed 0.8s charge minimum verified at 30/60/120Hz",
+    "No hit beyond 18m visible ring boundary apart from hero/bus footprint"
+  ],
+  "balanceReport": "QA/convoy-pylons-balance-results.json",
+  "limits": [
+    "Fixed ground plane; no new road-cratering mechanic. Support-loss paths tested by API/physics removal.",
+    "Feedback-only hero HP; CPU flight; no quake/flak portal redirection.",
+    "No physical-phone performance benchmark."
+  ]
+}

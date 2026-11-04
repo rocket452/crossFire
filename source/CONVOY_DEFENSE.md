@@ -1,75 +1,75 @@
-# Convoy Defense — completed prototype
+# Convoy Defense — ARGUS and quake pylons
 
-Choose **Scene → Convoy Defense**, or open `?scene=convoy`. This extends the existing Three.js/Cannon-es game. City Battle, Chinook Evacuation, Combat Testing and Shuriken Lab keep their existing systems. Step 4 completes presentation, results, measured config-only balance tuning and regression; it adds no combat mechanics.
+Choose **Scene → Convoy Defense** or `?scene=convoy`. This is the existing Three.js/Cannon-es game and destructible city. Quake pylons replace tether harpoons completely. The entire `attacks.tether` JSON object is retained unchanged for future repurposing, but no runtime code reads it. There are no cables, wall anchors, tether targeting, yank, movement slow or tether immunity states.
 
-## Scenario flow and scoring
+## Scenario flow and accounting
 
-Four buses start with eight passengers each, 14m apart. After 5s they drive the central eastbound boulevard at 4m/s. The lead bus stops at route distances 76m and 124m (world X=0 and X=48), for 35s each. Each pickup produces 24 civilians in twelve-person groups. Civilians follow the sidewalk and board automatically; players need not escort or interact with them. Ground civilians may choose another available bus; **aboard passengers never transfer**. Each bus has 24 seats and 1,680 HP.
+Four buses start with eight passengers each, 14m apart. After 5s they travel at 4m/s, stopping at route distances 76m and 124m (world X=0 and X=48) for 35s each. Each stop spawns 24 civilians in groups of twelve. They follow sidewalks and board automatically. Each bus has 24 seats and 1,680 HP. Ground people may select another available bus, but **aboard passengers never transfer**.
 
-Aboard passengers are counted saved only when their own bus crosses the exit at X=116, with its rear beyond the playable edge X=108. Destroying a bus kills its passengers. Left-behind ground civilians stay visible and vulnerable; they count as unsaved, not dead. Ground deaths move from unsaved to killed while the mission is active. Geometry contact never kills a civilian. Loose settled debris in the road uses existing collision release; intact structures are not erased. Buses use controlled route movement, door boarding and wreck bypass, not suspension physics.
+Passengers count as saved only when their own bus crosses the exit at X=116, its rear beyond playable X=108. A destroyed bus loses its passengers. Left-behind ground civilians remain vulnerable in the world; they are unsaved, not killed. Direct quake rings do not damage civilians. Losing a bus to a ring still loses its passengers.
 
-When every bus is escaped or destroyed, at least one escaped bus wins; losing all buses without an escape fails. Killing ARGUS does **not** finish the mission. Results freeze at that moment: saved / killed / left behind, buses escaped, simulation completion time, ARGUS destroyed yes/no and rank. The denominator is all **80 planned civilians**, including pickups never reached. Unreached civilians count as left behind, with an explanatory note, never as killed. Continued observation cannot change the completed report. City Rebuild clears it and starts again.
+The mission resolves when every bus is escaped or destroyed. At least one escaped bus wins; all buses destroyed without an escape fails. Destroying ARGUS never finishes the mission. The report freezes saved/killed/left-behind counts, buses escaped, simulation completion time, boss status and rank. All 80 planned civilians are the denominator, including unreached pickups (left behind, never killed). Ranks: S ≥90%, A ≥75%, B ≥50%, C below 50%. Keep observing and Results preserve the snapshot; Rebuild resets the mission. Pause/result-dialog behavior remains unchanged.
 
-Ranks use saved / planned total: **S ≥90%, A ≥75%, B ≥50%, C below 50%**. Winning with an empty bus is possible and scores C. Results offer Keep observing and Rebuild & retry; the HUD Results button reopens the same report. Opening results releases pointer lock and pauses simulation; closing restores the prior pause setting. Time is simulation time, excluding pauses, displayed rounded to whole seconds.
+## ARGUS combat and preserved rules
 
-## ARGUS and locked rules
+ARGUS reuses the articulated Walker rig, world-space planted feet, lane forecasting and building-breach/wreck adapters. Four 600-HP leg joints permanently remove 15% stride speed each, capped at 60%. Destroyed joints stay dark and are never rebuilt. Surviving-joint repair cannot reverse a recorded speed penalty. Accepted joint and exposed-core hits briefly flash red, independently of the hull.
 
-ARGUS reuses the articulated Walker model (approximately 21m in the existing scene), world-space planted feet and existing wreck/destruction adapters. It spawns in the northeast and follows the interception graph, forecasting the convoy's **remaining** route and stop delays. It replans every 3s, on stop/departure changes and bus-roster changes. Heroes do not steer its movement. Physical hull tests gate each candidate pose: blocking intact building sections must be damaged/pushed aside before it advances. Damaged-side shorter/slower steps produce a limp. Reaching a bus starts a warned stomp.
+Phase 1 has flak and quake-pylon placement. The existing lance can counter a directly controlled hero from phase 1; CPU lance targets unlock below 66% HP in phase 2, alongside two repair drones. Below 33%, phase 3 multiplies stride speed by 1.25 and attack cooldowns by 0.7. **No warning is shortened below 0.8s.** ARGUS still moves to intercept the convoy, not chase heroes.
 
-- Four leg joints have 600 HP each. A destroyed joint permanently removes 15% stride speed, stacking to 60%. Dead joints do not glow and cannot be repaired. Surviving-joint HP repair never reverses a recorded destruction penalty.
-- Phase 1: flak and tether attacks, plus the existing lance as a counter to a directly controlled hero. CPU heroes remain eligible for lance only in phase 2. Below 66% HP, phase 2 adds general lance targeting and two repair drones. Below 33%, phase 3 multiplies speed by 1.25 and cooldowns by 0.7; warning time never drops below 0.8s.
-- Every attack has a firing-part glow and charge sound hook. Flak warns for 0.9s, then travels for 0.7s before bursting. Ground/wall-running heroes, heroes below the configured roof/altitude safety limits, and covered heroes are safe. Violet's active barrier blocks bursts. Flak never hits ground civilians or buses.
-- Tether warns for 0.9s, flies for 0.35s and arms for 0.8s. Fast crossings yank toward the nearer anchor, apply 12 feedback damage and **40% movement slow for 1.5s**, then **3s immunity after the slow**. Teleports bypass the intervening line. Buses and civilians do not trigger cables.
-- Every tether update validates both anchors and their actual attached building sections. Killing either anchor, section detachment, hiding, collision release, depleted section HP, a failed building floor or building collision shutdown removes the whole cable, both hit shapes and any tracer meshes. Lifetime expiry, reset, boss death and mission completion also clean it up. No separate destruction-event listener can miss collapse paths.
-- Lance warns for 0.9s, lasts at most 4s, then has a 3s cooldown. It predicts slightly and ramps 12→60 feedback damage/sec over 3s continuous contact. At 33% / 66% / 100%, horizontal impulses are 10 / 18 / 28m/s, with upward impulses 2 / 4 / 7m/s. More than 0.5s without contact/line of sight ends the beam and resets the ramp. It targets heroes only; shields and buildings interrupt contact.
-- The core opens during lance fire (and stun). Core hits apply 2.5× hull damage; the stun threshold is 350 + 0.4 × current shutter armor (590 with full 600 armor). This accumulator uses the core hit's incoming damage before the hull multiplier. Stun interrupts the attack and halts ARGUS for 3s.
-- Two 220-HP repair drones arrive in phase 2; one replacement every 30s if below the cap of two. A beam restores the missing HP of a surviving joint over 10s, or repairs core-shutter armor if no damaged joint is available. No hull healing, destroyed-joint rebuilding or penalty reversal exists.
-- Enemy-owner filters prevent ARGUS attacks hitting ARGUS, its anchors or drones. Hero abilities, Chinook evacuation and existing city destruction are retained. No hero ability redesign or shared civilian refactor was added.
+Flak retains four airborne bursts, 0.9s warning + 0.7s flight, radius 5m, altitude band 26–54m, 24 feedback damage and 7s cooldown. Ground/wall-running heroes, roof-height/covered targets and active Violet barriers retain their protections. Flak never harms buses or ground civilians.
 
-## HUD and readability
+Lance retains a 0.9s warning, up to 4s firing, 3s cooldown, tracking/lead and 12→60 feedback DPS over 3s contact. Impulses at 33/66/100% ramp are 10/18/28m/s horizontally and 2/4/7m/s upward. More than 0.5s without contact/line of sight ends the beam and resets the ramp. The exposed core applies 2.5× hull damage; 350 + 0.4 × current shutter armor incoming core damage triggers 3s stun. Full armor is 600, so the initial threshold is 590. The lance does not damage civilians or buses.
 
-The existing ARGUS boss bar remains. The convoy panel shows lead route percentage, four bus markers, numbered pickup positions and an exit flag; numeric current/max HP and aboard/capacity for each bus; pickup seconds remaining; and separate saved/killed/left-behind/onboard totals. Lead progress reaching 100% does not mean the trailing buses have escaped: the safe-bus count records actual exits. The hero radar draws the route, buses, two stops, exit and ARGUS. Convoy civilians have **no individual radar dots**; its civilian count remains available. Other scenes retain their previous radar snapshots.
+Two 220-HP drones arrive in phase 2; replacement is one every 30s below the cap of two. A beam repairs the HP missing from a surviving joint over 10s, or shutter armor if no damaged living joint is available. No hull healing, destroyed-joint rebuilding or permanent-penalty reversal exists. Bus stomp remains 120 damage, 0.8s warning, 0.45s recovery and 3.5s cooldown.
 
-## Measured balance
+## Pylon placement and lifecycle
 
-Reproduce with `node QA/convoy-balance.mjs` (final) or add `--baseline` (accepted step-3 commit `ce52b5b`). The committed report is `QA/convoy-balance-results.json`. Runs use 60Hz, the actual articulated boss, full sixteen-building city, destruction/Cannon physics, real bus damage, no hero attacks, and specified joints destroyed at time zero. Normal approach trials keep hull HP in phase 1; extra trials begin in phase 3. They stop at mission resolution, rather than extrapolating a boss arrival after the game has ended.
+Placement uses the shared ranged scheduler: initial delay 8s, then an 8s cooldown after each landing/cast, competing normally with flak/lance and bus stomps. Phase 3 reduces placement cooldown to 5.6s. There are at most three reserved/deployed stakes. Pending placements count toward the cap. Destroyed stakes free a slot immediately; there is no automatic stake lifetime.
 
-**Final-leg threat** means the boss center comes within its configured 7.5m stomp range of the route segment from pickup 2 to exit. This is the usable danger threshold. Literal arrival-radius/centerline entry is also recorded: healthy ARGUS reaches it at 121.367s, later because it stops to stomp beforehand. First actual bus damage occurs at 103.833s.
+Candidates sample the convoy’s **remaining route**, including upcoming stops and the exit, every 8m. They sit 4m to either side of the route, outside the bus lane. Ranking prefers the position closest to forecast convoy progress 8s ahead, with a small distance-to-boss tie-breaker. Candidates must be within 65m of ARGUS, at least 8m from its root and 10m from another stake; inside map bounds; on supported open ground; and clear of building footprints and major collision geometry. If no remaining-route position is available, candidates come from the existing street/interception graph. No new streets or map layout were added.
 
-| Early destroyed joints | Baseline first bus contact | Final first bus contact | Final final-leg threat | Last bus exit | Threat time before exit |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| 0 | 37.933s | 102.583s | 102.583s | 133.583s | 31.000s |
-| 2 | 54.983s | None before exit | None before exit | 133.583s | — |
-| 3 | 62.867s | None before exit | None before exit | 133.583s | — |
-| 4 | 69.567s | None before exit | None before exit | 133.583s | — |
+A 3m ground marker brightens during the 0.9s placement warning. The stake descends through the final 30% of that warning, from 8m up, then lands with the existing spark/dust impact callback. It has a 140-HP hit shape and a glowing core. The existing ARGUS emitter glows and uses the charge sound hook during placement.
 
-With three joints destroyed and phase 3 active from the start, nearest bus distance is 32.611m; with four it is 48.045m. Neither contacts a bus. Phase-1 stride speeds for 0/1/2/3/4 destroyed joints are 1.15 / 0.9775 / 0.805 / 0.6325 / 0.46m/s. Phase 3 multiplies these by 1.25.
+Each landed stake independently charges for 0.9s with rising core/ground glow and the shared sound hook, then emits a ring. The ring expands at 12m/s to 18m radius (1.5s travel), then fades for 0.35s without continuing to deal damage. Pulses repeat every 4s including the charge; phase 3 reduces this to 2.8s while charge stays at least 0.8s. Landed stakes remain autonomous during a boss stun; a stun cancels a still-pending placement.
 
-| Parked bus / uninterrupted stomps | Baseline 900 HP | Final 1,680 HP |
-| --- | ---: | ---: |
-| 120-damage hits to destroy | 8 | 14 |
-| Phase 1: first impact to destruction | 33.25s | 61.75s |
-| Phase 3: first impact to destruction | 25.90s | 48.10s |
-| Phase 1 / 3 impact interval | 4.75s / 3.70s | 4.75s / 3.70s |
+A low/grounded hero touched by the swept ring takes 16 feedback damage plus an **outward** 14m/s horizontal, 4m/s upward impulse through the existing knockback API (0.45s duration, damping 2). Feet above 1.5m relative to local ground are safe. Wall-runners and heroes on roofs are safe. A low jump is only safe once it clears that height. Solid building cover blocks contact. Each hero can be hit once by each ring, with no global immunity window; other rings remain independent. Teleports bypass intervening ground, and the existing phased rescue dash remains phased.
 
-Final phase-3 survival exceeds the requested 45s intervention budget. Including the initial 0.8s wind-up, destruction occurs at 48.9s. Arrival and survival targets are met, but **all final unattended approach runs save 80/80 civilians**. This is a forgiving prototype: bus survival is longer than the remaining encounter window. No new attack or silent casualty mechanism was introduced to manufacture losses. More demanding balance needs a separately authorized design pass and human playtesting.
+A ring passing under the actual oriented bus footprint deals 60 HP once per ring per bus, moving or stopped. The swept intersection checks hero movement and bus motion, so fast crossings cannot tunnel through it. The system addresses only buses and heroes: civilians, ARGUS, its drones, other stakes and buildings receive no quake damage. Normal shared enemy-owner filtering remains in place for projectiles/explosions.
 
-Every changed tuning/presentation value in step 4:
+## Support validation and cleanup
 
-| File / path | Before | Final | Reason |
-| --- | --- | --- | --- |
-| `argus-config.json` `spawn.x` | 36 | 96 | Longer northeast intercept approach, inside existing bounds. |
-| `argus-config.json` `movement.speed` | 2.2 | 1.15 | Healthy final-leg threat 31s before exit; damaged-joint runs miss convoy. Intermediate 1.2 trial gave 35.05s, so final lowered to 1.15. |
-| `convoy-config.json` `busHealth` | 900 | 1680 | 14 stomps; 48.1s from first hit at phase-3 cadence. |
-| `convoy-config.json` `map.interceptionLanes.nodes[23]` | Absent | `[96,54]` | Connect new spawn to the existing lane graph. |
-| `convoy-config.json` `map.interceptionLanes.links[31]` | Absent | `[23,21]` | Links new node to existing north approach `[36,54]`; no city redesign. |
-| `convoy-config.json` `results.rankThresholds` | Absent | `{S:0.9,A:0.75,B:0.5,C:0}` | Data-driven results grades. |
+The existing city uses a fixed physics ground plane, not destructible road tiles. The default support adapter validates that body remains in the physics world with collision enabled. Placement is rechecked on landing and support is checked each update. A `getPylonGround(point)` adapter can return `{height, body, section}` for destructible street support. A missing ground result, detached/hidden/collision-disabled/depleted section, removed/disabled body or a height change over 0.5m invalidates the stake.
 
-No route, bus speed, stop duration, seat counts, combat damage, warning, phase or permanent-penalty values changed. No balance constants were moved into JavaScript.
+Destroying or invalidating a stake immediately removes its unit/hit shapes, warning, charge and **all of its rings**. Its remaining mesh falls/tilts for 0.7s as a cosmetic effect, without blocking buses, then is disposed. Reset, boss death and mission completion clear stakes, rings, falling meshes and previous-position bookkeeping. A lethal ring that resolves the mission clears them before the result dialog pauses the game. Diagnostic counters survive completion until reset.
+
+## HUD and shared-code removal
+
+The existing boss bar now includes **PYLONS n/3**. The convoy HUD still shows route/stops/exit, pickup countdown and numeric per-bus HP/passengers. Its radar retains buses, stops, exit and ARGUS, without individual civilian dots. Stakes remain visible world threats and use the existing enemy through-cover silhouette registration.
+
+Removal touched shared code in three places: `battle.js` no longer calls the tether pre-hero slow adapter; its ARGUS silhouette list now registers stakes rather than cable anchors; and the unused `externalSpeedScale` field/multipliers were removed from `runner-motion.js` and Kage’s ground/air dash code in `ninja-motion.js`. Their normal movement speeds, jumps, steering and other knockback behavior are preserved. Entry/dependency cache versions were bumped to `quake-pylons-198`. No collision, damage, city-destruction, Walker or Chinook implementation was rewritten.
+
+## Measured before/after balance
+
+Reports: `QA/convoy-pylons-balance-results.json`. Reproduce with `node QA/convoy-balance.mjs` and `node QA/convoy-balance.mjs --baseline`. The baseline option extracts the accepted pre-pylon source `accd002` into an isolated temporary directory and runs its actual simulation, then removes that temporary snapshot. It does not emulate old attacks using the new code.
+
+Both runs use 60Hz, the articulated model, sixteen-building city, real Cannon/destruction and bus damage, no hero attacks, and specified joints broken at time zero. Normal trials retain phase-1 hull HP. Extra stress trials start in phase 3. Bus routes/timings/health, boss movement/HP, joints and stomp damage were **not retuned** for this replacement.
+
+| Early broken joints | Before: saved / buses escaped | Pylons: saved / killed / left behind | Pylons: buses escaped | First bus damage | Finish |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 80 / 4 | 40 / 40 / 0 | 2 | 61.083s | 133.583s |
+| 2 | 80 / 4 | 60 / 20 / 0 | 3 | 64.133s | 133.583s |
+| 3 | 80 / 4 | 80 / 0 / 0 | 4 | 67.083s | 133.583s |
+| 4 | 80 / 4 | 80 / 0 / 0 | 4 | 67.083s | 133.583s |
+
+The healthy unattended run deploys three stakes, emits 87 pulses, records 80 bus-ring hits and **4,800 ring damage** across the convoy. Its bus HP at resolution is `[0,0,540,1020]`; the first two buses and their 40 passengers are lost. Original first bus damage was 103.833s. Current first body/stomp-range contact with a bus is 107.783s; ARGUS is within stomp range of the final route segment at 102.583s. Stomp-range arrival remains 31s before the final exit, but pylons threaten remotely much earlier.
+
+With phase 3 active from the start, three broken joints yield **40 saved / 40 killed / 2 escaped buses**, 5,520 ring damage; four broken joints yield **60 saved / 20 killed / 3 escaped buses**, 4,680 ring damage. ARGUS itself never reaches a bus in those damaged-joint trials. Breaking joints slows the boss permanently, but does not neutralize already-deployed remote hazards. Players must also destroy stakes or otherwise protect the evacuation. Rings never directly reduce ground civilian HP in these trials; losses are aboard destroyed buses.
+
+Stomp-only survivability is unchanged: 1,680 HP requires 14 impacts of 120. A parked bus survives 61.75s after the first hit in phase 1, 48.1s at phase-3 cadence (impact intervals 4.75s/3.7s). These isolated stomp numbers exclude pylons. The result is a scripted prototype benchmark, not measured human difficulty or physical-phone performance.
 
 ## Complete configuration reference
 
-Reload after editing either JSON, then City Rebuild. Distances/positions use metres, duration/interval/cooldown use simulation seconds, speeds use m/s and angular speeds use radians/sec unless noted. Arrays of positions use `[x,z]` for the map and `[x,y,z]` for local model offsets; graph links are zero-based node indices. Fractions use 0–1. The tables below enumerate every scalar/array value in both JSONs; changing structural arrays requires maintaining their IDs/references.
+Reload changed JSON and rebuild. Distances use metres; durations/intervals/cooldowns use simulation seconds; speeds use m/s; angular speeds use rad/s. Map positions are `[x,z]`, local model offsets `[x,y,z]`, graph links zero-based node indices and fractions 0–1. The original convoy and ARGUS fields remain below. Every `attacks.tether.*` row is intentionally retained **unused**. Active pylon values have their own table.
 
 ### `dist/convoy-config.json`
 
@@ -225,39 +225,39 @@ Reload after editing either JSON, then City Rebuild. Distances/positions use met
 | `attacks.flak.roofClearance` | `2` | Minimum height above nearby roofs before flak can hit. |
 | `attacks.flak.rooftopSearchRadius` | `24` | Radius used to find nearby protective rooftop height. |
 | `attacks.flak.burstFlash` | `0.5` | Visible burst lifetime. |
-| `attacks.flak.shellRadius` | `0.18` | Flak/anchor tracer collision/visual radius. |
+| `attacks.flak.shellRadius` | `0.18` | Flak tracer collision/visual radius. |
 | `attacks.flak.warningOpacity` | `0.16` | Warning volume transparency. |
 | `attacks.flak.patternRadius` | `10` | Spacing radius for additional burst centers around target. |
 | `attacks.flak.muzzleOffset` | `[0,1,2.6]` | Local launch offset relative to selected node. |
-| `attacks.tether.enabled` | `true` | Enable tether attack. |
-| `attacks.tether.initialDelay` | `8` | Initial reset cooldown for this attack. |
-| `attacks.tether.cooldown` | `8` | Base cooldown after finishing this attack; phase 3 multiplies by 0.7. |
-| `attacks.tether.windup` | `0.9` | Tether charge warning before harpoon launch. |
-| `attacks.tether.node` | `"plasma_cannon"` | Articulated model node used as firing origin. |
-| `attacks.tether.maximumLines` | `3` | Maximum simultaneous tether cables. |
-| `attacks.tether.lifetime` | `30` | Active cable lifetime, excluding warning/arming. |
-| `attacks.tether.armingTime` | `0.8` | Additional delay after flight before cable collision. |
-| `attacks.tether.flightTime` | `0.35` | Harpoon tracer travel time before extra arming delay. |
-| `attacks.tether.height` | `2.4` | Cable anchor height. |
-| `attacks.tether.anchorHealth` | `140` | HP of each independently shootable tether anchor. |
-| `attacks.tether.anchorRadius` | `0.48` | Anchor target radius. |
-| `attacks.tether.attachmentOffset` | `0.35` | Anchor offset beyond building facade. |
-| `attacks.tether.maximumRange` | `65` | Maximum building-pair center distance from boss. |
-| `attacks.tether.maximumPairDistance` | `30` | Maximum span between building centers for anchor placement. |
-| `attacks.tether.contactRadius` | `1.3` | Swept hero/cable collision tolerance. |
-| `attacks.tether.minimumCrossingSpeed` | `6` | Minimum motion speed to trigger a tether. |
-| `attacks.tether.maximumSweepDistance` | `35` | Longer frame displacements skip cable crossing (teleport safeguard). |
-| `attacks.tether.yankSpeed` | `18` | Horizontal impulse toward nearer anchor. |
-| `attacks.tether.yankUpward` | `3` | Vertical yank impulse speed. |
-| `attacks.tether.impulseDuration` | `0.35` | External impulse duration. |
-| `attacks.tether.impulseDrag` | `3` | Exponential impulse velocity damping rate. |
-| `attacks.tether.slowFraction` | `0.4` | Movement reduction fraction on tether hit. |
-| `attacks.tether.slowDuration` | `1.5` | Duration of slow. |
-| `attacks.tether.immunityAfterSlow` | `3` | Additional immunity after slow ends. |
-| `attacks.tether.damage` | `12` | Feedback damage on cable crossing. |
-| `attacks.tether.lineRadius` | `0.055` | Active cable cylinder radius. |
-| `attacks.tether.warningRadius` | `0.14` | Warning cable cylinder radius. |
-| `attacks.tether.muzzleOffset` | `[0,1.4,3.35]` | Local launch offset relative to selected node. |
+| `attacks.tether.enabled` | `true` | Retained, unused: Enable tether attack. |
+| `attacks.tether.initialDelay` | `8` | Retained, unused: Initial reset cooldown for this attack. |
+| `attacks.tether.cooldown` | `8` | Retained, unused: Base cooldown after finishing this attack; phase 3 multiplies by 0.7. |
+| `attacks.tether.windup` | `0.9` | Retained, unused: Tether charge warning before harpoon launch. |
+| `attacks.tether.node` | `"plasma_cannon"` | Retained, unused: Articulated model node used as firing origin. |
+| `attacks.tether.maximumLines` | `3` | Retained, unused: Maximum simultaneous tether cables. |
+| `attacks.tether.lifetime` | `30` | Retained, unused: Active cable lifetime, excluding warning/arming. |
+| `attacks.tether.armingTime` | `0.8` | Retained, unused: Additional delay after flight before cable collision. |
+| `attacks.tether.flightTime` | `0.35` | Retained, unused: Harpoon tracer travel time before extra arming delay. |
+| `attacks.tether.height` | `2.4` | Retained, unused: Cable anchor height. |
+| `attacks.tether.anchorHealth` | `140` | Retained, unused: HP of each independently shootable tether anchor. |
+| `attacks.tether.anchorRadius` | `0.48` | Retained, unused: Anchor target radius. |
+| `attacks.tether.attachmentOffset` | `0.35` | Retained, unused: Anchor offset beyond building facade. |
+| `attacks.tether.maximumRange` | `65` | Retained, unused: Maximum building-pair center distance from boss. |
+| `attacks.tether.maximumPairDistance` | `30` | Retained, unused: Maximum span between building centers for anchor placement. |
+| `attacks.tether.contactRadius` | `1.3` | Retained, unused: Swept hero/cable collision tolerance. |
+| `attacks.tether.minimumCrossingSpeed` | `6` | Retained, unused: Minimum motion speed to trigger a tether. |
+| `attacks.tether.maximumSweepDistance` | `35` | Retained, unused: Longer frame displacements skip cable crossing (teleport safeguard). |
+| `attacks.tether.yankSpeed` | `18` | Retained, unused: Horizontal impulse toward nearer anchor. |
+| `attacks.tether.yankUpward` | `3` | Retained, unused: Vertical yank impulse speed. |
+| `attacks.tether.impulseDuration` | `0.35` | Retained, unused: External impulse duration. |
+| `attacks.tether.impulseDrag` | `3` | Retained, unused: Exponential impulse velocity damping rate. |
+| `attacks.tether.slowFraction` | `0.4` | Retained, unused: Movement reduction fraction on tether hit. |
+| `attacks.tether.slowDuration` | `1.5` | Retained, unused: Duration of slow. |
+| `attacks.tether.immunityAfterSlow` | `3` | Retained, unused: Additional immunity after slow ends. |
+| `attacks.tether.damage` | `12` | Retained, unused: Feedback damage on cable crossing. |
+| `attacks.tether.lineRadius` | `0.055` | Retained, unused: Active cable cylinder radius. |
+| `attacks.tether.warningRadius` | `0.14` | Retained, unused: Warning cable cylinder radius. |
+| `attacks.tether.muzzleOffset` | `[0,1.4,3.35]` | Retained, unused: Local launch offset relative to selected node. |
 | `attacks.lance.minimumPhase` | `2` | Phase that unlocks lance targeting against CPU heroes. |
 | `attacks.lance.playerMinimumPhase` | `1` | Phase that unlocks lance targeting against a directly controlled hero; prevents a harmless opening against a solo grounded speedster. |
 | `attacks.lance.enabled` | `true` | Enable lance attack (target eligibility follows the two minimum-phase settings). |
@@ -312,50 +312,71 @@ Reload after editing either JSON, then City Rebuild. Distances/positions use met
 | `repairDrones.avoidanceRadius` | `10` | Radial detour around own boss hull. |
 | `repairDrones.avoidanceAngles` | `[0,0.35,-0.35,0.7,-0.7]` | Candidate detour yaw offsets in radians. |
 
-## Modules and integration
 
-- `convoy-config.json`, `convoy-map-config.js`: tuning, route interpolation/forecasting, graph pathfinding and validation.
-- `evac-bus.js`, `convoy-mission.js`: bus meshes/collision/manifests, autonomous ground groups, lifecycle and results snapshot.
-- `convoy-hud.js`, `convoy-results.js`, `convoy.css`: HUD, rank calculation and responsive accessible results dialog.
-- `argus-config.json`, `argus-model.js`, `argus-gait.js`, `argus.js`: existing Walker hierarchy adapters, world-space foot IK, interception, joint routing, boss HUD and death/wreck state.
-- `argus-attacks.js`, `argus-repair-drones.js`: shared ranged scheduler, flak, anchors/cable cleanup, lance/core/stun and re-armor-only drones.
-- `battle.js`: scene/menu integration, owner filtering, abilities/impulses/barrier adapters, minimap snapshot and pause/reset wiring.
-- `hero-minimap.js`: optional convoy route, stop/exit and bus marker presentation. Other scenes keep their snapshots.
-- `index.html`, `game-entry.js`: existing scene selection and entry-module cache version `argus-hit-197`; changed module imports use this version too. No Site identity or hosting audience changes.
+### Active quake-pylon tuning — `dist/argus-config.json`
 
-## Testing and reproduction
+| Setting | Final value | Controls |
+| --- | --- | --- |
+| `attacks.pylons.enabled` | `true` | Enable new pylon placement; existing deployed stakes are autonomous. |
+| `attacks.pylons.initialDelay` | `8` | Initial placement cooldown after reset. |
+| `attacks.pylons.cooldown` | `8` | Placement cooldown after landing/cancelled cast; phase 3 multiplies by 0.7. |
+| `attacks.pylons.windup` | `0.9` | Ground aim warning before the stake lands; clamped to at least 0.8s. |
+| `attacks.pylons.node` | `"plasma_cannon"` | Articulated emitter that glows during placement. |
+| `attacks.pylons.maximumActive` | `3` | Cap including pending placements; falling destroyed stakes do not reserve a slot. |
+| `attacks.pylons.health` | `140` | HP per shootable stake. |
+| `attacks.pylons.maximumRange` | `65` | Maximum horizontal placement distance from ARGUS. |
+| `attacks.pylons.minimumBossDistance` | `8` | Keep a stake outside the boss footprint. |
+| `attacks.pylons.minimumSpacing` | `10` | Minimum distance between reserved/deployed stakes. |
+| `attacks.pylons.sampleSpacing` | `8` | Distance between sampled route/graph candidates. |
+| `attacks.pylons.predictionSeconds` | `8` | How far ahead to forecast convoy progress when ranking candidate positions. |
+| `attacks.pylons.routeOffset` | `4` | Lateral distance from the convoy centerline; keeps stakes beside the bus lane. |
+| `attacks.pylons.radius` | `0.6` | Stake hit-shape half-width and placement clearance. |
+| `attacks.pylons.height` | `2.2` | Stake visual/hit-shape height. |
+| `attacks.pylons.warningRadius` | `3` | Ground placement/charge warning ring radius. |
+| `attacks.pylons.dropHeight` | `8` | Height from which the visible stake descends. |
+| `attacks.pylons.dropFraction` | `0.3` | Final fraction of placement warning used for the descent animation. |
+| `attacks.pylons.charge` | `0.9` | Per-stake rising-glow/audio charge before emitting a ring; clamped to ≥0.8s. |
+| `attacks.pylons.pulseInterval` | `4` | Time between repeating charge/pulse starts; includes charge, phase 3 ×0.7. |
+| `attacks.pylons.pulseSpeed` | `12` | Ground ring radial expansion speed. |
+| `attacks.pylons.pulseRadius` | `18` | Maximum ring radius. |
+| `attacks.pylons.ringWidth` | `0.6` | Physical and visible ground-ring band width, contained inside the configured outer radius. |
+| `attacks.pylons.fadeSeconds` | `0.35` | Cosmetic fade after expansion reaches maximum radius; no extra damage while fading. |
+| `attacks.pylons.heroDamage` | `16` | Feedback damage to a low/grounded hero once per ring. |
+| `attacks.pylons.heroRadius` | `0.45` | Ground hero contact radius added to the ring padding. |
+| `attacks.pylons.heroHeight` | `1.5` | Maximum feet height above local ground for quake contact; walls/roofs are safe. |
+| `attacks.pylons.busDamage` | `60` | Bus HP loss once per ring per bus. |
+| `attacks.pylons.knockbackSpeed` | `14` | Horizontal impulse away from the stake. |
+| `attacks.pylons.knockbackUpward` | `4` | Upward impulse speed. |
+| `attacks.pylons.impulseDuration` | `0.45` | Duration of the existing additive knockback effect. |
+| `attacks.pylons.impulseDrag` | `2` | Exponential velocity damping for knockback. |
+| `attacks.pylons.supportTolerance` | `0.5` | Maximum vertical ground change before placement becomes invalid. |
+| `attacks.pylons.fallSeconds` | `0.7` | Lifetime of a destroyed/unsupported stake’s cosmetic fall. |
+| `attacks.pylons.fallGravity` | `9.81` | Downward acceleration of the cosmetic falling stake. |
 
-Automated commands run from the project root:
+## Modules and validation
+
+`argus-pylons.js` owns placement candidates, support, stake models/hit shapes, autonomous charges/rings, swept hits and cleanup. `argus-attacks.js` schedules placement beside existing flak/lance and routes stake damage/hero knockback. `argus.js` retains gait/interception/joint/core/phase/repair/death orchestration. Convoy bus/civilian transport and results modules remain unchanged.
 
 ```sh
-node QA/convoy-test.mjs
-node QA/convoy-results-test.mjs
-node QA/argus-test.mjs
+node QA/argus-pylons-test.mjs
 node QA/argus-attacks-test.mjs
-node QA/convoy-balance.mjs > /tmp/convoy-balance.json
+node QA/argus-test.mjs
+node QA/convoy-balance.mjs > /tmp/convoy-pylons.json
+node QA/convoy-balance.mjs --baseline > /tmp/convoy-before-pylons.json
 python -m http.server 8765 --bind 0.0.0.0 --directory dist
-# In a second terminal with the local server running:
-node QA/convoy-hud-browser.cjs
-node QA/argus-browser.cjs
+# Second terminal, server running:
+node QA/argus-pylons-browser.cjs
 node QA/argus-attacks-browser.cjs
+node QA/argus-solo-browser.cjs
+node QA/argus-hit-flash-browser.cjs
 ```
 
-`QA/convoy-validation-results.json` records the completed suite results. Balance output includes full measurements and conditions, not only assertions. Node regressions cover Walker locomotion/weapons, building damage/collision release, combat hit shapes, Bastion state/model/lead/artillery/walls/weak points/pulse, Chinook lifecycle/navigation/targeting, radar and speedster/Kage movement/charged attacks. Browser regressions exercise actual scenes on desktop/touch, including ARGUS attachment hit routing, delayed-stop replanning, bus stomps, collapse, hero control, enemy owner filtering, flak/roof/barrier safety, cable yank/anchor destruction/building collapse, lance cover break, core interrupt, drone repairs and permanent joints. HUD tests cover route/countdown/radar, loaded/all-bus losses, one-bus win, fixed completion time/ARGUS flag, grade boundaries, reopen and reset.
+The pylon Node suite covers 30/60/120Hz warnings, repeat cadence, ground/air/wall/roof safety, outward impulses, no movement tax/immunity, moving and stopped bus hits once per ring, civilian/owner safety, high-speed sweeps, teleport relocation, real traced stake damage, missing/removed/failed support, cap/range/spacing/route preference, phase-3 timing, stun/death/reset and completion cleanup. The browser suite exercises actual city/controller/rendering on desktop and touch, including natural placement, warnings, impacts, growing rings, HP/feedback, stake shooting, missing-ground falls, HUD and reset. Screenshots were inspected. `QA/convoy-pylons-validation-results.json` lists completed scene regressions and byte comparisons.
 
-**Recorded outcome:** 30 Node suites and 10 current browser suites pass. The historical `bastion-browser.cjs` (superseded rotating-core assertion) and `combat-testing-browser.cjs` (old two-building/corner layout) fail on both the accepted step-3 build and this build. Their current permanent-weakpoint/wall/pulse and twelve-building arena replacements pass. The shuriken browser harness now derives early-release timing from JSON and uses the existing Shift dash binding. These are test-fixture updates, not gameplay changes. Chinook implementation/navigation/config and existing Walker/Bastion sources were byte-compared with accepted step 3 and are identical.
+For manual play: select Convoy Defense, watch for ground aim glows, then the rising light in each stake. Jump high enough or leave the ring path; shoot a stake’s glowing body to stop its pulses. Observe buses lose HP only when a ring reaches them; boarding civilians retain their HP. Destroying a stake removes its already-moving rings. Broken ARGUS joints still delay interception, but remote stakes need attention. Rebuild restores the scenario.
 
-For manual playtest: select Convoy Defense, use Watch convoy or take a hero. Watch both 35s stops; verify passengers disappear aboard without increasing saved. Observe final-leg ARGUS contact, destroy joints to delay it, use buildings against lance and shoot the open core. Shoot anchors or collapse their buildings, and check dead joints remain dark despite nearby repair beams. Let buses exit; verify the report and reopen it. Rebuild and repeat; destroy loaded buses to verify killed versus left behind and the all-bus failure condition.
+## Prototype limits
 
-## Known prototype limits
+Hero damage remains feedback-only, with no new health/death system. Playable flight is outside this prototype; existing CPU fliers still exercise flak. Rift gateways do not redirect flak or quake rings. Roads are backed by the existing fixed ground plane, so no new player-facing road-cratering mechanic was added; support loss is validated through adapter/physics removal tests. Pylons use simple primitive art and a cosmetic non-colliding fall. Bus driving remains kinematic and civilian formations simple. The reused Walker is about 21m tall. Physical-phone FPS, memory and thermal performance are unmeasured; touch emulation checks controls/layout only. Licensed character runtime assets remain private and out of public GitHub.
 
-Hero damage is feedback-only: no new health/death system. Flight threats currently target CPU fliers; no playable flight was introduced. Rift gateways do not redirect new flak/anchor tracer shots. Drone navigation is simple swept detouring rather than global pathfinding. Bus transport is kinematic, with simple civilian formations and roadside source points; no traffic simulation or complex escort mission system. The reused Walker is about 21m, not a new 40m model. Performance on a physical phone (FPS, memory, battery/thermal) is unmeasured; touch emulation verifies controls/layout only. Balance trials are scripted fixed-timestep scenarios, not broad human difficulty validation. The current no-intervention scenario saves all 80 civilians; the specified intervention window intentionally makes buses resilient. Ground survivors can still be attacked during continued observation, while the results screen preserves the completion-time score. Private licensed character assets remain out of the public GitHub repository.
-
-## Solo hero counterattack correction
-
-After step-4 playtesting, the player reported that full-health ARGUS did not engage a controlled ground speedster. Flak correctly excluded ground heroes, while the lance scheduler was globally locked until phase 2. The lance now has separate data-driven unlock phases for CPU heroes (2) and directly controlled heroes (1). It uses the existing 2s initial delay, 0.9s warning, range, cover checks, tracking, ramp impulses and open-core counterplay; no new weapon or movement penalty was added. It does not steer ARGUS away from convoy interception. CPU-only phase progression and the convoy balance trials are unchanged. `QA/argus-solo-browser.cjs` exercises automatic scheduling with the real player controller, including beam damage/impulses, moving input, cover break and control exit.
-
-Verified: autonomous phase-1 targeting, full warning, real controller movement, lance hit feedback/knockback, real-building cover interruption and control-exit phase gate pass in desktop and touch-emulated Chromium. The four convoy/results/ARGUS Node suites and existing ARGUS attack browser suite also pass. No physical-phone performance claim is made.
-
-ARGUS joint targets and its exposed core briefly flash red on accepted hits. Each target has an independent simulation-time flash, with retriggered pulses under sustained fire. The normal damaged glow returns afterward; destroyed joints stay dark, closed-core hits do not flash, and reset/death clear the effect. The hull remains excluded from whole-body damage flashing.
-
-Visual verification: `node QA/argus-hit-flash-browser.cjs` passes desktop/touch with actual traced weapon hits, independent target colors, fade/retrigger, blocked closed core, dark destroyed joints and reset. Existing ARGUS body/attack Node suites pass.
+Completed regression: 31 gameplay Node suites and 13 desktop/touch browser suites pass. Walker/Chinook/destruction/convoy transport source hashes match pre-pylon `accd002`. The focused gait browser fixture disables remote hazards only for its locomotion assertions, then re-enables pylons when exercising live CPU allies and player entry. Pylon tests also assert actual elapsed minimum charge time at 30/60/120Hz and that no damage extends beyond the visible 18m outer boundary (apart from the target footprint).

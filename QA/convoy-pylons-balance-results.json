@@ -1,0 +1,592 @@
+{
+  "dateUTC": "2026-11-04",
+  "baselineCommit": "accd002",
+  "before": {
+    "configuration": "pre-pylon accepted source accd002",
+    "hz": 60,
+    "conditions": "Actual articulated model, full 16-building city and destruction/physics; no hero attacks; joints destroyed at t=0 (first two = left hip/knee); actual bus damage enabled; main hull stays phase 1 in approach trials. Final-leg threat means within configured 7.5m stomp range of the segment from pickup 2 to exit. Survival trial parks one bus six metres away, suppresses ranged casts and measures uninterrupted stomping.",
+    "approach": [
+      {
+        "startingPhase": 1,
+        "earlyDestroyedJoints": 0,
+        "strideSpeed": 1.15,
+        "firstBusContact": 102.583,
+        "firstBusDamage": 103.8333,
+        "finalLegWithinStompRange": 102.583,
+        "finalLegWithinArrivalRadius": 121.367,
+        "firstBusEscape": 123.083,
+        "missionEnd": 133.583,
+        "outcome": "success",
+        "busesEscaped": 4,
+        "saved": 80,
+        "tensionBeforeLastExit": 31,
+        "minimumBusDistance": 4.513,
+        "bossPosition": [
+          61.493,
+          -0.65,
+          0.071
+        ],
+        "breachImpacts": 0
+      },
+      {
+        "startingPhase": 1,
+        "earlyDestroyedJoints": 2,
+        "strideSpeed": 0.805,
+        "firstBusContact": null,
+        "firstBusDamage": null,
+        "finalLegWithinStompRange": null,
+        "finalLegWithinArrivalRadius": null,
+        "firstBusEscape": 123.083,
+        "missionEnd": 133.583,
+        "outcome": "success",
+        "busesEscaped": 4,
+        "saved": 80,
+        "tensionBeforeLastExit": null,
+        "minimumBusDistance": 24.147,
+        "bossPosition": [
+          47.874,
+          -0.65,
+          18.18
+        ],
+        "breachImpacts": 7
+      },
+      {
+        "startingPhase": 1,
+        "earlyDestroyedJoints": 3,
+        "strideSpeed": 0.632,
+        "firstBusContact": null,
+        "firstBusDamage": null,
+        "finalLegWithinStompRange": null,
+        "finalLegWithinArrivalRadius": null,
+        "firstBusEscape": 123.083,
+        "missionEnd": 133.583,
+        "outcome": "success",
+        "busesEscaped": 4,
+        "saved": 80,
+        "tensionBeforeLastExit": null,
+        "minimumBusDistance": 47.921,
+        "bossPosition": [
+          47.872,
+          -0.831,
+          41.115
+        ],
+        "breachImpacts": 0
+      },
+      {
+        "startingPhase": 1,
+        "earlyDestroyedJoints": 4,
+        "strideSpeed": 0.46,
+        "firstBusContact": null,
+        "firstBusDamage": null,
+        "finalLegWithinStompRange": null,
+        "finalLegWithinArrivalRadius": null,
+        "firstBusEscape": 123.083,
+        "missionEnd": 133.583,
+        "outcome": "success",
+        "busesEscaped": 4,
+        "saved": 80,
+        "tensionBeforeLastExit": null,
+        "minimumBusDistance": 54,
+        "bossPosition": [
+          36.167,
+          -0.835,
+          52.382
+        ],
+        "breachImpacts": 0
+      }
+    ],
+    "survival": [
+      {
+        "phase": 1,
+        "busHP": 1680,
+        "stompDamage": 120,
+        "hitsToDestroy": 14,
+        "firstHit": 0.8,
+        "death": 62.55,
+        "fromFirstHit": 61.75,
+        "interval": 4.75
+      },
+      {
+        "phase": 3,
+        "busHP": 1680,
+        "stompDamage": 120,
+        "hitsToDestroy": 14,
+        "firstHit": 0.8,
+        "death": 48.9,
+        "fromFirstHit": 48.1,
+        "interval": 3.7
+      }
+    ],
+    "phase3Stress": [
+      {
+        "startingPhase": 3,
+        "earlyDestroyedJoints": 3,
+        "strideSpeed": 0.791,
+        "firstBusContact": null,
+        "firstBusDamage": null,
+        "finalLegWithinStompRange": null,
+        "finalLegWithinArrivalRadius": null,
+        "firstBusEscape": 123.083,
+        "missionEnd": 133.583,
+        "outcome": "success",
+        "busesEscaped": 4,
+        "saved": 80,
+        "tensionBeforeLastExit": null,
+        "minimumBusDistance": 32.611,
+        "bossPosition": [
+          47.999,
+          -0.748,
+          19.79
+        ],
+        "breachImpacts": 0
+      },
+      {
+        "startingPhase": 3,
+        "earlyDestroyedJoints": 4,
+        "strideSpeed": 0.575,
+        "firstBusContact": null,
+        "firstBusDamage": null,
+        "finalLegWithinStompRange": null,
+        "finalLegWithinArrivalRadius": null,
+        "firstBusEscape": 123.083,
+        "missionEnd": 133.583,
+        "outcome": "success",
+        "busesEscaped": 4,
+        "saved": 80,
+        "tensionBeforeLastExit": null,
+        "minimumBusDistance": 48.045,
+        "bossPosition": [
+          36.068,
+          -0.835,
+          37.191
+        ],
+        "breachImpacts": 7
+      }
+    ]
+  },
+  "after": {
+    "configuration": "quake pylons replacement",
+    "hz": 60,
+    "conditions": "Actual articulated model, full 16-building city and destruction/physics; no hero attacks; joints destroyed at t=0 (first two = left hip/knee); actual bus damage enabled; main hull stays phase 1 in approach trials. Final-leg threat means within configured 7.5m stomp range of the segment from pickup 2 to exit. Survival trial parks one bus six metres away, suppresses ranged casts and measures uninterrupted stomping.",
+    "approach": [
+      {
+        "startingPhase": 1,
+        "earlyDestroyedJoints": 0,
+        "strideSpeed": 1.15,
+        "firstBusContact": 107.783,
+        "firstBusDamage": 61.0833,
+        "finalLegWithinStompRange": 102.583,
+        "finalLegWithinArrivalRadius": 119.483,
+        "firstBusEscape": 130.083,
+        "missionEnd": 133.583,
+        "outcome": "success",
+        "busesEscaped": 2,
+        "saved": 40,
+        "tensionBeforeLastExit": 31,
+        "minimumBusDistance": 2.277,
+        "bossPosition": [
+          63.659,
+          -0.65,
+          0.056
+        ],
+        "breachImpacts": 0,
+        "killed": 40,
+        "leftBehind": 0,
+        "pylonStats": {
+          "placed": 3,
+          "pulses": 87,
+          "heroHits": 0,
+          "busHits": 80,
+          "busDamage": 4800,
+          "destroyed": 0,
+          "groundLost": 0
+        },
+        "busHealth": [
+          {
+            "id": "convoy-bus-0",
+            "health": 0,
+            "escaped": false,
+            "destroyed": true
+          },
+          {
+            "id": "convoy-bus-1",
+            "health": 0,
+            "escaped": false,
+            "destroyed": true
+          },
+          {
+            "id": "convoy-bus-2",
+            "health": 540,
+            "escaped": true,
+            "destroyed": false
+          },
+          {
+            "id": "convoy-bus-3",
+            "health": 1020,
+            "escaped": true,
+            "destroyed": false
+          }
+        ]
+      },
+      {
+        "startingPhase": 1,
+        "earlyDestroyedJoints": 2,
+        "strideSpeed": 0.805,
+        "firstBusContact": null,
+        "firstBusDamage": 64.1333,
+        "finalLegWithinStompRange": null,
+        "finalLegWithinArrivalRadius": null,
+        "firstBusEscape": 126.583,
+        "missionEnd": 133.583,
+        "outcome": "success",
+        "busesEscaped": 3,
+        "saved": 60,
+        "tensionBeforeLastExit": null,
+        "minimumBusDistance": 20.347,
+        "bossPosition": [
+          47.874,
+          -0.65,
+          18.18
+        ],
+        "breachImpacts": 7,
+        "killed": 20,
+        "leftBehind": 0,
+        "pylonStats": {
+          "placed": 3,
+          "pulses": 87,
+          "heroHits": 0,
+          "busHits": 81,
+          "busDamage": 4860,
+          "destroyed": 0,
+          "groundLost": 0
+        },
+        "busHealth": [
+          {
+            "id": "convoy-bus-0",
+            "health": 0,
+            "escaped": false,
+            "destroyed": true
+          },
+          {
+            "id": "convoy-bus-1",
+            "health": 60,
+            "escaped": true,
+            "destroyed": false
+          },
+          {
+            "id": "convoy-bus-2",
+            "health": 600,
+            "escaped": true,
+            "destroyed": false
+          },
+          {
+            "id": "convoy-bus-3",
+            "health": 1200,
+            "escaped": true,
+            "destroyed": false
+          }
+        ]
+      },
+      {
+        "startingPhase": 1,
+        "earlyDestroyedJoints": 3,
+        "strideSpeed": 0.632,
+        "firstBusContact": null,
+        "firstBusDamage": 67.0833,
+        "finalLegWithinStompRange": null,
+        "finalLegWithinArrivalRadius": null,
+        "firstBusEscape": 123.083,
+        "missionEnd": 133.583,
+        "outcome": "success",
+        "busesEscaped": 4,
+        "saved": 80,
+        "tensionBeforeLastExit": null,
+        "minimumBusDistance": 47.921,
+        "bossPosition": [
+          47.872,
+          -0.831,
+          41.115
+        ],
+        "breachImpacts": 0,
+        "killed": 0,
+        "leftBehind": 0,
+        "pylonStats": {
+          "placed": 3,
+          "pulses": 87,
+          "heroHits": 0,
+          "busHits": 60,
+          "busDamage": 3600,
+          "destroyed": 0,
+          "groundLost": 0
+        },
+        "busHealth": [
+          {
+            "id": "convoy-bus-0",
+            "health": 120,
+            "escaped": true,
+            "destroyed": false
+          },
+          {
+            "id": "convoy-bus-1",
+            "health": 660,
+            "escaped": true,
+            "destroyed": false
+          },
+          {
+            "id": "convoy-bus-2",
+            "health": 1140,
+            "escaped": true,
+            "destroyed": false
+          },
+          {
+            "id": "convoy-bus-3",
+            "health": 1200,
+            "escaped": true,
+            "destroyed": false
+          }
+        ]
+      },
+      {
+        "startingPhase": 1,
+        "earlyDestroyedJoints": 4,
+        "strideSpeed": 0.46,
+        "firstBusContact": null,
+        "firstBusDamage": 67.0833,
+        "finalLegWithinStompRange": null,
+        "finalLegWithinArrivalRadius": null,
+        "firstBusEscape": 123.083,
+        "missionEnd": 133.583,
+        "outcome": "success",
+        "busesEscaped": 4,
+        "saved": 80,
+        "tensionBeforeLastExit": null,
+        "minimumBusDistance": 54,
+        "bossPosition": [
+          36.167,
+          -0.835,
+          52.382
+        ],
+        "breachImpacts": 0,
+        "killed": 0,
+        "leftBehind": 0,
+        "pylonStats": {
+          "placed": 3,
+          "pulses": 87,
+          "heroHits": 0,
+          "busHits": 60,
+          "busDamage": 3600,
+          "destroyed": 0,
+          "groundLost": 0
+        },
+        "busHealth": [
+          {
+            "id": "convoy-bus-0",
+            "health": 120,
+            "escaped": true,
+            "destroyed": false
+          },
+          {
+            "id": "convoy-bus-1",
+            "health": 660,
+            "escaped": true,
+            "destroyed": false
+          },
+          {
+            "id": "convoy-bus-2",
+            "health": 1140,
+            "escaped": true,
+            "destroyed": false
+          },
+          {
+            "id": "convoy-bus-3",
+            "health": 1200,
+            "escaped": true,
+            "destroyed": false
+          }
+        ]
+      }
+    ],
+    "survival": [
+      {
+        "phase": 1,
+        "busHP": 1680,
+        "stompDamage": 120,
+        "hitsToDestroy": 14,
+        "firstHit": 0.8,
+        "death": 62.55,
+        "fromFirstHit": 61.75,
+        "interval": 4.75
+      },
+      {
+        "phase": 3,
+        "busHP": 1680,
+        "stompDamage": 120,
+        "hitsToDestroy": 14,
+        "firstHit": 0.8,
+        "death": 48.9,
+        "fromFirstHit": 48.1,
+        "interval": 3.7
+      }
+    ],
+    "phase3Stress": [
+      {
+        "startingPhase": 3,
+        "earlyDestroyedJoints": 3,
+        "strideSpeed": 0.791,
+        "firstBusContact": null,
+        "firstBusDamage": 63.85,
+        "finalLegWithinStompRange": null,
+        "finalLegWithinArrivalRadius": null,
+        "firstBusEscape": 130.083,
+        "missionEnd": 133.583,
+        "outcome": "success",
+        "busesEscaped": 2,
+        "saved": 40,
+        "tensionBeforeLastExit": null,
+        "minimumBusDistance": 28.883,
+        "bossPosition": [
+          47.999,
+          -0.748,
+          19.79
+        ],
+        "breachImpacts": 0,
+        "killed": 40,
+        "leftBehind": 0,
+        "pylonStats": {
+          "placed": 3,
+          "pulses": 130,
+          "heroHits": 0,
+          "busHits": 92,
+          "busDamage": 5520,
+          "destroyed": 0,
+          "groundLost": 0
+        },
+        "busHealth": [
+          {
+            "id": "convoy-bus-0",
+            "health": 0,
+            "escaped": false,
+            "destroyed": true
+          },
+          {
+            "id": "convoy-bus-1",
+            "health": 0,
+            "escaped": false,
+            "destroyed": true
+          },
+          {
+            "id": "convoy-bus-2",
+            "health": 240,
+            "escaped": true,
+            "destroyed": false
+          },
+          {
+            "id": "convoy-bus-3",
+            "health": 960,
+            "escaped": true,
+            "destroyed": false
+          }
+        ]
+      },
+      {
+        "startingPhase": 3,
+        "earlyDestroyedJoints": 4,
+        "strideSpeed": 0.575,
+        "firstBusContact": null,
+        "firstBusDamage": 67.4,
+        "finalLegWithinStompRange": null,
+        "finalLegWithinArrivalRadius": null,
+        "firstBusEscape": 126.583,
+        "missionEnd": 133.583,
+        "outcome": "success",
+        "busesEscaped": 3,
+        "saved": 60,
+        "tensionBeforeLastExit": null,
+        "minimumBusDistance": 44.268,
+        "bossPosition": [
+          36.071,
+          -0.835,
+          37.175
+        ],
+        "breachImpacts": 7,
+        "killed": 20,
+        "leftBehind": 0,
+        "pylonStats": {
+          "placed": 3,
+          "pulses": 130,
+          "heroHits": 0,
+          "busHits": 78,
+          "busDamage": 4680,
+          "destroyed": 0,
+          "groundLost": 0
+        },
+        "busHealth": [
+          {
+            "id": "convoy-bus-0",
+            "health": 0,
+            "escaped": false,
+            "destroyed": true
+          },
+          {
+            "id": "convoy-bus-1",
+            "health": 180,
+            "escaped": true,
+            "destroyed": false
+          },
+          {
+            "id": "convoy-bus-2",
+            "health": 960,
+            "escaped": true,
+            "destroyed": false
+          },
+          {
+            "id": "convoy-bus-3",
+            "health": 900,
+            "escaped": true,
+            "destroyed": false
+          }
+        ]
+      }
+    ]
+  },
+  "activePylonConfig": {
+    "enabled": true,
+    "initialDelay": 8,
+    "cooldown": 8,
+    "windup": 0.9,
+    "node": "plasma_cannon",
+    "maximumActive": 3,
+    "health": 140,
+    "maximumRange": 65,
+    "minimumBossDistance": 8,
+    "minimumSpacing": 10,
+    "sampleSpacing": 8,
+    "predictionSeconds": 8,
+    "routeOffset": 4,
+    "radius": 0.6,
+    "height": 2.2,
+    "warningRadius": 3,
+    "dropHeight": 8,
+    "dropFraction": 0.3,
+    "charge": 0.9,
+    "pulseInterval": 4,
+    "pulseSpeed": 12,
+    "pulseRadius": 18,
+    "ringWidth": 0.6,
+    "fadeSeconds": 0.35,
+    "heroDamage": 16,
+    "heroRadius": 0.45,
+    "heroHeight": 1.5,
+    "busDamage": 60,
+    "knockbackSpeed": 14,
+    "knockbackUpward": 4,
+    "impulseDuration": 0.45,
+    "impulseDrag": 2,
+    "supportTolerance": 0.5,
+    "fallSeconds": 0.7,
+    "fallGravity": 9.81
+  },
+  "retainedTetherConfigUnchangedAndUnused": true,
+  "otherBalanceChanges": [],
+  "conditions": "Full 16-building city, articulated rig, real Cannon/destruction, no player or AI hero intervention. Main trial hull stays phase 1; joints destroyed at t=0. Ground civilian HP untouched by rings; deaths are passengers aboard destroyed buses."
+}

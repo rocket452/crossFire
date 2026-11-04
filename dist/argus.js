@@ -1,7 +1,7 @@
-import {ArgusAttacks} from './argus-attacks.js?v=argus-hit-197';
-import {ArgusRepairDrones} from './argus-repair-drones.js?v=argus-hit-197';
+import {ArgusAttacks} from './argus-attacks.js?v=quake-pylons-198';
+import {ArgusRepairDrones} from './argus-repair-drones.js?v=quake-pylons-198';
 import * as THREE from './vendor/three.module.js';
-import {ArgusModel} from './argus-model.js?v=argus-hit-197';
+import {ArgusModel} from './argus-model.js?v=quake-pylons-198';
 import {ArgusGait} from './argus-gait.js';
 import {interceptionPath,predictConvoyDistance,routePoint} from './convoy-map-config.js';
 import {traceImpact} from './combat-collision.js';
