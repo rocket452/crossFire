@@ -47,3 +47,29 @@ for(const protection of['rooftop','ground','cover','shield']){
 {
  const ninja=new NinjaMotion();ninja.body.reset({x:0,y:.08,z:0});ninja.body.bounds={minX:-500,maxX:500,minZ:-500,maxZ:500};ninja.body.externalSpeedScale=.6;assert(ninja.startDash({x:0,y:1.2,z:100}));ninja.step({},.1,[]);assert(ninja.active);assert(Math.abs(ninja.position.z-128.8*.6*.1)<.001);console.log('PASS temporary slow scales Kage dash speed without false collision cancellation');
 }
+
+// Exercise autonomous scheduling, rather than forcing begin('lance') in a phase-2 fixture.
+{
+ const {boss:b,h,step}=setup(hero(36,.08,42));h.motion={mode:'ground'};
+ b.config.attacks.flak.enabled=b.config.attacks.tether.enabled=false;
+ step(b.config.attacks.lance.initialDelay+.05);
+ assert.equal(b.phase,1);assert.equal(b.combatUnit.health,b.combatUnit.maxHealth);
+ assert.equal(b.attacks.active?.kind,'lance','full-health ARGUS must engage a directly controlled ground hero');
+ assert.equal(b.attacks.active.stage,'windup');assert.equal(h.hits||0,0);
+ step(.7);assert.equal(h.hits||0,0,'opening counterattack still respects its warning');
+ step(1.5);assert(b.attacks.stats.lanceHits>0);assert(b.attacks.stats.impulses>0);
+ assert.equal(b.attacks.stats.flakHits,0);console.log('PASS autonomous full-health lance counter to controlled ground hero, warning and ramp impulses');
+}
+{
+ const {boss:b,h,step}=setup(hero(36,.08,42));h.active=false;h.motion={mode:'ground'};
+ b.config.attacks.flak.enabled=b.config.attacks.tether.enabled=false;step(5);
+ assert.equal(b.attacks.active,null,'CPU heroes retain their phase-2 lance unlock');
+ b.phase=2;step(.1);assert.equal(b.attacks.active?.kind,'lance');
+ console.log('PASS CPU phase gate preserved, phase 2 unlocks lance naturally');
+}
+{
+ const {boss:b,physics,step}=setup(hero(36,.08,42));b.config.attacks.flak.enabled=b.config.attacks.tether.enabled=false;
+ physics.addChunk({building:'solo-cover',type:'wall',floor:1,x:36,y:6,z:47,size:[20,14,.4]});
+ step(5);assert.equal(b.attacks.active,null,'opening lance never acquires through intact cover');
+ console.log('PASS solo counterattack respects cover during target acquisition');
+}

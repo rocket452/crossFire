@@ -232,7 +232,9 @@
         -3.9,
         0
       ],
-      "warningOpacity": 0.2
+      "warningOpacity": 0.2,
+      "minimumPhase": 2,
+      "playerMinimumPhase": 1
     }
   },
   "repairDrones": {

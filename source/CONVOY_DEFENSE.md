@@ -17,7 +17,7 @@ Ranks use saved / planned total: **S ≥90%, A ≥75%, B ≥50%, C below 50%**. 
 ARGUS reuses the articulated Walker model (approximately 21m in the existing scene), world-space planted feet and existing wreck/destruction adapters. It spawns in the northeast and follows the interception graph, forecasting the convoy's **remaining** route and stop delays. It replans every 3s, on stop/departure changes and bus-roster changes. Heroes do not steer its movement. Physical hull tests gate each candidate pose: blocking intact building sections must be damaged/pushed aside before it advances. Damaged-side shorter/slower steps produce a limp. Reaching a bus starts a warned stomp.
 
 - Four leg joints have 600 HP each. A destroyed joint permanently removes 15% stride speed, stacking to 60%. Dead joints do not glow and cannot be repaired. Surviving-joint HP repair never reverses a recorded destruction penalty.
-- Phase 1: flak and tether attacks. Below 66% HP, phase 2 adds lance and two repair drones. Below 33%, phase 3 multiplies speed by 1.25 and cooldowns by 0.7; warning time never drops below 0.8s.
+- Phase 1: flak and tether attacks, plus the existing lance as a counter to a directly controlled hero. CPU heroes remain eligible for lance only in phase 2. Below 66% HP, phase 2 adds general lance targeting and two repair drones. Below 33%, phase 3 multiplies speed by 1.25 and cooldowns by 0.7; warning time never drops below 0.8s.
 - Every attack has a firing-part glow and charge sound hook. Flak warns for 0.9s, then travels for 0.7s before bursting. Ground/wall-running heroes, heroes below the configured roof/altitude safety limits, and covered heroes are safe. Violet's active barrier blocks bursts. Flak never hits ground civilians or buses.
 - Tether warns for 0.9s, flies for 0.35s and arms for 0.8s. Fast crossings yank toward the nearer anchor, apply 12 feedback damage and **40% movement slow for 1.5s**, then **3s immunity after the slow**. Teleports bypass the intervening line. Buses and civilians do not trigger cables.
 - Every tether update validates both anchors and their actual attached building sections. Killing either anchor, section detachment, hiding, collision release, depleted section HP, a failed building floor or building collision shutdown removes the whole cable, both hit shapes and any tracer meshes. Lifetime expiry, reset, boss death and mission completion also clean it up. No separate destruction-event listener can miss collapse paths.
@@ -254,7 +254,9 @@ Reload after editing either JSON, then City Rebuild. Distances/positions use met
 | `attacks.tether.lineRadius` | `0.055` | Active cable cylinder radius. |
 | `attacks.tether.warningRadius` | `0.14` | Warning cable cylinder radius. |
 | `attacks.tether.muzzleOffset` | `[0,1.4,3.35]` | Local launch offset relative to selected node. |
-| `attacks.lance.enabled` | `true` | Enable lance attack in phase 2+. |
+| `attacks.lance.minimumPhase` | `2` | Phase that unlocks lance targeting against CPU heroes. |
+| `attacks.lance.playerMinimumPhase` | `1` | Phase that unlocks lance targeting against a directly controlled hero; prevents a harmless opening against a solo grounded speedster. |
+| `attacks.lance.enabled` | `true` | Enable lance attack (target eligibility follows the two minimum-phase settings). |
 | `attacks.lance.initialDelay` | `2` | Initial reset cooldown for this attack. |
 | `attacks.lance.cooldown` | `3` | Base cooldown after finishing this attack; phase 3 multiplies by 0.7. |
 | `attacks.lance.windup` | `0.9` | Lance charge warning before damaging beam. |
@@ -315,7 +317,7 @@ Reload after editing either JSON, then City Rebuild. Distances/positions use met
 - `argus-attacks.js`, `argus-repair-drones.js`: shared ranged scheduler, flak, anchors/cable cleanup, lance/core/stun and re-armor-only drones.
 - `battle.js`: scene/menu integration, owner filtering, abilities/impulses/barrier adapters, minimap snapshot and pause/reset wiring.
 - `hero-minimap.js`: optional convoy route, stop/exit and bus marker presentation. Other scenes keep their snapshots.
-- `index.html`, `game-entry.js`: existing scene selection and entry-module cache version `convoy-195`; changed module imports use this version too. No Site identity or hosting audience changes.
+- `index.html`, `game-entry.js`: existing scene selection and entry-module cache version `argus-solo-196`; changed module imports use this version too. No Site identity or hosting audience changes.
 
 ## Testing and reproduction
 
@@ -343,3 +345,9 @@ For manual playtest: select Convoy Defense, use Watch convoy or take a hero. Wat
 ## Known prototype limits
 
 Hero damage is feedback-only: no new health/death system. Flight threats currently target CPU fliers; no playable flight was introduced. Rift gateways do not redirect new flak/anchor tracer shots. Drone navigation is simple swept detouring rather than global pathfinding. Bus transport is kinematic, with simple civilian formations and roadside source points; no traffic simulation or complex escort mission system. The reused Walker is about 21m, not a new 40m model. Performance on a physical phone (FPS, memory, battery/thermal) is unmeasured; touch emulation verifies controls/layout only. Balance trials are scripted fixed-timestep scenarios, not broad human difficulty validation. The current no-intervention scenario saves all 80 civilians; the specified intervention window intentionally makes buses resilient. Ground survivors can still be attacked during continued observation, while the results screen preserves the completion-time score. Private licensed character assets remain out of the public GitHub repository.
+
+## Solo hero counterattack correction
+
+After step-4 playtesting, the player reported that full-health ARGUS did not engage a controlled ground speedster. Flak correctly excluded ground heroes, while the lance scheduler was globally locked until phase 2. The lance now has separate data-driven unlock phases for CPU heroes (2) and directly controlled heroes (1). It uses the existing 2s initial delay, 0.9s warning, range, cover checks, tracking, ramp impulses and open-core counterplay; no new weapon or movement penalty was added. It does not steer ARGUS away from convoy interception. CPU-only phase progression and the convoy balance trials are unchanged. `QA/argus-solo-browser.cjs` exercises automatic scheduling with the real player controller, including beam damage/impulses, moving input, cover break and control exit.
+
+Verified: autonomous phase-1 targeting, full warning, real controller movement, lance hit feedback/knockback, real-building cover interruption and control-exit phase gate pass in desktop and touch-emulated Chromium. The four convoy/results/ARGUS Node suites and existing ARGUS attack browser suite also pass. No physical-phone performance claim is made.
