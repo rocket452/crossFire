@@ -279,6 +279,10 @@ Reload changed JSON and rebuild. Distances use metres; durations/intervals/coold
 | `attacks.lance.range` | `120` | Maximum lance range. |
 | `attacks.lance.radius` | `0.9` | Lance collision/halo radius. |
 | `attacks.lance.trackingSpeed` | `1.15` | Maximum lance tracking angle speed. |
+| `attacks.lance.firingTracking.reactionSeconds` | `0.18` | Motion observation delay while firing; direction changes take time to register. |
+| `attacks.lance.firingTracking.turnAcceleration` | `3.2` | Maximum angular motor acceleration in rad/s²; prevents instant steering reversals. |
+| `attacks.lance.firingTracking.responseRate` | `14` | Aim-error response gain per second before the existing 1.15rad/s turn cap. |
+| `attacks.lance.firingTracking.maximumPredictionDistance` | `12` | Maximum metres of motion extrapolation from the delayed observation. |
 | `attacks.lance.leadFactor` | `0.35` | Scale on target velocity lead. |
 | `attacks.lance.leadSeconds` | `0.12` | Target velocity prediction horizon before scaling. |
 | `attacks.lance.maximumLead` | `2` | Clamp on predicted positional lead. |
@@ -414,3 +418,11 @@ Validation: `QA/argus-walker-beam-test.mjs` verifies the shared effect, no charg
 The upper body now swivels at up to 1.6rad/s toward the tracked lance direction, independently of the interception root and planted leg IK. A subtle 12-degree offset puts the right cannon shoulder forward. When targeting someone behind ARGUS, he turns first: the separate 1.6s arm raise begins only when the target is within 20 degrees of the upper body's facing. The existing 2.2s minimum windup and up-to-2.5s extra alignment wait remain; far-side targets can therefore take longer to charge. The arm yaw is constrained to a 55-degree forward cone while the torso catches up. Upper-arm and cannon segment checks against oriented chest, waist, pelvis and reactor bounds reject cross-body aiming, and firing readiness also requires body clearance. If a firing target moves beyond a safe arm pose, the beam is suppressed while the torso catches up; the existing contact grace can end the attack. No shot is projected through ARGUS's own torso.
 
 When firing stops, torso swivel eases back at 1.2rad/s; rebuild restores neutral yaw. Shared Walker beam visuals/building damage, target tracking speed, core exposure and all convoy/phase rules remain. Cache revision: `argus-torso-202`. `QA/argus-torso-aim-test.mjs` checks seven target bearings at 30/60/120Hz, side/rear acquisition, moving orbital tracking, clearance, planted feet, smooth neutral return and reset. `QA/argus-torso-browser.cjs` captures real city desktop/touch left/right/rear charge and firing poses.
+
+## Jukeable lance tracking — revision 203
+
+While firing, ARGUS now follows delayed target observations with a finite-acceleration cannon motor (`argus-lance-tracking.js`). A 0.18s reaction lag and 3.2rad/s² turning acceleration make sharp reversals leave the beam sweeping toward the previous motion estimate. Predictable movement is extrapolated from the observed velocity so ordinary straight running does not receive the same tracking penalty. Prediction is capped at 12m, and the existing future lead remains capped at 2m. The original 1.15rad/s maximum tracking speed is retained. Observation history is per cast and discarded on finish/reset, so it cannot carry a stale target or angular velocity into another shot.
+
+No juke immunity or scripted miss is applied: hits still use the rendered beam direction and normal collision. A sufficiently good dodge can break continuous contact for the existing 0.5s grace and end the beam. The charge/arm-readiness gate still tracks the actual target with its existing rules; delayed tracking begins only during firing. Torso safety, barriers, core exposure, damage ramp, building damage and player movement are unchanged. Cache revision: `argus-jukes-203`.
+
+`QA/argus-juke-tracking-test.mjs` compares identical 12m/s straight runs and reversals at 45m distance at 30/60/120Hz. Measured steady miss is 0.05–0.25m; peak reversal miss is 5.48–5.67m, with approximately 0.48–0.51s outside a 1.45m hit corridor. These are fixture measurements, not guaranteed invulnerability durations. The tracker can reacquire predictable motion afterward. `QA/argus-juke-browser.cjs` uses scripted straight/reversal trajectories of the actual speedster model against the live articulated boss/beam on desktop and touch. Physical-phone performance remains unmeasured.

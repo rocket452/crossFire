@@ -1,0 +1,62 @@
+{
+  "revision": "argus-jukes-203",
+  "config": {
+    "reactionSeconds": 0.18,
+    "turnAcceleration": 3.2,
+    "responseRate": 14,
+    "maximumPredictionDistance": 12
+  },
+  "tests": [
+    "juke",
+    "windup",
+    "beam",
+    "torso",
+    "attacks",
+    "aster",
+    "pylons",
+    "walker",
+    "convoy",
+    "juke-browser",
+    "attacks-browser",
+    "buildings-browser",
+    "solo-browser"
+  ],
+  "result": "PASS",
+  "scriptedTrajectory": "12m/s steady run vs sharp 180-degree reversal at about 45m range",
+  "pureTracker": {
+    "hz": [
+      30,
+      60,
+      120
+    ],
+    "steadyMissMetres": [
+      0.05,
+      0.15,
+      0.25
+    ],
+    "jukeMissMetres": [
+      5.48,
+      5.48,
+      5.67
+    ],
+    "missWindowSeconds": [
+      0.5,
+      0.483,
+      0.508
+    ]
+  },
+  "browserResults": [
+    "PASS desktop {\"steadyMiss\":0.1067607722298586,\"jukeMiss\":5.6644597889325645,\"straightHits\":311,\"jukeHits\":258,\"beamBroken\":false,\"missWindow\":0.483333333333334}",
+    "PASS touch {\"steadyMiss\":0.1067607722298586,\"jukeMiss\":5.6644597889325645,\"straightHits\":311,\"jukeHits\":258,\"beamBroken\":false,\"missWindow\":0.483333333333334}"
+  ],
+  "unchanged": [
+    "Player movement/energy",
+    "Charge and arm/torso readiness",
+    "Beam maximum turn speed, visuals and building damage",
+    "Stun/core/barrier/phase/convoy rules"
+  ],
+  "limits": [
+    "Synthetic trajectory measurements are not a guaranteed dodge window",
+    "Physical-phone performance remains unmeasured"
+  ]
+}

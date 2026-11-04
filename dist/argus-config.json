@@ -249,7 +249,13 @@
       "torsoAimOffsetDegrees": 12,
       "armForwardLimitDegrees": 55,
       "armClearance": 0.12,
-      "armRaiseStartDegrees": 20
+      "armRaiseStartDegrees": 20,
+      "firingTracking": {
+        "reactionSeconds": 0.18,
+        "turnAcceleration": 3.2,
+        "responseRate": 14,
+        "maximumPredictionDistance": 12
+      }
     },
     "pylons": {
       "enabled": true,
