@@ -1,9 +1,37 @@
 {
   "health": 10000,
-  "spawn": {"x": 36, "z": 54, "yaw": 3.141592653589793},
-  "movement": {"speed": 2.2, "turnSpeed": 0.48, "waypointRadius": 0.18, "arrivalRadius": 0.7},
-  "interception": {"replanInterval": 3, "predictionStep": 2, "maximumPrediction": 130, "minimumLead": 2, "breachAllowance": 3},
-  "gait": {"lateral": 1.75, "ankleHeight": 1.62, "pelvisHeight": -0.65, "stepTrigger": 0.95, "stepLead": 0.25, "swingDuration": 0.65, "stepLift": 0.8, "maxSupportReach": 2.55, "damagedStrideScale": 0.22, "damagedSwingExtra": 0.18, "limpDrop": 0.1, "sway": 0.12},
+  "spawn": {
+    "x": 36,
+    "z": 54,
+    "yaw": 3.141592653589793
+  },
+  "movement": {
+    "speed": 2.2,
+    "turnSpeed": 0.48,
+    "waypointRadius": 0.18,
+    "arrivalRadius": 0.7
+  },
+  "interception": {
+    "replanInterval": 3,
+    "predictionStep": 2,
+    "maximumPrediction": 130,
+    "minimumLead": 2,
+    "breachAllowance": 3
+  },
+  "gait": {
+    "lateral": 1.75,
+    "ankleHeight": 1.62,
+    "pelvisHeight": -0.65,
+    "stepTrigger": 0.95,
+    "stepLead": 0.25,
+    "swingDuration": 0.65,
+    "stepLift": 0.8,
+    "maxSupportReach": 2.55,
+    "damagedStrideScale": 0.22,
+    "damagedSwingExtra": 0.18,
+    "limpDrop": 0.1,
+    "sway": 0.12
+  },
   "joints": {
     "health": 600,
     "permanentDestruction": true,
@@ -13,14 +41,230 @@
     "radius": 0.72,
     "sparkInterval": 0.45,
     "locations": [
-      {"id": "argus-hip-l", "node": "thigh_l", "side": "l", "offset": [-0.6, -0.15, 1.15]},
-      {"id": "argus-knee-l", "node": "shin_l", "side": "l", "offset": [-0.35, 0, 1.1]},
-      {"id": "argus-hip-r", "node": "thigh_r", "side": "r", "offset": [0.6, -0.15, 1.15]},
-      {"id": "argus-knee-r", "node": "shin_r", "side": "r", "offset": [0.35, 0, 1.1]}
+      {
+        "id": "argus-hip-l",
+        "node": "thigh_l",
+        "side": "l",
+        "offset": [
+          -0.6,
+          -0.15,
+          1.15
+        ]
+      },
+      {
+        "id": "argus-knee-l",
+        "node": "shin_l",
+        "side": "l",
+        "offset": [
+          -0.35,
+          0,
+          1.1
+        ]
+      },
+      {
+        "id": "argus-hip-r",
+        "node": "thigh_r",
+        "side": "r",
+        "offset": [
+          0.6,
+          -0.15,
+          1.15
+        ]
+      },
+      {
+        "id": "argus-knee-r",
+        "node": "shin_r",
+        "side": "r",
+        "offset": [
+          0.35,
+          0,
+          1.1
+        ]
+      }
     ]
   },
-  "armor": {"bodyDamageScale": 1, "coreDamageScale": 0},
-  "breach": {"interval": 0.3, "power": 24, "radius": 3.2, "contactsPerTick": 4, "skin": 0.02},
-  "melee": {"range": 7.5, "windup": 0.8, "recovery": 0.45, "cooldown": 3.5, "busDamage": 120, "impactRadius": 5, "footLift": 1.7, "telegraphRadius": 4.5, "flashHz": 5},
-  "death": {"collapseSeconds": 1.5}
+  "armor": {
+    "bodyDamageScale": 1,
+    "coreDamageScale": 0
+  },
+  "breach": {
+    "interval": 0.3,
+    "power": 24,
+    "radius": 3.2,
+    "contactsPerTick": 4,
+    "skin": 0.02
+  },
+  "melee": {
+    "range": 7.5,
+    "windup": 0.8,
+    "recovery": 0.45,
+    "cooldown": 3.5,
+    "busDamage": 120,
+    "impactRadius": 5,
+    "footLift": 1.7,
+    "telegraphRadius": 4.5,
+    "flashHz": 5
+  },
+  "death": {
+    "collapseSeconds": 1.5
+  },
+  "phases": {
+    "phase2Health": 0.66,
+    "phase3Health": 0.33,
+    "phase3SpeedMultiplier": 1.25,
+    "phase3CooldownMultiplier": 0.7
+  },
+  "attacks": {
+    "minimumTelegraph": 0.8,
+    "recovery": 0.5,
+    "audio": {
+      "enabled": true,
+      "startHz": 130,
+      "endHz": 650,
+      "gain": 0.035
+    },
+    "flak": {
+      "enabled": true,
+      "initialDelay": 4,
+      "cooldown": 7,
+      "windup": 0.9,
+      "node": "rocket_pod",
+      "shellCount": 4,
+      "flightTime": 0.7,
+      "radius": 5,
+      "heightBand": [
+        26,
+        54
+      ],
+      "maximumDistance": 48,
+      "damage": 24,
+      "roofClearance": 2,
+      "rooftopSearchRadius": 24,
+      "burstFlash": 0.5,
+      "shellRadius": 0.18,
+      "warningOpacity": 0.16,
+      "patternRadius": 10,
+      "muzzleOffset": [
+        0,
+        1,
+        2.6
+      ]
+    },
+    "tether": {
+      "enabled": true,
+      "initialDelay": 8,
+      "cooldown": 8,
+      "windup": 0.9,
+      "node": "plasma_cannon",
+      "maximumLines": 3,
+      "lifetime": 30,
+      "armingTime": 0.8,
+      "flightTime": 0.35,
+      "height": 2.4,
+      "anchorHealth": 140,
+      "anchorRadius": 0.48,
+      "attachmentOffset": 0.35,
+      "maximumRange": 65,
+      "maximumPairDistance": 30,
+      "contactRadius": 1.3,
+      "minimumCrossingSpeed": 6,
+      "maximumSweepDistance": 35,
+      "yankSpeed": 18,
+      "yankUpward": 3,
+      "impulseDuration": 0.35,
+      "impulseDrag": 3,
+      "slowFraction": 0.4,
+      "slowDuration": 1.5,
+      "immunityAfterSlow": 3,
+      "damage": 12,
+      "lineRadius": 0.055,
+      "warningRadius": 0.14,
+      "muzzleOffset": [
+        0,
+        1.4,
+        3.35
+      ]
+    },
+    "lance": {
+      "enabled": true,
+      "initialDelay": 2,
+      "cooldown": 3,
+      "windup": 0.9,
+      "node": "forearm_r",
+      "duration": 4,
+      "range": 120,
+      "radius": 0.9,
+      "trackingSpeed": 1.15,
+      "leadFactor": 0.35,
+      "leadSeconds": 0.12,
+      "maximumLead": 2,
+      "lostContactGrace": 0.5,
+      "baseDamagePerSecond": 12,
+      "maximumDamagePerSecond": 60,
+      "rampSeconds": 3,
+      "impulseThresholds": [
+        0.33,
+        0.66,
+        1
+      ],
+      "impulseSpeeds": [
+        10,
+        18,
+        28
+      ],
+      "impulseUpward": [
+        2,
+        4,
+        7
+      ],
+      "impulseDuration": 0.6,
+      "impulseDrag": 2,
+      "coreMultiplier": 2.5,
+      "coreStunDamage": 350,
+      "armorStunScale": 0.4,
+      "stunDuration": 3,
+      "coreRadius": 0.9,
+      "armorHealth": 600,
+      "exposeCoreWhileStunned": true,
+      "haltMovement": true,
+      "muzzleOffset": [
+        0,
+        -3.9,
+        0
+      ],
+      "warningOpacity": 0.2
+    }
+  },
+  "repairDrones": {
+    "enabled": true,
+    "initialCount": 2,
+    "maximumAlive": 2,
+    "respawnSeconds": 30,
+    "health": 220,
+    "speed": 12,
+    "channelSeconds": 10,
+    "channelRange": 1,
+    "offsetX": 3,
+    "offsetY": 2.5,
+    "collisionRadius": 0.4,
+    "roofClearance": 4,
+    "wreckSeconds": 12,
+    "maximumWrecks": 4,
+    "bodySize": [
+      1.4,
+      0.8,
+      1.6
+    ],
+    "orbitSpreadRadians": 0.6,
+    "spawnRadius": 8,
+    "spawnHeight": 22,
+    "avoidanceRadius": 10,
+    "avoidanceAngles": [
+      0,
+      0.35,
+      -0.35,
+      0.7,
+      -0.7
+    ]
+  }
 }

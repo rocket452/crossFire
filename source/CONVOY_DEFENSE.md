@@ -1,6 +1,6 @@
 # Convoy Defense — foundation and ARGUS integration
 
-Select **Convoy Defense** from Scene, or use `?scene=convoy`. This is a separate scenario in the existing city renderer/physics, not a replacement for City Battle, the Chinook evacuation, Combat Testing or Shuriken Lab. The foundation below records step 1. Step 2 now adds moving ARGUS, four joint targets and bus stomps; see `source/ARGUS.md`. Flak/tethers/lance, repair drones, hero health/death and playable flight remain out of scope.
+Select **Convoy Defense** from Scene, or use `?scene=convoy`. This is a separate scenario in the existing city renderer/physics, not a replacement for City Battle, the Chinook evacuation, Combat Testing or Shuriken Lab. The foundation below records step 1. Step 2 now adds moving ARGUS, four joint targets and bus stomps; see `source/ARGUS.md`. Step 3 now adds flak/tethers/lance, repair drones and phases; see `source/ARGUS.md`. Hero health/death and playable flight remain outside the approved prototype scope.
 
 ## Lifecycle and accounting
 
@@ -56,4 +56,4 @@ The map retains the existing sixteen destructible city buildings and adds open a
 - Killing ARGUS does not win; surviving buses must exit.
 - Preserve the Chinook scenario without refactoring/extracting a shared civilian system in this pass.
 
-Step 1 was verified by the user. Step 2 is documented in `source/ARGUS.md` and stops before flak/tethers/lance or repair drones. Those require step 3 authorization.
+Step 1 was verified by the user. Steps 2–3 are documented in `source/ARGUS.md`. Step 4 HUD/balance work has not started.

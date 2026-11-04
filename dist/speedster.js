@@ -5,7 +5,7 @@ import * as THREE from './vendor/three.module.js';
 import {VOLT_STUN} from './hero-powers.js?v=combat-hud-102';
 import {RunnerEnergy,RUNNER_ENERGY} from './runner-energy.js?v=weapon-drain-77';
 import {RunnerHeading} from './runner-heading.js?v=runner-camera-27';
-import {RunnerMotion,terrainHeight} from './runner-motion.js?v=pulse-knockback-173';
+import {RunnerMotion,terrainHeight} from './runner-motion.js?v=argus-194';
 import {RunnerAnimator} from './runner-animation.js?v=runner-ai-7';
 import {RunnerLookPose} from './runner-look-pose.js?v=torso-look-75';
 import {RunnerAI} from './runner-ai.js?v=robot-experiments-108';

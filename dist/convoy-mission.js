@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {EvacBus} from './evac-bus.js';
-import {routeLength,routePoint,validateConvoyConfig} from './convoy-map-config.js?v=argus-193';
+import {routeLength,routePoint,validateConvoyConfig} from './convoy-map-config.js?v=argus-194';
 // Step 1 only: autonomous convoy and civilian accounting. No ARGUS or Chinook logic.
 export class ConvoyMission {
  constructor(scene,damage,config,{onEvent=()=>{},isBusPathClear=()=>true,isCivilianPathClear=()=>true,clearDebris=()=>{},groundHeight=()=>.08,onBusDestroyed=()=>{},onSmoke=()=>{}}={}){

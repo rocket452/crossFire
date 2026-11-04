@@ -1,4 +1,4 @@
-import {RunnerMotion,terrainHeight} from './runner-motion.js?v=pulse-knockback-173';
+import {RunnerMotion,terrainHeight} from './runner-motion.js?v=argus-194';
 // Air steering response is 40% lower, retaining more takeoff momentum during turns.
 // Jump height scales with launch speed squared: sqrt(0.7) lowers only the first jump by 30%.
 export const NINJA=Object.freeze({runSpeed:32.2,airSpeed:32.2,airAcceleration:3,airDrag:.15,wallPushSpeed:12.6,wallJumpSpeed:40,jumpSpeed:34*Math.sqrt(.7),doubleJumpSpeed:30,gravity:32,fallGravity:44,terminalSpeed:52,coyoteSeconds:.1,jumpBufferSeconds:.15,dashRange:48,dashSpeed:128.8,dashCooldown:6,dashDamage:320,slowFallSeconds:2,slowFallGravity:.12,slowFallSpeed:3,shurikenDamage:55,throwInterval:.22,shurikenSpeed:59.5,shurikenScale:2,shurikenRadius:.24,shurikenRange:127.5,maxProjectiles:36});
@@ -28,11 +28,11 @@ export class NinjaMotion {
  stepGroundDash(dt,sections){
   // Keep real floor/roof support, step handling and gravity. Short sweeps also catch
   // enemies at dash speed without treating the walkable floor as an attack hit.
-  const steps=Math.ceil(dt/Math.min(.008,.5/NINJA.dashSpeed)),h=dt/steps;
+  const dashSpeed=NINJA.dashSpeed*(this.body.externalSpeedScale??1),steps=Math.ceil(dt/Math.min(.008,.5/dashSpeed)),h=dt/steps;
   for(let i=0;i<steps&&this.active;i++){
-   const d=this.dash.direction,from={...this.position},length=Math.min(this.dash.remaining,NINJA.dashSpeed*h),to={x:from.x+d.x*length,y:from.y,z:from.z+d.z*length},sweep=this.sweep(from,to,true),hit=sweep?.blocking===false?null:sweep,fraction=hit?Math.max(0,hit.t-.025/Math.max(length,.001)):1,travel=length*fraction;
-   this.body.yaw=Math.atan2(d.x,d.z);this.body.runSpeed=this.body.boostSpeed=NINJA.dashSpeed;this.velocity.x=d.x*NINJA.dashSpeed;this.velocity.z=d.z*NINJA.dashSpeed;
-   if(travel>0)this.body.step({forward:1,player:true,gravityScale:NINJA.gravity/25,fallGravityScale:NINJA.fallGravity/25,fallSpeed:NINJA.terminalSpeed},travel/NINJA.dashSpeed,sections);
+   const d=this.dash.direction,from={...this.position},length=Math.min(this.dash.remaining,dashSpeed*h),to={x:from.x+d.x*length,y:from.y,z:from.z+d.z*length},sweep=this.sweep(from,to,true),hit=sweep?.blocking===false?null:sweep,fraction=hit?Math.max(0,hit.t-.025/Math.max(length,.001)):1,travel=length*fraction;
+   this.body.yaw=Math.atan2(d.x,d.z);this.body.runSpeed=this.body.boostSpeed=NINJA.dashSpeed;this.velocity.x=d.x*dashSpeed;this.velocity.z=d.z*dashSpeed;
+   if(travel>0)this.body.step({forward:1,player:true,gravityScale:NINJA.gravity/25,fallGravityScale:NINJA.fallGravity/25,fallSpeed:NINJA.terminalSpeed},travel/dashSpeed,sections);
    this.dash.remaining-=length;const moved=(this.position.x-from.x)*d.x+(this.position.z-from.z)*d.z;
    this.applyDashContacts(sweep,Math.min(1,Math.max(0,moved/Math.max(length,1e-8))));
    if(this.mode==='ground')this.jumps=0;else if(this.jumps===0)this.jumps=1;
@@ -44,9 +44,9 @@ export class NinjaMotion {
   if(!(dt>0))return;dt=Math.min(dt,.15);this.cooldown=Math.max(0,this.cooldown-dt);this.wallJumpLock=Math.max(0,this.wallJumpLock-dt);this.slowFall=Math.max(0,this.slowFall-dt);
   if(this.active){
    if(this.dash.grounded){this.stepGroundDash(dt,sections);this.jumpRequested=false;return;}
-   const d=this.dash.direction,p=this.position,start={...p},length=Math.min(this.dash.remaining,NINJA.dashSpeed*dt),to={x:p.x+d.x*length,y:p.y+d.y*length,z:p.z+d.z*length},sweep=this.sweep(p,to),hit=sweep?.blocking===false?null:sweep,t=hit?Math.max(0,hit.t-.025/Math.max(length,.001)):1;
+   const dashSpeed=NINJA.dashSpeed*(this.body.externalSpeedScale??1),d=this.dash.direction,p=this.position,start={...p},length=Math.min(this.dash.remaining,dashSpeed*dt),to={x:p.x+d.x*length,y:p.y+d.y*length,z:p.z+d.z*length},sweep=this.sweep(p,to),hit=sweep?.blocking===false?null:sweep,t=hit?Math.max(0,hit.t-.025/Math.max(length,.001)):1;
    p.x+=(to.x-p.x)*t;p.y+=(to.y-p.y)*t;p.z+=(to.z-p.z)*t;const bounds=this.body.bounds;p.x=Math.max(bounds.minX,Math.min(bounds.maxX,p.x));p.z=Math.max(bounds.minZ,Math.min(bounds.maxZ,p.z));
-   this.body.velocity={x:d.x*NINJA.dashSpeed,y:d.y*NINJA.dashSpeed,z:d.z*NINJA.dashSpeed};this.body.speed=length*t/dt;this.dash.remaining-=length;this.applyDashContacts(sweep,Math.min(1,Math.max(0,((p.x-start.x)*d.x+(p.y-start.y)*d.y+(p.z-start.z)*d.z)/Math.max(length,1e-8))));
+   this.body.velocity={x:d.x*dashSpeed,y:d.y*dashSpeed,z:d.z*dashSpeed};this.body.speed=length*t/dt;this.dash.remaining-=length;this.applyDashContacts(sweep,Math.min(1,Math.max(0,((p.x-start.x)*d.x+(p.y-start.y)*d.y+(p.z-start.z)*d.z)/Math.max(length,1e-8))));
    if(hit){this.applyDashHit(hit);this.finishDash();}
    else if(this.dash.remaining<=1e-6||p.y<=terrainHeight(p.x,p.z))this.finishDash();
    if(p.y<terrainHeight(p.x,p.z)){p.y=terrainHeight(p.x,p.z);this.body.mode='ground';this.jumps=0;this.slowFall=0;}
