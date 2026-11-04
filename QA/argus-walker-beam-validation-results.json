@@ -1,0 +1,45 @@
+{
+  "revision": "argus-walker-beam-201",
+  "effect": "Shared EnergyBeamEffect instance, same class/source as Siege Walker",
+  "buildingDamage": {
+    "power": 35,
+    "radius": 3.4,
+    "tickSeconds": 0.1,
+    "source": "argus",
+    "beamPriority": true
+  },
+  "suites": [
+    "beam",
+    "windup",
+    "attacks",
+    "walker",
+    "aster",
+    "body",
+    "pylons",
+    "convoy",
+    "aster-browser",
+    "attacks-browser",
+    "solo-browser",
+    "buildings-browser"
+  ],
+  "result": "PASS",
+  "coverage": [
+    "Real GLB arm readiness and 2.2s harmless charge",
+    "Exact 10Hz building damage at 30/60/120Hz",
+    "Scorch, real wall detach and beam advance through breach",
+    "Durable cover and barriers stop hero/downstream building damage",
+    "Core/stun, local weak-point damage, repairs, pylons, reset and convoy",
+    "Desktop/touch real WebGL shaders and existing city section breach"
+  ],
+  "unchangedSources": [
+    "energy-beam.js",
+    "beam-combat.js",
+    "siege-walker.js",
+    "destruction.js",
+    "evacuation.js",
+    "convoy-mission.js"
+  ],
+  "limits": [
+    "Physical-phone FPS/thermals unmeasured"
+  ]
+}

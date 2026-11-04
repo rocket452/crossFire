@@ -294,7 +294,7 @@ Reload changed JSON and rebuild. Distances use metres; durations/intervals/coold
 | `attacks.lance.exposeCoreWhileStunned` | `true` | Keep bonus core target open during stun. |
 | `attacks.lance.haltMovement` | `true` | Hold movement while lance winds up/fires. |
 | `attacks.lance.muzzleOffset` | `[0,-4.02,0]` | Local launch offset relative to selected node. |
-| `attacks.lance.warningOpacity` | `0.2` | Lance telegraph beam opacity. |
+| `attacks.lance.warningOpacity` | `0.2` | Legacy cylinder-effect opacity, retained but unused by the shared Walker effect. |
 | `repairDrones.enabled` | `true` | Enable phase-2 repair drones. |
 | `repairDrones.initialCount` | `2` | Drones spawned once upon entering phase 2. |
 | `repairDrones.maximumAlive` | `2` | Simultaneous live drone cap. |
@@ -394,3 +394,11 @@ The entry-module cache revision is now `argus-aster-199`. Dedicated GLB/JSON ass
 ARGUS now raises its cannon over 1.6s while every cannon material flashes orange at 4Hz, then holds the fully extended arm until at least 2.2s have elapsed. Charge tracking follows the current intended target at the existing 1.15rad/s turn limit. Firing also requires the rendered muzzle axis, straight elbow and target direction to agree within 3 degrees, with clear line of sight and an unobstructed arm pose. If that condition fails, the charge waits up to 2.5 additional seconds, then cancels into its normal cooldown. It never fires solely because the timer elapsed. Stun/death/reset cancel normally. Core exposure still begins only on actual firing; damage, firing duration and cooldown are unchanged. Phase 3 does not shorten this windup. Entry/dependency cache revision: `argus-beam-200`.
 
 Validation: `QA/argus-beam-windup-test.mjs` checks the real articulated frame at 30/60/120Hz, moving-target tracking, whole-cannon flashing, extension before damage, late readiness, obstructed-aim timeout and stun cancellation. Existing model, attack, pylon, convoy and desktop/touch browser checks cover integration.
+
+## Walker beam effect and building damage — revision 201
+
+ARGUS now instantiates the same `EnergyBeamEffect` as Siege Walker: blue-white layered shader tubes, charge orb/motes, moving rings, electrical arcs, muzzle lighting and impact glow. Its shared red tracking telegraph runs only during charge. The original Walker renderer and combat controller remain unchanged; ARGUS owns a separate effect instance, cleared on finish, blocked aiming, stun, death and reset. The deprecated cylinder `warningOpacity` value is retained but no longer drives this effect.
+
+ARGUS still requires the revision-200 2.2s windup and fully extended, aligned arm. It retains 4s firing, original hero damage ramp/impulses and core exposure. During firing only, `attacks.lance.buildingDamage` adds configurable `power: 35`, `radius: 3.4m`, `tickSeconds: 0.1s` impacts. These match the Walker's building strike strength/radius/cadence and use `{beam:true, source:'argus'}` for existing boss damage scaling and bounded beam-priority debris activation. Scorch/support collapse are handled by the existing destruction system. The beam stops at intact cover; once a section detaches it can continue through the breach. Durable cover still resets/ends hero contact after 0.5s, while flimsy cover can break before that grace expires. Barriers stop the ray and prevent downstream building damage. No bus/civilian damage or enemy friendly fire was added. Entry cache revision: `argus-walker-beam-201`.
+
+Validation: `QA/argus-walker-beam-test.mjs` verifies the shared effect, no charge damage, exact 10Hz building damage at 30/60/120Hz, scorch/breach, debris passthrough, durable cover, barrier protection, stun/reset and boss safety. `QA/argus-beam-buildings-browser.cjs` covers actual WebGL charge/firing shaders plus real Cannon wall damage and reset on desktop/touch. Existing Walker beam, ARGUS charge/arm/attacks/pylons and convoy regressions also run. Physical-phone performance remains unmeasured.

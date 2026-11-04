@@ -238,7 +238,12 @@
       "armRaiseSeconds": 1.6,
       "fireAlignmentDegrees": 3,
       "aimTimeout": 2.5,
-      "chargeFlashHz": 4
+      "chargeFlashHz": 4,
+      "buildingDamage": {
+        "power": 35,
+        "radius": 3.4,
+        "tickSeconds": 0.1
+      }
     },
     "pylons": {
       "enabled": true,
