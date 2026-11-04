@@ -18,7 +18,7 @@ Phase 1 has flak and quake-pylon placement. The existing lance can counter a dir
 
 Flak retains four airborne bursts, 0.9s warning + 0.7s flight, radius 5m, altitude band 26–54m, 24 feedback damage and 7s cooldown. Ground/wall-running heroes, roof-height/covered targets and active Violet barriers retain their protections. Flak never harms buses or ground civilians.
 
-Lance retains a 0.9s warning, up to 4s firing, 3s cooldown, tracking/lead and 12→60 feedback DPS over 3s contact. Impulses at 33/66/100% ramp are 10/18/28m/s horizontally and 2/4/7m/s upward. More than 0.5s without contact/line of sight ends the beam and resets the ramp. The exposed core applies 2.5× hull damage; 350 + 0.4 × current shutter armor incoming core damage triggers 3s stun. Full armor is 600, so the initial threshold is 590. The lance does not damage civilians or buses.
+Lance uses a 2.2s flashing warning, up to 4s firing, 3s cooldown, tracking/lead and 12→60 feedback DPS over 3s contact. Impulses at 33/66/100% ramp are 10/18/28m/s horizontally and 2/4/7m/s upward. More than 0.5s without contact/line of sight ends the beam and resets the ramp. The exposed core applies 2.5× hull damage; 350 + 0.4 × current shutter armor incoming core damage triggers 3s stun. Full armor is 600, so the initial threshold is 590. The lance does not damage civilians or buses.
 
 Two 220-HP drones arrive in phase 2; replacement is one every 30s below the cap of two. A beam repairs the HP missing from a surviving joint over 10s, or shutter armor if no damaged living joint is available. No hull healing, destroyed-joint rebuilding or permanent-penalty reversal exists. Bus stomp remains 120 damage, 0.8s warning, 0.45s recovery and 3.5s cooldown.
 
@@ -263,7 +263,11 @@ Reload changed JSON and rebuild. Distances use metres; durations/intervals/coold
 | `attacks.lance.enabled` | `true` | Enable lance attack (target eligibility follows the two minimum-phase settings). |
 | `attacks.lance.initialDelay` | `2` | Initial reset cooldown for this attack. |
 | `attacks.lance.cooldown` | `3` | Base cooldown after finishing this attack; phase 3 multiplies by 0.7. |
-| `attacks.lance.windup` | `0.9` | Lance charge warning before damaging beam. |
+| `attacks.lance.windup` | `2.2` | Lance charge warning before damaging beam. |
+| `attacks.lance.armRaiseSeconds` | `1.6` | Smooth arm extension duration, followed by an aimed charge hold. |
+| `attacks.lance.fireAlignmentDegrees` | `3` | Maximum muzzle-axis, elbow and target direction error before firing. |
+| `attacks.lance.aimTimeout` | `2.5` | Extra aiming time after minimum windup; cancel safely if blocked or unable to align. |
+| `attacks.lance.chargeFlashHz` | `4` | Cannon charge flashes per simulation second. |
 | `attacks.lance.node` | `"forearm_r"` | Articulated model node used as firing origin. |
 | `attacks.lance.duration` | `4` | Maximum continuous lance firing time. |
 | `attacks.lance.range` | `120` | Maximum lance range. |
@@ -384,3 +388,9 @@ Completed regression: 31 gameplay Node suites and 13 desktop/touch browser suite
 ## ASTER visual revision 199
 
 The entry-module cache revision is now `argus-aster-199`. Dedicated GLB/JSON assets load only for Convoy Defense. All combat and convoy tuning is retained; only flak and lance local muzzle offsets changed to match the new emitters. The historical pylon measurements above remain a record of revision 198. Current model verification and fresh balance measurements are recorded in `QA/argus-aster-validation-results.json` and `QA/argus-aster-balance-results.json`. Original Walker, Bastion, Chinook, hero movement and destruction sources/assets remain unchanged by this visual revision.
+
+## Beam readiness revision 200
+
+ARGUS now raises its cannon over 1.6s while every cannon material flashes orange at 4Hz, then holds the fully extended arm until at least 2.2s have elapsed. Charge tracking follows the current intended target at the existing 1.15rad/s turn limit. Firing also requires the rendered muzzle axis, straight elbow and target direction to agree within 3 degrees, with clear line of sight and an unobstructed arm pose. If that condition fails, the charge waits up to 2.5 additional seconds, then cancels into its normal cooldown. It never fires solely because the timer elapsed. Stun/death/reset cancel normally. Core exposure still begins only on actual firing; damage, firing duration and cooldown are unchanged. Phase 3 does not shorten this windup. Entry/dependency cache revision: `argus-beam-200`.
+
+Validation: `QA/argus-beam-windup-test.mjs` checks the real articulated frame at 30/60/120Hz, moving-target tracking, whole-cannon flashing, extension before damage, late readiness, obstructed-aim timeout and stun cancellation. Existing model, attack, pylon, convoy and desktop/touch browser checks cover integration.

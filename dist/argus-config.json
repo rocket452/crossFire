@@ -189,7 +189,7 @@
       "enabled": true,
       "initialDelay": 2,
       "cooldown": 3,
-      "windup": 0.9,
+      "windup": 2.2,
       "node": "forearm_r",
       "duration": 4,
       "range": 120,
@@ -234,7 +234,11 @@
       ],
       "warningOpacity": 0.2,
       "minimumPhase": 2,
-      "playerMinimumPhase": 1
+      "playerMinimumPhase": 1,
+      "armRaiseSeconds": 1.6,
+      "fireAlignmentDegrees": 3,
+      "aimTimeout": 2.5,
+      "chargeFlashHz": 4
     },
     "pylons": {
       "enabled": true,

@@ -15,7 +15,7 @@ export class ArgusModel {
   const feet=pose.feet.map(f=>{const t=f.swinging?Math.min(1,f.age/f.duration):0;return{...f,ankle:{...f.ankle},pitch:f.swinging?Math.sin(t*Math.PI*2)*this.frame.animation.footPitch:0};});
   if(slam){const t=slam.progress,k=t<.72?t/.72:1-(t-.72)/.28,e=k*k*(3-2*k);feet[1].ankle.y+=e*this.config.melee.footLift;}
   const compression=this.impactAge<.5?Math.sin(this.impactAge*Math.PI/.5)*.09:0;
-  this.walker.applyWalkPose({...pose,y:pose.y-compression,feet});this.frame.animate(pose,time,slam,this.actor,this.impactAge);
+  this.walker.applyWalkPose({...pose,y:pose.y-compression,feet});this.frame.animate(pose,time,slam,this.actor,this.impactAge);this.lanceBase={arm:this.nodes.upperarm_r.quaternion.clone(),fore:this.nodes.forearm_r.quaternion.clone()};
   this.telegraph.visible=!!slam;if(slam){this.telegraph.position.set(slam.point.x,.13,slam.point.z);this.telegraph.material.opacity=.35+.55*Math.sin(time*Math.PI*this.config.melee.flashHz)**2;}
  }
  targetPosition(id){return this.targets.find(t=>t.id===id)?.mesh.getWorldPosition(new THREE.Vector3());}
@@ -42,7 +42,10 @@ export class ArgusModel {
   for(const c of chunks){if(c.state!=='intact'||c.hidden||c.collisionDisabled)continue;let box=c.bounds;if(!box){const p=c.body.position;box=new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(p.x,p.y,p.z),new THREE.Vector3(...c.size));}if(!broad.intersectsBox(box))continue;if(boxes.some(b=>b.intersectsBox(box)))hits.push(c);}
   return hits;
  }
- aimLance(direction,chunks){const arm=this.nodes.upperarm_r,fore=this.nodes.forearm_r,old=arm.quaternion.clone(),oldFore=fore.quaternion.clone(),local=direction.clone().applyQuaternion(arm.parent.getWorldQuaternion(new THREE.Quaternion()).invert());const attack=this.actor?.attacks?.active,t=attack?.stage==='windup'?THREE.MathUtils.smoothstep(attack.age/attack.windup,0,1):1;arm.quaternion.slerp(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,-1,0),local),t);fore.quaternion.slerp(new THREE.Quaternion(),t);this.root.updateMatrixWorld(true);if(this.blockers(chunks).length){arm.quaternion.copy(old);fore.quaternion.copy(oldFore);this.root.updateMatrixWorld(true);return false;}this.frame.updateHydraulics();return true;}
+ aimLance(direction,chunks){const arm=this.nodes.upperarm_r,fore=this.nodes.forearm_r,old=arm.quaternion.clone(),oldFore=fore.quaternion.clone(),local=direction.clone().applyQuaternion(arm.parent.getWorldQuaternion(new THREE.Quaternion()).invert());const attack=this.actor?.attacks?.active,t=attack?.stage==='windup'?THREE.MathUtils.smoothstep(attack.age/this.config.attacks.lance.armRaiseSeconds,0,1):1;arm.quaternion.copy(this.lanceBase?.arm||old).slerp(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,-1,0),local),t);fore.quaternion.copy(this.lanceBase?.fore||oldFore).slerp(new THREE.Quaternion(),t);this.root.updateMatrixWorld(true);if(this.blockers(chunks).length){arm.quaternion.copy(old);fore.quaternion.copy(oldFore);this.root.updateMatrixWorld(true);return false;}this.frame.updateHydraulics();return true;}
+ // Read the rendered muzzle axis and elbow, rather than trusting the charge timer.
+ lanceAligned(direction){this.root.updateMatrixWorld(true);const axis=new THREE.Vector3(0,-1,0).transformDirection(this.nodes.forearm_r.matrixWorld),tolerance=THREE.MathUtils.degToRad(this.config.attacks.lance.fireAlignmentDegrees);return axis.angleTo(direction)<=tolerance&&this.nodes.forearm_r.quaternion.angleTo(new THREE.Quaternion())<=tolerance;}
+ flashLance(time){const strength=.15+Math.sin(time*Math.PI*this.config.attacks.lance.chargeFlashHz)**2*5;for(const surface of this.frame.renderRoots.forearm_r.children){if(!surface.isMesh)continue;surface.material.emissive.set('#ff7439');surface.material.emissiveIntensity=strength;}}
  destroy(){this.hitFlashes.clear();this.core.visible=false;this.shutter.visible=true;this.telegraph.visible=false;this.walker.destroy();}
  updateDeath(dt,time){const scaled=dt*1.5/this.config.death.collapseSeconds;this.walker.update(scaled,time,[]);}
  syncWrecks(){this.walker.syncWrecks();}

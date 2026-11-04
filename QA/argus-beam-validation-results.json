@@ -1,0 +1,28 @@
+{
+  "revision": "argus-beam-200",
+  "tuning": {
+    "windup": 2.2,
+    "armRaiseSeconds": 1.6,
+    "fireAlignmentDegrees": 3,
+    "aimTimeout": 2.5,
+    "chargeFlashHz": 4
+  },
+  "nodeSuites": [
+    "argus-beam-windup-test (30/60/120Hz)",
+    "argus-aster-test",
+    "argus-attacks-test",
+    "argus-test",
+    "argus-pylons-test",
+    "convoy-test"
+  ],
+  "browserSuites": [
+    "argus-aster-browser desktop/touch",
+    "argus-attacks-browser desktop/touch",
+    "argus-solo-browser desktop/touch"
+  ],
+  "result": "PASS",
+  "visualInspection": "Fully extended aimed arm holds harmless telegraph; orange cannon flash visible before core opens/firing",
+  "limitations": [
+    "Physical-phone performance unmeasured"
+  ]
+}
