@@ -1,0 +1,7 @@
+export class ConvoyHUD {
+ constructor(root){this.root=root;root.hidden=false;root.innerHTML='<div class="convoy-heading"><b>CONVOY DEFENSE</b><span data-phase></span></div><div class="convoy-counts"><span>SAVED <b data-saved>0</b></span><span>LOST <b data-lost>0</b></span><span>LEFT BEHIND <b data-unsaved>0</b></span><span>WAITING <b data-waiting>0</b></span><span>ABOARD <b data-onboard>0</b></span></div><div data-buses></div><small data-detail></small>';
+ }
+ update(mission){const d=mission.diagnostics(),text=(key,value)=>this.root.querySelector('[data-'+key+']').textContent=value;for(const key of['saved','lost','unsaved','waiting','onboard'])text(key,d[key]);text('phase',d.phase==='starting'?'DEPARTING IN '+Math.ceil(d.remaining)+'s':d.phase==='pickup'?'PICKUP '+d.pickup+' / 2 · '+Math.ceil(d.remaining)+'s':d.phase==='success'?'EVACUATION COMPLETE':d.phase==='failed'?'ALL BUSES LOST':d.blocked?'ROUTE BLOCKED':'CONVOY MOVING');
+  this.root.dataset.phase=d.phase;this.root.querySelector('[data-buses]').innerHTML=d.buses.map((b,i)=>'<span class="convoy-bus-health '+(b.destroyed?'destroyed':b.escaped?'escaped':'')+'">BUS '+(i+1)+' <b>'+(b.destroyed?'LOST':b.escaped?'SAFE':b.onboard+'/'+b.capacity)+'</b><i><em style="width:'+Math.ceil(b.health/b.maxHealth*100)+'%"></em></i></span>').join('');text('detail',d.terminal?'Saved '+d.saved+' · killed '+d.lost+' · unsaved '+d.unsaved:'Pickups '+d.completedPickups+'/2 · Passengers score only after their bus exits.');
+ }
+}

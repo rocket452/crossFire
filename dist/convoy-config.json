@@ -1,0 +1,93 @@
+{
+  "busCount": 4,
+  "capacity": 24,
+  "initialPassengers": 8,
+  "busHealth": 900,
+  "busSpeed": 4,
+  "busSpacing": 14,
+  "startupDelay": 5,
+  "pickupDuration": 35,
+  "civiliansPerPickup": 24,
+  "civilianGroupSize": 12,
+  "civilianHealth": 35,
+  "civilianSpeed": 3.8,
+  "civilianSpacing": 0.6,
+  "civilianColumns": 3,
+  "civilianPathRadius": 1.15,
+  "boardingInterval": 0.22,
+  "boardingRadius": 0.8,
+  "busWidth": 3.2,
+  "busLength": 10,
+  "busHeight": 3.4,
+  "doorOffset": [
+    2.6,
+    0,
+    1.7
+  ],
+  "wreckAvoidOffset": 3.8,
+  "wreckAvoidInner": 12,
+  "wreckAvoidOuter": 24,
+  "smokeInterval": 0.45,
+  "map": {
+    "bounds": {
+      "minX": -132,
+      "maxX": 108,
+      "minZ": -60,
+      "maxZ": 60
+    },
+    "movementBounds": {
+      "minX": -128,
+      "maxX": 104,
+      "minZ": -56,
+      "maxZ": 56
+    },
+    "heroStart": {
+      "x": -42,
+      "y": 0.08,
+      "z": 8
+    },
+    "route": [
+      [
+        -76,
+        0
+      ],
+      [
+        116,
+        0
+      ]
+    ],
+    "pickupSidewalkZ": -5.3,
+    "pickups": [
+      {
+        "name": "West residences",
+        "distance": 76,
+        "sources": [
+          [
+            -36,
+            -5.3
+          ],
+          [
+            -12,
+            -5.3
+          ]
+        ]
+      },
+      {
+        "name": "East residences",
+        "distance": 124,
+        "sources": [
+          [
+            12,
+            -5.3
+          ],
+          [
+            36,
+            -5.3
+          ]
+        ]
+      }
+    ],
+    "roadHalfWidth": 6,
+    "debrisClearInterval": 0.5
+  }
+}
