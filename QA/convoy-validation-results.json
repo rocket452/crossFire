@@ -1,0 +1,232 @@
+{
+  "dateUTC": "2026-11-04",
+  "nodeSuites": [
+    {
+      "suite": "convoy-test",
+      "passed": true
+    },
+    {
+      "suite": "convoy-results-test",
+      "passed": true
+    },
+    {
+      "suite": "argus-test",
+      "passed": true
+    },
+    {
+      "suite": "argus-attacks-test",
+      "passed": true
+    },
+    {
+      "suite": "walker-gait-test",
+      "passed": true
+    },
+    {
+      "suite": "walker-weapons-test",
+      "passed": true
+    },
+    {
+      "suite": "city-physics-test",
+      "passed": true
+    },
+    {
+      "suite": "building-damage-test",
+      "passed": true
+    },
+    {
+      "suite": "building-collision-release-test",
+      "passed": true
+    },
+    {
+      "suite": "combat-collision-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-state-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-heavy-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-arms-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-leading-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-rain-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-beam-walls-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-permanent-weakpoints-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-proximity-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-pulse-knockback-test",
+      "passed": true
+    },
+    {
+      "suite": "evacuation-lifecycle-test",
+      "passed": true
+    },
+    {
+      "suite": "evacuation-navigation-test",
+      "passed": true
+    },
+    {
+      "suite": "evacuation-policy-test",
+      "passed": true
+    },
+    {
+      "suite": "hero-minimap-test",
+      "passed": true
+    },
+    {
+      "suite": "runner-motion-test",
+      "passed": true
+    },
+    {
+      "suite": "runner-air-wall-test",
+      "passed": true
+    },
+    {
+      "suite": "ninja-motion-test",
+      "passed": true
+    },
+    {
+      "suite": "ninja-jump-feel-test",
+      "passed": true
+    },
+    {
+      "suite": "ninja-ground-dash-test",
+      "passed": true
+    },
+    {
+      "suite": "ninja-phase-test",
+      "passed": true
+    },
+    {
+      "suite": "charged-shuriken-test",
+      "passed": true
+    }
+  ],
+  "browserSuites": [
+    {
+      "suite": "argus-browser",
+      "passed": true
+    },
+    {
+      "suite": "argus-attacks-browser",
+      "passed": true
+    },
+    {
+      "suite": "walker-weapons-browser",
+      "passed": true
+    },
+    {
+      "suite": "evacuation-cycle-browser",
+      "passed": true
+    },
+    {
+      "suite": "bastion-permanent-weakpoints-browser",
+      "passed": true
+    },
+    {
+      "suite": "bastion-beam-walls-browser",
+      "passed": true
+    },
+    {
+      "suite": "bastion-pulse-knockback-browser",
+      "passed": true
+    },
+    {
+      "suite": "arena-center-browser",
+      "passed": true
+    },
+    {
+      "suite": "convoy-hud-browser",
+      "passed": true
+    },
+    {
+      "suite": "charged-shuriken-browser",
+      "passed": true
+    }
+  ],
+  "browserConditions": "Installed Chromium/Playwright software WebGL; desktop and touch emulation. Instrumented real gameplay modules and fixed timestep simulation, screenshots visually inspected. Not physical-phone performance measurement.",
+  "unchangedSources": [
+    {
+      "file": "dist/evacuation.js",
+      "sha256": "617ef7c189e14fa65b541ea4be64baed828749b92e77194918acfdf51c15cd46",
+      "identicalToAcceptedStep3": true
+    },
+    {
+      "file": "dist/evacuation-navigation.js",
+      "sha256": "e821b6bc14f7c27db45d7dbfb9693ecb3a80f71c6c50a784d7b3b0b8fa042eee",
+      "identicalToAcceptedStep3": true
+    },
+    {
+      "file": "dist/evacuation-config.js",
+      "sha256": "8bd6ca028486516a15a925a6afbbde5fc6b341f933ddcbe34163dfc951a02617",
+      "identicalToAcceptedStep3": true
+    },
+    {
+      "file": "dist/bastion.js",
+      "sha256": "6073d3d5e86221f643ffa86debe31be5e2a974003e558b0478ed91395e028301",
+      "identicalToAcceptedStep3": true
+    },
+    {
+      "file": "dist/bastion-config.json",
+      "sha256": "df74fe2d2ee503a7e0d87af3f8e7dd78017e7a79e70d6a3964e30552c9dd004a",
+      "identicalToAcceptedStep3": true
+    },
+    {
+      "file": "dist/siege-walker.js",
+      "sha256": "1392498aec93a567cf122231a64ba413e3585fa2488fab5805f25518ca315d2d",
+      "identicalToAcceptedStep3": true
+    }
+  ],
+  "historicalHarnesses": [
+    {
+      "suite": "bastion-browser",
+      "status": "Fails on both accepted step3 and step4; old rotating-core damage assertion was superseded by permanent arm/back targets. Current permanent-weakpoint, beam-wall and pulse browser suites pass."
+    },
+    {
+      "suite": "combat-testing-browser",
+      "status": "Fails on both accepted step3 and step4; expects two buildings/corner spawn instead of current twelve-building centered arena. Current arena-center browser suite passes."
+    }
+  ],
+  "updatedFixtures": [
+    "ARGUS fixtures now allow new approach timing; obstacle spans actual approach lane; attack assertions derive speed from JSON.",
+    "Bastion wall-only Node test excludes proximity pulse damage from its collision totals.",
+    "Shuriken browser uses configured early-release timing and current Shift dash, five scene options."
+  ],
+  "coverage": [
+    "Loaded-bus passenger death and separate unsaved ground population",
+    "All-buses loss and one-bus win",
+    "Frozen completion time, ARGUS flag, rank boundaries and planned denominator",
+    "Route/stop/exit markers, per-bus HP/manifests, pickup countdown, no civilian radar dots",
+    "ARGUS replanning after delayed stop, foot planting, physical breach, collapse without mission win",
+    "Anchor kill and attached section/building collapse cleanup",
+    "Lance continuous impulses, cover grace break, core interrupt",
+    "Damaged joint repair, permanent dead joint and speed penalty retention",
+    "Walker weapons/city destruction, Chinook multi-cycle evacuation, modern Bastion and arena, shuriken lab"
+  ],
+  "balanceReport": "QA/convoy-balance-results.json",
+  "limitations": [
+    "All final unattended balance trials save 80/80 civilians; forgiving prototype.",
+    "Feedback-only hero damage; CPU flight only; flak/anchor tracer portal redirection absent.",
+    "Physical-phone FPS/thermal/memory not measured."
+  ]
+}

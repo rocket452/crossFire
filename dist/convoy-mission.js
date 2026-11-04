@@ -1,10 +1,11 @@
+import {convoyResult} from './convoy-results.js?v=convoy-195';
 import * as THREE from './vendor/three.module.js';
 import {EvacBus} from './evac-bus.js';
-import {routeLength,routePoint,validateConvoyConfig} from './convoy-map-config.js?v=argus-194';
+import {routeLength,routePoint,validateConvoyConfig} from './convoy-map-config.js?v=convoy-195';
 // Step 1 only: autonomous convoy and civilian accounting. No ARGUS or Chinook logic.
 export class ConvoyMission {
- constructor(scene,damage,config,{onEvent=()=>{},isBusPathClear=()=>true,isCivilianPathClear=()=>true,clearDebris=()=>{},groundHeight=()=>.08,onBusDestroyed=()=>{},onSmoke=()=>{}}={}){
-  validateConvoyConfig(config);Object.assign(this,{scene,damage,config,onEvent,isBusPathClear,isCivilianPathClear,clearDebris,groundHeight,onBusDestroyed,onSmoke});this.length=routeLength(config.map.route);this.buses=Array.from({length:config.busCount},(_,i)=>new EvacBus(scene,damage,i,config));
+ constructor(scene,damage,config,{onEvent=()=>{},isBusPathClear=()=>true,isCivilianPathClear=()=>true,clearDebris=()=>{},groundHeight=()=>.08,onBusDestroyed=()=>{},onSmoke=()=>{},getBossDestroyed=()=>false}={}){
+  validateConvoyConfig(config);Object.assign(this,{scene,damage,config,onEvent,isBusPathClear,isCivilianPathClear,clearDebris,groundHeight,onBusDestroyed,onSmoke,getBossDestroyed});this.length=routeLength(config.map.route);this.buses=Array.from({length:config.busCount},(_,i)=>new EvacBus(scene,damage,i,config));
   this.root=new THREE.Group();this.root.name='Convoy route and pickups';scene.add(this.root);this.markers=[];this.buildMarkers();
   this.people=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:'white',roughness:1}),config.civiliansPerPickup*config.map.pickups.length*6);this.people.count=0;this.people.frustumCulled=false;scene.add(this.people);this.dummy=new THREE.Object3D();this.reset();
  }
@@ -17,7 +18,7 @@ export class ConvoyMission {
   const exit=routePoint(c.map.route,this.length),arch=new THREE.Mesh(new THREE.BoxGeometry(.25,7,12),new THREE.MeshBasicMaterial({color:'#65dab9',wireframe:true}));arch.position.set(exit.x,3.5,exit.z);this.root.add(arch);
  }
  reset(){
-  this.damage.units=this.damage.units.filter(u=>!u.entity.convoy||u.kind==='bus');this.records=[];this.cohorts=[];this.time=0;this.distance=0;this.nextPickup=0;this.completedPickups=0;this.phase='starting';this.remaining=this.config.startupDelay;this.clearClock=0;this.events=[];this.blocked=false;this.terminal=false;
+  this.damage.units=this.damage.units.filter(u=>!u.entity.convoy||u.kind==='bus');this.records=[];this.cohorts=[];this.time=0;this.distance=0;this.nextPickup=0;this.completedPickups=0;this.phase='starting';this.remaining=this.config.startupDelay;this.clearClock=0;this.events=[];this.blocked=false;this.terminal=false;this.result=null;
   for(const bus of this.buses){bus.reset();for(let i=0;i<this.config.initialPassengers;i++){const record={id:bus.id+'-initial-'+i,status:'onboard',busId:bus.id};this.records.push(record);bus.passengers.push(record);}const p=routePoint(this.config.map.route,-bus.index*this.config.busSpacing);bus.place(p,this.groundHeight(p.x,p.z));}
   for(const m of this.markers)m.material.color.set('#eccd6e');this.sync();this.render();this.notify('Convoy ready · two civilian pickups ahead.');
  }
@@ -71,7 +72,7 @@ export class ConvoyMission {
  resolve(){
   if(this.activeBuses.length)return;
   for(const c of this.civilians){c.status='left-behind';c.moving=false;}
-  this.terminal=true;this.phase=this.buses.some(b=>b.escaped)?'success':'failed';this.notify(this.phase==='success'?'Evacuation complete · '+this.diagnostics().saved+' civilians saved.':'Mission failed · all evacuation buses destroyed.');
+  this.terminal=true;this.phase=this.buses.some(b=>b.escaped)?'success':'failed';this.result=convoyResult(this.diagnostics(),this.config,this.getBossDestroyed());this.notify(this.phase==='success'?'Evacuation complete · '+this.diagnostics().saved+' civilians saved.':'Mission failed · all evacuation buses destroyed.');
  }
  disable(unit){
   if(!unit?.entity?.convoy)return false;
@@ -108,5 +109,5 @@ export class ConvoyMission {
  moveCarriedCivilian(c,p){if(!c.carried){this.relocateCivilian(c,p);c.carried=true;}c.group.center.copy(p);c.root.position.copy(p);this.sync();}
  sync(){for(const b of this.buses)b.sync();for(const c of this.civilians)c.unit.shapes=c.unit.dashPhased?[]:[{center:{x:c.root.position.x,y:c.root.position.y+.92,z:c.root.position.z},half:{x:.35,y:.95,z:.35}}];}
  render(){let n=0;for(const c of this.civilians){if(c.unit.dashPhased)continue;const swing=c.moving?Math.sin(this.time*12+c.phase)*.65:Math.sin(this.time*2+c.phase)*.04;const offsets=[[0,1.65,0],[0,1.1,0],[-.22,.4,0],[.22,.4,0],[-.4,1.05,0],[.4,1.05,0]],sizes=[[.38,.4,.38],[.58,.7,.32],[.2,.8,.24],[.2,.8,.24],[.17,.65,.2],[.17,.65,.2]];for(let i=0;i<6;i++){this.dummy.position.set(...offsets[i]).applyAxisAngle(new THREE.Vector3(0,1,0),c.root.rotation.y).add(c.root.position);this.dummy.rotation.set(i>1?swing*(i%2?1:-1):0,c.root.rotation.y,0);this.dummy.scale.set(...sizes[i]);this.dummy.updateMatrix();this.people.setMatrixAt(n,this.dummy.matrix);this.people.setColorAt(n++,new THREE.Color(i===0?'#d4a078':i===1?['#e1bd63','#719aa9','#bba0b5'][c.slot%3]:'#354454'));}}this.people.count=n;this.people.instanceMatrix.needsUpdate=true;if(this.people.instanceColor)this.people.instanceColor.needsUpdate=true;}
- diagnostics(){const count=status=>this.records.filter(c=>c.status===status).length;return{phase:this.phase,failed:this.failed,terminal:this.terminal,time:this.time,distance:this.distance,routeLength:this.length,pickup:this.nextPickup+1,completedPickups:this.completedPickups,remaining:this.remaining,blocked:this.blocked,saved:count('saved'),lost:count('lost'),unsaved:count('left-behind'),waiting:count('waiting'),onboard:count('onboard'),total:this.records.length,buses:this.buses.map(b=>({id:b.id,health:b.unit.health,maxHealth:b.unit.maxHealth,onboard:b.passengers.length,capacity:this.config.capacity,destroyed:b.destroyed,escaped:b.escaped,position:b.root.position.toArray()}))};}
+ diagnostics(){const count=status=>this.records.filter(c=>c.status===status).length;return{result:this.result,phase:this.phase,failed:this.failed,terminal:this.terminal,time:this.time,distance:this.distance,routeLength:this.length,pickup:this.nextPickup+1,completedPickups:this.completedPickups,remaining:this.remaining,blocked:this.blocked,saved:count('saved'),lost:count('lost'),unsaved:count('left-behind'),waiting:count('waiting'),onboard:count('onboard'),total:this.records.length,buses:this.buses.map(b=>({id:b.id,health:b.unit.health,maxHealth:b.unit.maxHealth,onboard:b.passengers.length,capacity:this.config.capacity,destroyed:b.destroyed,escaped:b.escaped,position:b.root.position.toArray()}))};}
 }

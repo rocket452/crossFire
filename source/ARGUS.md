@@ -32,7 +32,7 @@ At zero main HP it buckles using the original Walker death pose, breaks into 18 
 
 ## Files and tuning
 
-- `dist/argus-config.json`: main HP 10,000; spawn `(36,54)`; base stride 2.2m/s; turn rate 0.48rad/s; gait reach/step/limp parameters; all four joint locations/HP/radius, permanent flag, speed penalties and hull transfer; closed-core/body damage scaling; replan/prediction parameters; breach power/cadence; melee range/windup/damage/recovery/cooldown; collapse duration.
+- `dist/argus-config.json`: main HP 10,000; spawn `(96,54)`; base stride 1.15m/s; turn rate 0.48rad/s; gait reach/step/limp parameters; all four joint locations/HP/radius, permanent flag, speed penalties and hull transfer; closed-core/body damage scaling; replan/prediction parameters; breach power/cadence; melee range/windup/damage/recovery/cooldown; collapse duration.
 - `dist/argus-model.js`, `dist/argus-gait.js`, `dist/argus.js`: art adapter, planted locomotion and encounter controller.
 - `dist/convoy-config.json`, `dist/convoy-map-config.js`: lane data plus read-only route forecast/graph helpers. Existing bus/civilian tuning is unchanged.
 - `dist/battle.js`: actor loading, hero targeting/damage/stun adapters, update/reset/wreck integration, ARGUS HP/joint status, silhouettes and radar.
@@ -99,7 +99,7 @@ Crossing below 66% HP enters phase 2 and spawns two 220HP repair drones, capped 
 
 A zero-HP/destroyed joint is excluded before and during every channel. No repair path clears its permanent flag or speed penalty. Killing a drone interrupts its beam and creates a smoking physical wreck (12s lifetime; at most four drone wrecks retained). If fewer than two remain, one replacement arrives after 30s, then another after a further 30s if still needed. Boss stuns do not freeze independent drones; stunning a drone itself interrupts its channel. Boss death destroys the remaining drones and clears all pending offensive hazards. Rebuild removes their units, beams, statuses and wreck bodies. No new actors respawn after the convoy resolves.
 
-Phase 1 is above 66% HP: flak and tethers. Phase 2 adds lance/drones. Below 33%, phase 3 multiplies stride speed by 1.25 and attack cooldowns by 0.7; destroyed-leg penalties still multiply that speed and are never refunded. Red visor overdrive and faster activity provide a world cue. The existing compact status line reports phase; a dedicated HUD/armor-progress/balance pass is deferred to step 4.
+Phase 1 is above 66% HP: flak and tethers. Phase 2 adds lance/drones. Below 33%, phase 3 multiplies stride speed by 1.25 and attack cooldowns by 0.7; destroyed-leg penalties still multiply that speed and are never refunded. Red visor overdrive and faster activity provide a world cue. The existing compact status line reports phase; Step 4 HUD, results and measured balance are complete; see `CONVOY_DEFENSE.md` for the authoritative full config reference and simulation results.
 
 ### Step-3 verification and limits
 

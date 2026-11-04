@@ -19,7 +19,7 @@ export class HeroMinimap {
   svg('path',{d:'M0 -6L4.8 4L0 2L-4.8 4Z',class:'minimap-player'},this.svg);
   this.civilianCount=root.querySelector('[data-minimap-civilians]');this.enemyCount=root.querySelector('[data-minimap-enemies]');
  }
- setWorld({bounds,buildings,subways=[],landing=null,roadLanes=[-48,-24,0,24,48],roadExtent=60}){
+ setWorld({bounds,buildings,subways=[],landing=null,roadLanes=[-48,-24,0,24,48],roadExtent=60,route=null}){
   this.world.replaceChildren();this.structures=[];
   svg('rect',{x:bounds.minX,y:bounds.minZ,width:bounds.maxX-bounds.minX,height:bounds.maxZ-bounds.minZ,class:'minimap-ground'},this.world);
   for(const lane of roadLanes){
@@ -28,14 +28,16 @@ export class HeroMinimap {
   if(landing&&bounds.maxZ>60)svg('path',{d:`M0 54V${roadExtent}`,class:'minimap-approach'},this.world);
   for(const b of buildings){const rect=svg('rect',{x:b.x-5,y:b.z-5,width:10,height:10,class:'minimap-building'},this.world);this.structures.push({id:b.id,node:rect});}
   this.staticMarkers=subways.map((p,i)=>({...p,id:'subway-'+i,kind:'subway',label:'Subway entrance'}));if(landing)this.staticMarkers.push({...landing,id:'evac-zone',kind:'landing',label:'Evacuation landing zone'});
+  if(route)svg('path',{d:route.map((p,i)=>(i?'L':'M')+p[0]+' '+p[1]).join(' '),class:'minimap-convoy-route'},this.world);
   this.timer=this.structureTimer=0;
  }
  refresh(){
   const data=this.getSnapshot(),people=data.civilians||[],enemies=data.enemies||[];
-  this.counts={civilians:people.length,enemies:enemies.length};this.civilianCount.textContent=people.length;this.enemyCount.textContent=enemies.length;
+  this.counts={civilians:data.civilianTotal??people.length,enemies:enemies.length};this.civilianCount.textContent=this.counts.civilians;this.enemyCount.textContent=enemies.length;
   const entries=[...this.staticMarkers,...civilianClusters(people).map(g=>({...g,id:'group-'+g.id,kind:'civilian',label:g.count+' civilians'+(g.targeted?' — targeted by enemy attack':'')})),...enemies.map(e=>({...e,kind:e.boss?'boss':'enemy',label:e.name||(e.boss?'Siege Walker':'Robot drone')})),...(data.allies||[]).map(a=>({...a,kind:'ally',label:'Allied hero'}))];
   for(const p of data.plasma||[])entries.push({...p,id:'impact-'+p.id,kind:'plasma',label:'Plasma impact in '+Math.max(0,p.eta).toFixed(1)+' seconds'});
   for(const b of data.buses||[])entries.push({...b,kind:'bus',label:'Evacuation bus'});for(const p of data.pickups||[])entries.push({...p,kind:'pickup'});
+  if(data.exit)entries.push({...data.exit,kind:'exit',label:'Convoy evacuation exit'});
   if(data.helicopter)entries.push({...data.helicopter,id:'evac-helicopter',kind:'helicopter',label:'Evacuation helicopter'});
   const live=new Set(entries.map(e=>e.id));for(const[id,m]of this.nodes)if(!live.has(id)){m.node.remove();this.nodes.delete(id);}
   for(const entry of entries){let marker=this.nodes.get(entry.id);if(!marker){marker=this.makeMarker(entry);this.nodes.set(entry.id,marker);}marker.entry=entry;marker.title.textContent=entry.label;marker.node.classList.toggle('targeted',entry.kind==='civilian'&&!!entry.targeted);marker.node.setAttribute('data-targeted',String(!!entry.targeted));}
@@ -49,7 +51,8 @@ export class HeroMinimap {
   else if(entry.kind==='enemy'){svg('path',{d:'M0 -5.5L5.5 0L0 5.5L-5.5 0Z',class:'minimap-symbol'},node);svg('circle',{r:1.2,class:'minimap-enemy-core'},node);}
   else if(entry.kind==='plasma'){const d='M-10 0H-3M3 0H10M0 -10V-3M0 3V10M5.5 0A5.5 5.5 0 1 0 -5.5 0A5.5 5.5 0 1 0 5.5 0';svg('path',{d,class:'minimap-plasma-outline'},node);svg('path',{d,class:'minimap-plasma-crosshair'},node);}
   else if(entry.kind==='bus')svg('rect',{x:-3,y:-5,width:6,height:10,rx:1},node);
-  else if(entry.kind==='pickup'){svg('circle',{r:4,fill:'none',stroke:'#e5c874'},node);}
+  else if(entry.kind==='pickup'){svg('circle',{r:5,fill:'#24392e',stroke:'#e5c874'},node);const number=svg('text',{class:'minimap-pickup-number'},node);number.textContent=entry.number||'';}
+  else if(entry.kind==='exit')svg('path',{d:'M-4 6V-7H6L2 -2H-4Z'},node);
   else if(entry.kind==='ally')svg('circle',{r:2.6,class:'minimap-symbol'},node);
   else if(entry.kind==='helicopter')svg('path',{d:'M-5 0H5M0 -4V4M-6 -4H6',class:'minimap-helicopter'},node);
   else{svg('rect',{x:-5.5,y:-5.5,width:11,height:11,rx:2,class:'minimap-symbol'},node);const text=svg('text',{'text-anchor':'middle','dominant-baseline':'central',class:'minimap-map-label'},node);text.textContent=entry.kind==='landing'?'H':'S';}

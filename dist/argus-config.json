@@ -1,12 +1,12 @@
 {
   "health": 10000,
   "spawn": {
-    "x": 36,
+    "x": 96,
     "z": 54,
     "yaw": 3.141592653589793
   },
   "movement": {
-    "speed": 2.2,
+    "speed": 1.15,
     "turnSpeed": 0.48,
     "waypointRadius": 0.18,
     "arrivalRadius": 0.7
