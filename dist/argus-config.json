@@ -194,7 +194,7 @@
       "duration": 4,
       "range": 120,
       "radius": 0.9,
-      "trackingSpeed": 1.15,
+      "trackingSpeed": 0.92,
       "leadFactor": 0.35,
       "leadSeconds": 0.12,
       "maximumLead": 2,

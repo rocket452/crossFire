@@ -278,7 +278,7 @@ Reload changed JSON and rebuild. Distances use metres; durations/intervals/coold
 | `attacks.lance.duration` | `4` | Maximum continuous lance firing time. |
 | `attacks.lance.range` | `120` | Maximum lance range. |
 | `attacks.lance.radius` | `0.9` | Lance collision/halo radius. |
-| `attacks.lance.trackingSpeed` | `1.15` | Maximum lance tracking angle speed. |
+| `attacks.lance.trackingSpeed` | `0.92` | Maximum lance tracking angle speed. |
 | `attacks.lance.firingTracking.reactionSeconds` | `0.18` | Motion observation delay while firing; direction changes take time to register. |
 | `attacks.lance.firingTracking.turnAcceleration` | `3.2` | Maximum angular motor acceleration in rad/s²; prevents instant steering reversals. |
 | `attacks.lance.firingTracking.responseRate` | `14` | Aim-error response gain per second before the existing 1.15rad/s turn cap. |
@@ -442,3 +442,7 @@ The tracking motor continues updating even when the torso cannot yet reach the d
 ## Four-second beam — revision 206
 
 `attacks.lance.duration` is now 4 seconds. Misses and jukes still do not cancel the burst; the damage buildup resets after the existing contact grace while the beam continues. Charge-up, inertial tracking, torso safety, building damage, cooldown and stun interruption are unchanged. Duration checks now read the config instead of assuming the previous 12-second tuning. Entry/config cache revision: `argus-duration-206`.
+
+## Slower beam tracking — revision 207
+
+`attacks.lance.trackingSpeed` is reduced by 20%, from 1.15 to 0.92rad/s (about 52.7 degrees/s). This caps beam steering during windup and firing. The independent torso swivel speed, reaction delay, turning acceleration, four-second burst, sustained misses and damage values remain unchanged. Entry/config cache revision: `argus-tracking-207`.
