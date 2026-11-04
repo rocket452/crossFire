@@ -3,7 +3,7 @@ import {execFileSync} from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import * as THREE from '../dist/vendor/three.module.js';
-import {gltfModel,spec} from './walker-fixture.mjs';
+import {gltfModel,spec} from './argus-fixture.mjs';
 import {Argus} from '../dist/argus.js';
 import {ConvoyMission} from '../dist/convoy-mission.js';
 import {DestructionWorld} from '../dist/destruction.js';

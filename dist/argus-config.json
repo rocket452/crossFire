@@ -146,8 +146,8 @@
       "patternRadius": 10,
       "muzzleOffset": [
         0,
-        1,
-        2.6
+        0.5,
+        1.55
       ]
     },
     "tether": {
@@ -229,7 +229,7 @@
       "haltMovement": true,
       "muzzleOffset": [
         0,
-        -3.9,
+        -4.02,
         0
       ],
       "warningOpacity": 0.2,

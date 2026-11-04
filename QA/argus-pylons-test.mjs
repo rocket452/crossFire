@@ -6,7 +6,7 @@ import {quakeRingContact,quakeBusContact} from '../dist/argus-pylons.js';
 import {ConvoyMission} from '../dist/convoy-mission.js';
 import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
 import {DestructionWorld} from '../dist/destruction.js';
-import {gltfModel,spec} from './walker-fixture.mjs';
+import {gltfModel,spec} from './argus-fixture.mjs';
 const config=JSON.parse(fs.readFileSync('dist/argus-config.json')),cc=JSON.parse(fs.readFileSync('dist/convoy-config.json'));
 function fixture({height=.08,support=null,hz=60}={}){const scene=new THREE.Scene(),physics=new DestructionWorld(),hits=[],impulses=[],charges=[],hero={root:new THREE.Group(),enabled:true,active:true,motion:{mode:'ground'},shuriken:{teleports:0}};hero.root.position.set(6,height,4);let boss,mission;const damage=new UnitDamage(u=>{if(!boss?.disable(u))mission?.disable(u);});mission=new ConvoyMission(scene,damage,structuredClone(cc));boss=new Argus(scene,damage,gltfModel,spec,structuredClone(config),{physics,getConvoy:()=>mission,getHeroes:()=>[hero],getPylonGround:support||undefined,onHeroHit:(h,p,power,kind)=>hits.push({power,kind}),onImpulse:(h,v)=>impulses.push(v.clone()),onCharge:(k,s)=>charges.push({k,s})});for(const k of['flak','pylons','lance'])boss.config.attacks[k].enabled=false;let time=0;const step=s=>{for(let i=0;i<Math.round(s*hz);i++){time+=1/hz;boss.attacks.update(1/hz,time);boss.attacks.afterHeroes(1/hz);}};const plant=(x=0,z=4)=>{const point=new THREE.Vector3(x,.08,z),ground=boss.attacks.pylons.ground(point);boss.attacks.begin('pylons',{point,ground});return boss.attacks.active.pylon;};return{boss,mission,physics,hero,damage,hits,impulses,charges,step,plant};}
 for(const hz of[30,60,120]){

@@ -1,10 +1,10 @@
 # ARGUS — model, locomotion and interception
 
-The existing Convoy Defense boss reuses the Walker rig and the city’s damage/physics systems. This document records its model and locomotion foundation. Current combat, quake pylons, complete tuning and measured balance are documented in [CONVOY_DEFENSE.md](CONVOY_DEFENSE.md).
+The Convoy Defense boss uses the original ARGUS / ASTER FRAME model and independent articulated runtime, alongside the city’s existing damage/physics systems. This document records its model and locomotion foundation. Current combat, quake pylons, complete tuning and measured balance are documented in [CONVOY_DEFENSE.md](CONVOY_DEFENSE.md).
 
 ## Model, gait and joints
 
-`argus-model.js` composes `SiegeWalker` with the existing 21m, 18-component Blender model and its articulated hierarchy. The existing two-bone leg solve and physical wreck builder are reused; the original patrol and ranged-weapon updates do not run on a living ARGUS. Its four orange targets attach to the left/right thigh/hip and shin/knee meshes. Each has a tagged part collision shape and 600 HP. A solid armored shutter covers the reactor; it is immune while closed, opening during lance fire and core stun.
+`argus-model.js` composes the independent `ArgusFrame` with a new 20.8m, 18-component Blender model. It shares only pure two-bone IK math with Walker; geometry, rigid hierarchy, material handling, visual poses and compound wreck construction are separate. See [ARGUS_ASTER.md](ARGUS_ASTER.md) for authoring and animation details. Its four orange targets attach to the left/right thigh/hip and shin/knee meshes. Each has a tagged part collision shape and 600 HP. A solid armored shutter covers the reactor; it is immune while closed, opening during lance fire and core stun.
 
 `argus-gait.js` owns destination-driven root translation, yaw and alternating world-space foot plants. A grounded ankle remains at its anchor while the pelvis travels/turns. Swing feet interpolate smoothly into predicted landing points. A reach guard can hold the root until the late foot lands instead of stretching the rig or dragging a planted foot. At least one foot supports the walking body. Damaged sides have shorter forward placement, longer swing time and a small body dip/lean. ARGUS finishes an in-flight step before starting its separate single-foot stomp.
 
@@ -28,12 +28,12 @@ Before accepting a walking pose, ARGUS sweeps conservative world bounds of its a
 
 A bus within 7.5m makes ARGUS stop advancing. With both feet planted and cooldown ready, it flashes yellow and marks the bus's locked ground position for a 0.8s windup. The right foot lifts and slams down, with dust/sparks and an expanding impact ring. A bus receives 120 damage only if it remains nearby, inside the marked impact radius, and unobstructed at impact. The attack has 0.45s recovery and 3.5s cooldown. It does not damage heroes or civilians directly. Existing hero stuns interrupt the windup and preserve all joint penalties; the existing electrical stun effect is wired to ARGUS.
 
-At zero main HP it buckles using the original Walker death pose, breaks into 18 Cannon wreck bodies and emits the existing reactor explosion/smoke. Its core/joint lights shut off and combat hit shapes clear. The convoy continues; killing ARGUS cannot set mission success. City Rebuild removes wrecks and restores exactly one fresh ARGUS and the original convoy manifests. As in step 1's kinematic convoy, loose wrecks do not become permanent bus-route blockers.
+At zero main HP it buckles using its own staged collapse pose, breaks into 18 Cannon wreck bodies and emits the existing reactor explosion/smoke. Its core/joint lights shut off and combat hit shapes clear. The convoy continues; killing ARGUS cannot set mission success. City Rebuild removes wrecks and restores exactly one fresh ARGUS and the original convoy manifests. As in step 1's kinematic convoy, loose wrecks do not become permanent bus-route blockers.
 
 ## Files and tuning
 
 - `dist/argus-config.json`: main HP 10,000; spawn `(96,54)`; base stride 1.15m/s; turn rate 0.48rad/s; gait reach/step/limp parameters; all four joint locations/HP/radius, permanent flag, speed penalties and hull transfer; closed-core/body damage scaling; replan/prediction parameters; breach power/cadence; melee range/windup/damage/recovery/cooldown; collapse duration.
-- `dist/argus-model.js`, `dist/argus-gait.js`, `dist/argus.js`: art adapter, planted locomotion and encounter controller.
+- `dist/argus-frame.js`, `dist/argus-model.js`, `dist/argus-gait.js`, `dist/argus.js`: art adapter, planted locomotion and encounter controller.
 - `dist/convoy-config.json`, `dist/convoy-map-config.js`: lane data plus read-only route forecast/graph helpers. Existing bus/civilian tuning is unchanged.
 - `dist/battle.js`: actor loading, hero targeting/damage/stun adapters, update/reset/wreck integration, ARGUS HP/joint status, silhouettes and radar.
 - `dist/destruction.js`: boss damage-source recognition only.
@@ -44,7 +44,7 @@ The most useful first-playtest knobs are base speed, joint HP, replan interval/b
 
 ## Testing
 
-`node QA/argus-test.mjs` checks the real Walker mesh/rig at 30/60/120Hz, rendered planted-ankle stability/IK, predicted interception, bus damage, all four permanent joint penalties, no duplicate joint damage, core immunity, shorter damaged-side strides, stop-delay/departure replans, collision-gated building breaches, full boss building damage, interrupted melee, 18 physical death pieces, continuing mission victory, and reset cleanup. `QA/walker-fixture.mjs` supplies the original GLB geometry for these tests.
+`node QA/argus-test.mjs` checks the real ASTER mesh/rig at 30/60/120Hz, rendered planted-ankle stability/IK, predicted interception, bus damage, all four permanent joint penalties, no duplicate joint damage, core immunity, shorter damaged-side strides, stop-delay/departure replans, collision-gated building breaches, full boss building damage, interrupted melee, 18 physical death pieces, continuing mission victory, and reset cleanup. `QA/argus-fixture.mjs` supplies the new multi-material GLB geometry for these tests.
 
 The current desktop/touch ARGUS browser checks (`argus-pylons-browser.cjs`, `argus-attacks-browser.cjs`, `argus-solo-browser.cjs`, `argus-hit-flash-browser.cjs`) cover real city/controller/rendered combat integration. See the convoy validation report for this revision’s completed checks.
 

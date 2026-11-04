@@ -1,0 +1,365 @@
+{
+  "revision": "argus-aster-199",
+  "design": "Original sleeker futuristic ASTER frame",
+  "asset": {
+    "triangles": 15084,
+    "rigidParts": 18,
+    "surfaces": 44,
+    "liveHydraulicLinks": 6,
+    "bakedClips": 0,
+    "animation": "procedural rigid-part IK"
+  },
+  "nodeSuites": [
+    {
+      "suite": "argus-aster-test",
+      "passed": true
+    },
+    {
+      "suite": "argus-test",
+      "passed": true
+    },
+    {
+      "suite": "argus-attacks-test",
+      "passed": true
+    },
+    {
+      "suite": "argus-pylons-test",
+      "passed": true
+    },
+    {
+      "suite": "convoy-test",
+      "passed": true
+    },
+    {
+      "suite": "convoy-results-test",
+      "passed": true
+    },
+    {
+      "suite": "walker-gait-test",
+      "passed": true
+    },
+    {
+      "suite": "walker-weapons-test",
+      "passed": true
+    },
+    {
+      "suite": "city-physics-test",
+      "passed": true
+    },
+    {
+      "suite": "building-damage-test",
+      "passed": true
+    },
+    {
+      "suite": "building-collision-release-test",
+      "passed": true
+    },
+    {
+      "suite": "combat-collision-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-state-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-heavy-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-arms-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-leading-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-rain-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-beam-walls-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-permanent-weakpoints-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-proximity-test",
+      "passed": true
+    },
+    {
+      "suite": "bastion-pulse-knockback-test",
+      "passed": true
+    },
+    {
+      "suite": "evacuation-lifecycle-test",
+      "passed": true
+    },
+    {
+      "suite": "evacuation-navigation-test",
+      "passed": true
+    },
+    {
+      "suite": "evacuation-policy-test",
+      "passed": true
+    },
+    {
+      "suite": "hero-minimap-test",
+      "passed": true
+    },
+    {
+      "suite": "runner-motion-test",
+      "passed": true
+    },
+    {
+      "suite": "runner-air-wall-test",
+      "passed": true
+    },
+    {
+      "suite": "ninja-motion-test",
+      "passed": true
+    },
+    {
+      "suite": "ninja-jump-feel-test",
+      "passed": true
+    },
+    {
+      "suite": "ninja-ground-dash-test",
+      "passed": true
+    },
+    {
+      "suite": "ninja-phase-test",
+      "passed": true
+    },
+    {
+      "suite": "charged-shuriken-test",
+      "passed": true
+    }
+  ],
+  "browserSuites": [
+    {
+      "suite": "argus-attacks-browser",
+      "passed": true
+    },
+    {
+      "suite": "argus-solo-browser",
+      "passed": true
+    },
+    {
+      "suite": "argus-hit-flash-browser",
+      "passed": true
+    },
+    {
+      "suite": "argus-pylons-browser",
+      "passed": true
+    },
+    {
+      "suite": "argus-browser",
+      "passed": true
+    },
+    {
+      "suite": "walker-weapons-browser",
+      "passed": true
+    },
+    {
+      "suite": "evacuation-cycle-browser",
+      "passed": true
+    },
+    {
+      "suite": "bastion-permanent-weakpoints-browser",
+      "passed": true
+    },
+    {
+      "suite": "bastion-beam-walls-browser",
+      "passed": true
+    },
+    {
+      "suite": "bastion-pulse-knockback-browser",
+      "passed": true
+    },
+    {
+      "suite": "arena-center-browser",
+      "passed": true
+    },
+    {
+      "suite": "charged-shuriken-browser",
+      "passed": true
+    },
+    {
+      "suite": "convoy-hud-browser",
+      "passed": true
+    },
+    {
+      "suite": "argus-aster-browser",
+      "desktop": true,
+      "touch": true,
+      "passed": true
+    }
+  ],
+  "blenderHierarchy": "PASS original editable pivot world transforms and geometry",
+  "visualInspection": [
+    "front/rear",
+    "walk",
+    "lance and open core",
+    "stomp telegraph",
+    "stun",
+    "wreck"
+  ],
+  "unchangedSources": [
+    {
+      "path": "dist/bastion-art.js",
+      "sha256": "0b775da7c1e628a2ad37046f65b03ebf587cf0d6a30711fa3cef1865869da2ce",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/bastion-beam-walls.js",
+      "sha256": "d9bcf55500eb8f0b21ea603011944951fc8dc4a3f6e90d5a89c0bc9ff3936cbc",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/bastion-config.json",
+      "sha256": "df74fe2d2ee503a7e0d87af3f8e7dd78017e7a79e70d6a3964e30552c9dd004a",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/bastion-effects.js",
+      "sha256": "a00a0300cc1c6c07c5f304fafeed7475402f7726da2bab27b106c8f871e1c2c5",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/bastion-geometry.js",
+      "sha256": "92b08036efb422cde0023860b54f13c6ab8b9db8617e7a6a2ed4538d71eea3a9",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/bastion-model.js",
+      "sha256": "368e4051883db33d51ef515906361b4c769c2dfc373da3fe06fe2f31af206a58",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/bastion-projectiles.js",
+      "sha256": "02d98934d20a9c96afc8592bfb8e214d5fa46179e771554c82a237be98094428",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/bastion-pulse-visual.js",
+      "sha256": "7d006b3d7f9420ba90d4e9b9ebc317e4d57fe7beadf80e44d388c76250e8f8d2",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/bastion-rain.js",
+      "sha256": "52efaf2329db8310007cd5fb3e1121544e34ac59b62f69ab08aecad707f9dc0c",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/bastion-state.js",
+      "sha256": "267f8a920f9c3d66d8dcd1f14ebd6e7381d7360092be45676de5792ada264c69",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/bastion-testing.css",
+      "sha256": "6ad83c8b2c91394c587816ad5dda30b4de3a98c8300e662c251aac2ef526ac3d",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/bastion-testing.js",
+      "sha256": "503ab1198a700e94e11510848edba3c9db3c2ce0c51d29a58616556d309e46f7",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/bastion.js",
+      "sha256": "6073d3d5e86221f643ffa86debe31be5e2a974003e558b0478ed91395e028301",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/city-assets/robot-missile.glb",
+      "sha256": "e11e2566270b9b6164e1811a63d5675f40f9ac9522abbbb4cea4d22fba39489a",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/city-assets/siege-walker.blend",
+      "sha256": "00e429ea5db21c4870c0761d02de83ab8981163cdc0fb70aba8061c69e5dc9d1",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/city-assets/siege-walker.glb",
+      "sha256": "38196e0e18784aad96a980f486c889dcb9a99a2e018820980e7655f435da0213",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/city-assets/siege-walker.json",
+      "sha256": "3dfa5a6b5b4ac0911602842c1f1105a5df8bb55aa2c4b55cb520a98fe8f9f587",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/convoy-config.json",
+      "sha256": "9a85cb5f282f353305feb755f95b27cd43291f0b7f173ef06eb15d692640a4f5",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/convoy-mission.js",
+      "sha256": "9edc233253428fa64b0d83a2dafe0c98589a3956615c0fa25e96e47b8fb94b7c",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/destruction.js",
+      "sha256": "2adf2519c326b9de54bc17e0373e14efa54a35e1e013bbfcee208af98ec13849",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/evacuation-config.js",
+      "sha256": "8bd6ca028486516a15a925a6afbbde5fc6b341f933ddcbe34163dfc951a02617",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/evacuation-navigation.js",
+      "sha256": "e821b6bc14f7c27db45d7dbfb9693ecb3a80f71c6c50a784d7b3b0b8fa042eee",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/evacuation.js",
+      "sha256": "617ef7c189e14fa65b541ea4be64baed828749b92e77194918acfdf51c15cd46",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/ninja-motion.js",
+      "sha256": "b0ab17353a8fe8e431a8bf1c4ddfcc2ed0d77d81887c5035e1c2aa2d722ac173",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/runner-motion.js",
+      "sha256": "cfc6a4cc0497deeadaedc4f413a3721b04f7f65261752bee74349241021aae5d",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/siege-walker.js",
+      "sha256": "1392498aec93a567cf122231a64ba413e3585fa2488fab5805f25518ca315d2d",
+      "unchangedFrom": "2b91327"
+    },
+    {
+      "path": "dist/walker-gait.js",
+      "sha256": "ebdfc40cc9f7624a8deaed53efc9c1ec15a249898de2e035927ed81044f86a28",
+      "unchangedFrom": "2b91327"
+    }
+  ],
+  "balanceChanges": [],
+  "visualOffsets": {
+    "flak": [
+      0,
+      0.5,
+      1.55
+    ],
+    "lance": [
+      0,
+      -4.02,
+      0
+    ]
+  },
+  "limitations": [
+    "Physical phone FPS, memory and thermals unmeasured",
+    "Runtime procedural rig, no baked skeletal animation clips"
+  ]
+}

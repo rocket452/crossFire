@@ -12,7 +12,7 @@ The mission resolves when every bus is escaped or destroyed. At least one escape
 
 ## ARGUS combat and preserved rules
 
-ARGUS reuses the articulated Walker rig, world-space planted feet, lane forecasting and building-breach/wreck adapters. Four 600-HP leg joints permanently remove 15% stride speed each, capped at 60%. Destroyed joints stay dark and are never rebuilt. Surviving-joint repair cannot reverse a recorded speed penalty. Accepted joint and exposed-core hits briefly flash red, independently of the hull.
+ARGUS uses its own original 20.8m ASTER model and articulated frame, retaining world-space planted feet, lane forecasting and building-breach behavior. Its dedicated compound wreck adapter preserves the existing physics callback contract. See [ARGUS_ASTER.md](ARGUS_ASTER.md). Four 600-HP leg joints permanently remove 15% stride speed each, capped at 60%. Destroyed joints stay dark and are never rebuilt. Surviving-joint repair cannot reverse a recorded speed penalty. Accepted joint and exposed-core hits briefly flash red, independently of the hull.
 
 Phase 1 has flak and quake-pylon placement. The existing lance can counter a directly controlled hero from phase 1; CPU lance targets unlock below 66% HP in phase 2, alongside two repair drones. Below 33%, phase 3 multiplies stride speed by 1.25 and attack cooldowns by 0.7. **No warning is shortened below 0.8s.** ARGUS still moves to intercept the convoy, not chase heroes.
 
@@ -228,7 +228,7 @@ Reload changed JSON and rebuild. Distances use metres; durations/intervals/coold
 | `attacks.flak.shellRadius` | `0.18` | Flak tracer collision/visual radius. |
 | `attacks.flak.warningOpacity` | `0.16` | Warning volume transparency. |
 | `attacks.flak.patternRadius` | `10` | Spacing radius for additional burst centers around target. |
-| `attacks.flak.muzzleOffset` | `[0,1,2.6]` | Local launch offset relative to selected node. |
+| `attacks.flak.muzzleOffset` | `[0,0.5,1.55]` | Local launch offset relative to selected node. |
 | `attacks.tether.enabled` | `true` | Retained, unused: Enable tether attack. |
 | `attacks.tether.initialDelay` | `8` | Retained, unused: Initial reset cooldown for this attack. |
 | `attacks.tether.cooldown` | `8` | Retained, unused: Base cooldown after finishing this attack; phase 3 multiplies by 0.7. |
@@ -289,7 +289,7 @@ Reload changed JSON and rebuild. Distances use metres; durations/intervals/coold
 | `attacks.lance.armorHealth` | `600` | Maximum repairable shutter armor; affects stun threshold, not destroyed joints. |
 | `attacks.lance.exposeCoreWhileStunned` | `true` | Keep bonus core target open during stun. |
 | `attacks.lance.haltMovement` | `true` | Hold movement while lance winds up/fires. |
-| `attacks.lance.muzzleOffset` | `[0,-3.9,0]` | Local launch offset relative to selected node. |
+| `attacks.lance.muzzleOffset` | `[0,-4.02,0]` | Local launch offset relative to selected node. |
 | `attacks.lance.warningOpacity` | `0.2` | Lance telegraph beam opacity. |
 | `repairDrones.enabled` | `true` | Enable phase-2 repair drones. |
 | `repairDrones.initialCount` | `2` | Drones spawned once upon entering phase 2. |
@@ -377,6 +377,10 @@ For manual play: select Convoy Defense, watch for ground aim glows, then the ris
 
 ## Prototype limits
 
-Hero damage remains feedback-only, with no new health/death system. Playable flight is outside this prototype; existing CPU fliers still exercise flak. Rift gateways do not redirect flak or quake rings. Roads are backed by the existing fixed ground plane, so no new player-facing road-cratering mechanic was added; support loss is validated through adapter/physics removal tests. Pylons use simple primitive art and a cosmetic non-colliding fall. Bus driving remains kinematic and civilian formations simple. The reused Walker is about 21m tall. Physical-phone FPS, memory and thermal performance are unmeasured; touch emulation checks controls/layout only. Licensed character runtime assets remain private and out of public GitHub.
+Hero damage remains feedback-only, with no new health/death system. Playable flight is outside this prototype; existing CPU fliers still exercise flak. Rift gateways do not redirect flak or quake rings. Roads are backed by the existing fixed ground plane, so no new player-facing road-cratering mechanic was added; support loss is validated through adapter/physics removal tests. Pylons use simple primitive art and a cosmetic non-colliding fall. Bus driving remains kinematic and civilian formations simple. The original ARGUS ASTER model is about 20.8m tall; its animations use runtime procedural rigid-part IK rather than baked skeletal clips. Physical-phone FPS, memory and thermal performance are unmeasured; touch emulation checks controls/layout only. Licensed character runtime assets remain private and out of public GitHub.
 
 Completed regression: 31 gameplay Node suites and 13 desktop/touch browser suites pass. Walker/Chinook/destruction/convoy transport source hashes match pre-pylon `accd002`. The focused gait browser fixture disables remote hazards only for its locomotion assertions, then re-enables pylons when exercising live CPU allies and player entry. Pylon tests also assert actual elapsed minimum charge time at 30/60/120Hz and that no damage extends beyond the visible 18m outer boundary (apart from the target footprint).
+
+## ASTER visual revision 199
+
+The entry-module cache revision is now `argus-aster-199`. Dedicated GLB/JSON assets load only for Convoy Defense. All combat and convoy tuning is retained; only flak and lance local muzzle offsets changed to match the new emitters. The historical pylon measurements above remain a record of revision 198. Current model verification and fresh balance measurements are recorded in `QA/argus-aster-validation-results.json` and `QA/argus-aster-balance-results.json`. Original Walker, Bastion, Chinook, hero movement and destruction sources/assets remain unchanged by this visual revision.

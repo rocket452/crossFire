@@ -1,13 +1,13 @@
-import {ArgusAttacks} from './argus-attacks.js?v=quake-pylons-198';
-import {ArgusRepairDrones} from './argus-repair-drones.js?v=quake-pylons-198';
+import {ArgusAttacks} from './argus-attacks.js?v=argus-aster-199';
+import {ArgusRepairDrones} from './argus-repair-drones.js?v=argus-aster-199';
 import * as THREE from './vendor/three.module.js';
-import {ArgusModel} from './argus-model.js?v=quake-pylons-198';
+import {ArgusModel} from './argus-model.js?v=argus-aster-199';
 import {ArgusGait} from './argus-gait.js';
 import {interceptionPath,predictConvoyDistance,routePoint} from './convoy-map-config.js';
 import {traceImpact} from './combat-collision.js';
 export class Argus {
  constructor(scene,damage,gltf,spec,config,{getConvoy,physics,onEvent=()=>{},onSpark=()=>{},onStomp=()=>{},...callbacks}){
-  config.melee.windup=Math.max(.8,config.attacks.minimumTelegraph,config.melee.windup);Object.assign(this,{damage,config,getConvoy,physics,onEvent,onSpark,onStomp});this.evac=true;this.suppressDamageFlash=true;this.model=new ArgusModel(scene,gltf,spec,config,callbacks);this.root=this.model.root;this.nodes=this.model.nodes;this.meshes=this.model.meshes;this.gait=new ArgusGait({...config.gait,turnSpeed:config.movement.turnSpeed});this.reset();this.attacks=new ArgusAttacks(this,scene,callbacks);this.drones=new ArgusRepairDrones(this,scene);
+  config.melee.windup=Math.max(.8,config.attacks.minimumTelegraph,config.melee.windup);Object.assign(this,{damage,config,getConvoy,physics,onEvent,onSpark,onStomp});this.evac=true;this.suppressDamageFlash=true;this.model=new ArgusModel(scene,gltf,spec,config,callbacks);this.model.actor=this;this.root=this.model.root;this.nodes=this.model.nodes;this.meshes=this.model.meshes;this.gait=new ArgusGait({...config.gait,turnSpeed:config.movement.turnSpeed});this.reset();this.attacks=new ArgusAttacks(this,scene,callbacks);this.drones=new ArgusRepairDrones(this,scene);
  }
  reset(){
   this.attacks?.reset();this.drones?.reset();this.phase=1;this.coreArmor=this.config.attacks.lance.armorHealth;this.damage.units=this.damage.units.filter(u=>u.entity!==this);this.combatUnit=this.damage.add('argus','robot',this,this.config.health);this.model.walker.combatUnit=this.combatUnit;this.model.reset();this.joints=new Map(this.config.joints.locations.map(p=>[p.id,{...p,health:this.config.joints.health,destroyed:false}]));this.dead=false;this.stunRemaining=0;this.stunKind=null;this.time=0;this.replanClock=0;this.replans=0;this.lastConvoyState='';this.plan=null;this.lanePath=[];this.waypoint=0;this.breachClock=0;this.breaches=0;this.blocked=false;this.slam=null;this.slamCooldown=0;this.slams=0;this.sparkClock=0;this.damageTaken=0;
@@ -69,5 +69,5 @@ export class Argus {
  destroy(){if(this.dead)return;this.dead=true;this.attacks?.clear();this.drones?.stop();this.slam=null;this.model.destroy();this.sync();this.onEvent('ARGUS destroyed · get the surviving buses out.');}
  disable(unit){if(this.attacks?.disable(unit)||this.drones?.disable(unit))return true;if(unit!==this.combatUnit)return false;this.destroy();return true;}
  syncWrecks(){this.model.syncWrecks();this.drones?.syncWrecks();}
- diagnostics(){return{health:this.combatUnit.health,maxHealth:this.combatUnit.maxHealth,dead:this.dead,position:this.root.position.toArray(),strideSpeed:this.strideSpeed,speedMultiplier:this.speedMultiplier,sideDamage:this.sideDamage(),joints:[...this.joints.values()].map(j=>({...j,position:this.model.targetPosition(j.id).toArray()})),phase:this.phase,coreOpen:this.coreOpen,coreArmor:this.coreArmor,attacks:this.attacks?.diagnostics(),repairDrones:this.drones?.diagnostics(),plan:this.plan?{...this.plan,path:undefined}:null,lanePath:this.lanePath,waypoint:this.waypoint,replans:this.replans,blocked:this.blocked,breaches:this.breaches,slams:this.slams,windup:this.windup,stunned:this.stunRemaining,wrecks:this.model.walker.wrecks.length,gait:this.gait.diagnostics()};}
+ diagnostics(){return{model:this.model.frame.diagnostics(),health:this.combatUnit.health,maxHealth:this.combatUnit.maxHealth,dead:this.dead,position:this.root.position.toArray(),strideSpeed:this.strideSpeed,speedMultiplier:this.speedMultiplier,sideDamage:this.sideDamage(),joints:[...this.joints.values()].map(j=>({...j,position:this.model.targetPosition(j.id).toArray()})),phase:this.phase,coreOpen:this.coreOpen,coreArmor:this.coreArmor,attacks:this.attacks?.diagnostics(),repairDrones:this.drones?.diagnostics(),plan:this.plan?{...this.plan,path:undefined}:null,lanePath:this.lanePath,waypoint:this.waypoint,replans:this.replans,blocked:this.blocked,breaches:this.breaches,slams:this.slams,windup:this.windup,stunned:this.stunRemaining,wrecks:this.model.walker.wrecks.length,gait:this.gait.diagnostics()};}
 }
