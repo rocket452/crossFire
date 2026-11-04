@@ -1,0 +1,37 @@
+{
+  "revision": "argus-sustained-205",
+  "result": "PASS",
+  "tests": [
+    "sustained",
+    "attacks",
+    "beam",
+    "windup",
+    "torso",
+    "aster",
+    "pylons",
+    "tracking",
+    "convoy",
+    "juke-browser",
+    "attacks-browser",
+    "solo-browser",
+    "buildings-browser"
+  ],
+  "changes": [
+    "Misses and cover reset damage ramp after 0.5s without cancelling the burst",
+    "Inertial tracking continues during missed/unsafe desired aiming",
+    "Collision and VFX follow actual barrel axis",
+    "12s timeout and stun/death/reset interruption retained"
+  ],
+  "sustainedResults": [
+    "PASS 30Hz {\"duration\":12.033,\"longestMiss\":2.067,\"continuousVisual\":true,\"rampReset\":true,\"stunInterrupt\":true}",
+    "PASS 60Hz {\"duration\":12,\"longestMiss\":2.067,\"continuousVisual\":true,\"rampReset\":true,\"stunInterrupt\":true}",
+    "PASS 120Hz {\"duration\":12.008,\"longestMiss\":2.058,\"continuousVisual\":true,\"rampReset\":true,\"stunInterrupt\":true}"
+  ],
+  "browserResults": [
+    "PASS desktop {\"steadyMiss\":0.1067607722298586,\"jukeMiss\":5.6644597889325645,\"straightHits\":311,\"jukeHits\":258,\"finishedAfterFullBurst\":true,\"missWindow\":0.483333333333334}",
+    "PASS touch {\"steadyMiss\":0.1067607722298586,\"jukeMiss\":5.6644597889325645,\"straightHits\":311,\"jukeHits\":258,\"finishedAfterFullBurst\":true,\"missWindow\":0.483333333333334}"
+  ],
+  "limits": [
+    "Physical-phone performance unmeasured"
+  ]
+}

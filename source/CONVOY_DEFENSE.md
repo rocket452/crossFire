@@ -18,7 +18,7 @@ Phase 1 has flak and quake-pylon placement. The existing lance can counter a dir
 
 Flak retains four airborne bursts, 0.9s warning + 0.7s flight, radius 5m, altitude band 26–54m, 24 feedback damage and 7s cooldown. Ground/wall-running heroes, roof-height/covered targets and active Violet barriers retain their protections. Flak never harms buses or ground civilians.
 
-Lance uses a 2.2s flashing warning, up to 12s firing, 3s cooldown, tracking/lead and 12→60 feedback DPS over 3s contact. Impulses at 33/66/100% ramp are 10/18/28m/s horizontally and 2/4/7m/s upward. More than 0.5s without contact/line of sight ends the beam and resets the ramp. The exposed core applies 2.5× hull damage; 350 + 0.4 × current shutter armor incoming core damage triggers 3s stun. Full armor is 600, so the initial threshold is 590. The lance does not damage civilians or buses.
+Lance uses a 2.2s flashing warning, up to 12s firing, 3s cooldown, tracking/lead and 12→60 feedback DPS over 3s contact. Impulses at 33/66/100% ramp are 10/18/28m/s horizontally and 2/4/7m/s upward. More than 0.5s without contact resets the damage ramp; the beam keeps firing for its full 12s burst. The exposed core applies 2.5× hull damage; 350 + 0.4 × current shutter armor incoming core damage triggers 3s stun. Full armor is 600, so the initial threshold is 590. The lance does not damage civilians or buses.
 
 Two 220-HP drones arrive in phase 2; replacement is one every 30s below the cap of two. A beam repairs the HP missing from a surviving joint over 10s, or shutter armor if no damaged living joint is available. No hull healing, destroyed-joint rebuilding or permanent-penalty reversal exists. Bus stomp remains 120 damage, 0.8s warning, 0.45s recovery and 3.5s cooldown.
 
@@ -286,7 +286,7 @@ Reload changed JSON and rebuild. Distances use metres; durations/intervals/coold
 | `attacks.lance.leadFactor` | `0.35` | Scale on target velocity lead. |
 | `attacks.lance.leadSeconds` | `0.12` | Target velocity prediction horizon before scaling. |
 | `attacks.lance.maximumLead` | `2` | Clamp on predicted positional lead. |
-| `attacks.lance.lostContactGrace` | `0.5` | Miss/cover duration before early beam end and ramp reset. |
+| `attacks.lance.lostContactGrace` | `0.5` | Missed-contact time before resetting ramp and impulse thresholds; does not end firing. |
 | `attacks.lance.baseDamagePerSecond` | `12` | Initial feedback damage rate. |
 | `attacks.lance.maximumDamagePerSecond` | `60` | Damage rate at full contact ramp. |
 | `attacks.lance.rampSeconds` | `3` | Continuous hold time to maximum ramp. |
@@ -430,3 +430,11 @@ No juke immunity or scripted miss is applied: hits still use the rendered beam d
 ## Longer beam — revision 204
 
 `attacks.lance.duration` increases from 4 to 12 seconds. Charge-up, cooldown, hero damage per second, jukeable tracking, torso/arm readiness and building damage remain unchanged. Cover, loss of contact, barriers, stun, death and reset can still interrupt the burst early. Entry/config cache revision: `argus-beam-duration-204`.
+
+## Sustained misses — revision 205
+
+Missing or losing line of sight no longer cancels a firing lance. ARGUS continues the full configured 12s sweep, with the same delayed, inertial tracking; after 0.5s without contact, only the damage ramp and impulse thresholds reset. Intact walls and barriers still clip the ray and protect targets behind them, while building impacts can breach cover normally. Core exposure remains active throughout the burst. Existing stun, death, target disablement, mission completion and rebuild still stop the weapon.
+
+The tracking motor continues updating even when the torso cannot yet reach the desired angle. The beam traces and renders along the actual barrel axis, so it can safely sweep past the target while the torso catches up rather than ending the attack or firing through the body. The body-clearance safety check remains. Cache revision: `argus-sustained-205`. This supersedes earlier revision notes describing contact/cover as cancelling the cast.
+
+`QA/argus-sustained-beam-test.mjs` exercises rapid repeated reversals at 30/60/120Hz, exceeds the old 0.5s cutoff, and verifies 12s firing, continuous visuals, body clearance, damage-ramp reset and stun interruption. The desktop/touch juke browser test now verifies that the beam remains active through 11.8s and ends at its scheduled timeout. Cover/solo browser checks expect ongoing firing into cover rather than early cancellation.
