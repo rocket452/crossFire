@@ -1,7 +1,7 @@
-import {ArgusAttacks} from './argus-attacks.js?v=argus-solo-196';
-import {ArgusRepairDrones} from './argus-repair-drones.js?v=argus-solo-196';
+import {ArgusAttacks} from './argus-attacks.js?v=argus-hit-197';
+import {ArgusRepairDrones} from './argus-repair-drones.js?v=argus-hit-197';
 import * as THREE from './vendor/three.module.js';
-import {ArgusModel} from './argus-model.js?v=argus-solo-196';
+import {ArgusModel} from './argus-model.js?v=argus-hit-197';
 import {ArgusGait} from './argus-gait.js';
 import {interceptionPath,predictConvoyDistance,routePoint} from './convoy-map-config.js';
 import {traceImpact} from './combat-collision.js';
@@ -20,8 +20,8 @@ export class Argus {
  get windup(){return this.slam?Math.max(0,this.config.melee.windup-this.slam.age):this.attacks?.windup||0;}
  sideDamage(){return{l:[...this.joints.values()].filter(j=>j.side==='l'&&j.destroyed).length,r:[...this.joints.values()].filter(j=>j.side==='r'&&j.destroyed).length};}
  modifyDamage(power,point,part){
-  if(this.dead)return 0;if(part==='argus-core-open'){if(!this.coreOpen)return 0;const c=this.config.attacks.lance,a=this.attacks?.active;this.coreArmor=Math.max(0,this.coreArmor-power);if(a?.kind==='lance'&&a.stage==='firing'){a.coreDamage+=power;if(a.coreDamage>=a.requiredCore)this.stun(c.stunDuration,'core');}return power*c.coreMultiplier;}if(part==='argus-core-closed')return this.coreOpen?power*this.config.attacks.lance.coreMultiplier:power*this.config.armor.coreDamageScale;
-  const joint=this.joints.get(part);if(joint){if(joint.destroyed&&this.config.joints.permanentDestruction)return 0;const damage=Math.min(joint.health,power);joint.health=Math.max(0,joint.health-damage);this.onSpark(this.model.targetPosition(part));if(joint.health===0&&!joint.destroyed){joint.destroyed=true;this.replanClock=0;this.onEvent('ARGUS '+part.replace('argus-','').toUpperCase()+' JOINT DESTROYED · stride '+Math.round(this.speedMultiplier*100)+'%.');}this.model.paint(this.joints,this.time);return damage*this.config.joints.hullDamageScale;}
+  if(this.dead)return 0;if(part==='argus-core-open'){if(!this.coreOpen)return 0;if(power>0)this.model.flashWeakPoint('argus-core-open');this.model.setCore(true,0,this.time);const c=this.config.attacks.lance,a=this.attacks?.active;this.coreArmor=Math.max(0,this.coreArmor-power);if(a?.kind==='lance'&&a.stage==='firing'){a.coreDamage+=power;if(a.coreDamage>=a.requiredCore)this.stun(c.stunDuration,'core');}return power*c.coreMultiplier;}if(part==='argus-core-closed'){if(this.coreOpen&&power>0){this.model.flashWeakPoint('argus-core-open');this.model.setCore(true,0,this.time);}return this.coreOpen?power*this.config.attacks.lance.coreMultiplier:power*this.config.armor.coreDamageScale;}
+  const joint=this.joints.get(part);if(joint){if(joint.destroyed&&this.config.joints.permanentDestruction)return 0;const damage=Math.min(joint.health,power);if(damage>0)this.model.flashWeakPoint(part);joint.health=Math.max(0,joint.health-damage);this.onSpark(this.model.targetPosition(part));if(joint.health===0&&!joint.destroyed){joint.destroyed=true;this.replanClock=0;this.onEvent('ARGUS '+part.replace('argus-','').toUpperCase()+' JOINT DESTROYED · stride '+Math.round(this.speedMultiplier*100)+'%.');}this.model.paint(this.joints,this.time);return damage*this.config.joints.hullDamageScale;}
   return power*this.config.armor.bodyDamageScale;
  }
  recordHit(kind,team,damage){this.damageTaken+=damage;}

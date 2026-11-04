@@ -132,6 +132,10 @@ Reload after editing either JSON, then City Rebuild. Distances/positions use met
 
 | Setting | Final value | Controls |
 | --- | --- | --- |
+| `weakPointFlash.seconds` | `0.18` | Duration of a local weak-point hit flash. |
+| `weakPointFlash.retriggerSeconds` | `0.1` | Minimum age before sustained hits restart the flash pulse. |
+| `weakPointFlash.color` | `"#ff304a"` | Red hit-flash color on the damaged target only. |
+| `weakPointFlash.intensity` | `5` | Added emissive intensity at peak flash. |
 | `health` | `10000` | ARGUS main hull HP. |
 | `spawn.x` | `96` | Initial ARGUS world-space coordinate. |
 | `spawn.z` | `54` | Initial ARGUS world-space coordinate. |
@@ -317,7 +321,7 @@ Reload after editing either JSON, then City Rebuild. Distances/positions use met
 - `argus-attacks.js`, `argus-repair-drones.js`: shared ranged scheduler, flak, anchors/cable cleanup, lance/core/stun and re-armor-only drones.
 - `battle.js`: scene/menu integration, owner filtering, abilities/impulses/barrier adapters, minimap snapshot and pause/reset wiring.
 - `hero-minimap.js`: optional convoy route, stop/exit and bus marker presentation. Other scenes keep their snapshots.
-- `index.html`, `game-entry.js`: existing scene selection and entry-module cache version `argus-solo-196`; changed module imports use this version too. No Site identity or hosting audience changes.
+- `index.html`, `game-entry.js`: existing scene selection and entry-module cache version `argus-hit-197`; changed module imports use this version too. No Site identity or hosting audience changes.
 
 ## Testing and reproduction
 
@@ -351,3 +355,7 @@ Hero damage is feedback-only: no new health/death system. Flight threats current
 After step-4 playtesting, the player reported that full-health ARGUS did not engage a controlled ground speedster. Flak correctly excluded ground heroes, while the lance scheduler was globally locked until phase 2. The lance now has separate data-driven unlock phases for CPU heroes (2) and directly controlled heroes (1). It uses the existing 2s initial delay, 0.9s warning, range, cover checks, tracking, ramp impulses and open-core counterplay; no new weapon or movement penalty was added. It does not steer ARGUS away from convoy interception. CPU-only phase progression and the convoy balance trials are unchanged. `QA/argus-solo-browser.cjs` exercises automatic scheduling with the real player controller, including beam damage/impulses, moving input, cover break and control exit.
 
 Verified: autonomous phase-1 targeting, full warning, real controller movement, lance hit feedback/knockback, real-building cover interruption and control-exit phase gate pass in desktop and touch-emulated Chromium. The four convoy/results/ARGUS Node suites and existing ARGUS attack browser suite also pass. No physical-phone performance claim is made.
+
+ARGUS joint targets and its exposed core briefly flash red on accepted hits. Each target has an independent simulation-time flash, with retriggered pulses under sustained fire. The normal damaged glow returns afterward; destroyed joints stay dark, closed-core hits do not flash, and reset/death clear the effect. The hull remains excluded from whole-body damage flashing.
+
+Visual verification: `node QA/argus-hit-flash-browser.cjs` passes desktop/touch with actual traced weapon hits, independent target colors, fade/retrigger, blocked closed core, dark destroyed joints and reset. Existing ARGUS body/attack Node suites pass.
