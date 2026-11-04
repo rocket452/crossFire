@@ -18,7 +18,7 @@ Phase 1 has flak and quake-pylon placement. The existing lance can counter a dir
 
 Flak retains four airborne bursts, 0.9s warning + 0.7s flight, radius 5m, altitude band 26–54m, 24 feedback damage and 7s cooldown. Ground/wall-running heroes, roof-height/covered targets and active Violet barriers retain their protections. Flak never harms buses or ground civilians.
 
-Lance uses a 2.2s flashing warning, up to 12s firing, 3s cooldown, tracking/lead and 12→60 feedback DPS over 3s contact. Impulses at 33/66/100% ramp are 10/18/28m/s horizontally and 2/4/7m/s upward. More than 0.5s without contact resets the damage ramp; the beam keeps firing for its full 12s burst. The exposed core applies 2.5× hull damage; 350 + 0.4 × current shutter armor incoming core damage triggers 3s stun. Full armor is 600, so the initial threshold is 590. The lance does not damage civilians or buses.
+Lance uses a 2.2s flashing warning, up to 4s firing, 3s cooldown, tracking/lead and 12→60 feedback DPS over 3s contact. Impulses at 33/66/100% ramp are 10/18/28m/s horizontally and 2/4/7m/s upward. More than 0.5s without contact resets the damage ramp; the beam keeps firing for its full 4s burst. The exposed core applies 2.5× hull damage; 350 + 0.4 × current shutter armor incoming core damage triggers 3s stun. Full armor is 600, so the initial threshold is 590. The lance does not damage civilians or buses.
 
 Two 220-HP drones arrive in phase 2; replacement is one every 30s below the cap of two. A beam repairs the HP missing from a surviving joint over 10s, or shutter armor if no damaged living joint is available. No hull healing, destroyed-joint rebuilding or permanent-penalty reversal exists. Bus stomp remains 120 damage, 0.8s warning, 0.45s recovery and 3.5s cooldown.
 
@@ -275,7 +275,7 @@ Reload changed JSON and rebuild. Distances use metres; durations/intervals/coold
 | `attacks.lance.aimTimeout` | `2.5` | Extra aiming time after minimum windup; cancel safely if blocked or unable to align. |
 | `attacks.lance.chargeFlashHz` | `4` | Cannon charge flashes per simulation second. |
 | `attacks.lance.node` | `"forearm_r"` | Articulated model node used as firing origin. |
-| `attacks.lance.duration` | `12` | Maximum continuous lance firing time. |
+| `attacks.lance.duration` | `4` | Maximum continuous lance firing time. |
 | `attacks.lance.range` | `120` | Maximum lance range. |
 | `attacks.lance.radius` | `0.9` | Lance collision/halo radius. |
 | `attacks.lance.trackingSpeed` | `1.15` | Maximum lance tracking angle speed. |
@@ -438,3 +438,7 @@ Missing or losing line of sight no longer cancels a firing lance. ARGUS continue
 The tracking motor continues updating even when the torso cannot yet reach the desired angle. The beam traces and renders along the actual barrel axis, so it can safely sweep past the target while the torso catches up rather than ending the attack or firing through the body. The body-clearance safety check remains. Cache revision: `argus-sustained-205`. This supersedes earlier revision notes describing contact/cover as cancelling the cast.
 
 `QA/argus-sustained-beam-test.mjs` exercises rapid repeated reversals at 30/60/120Hz, exceeds the old 0.5s cutoff, and verifies 12s firing, continuous visuals, body clearance, damage-ramp reset and stun interruption. The desktop/touch juke browser test now verifies that the beam remains active through 11.8s and ends at its scheduled timeout. Cover/solo browser checks expect ongoing firing into cover rather than early cancellation.
+
+## Four-second beam — revision 206
+
+`attacks.lance.duration` is now 4 seconds. Misses and jukes still do not cancel the burst; the damage buildup resets after the existing contact grace while the beam continues. Charge-up, inertial tracking, torso safety, building damage, cooldown and stun interruption are unchanged. Duration checks now read the config instead of assuming the previous 12-second tuning. Entry/config cache revision: `argus-duration-206`.

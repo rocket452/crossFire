@@ -191,7 +191,7 @@
       "cooldown": 3,
       "windup": 2.2,
       "node": "forearm_r",
-      "duration": 12,
+      "duration": 4,
       "range": 120,
       "radius": 0.9,
       "trackingSpeed": 1.15,
