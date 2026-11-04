@@ -1,0 +1,70 @@
+{
+  "revision": "evac-lane-208",
+  "scene": "Civilian evacuation / Chinook",
+  "layout": {
+    "spawn": {
+      "x": 48,
+      "z": 48
+    },
+    "landing": {
+      "x": -48,
+      "z": 48
+    },
+    "routeMetres": 96,
+    "buildingsRemaining": 6,
+    "waveSize": 12,
+    "spawnIntervalSeconds": 30
+  },
+  "waveAttackLatenciesSeconds": [
+    5.933,
+    4.317,
+    7.533,
+    2.8
+  ],
+  "weapons": [
+    "beam",
+    "plasma",
+    "missiles",
+    "beam"
+  ],
+  "combatTrial": "Real 100-second full-city simulation on desktop/touch; boss HP protected only in QA to allow multiple attack cycles. CPU defenders active. Normal game damage unchanged.",
+  "nodeSuites": [
+    "node",
+    "lifecycle",
+    "policy",
+    "navigation",
+    "raider",
+    "minimap",
+    "walker",
+    "convoy",
+    "argus"
+  ],
+  "browserSuites": [
+    "browser",
+    "cycle-browser",
+    "scene-browser"
+  ],
+  "results": "PASS",
+  "browserObservations": [
+    "WAVES false {\"waves\":[{\"id\":1,\"spawnedAt\":0.016666666666666666,\"weapon\":\"beam\",\"attackAt\":5.949999999999984},{\"id\":2,\"spawnedAt\":29.999999999999577,\"weapon\":\"plasma\",\"attackAt\":34.316666666666},{\"id\":3,\"spawnedAt\":59.999999999997875,\"weapon\":\"missiles\",\"attackAt\":67.53333333333079},{\"id\":4,\"spawnedAt\":89.99999999999618,\"weapon\":\"beam\",\"attackAt\":92.79999999999602}],\"saved\":1,\"lost\":21,\"groups\":4,\"arsenal\":\"beam\"}",
+    "PASS desktop single visible subway/minimap marker, opposite landing/clear half-city, 150s autonomous cycles, 100s wave attack priorities, Bruiser approach alignment, reset and battle/convoy isolation",
+    "WAVES true {\"waves\":[{\"id\":1,\"spawnedAt\":0.016666666666666666,\"weapon\":\"beam\",\"attackAt\":5.949999999999984},{\"id\":2,\"spawnedAt\":29.999999999999577,\"weapon\":\"plasma\",\"attackAt\":34.316666666666},{\"id\":3,\"spawnedAt\":59.999999999997875,\"weapon\":\"missiles\",\"attackAt\":67.53333333333079},{\"id\":4,\"spawnedAt\":89.99999999999618,\"weapon\":\"beam\",\"attackAt\":92.79999999999602}],\"saved\":1,\"lost\":21,\"groups\":4,\"arsenal\":\"beam\"}",
+    "PASS touch single visible subway/minimap marker, opposite landing/clear half-city, 150s autonomous cycles, 100s wave attack priorities, Bruiser approach alignment, reset and battle/convoy isolation"
+  ],
+  "unchangedSources": [
+    "dist/siege-walker.js",
+    "dist/robot-arsenal.js",
+    "dist/robot-missiles.js",
+    "dist/plasma-artillery.js",
+    "dist/destruction.js",
+    "dist/convoy-mission.js",
+    "dist/convoy-config.json",
+    "dist/argus-config.json",
+    "dist/argus-attacks.js"
+  ],
+  "limits": [
+    "A pending wave waits for the next normal available weapon; warnings/stuns/destroyed mounts remain authoritative",
+    "Dead/boarded/hidden civilians cannot be forced into an attack",
+    "Physical-phone performance unmeasured"
+  ]
+}

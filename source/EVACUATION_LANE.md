@@ -1,0 +1,17 @@
+# Civilian evacuation — open lane revision 208
+
+This changes only the Chinook / Civilian evacuation scene. The single eastern corner subway is at `(48,48)`; the helicopter landing zone is directly west at `(-48,48)`. The remaining entrance spawns twelve civilians every thirty simulation seconds, including the opening wave. Civilians use the existing street graph, formations, rescue relocation, boarding, passenger accounting and helicopter lifecycle. The route is 96m across the positive-Z outer street, with no intervening turns or buildings.
+
+The evacuation-facing half's buildings are removed from this scene so the Siege Walker at the centre has clear lines of sight toward the full civilian lane. Six buildings remain behind the robot, respecting the earlier B06/B07 removal. Other scenes retain their own layouts. The one subway and moved pad appear on the existing minimap. The outer Bruiser road and three-unit squad are aligned to the moved Chinook's x coordinate; the original extended boulevard, spawn timing and count remain.
+
+## Per-wave attacks
+
+Every newly spawned wave gets an unfulfilled attack request, identified independently of its moving/teleported cohort. The oldest visible unfulfilled wave takes priority over heroes for the next weapon acquisition. Beam selection, missile target selection and plasma target selection all respect this request. A warned/committed beam or plasma shot, or an actual missile launch at that wave, records the request once. Heroes can interrupt or block it normally; surviving civilians do not force additional attacks indefinitely. The usual hero/civilian/eligible-aircraft target rotation resumes afterward. No forced simultaneous fire, instant damage or bypass of weapon telegraphs is added. Existing startup/recovery windows, weapon rotation, destroyed mounts and stuns remain authoritative.
+
+A wave arriving while a weapon is already committed waits for the next normal opportunity. Dead/boarded/phased or hidden civilians cannot be illegally acquired, and a destroyed/disarmed/stunned Walker cannot be forced to attack. These are deliberate combat/rescue limits rather than scripted civilian deaths. Reset clears all wave requests and restores the single-entrance layout. `waveAttacks` diagnostics record spawn and first attack times/weapon for verification.
+
+## Files and checks
+
+`evacuation-config.js` owns the entrance, landing and scene building filter; `evacuation.js` owns formation spawn and per-wave targeting/accounting. `battle.js` wires acquisition invalidation and weapon commitment tracking only when this scene exists. `evac-approach.js` accepts a road x offset with a zero default; its off-ground decorative pieces are omitted at the shifted edge. Siege Walker/arsenal/projectile implementations and Convoy Defense/ARGUS are unchanged.
+
+`QA/evacuation-open-lane-test.mjs` verifies the straight route, clear lines of fire, thirty-second waves, 150s autonomous rescue cycles and priority/commit/reset behavior. `QA/evacuation-open-lane-browser.cjs` checks actual city geometry, one rendered entrance and minimap marker, boarding/escape cycles, multiple live wave attacks, squad alignment, reset and scene isolation on desktop/touch. Its long combat trial holds boss HP constant solely to measure successive wave scheduling; the regular game retains normal damage. Existing lifecycle/navigation/policy, Walker weapons, minimap, Bruiser, convoy and ARGUS checks remain relevant. Phone emulation does not measure physical-phone performance.
