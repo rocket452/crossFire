@@ -265,6 +265,12 @@ Reload changed JSON and rebuild. Distances use metres; durations/intervals/coold
 | `attacks.lance.cooldown` | `3` | Base cooldown after finishing this attack; phase 3 multiplies by 0.7. |
 | `attacks.lance.windup` | `2.2` | Lance charge warning before damaging beam. |
 | `attacks.lance.armRaiseSeconds` | `1.6` | Smooth arm extension duration, followed by an aimed charge hold. |
+| `attacks.lance.torsoTurnSpeed` | `1.6` | Upper-body swivel aiming speed in rad/s. Legs and intercept root remain unchanged. |
+| `attacks.lance.torsoReturnSpeed` | `1.2` | Smooth return speed to the walking torso pose in rad/s. |
+| `attacks.lance.torsoAimOffsetDegrees` | `12` | Slight shoulder-forward stance keeps the right cannon outboard of the chest. |
+| `attacks.lance.armForwardLimitDegrees` | `55` | Maximum sideways arm aim before the torso must catch up. |
+| `attacks.lance.armRaiseStartDegrees` | `20` | Begin the smooth arm raise once the torso is within this target yaw. |
+| `attacks.lance.armClearance` | `0.12` | Extra metres around arm segment proxies for torso clearance checks. |
 | `attacks.lance.fireAlignmentDegrees` | `3` | Maximum muzzle-axis, elbow and target direction error before firing. |
 | `attacks.lance.aimTimeout` | `2.5` | Extra aiming time after minimum windup; cancel safely if blocked or unable to align. |
 | `attacks.lance.chargeFlashHz` | `4` | Cannon charge flashes per simulation second. |
@@ -402,3 +408,9 @@ ARGUS now instantiates the same `EnergyBeamEffect` as Siege Walker: blue-white l
 ARGUS still requires the revision-200 2.2s windup and fully extended, aligned arm. It retains 4s firing, original hero damage ramp/impulses and core exposure. During firing only, `attacks.lance.buildingDamage` adds configurable `power: 35`, `radius: 3.4m`, `tickSeconds: 0.1s` impacts. These match the Walker's building strike strength/radius/cadence and use `{beam:true, source:'argus'}` for existing boss damage scaling and bounded beam-priority debris activation. Scorch/support collapse are handled by the existing destruction system. The beam stops at intact cover; once a section detaches it can continue through the breach. Durable cover still resets/ends hero contact after 0.5s, while flimsy cover can break before that grace expires. Barriers stop the ray and prevent downstream building damage. No bus/civilian damage or enemy friendly fire was added. Entry cache revision: `argus-walker-beam-201`.
 
 Validation: `QA/argus-walker-beam-test.mjs` verifies the shared effect, no charge damage, exact 10Hz building damage at 30/60/120Hz, scorch/breach, debris passthrough, durable cover, barrier protection, stun/reset and boss safety. `QA/argus-beam-buildings-browser.cjs` covers actual WebGL charge/firing shaders plus real Cannon wall damage and reset on desktop/touch. Existing Walker beam, ARGUS charge/arm/attacks/pylons and convoy regressions also run. Physical-phone performance remains unmeasured.
+
+## Torso aiming — revision 202
+
+The upper body now swivels at up to 1.6rad/s toward the tracked lance direction, independently of the interception root and planted leg IK. A subtle 12-degree offset puts the right cannon shoulder forward. When targeting someone behind ARGUS, he turns first: the separate 1.6s arm raise begins only when the target is within 20 degrees of the upper body's facing. The existing 2.2s minimum windup and up-to-2.5s extra alignment wait remain; far-side targets can therefore take longer to charge. The arm yaw is constrained to a 55-degree forward cone while the torso catches up. Upper-arm and cannon segment checks against oriented chest, waist, pelvis and reactor bounds reject cross-body aiming, and firing readiness also requires body clearance. If a firing target moves beyond a safe arm pose, the beam is suppressed while the torso catches up; the existing contact grace can end the attack. No shot is projected through ARGUS's own torso.
+
+When firing stops, torso swivel eases back at 1.2rad/s; rebuild restores neutral yaw. Shared Walker beam visuals/building damage, target tracking speed, core exposure and all convoy/phase rules remain. Cache revision: `argus-torso-202`. `QA/argus-torso-aim-test.mjs` checks seven target bearings at 30/60/120Hz, side/rear acquisition, moving orbital tracking, clearance, planted feet, smooth neutral return and reset. `QA/argus-torso-browser.cjs` captures real city desktop/touch left/right/rear charge and firing poses.

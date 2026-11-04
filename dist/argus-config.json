@@ -243,7 +243,13 @@
         "power": 35,
         "radius": 3.4,
         "tickSeconds": 0.1
-      }
+      },
+      "torsoTurnSpeed": 1.6,
+      "torsoReturnSpeed": 1.2,
+      "torsoAimOffsetDegrees": 12,
+      "armForwardLimitDegrees": 55,
+      "armClearance": 0.12,
+      "armRaiseStartDegrees": 20
     },
     "pylons": {
       "enabled": true,

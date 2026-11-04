@@ -1,0 +1,41 @@
+{
+  "revision": "argus-torso-202",
+  "tuning": {
+    "torsoTurnSpeed": 1.6,
+    "torsoReturnSpeed": 1.2,
+    "torsoAimOffsetDegrees": 12,
+    "armForwardLimitDegrees": 55,
+    "armRaiseStartDegrees": 20,
+    "armClearance": 0.12
+  },
+  "tests": [
+    "torso",
+    "windup",
+    "beam",
+    "aster",
+    "attacks",
+    "body",
+    "pylons",
+    "walker",
+    "convoy",
+    "torso-browser",
+    "aster-browser",
+    "attacks-browser",
+    "solo-browser",
+    "buildings-browser"
+  ],
+  "result": "PASS",
+  "coverage": [
+    "Seven target bearings from -170 to +170 degrees at 30/60/120Hz",
+    "Rendered upper-body swivel and arm clearance against oriented torso bounds",
+    "No planted-foot displacement, smooth return and reset",
+    "Rear target turns before independent smooth arm raise",
+    "Moving orbital target tracking and aligned firing",
+    "Desktop/touch left/right/rear screenshots",
+    "Existing charge, shared Walker beam, building damage, core stun, repair, pylons, convoy and player speedster controls"
+  ],
+  "limits": [
+    "Torso/arm clearance uses conservative segment proxies, not triangle-level collision",
+    "Physical-phone performance unmeasured"
+  ]
+}

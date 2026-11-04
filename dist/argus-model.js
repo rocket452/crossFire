@@ -1,5 +1,7 @@
 import * as THREE from './vendor/three.module.js';
-import {ArgusFrame} from './argus-frame.js?v=argus-aster-199';
+import {ArgusFrame} from './argus-frame.js?v=argus-torso-202';
+import {segmentBoxFraction} from './combat-collision.js';
+const turnDelta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 // Dedicated Blender Aster frame with stable gameplay part IDs and world-space foot IK.
 export class ArgusModel {
  constructor(scene,gltf,spec,config,callbacks={}){
@@ -10,12 +12,12 @@ export class ArgusModel {
   this.telegraph=new THREE.Mesh(new THREE.RingGeometry(config.melee.telegraphRadius-.18,config.melee.telegraphRadius,48),new THREE.MeshBasicMaterial({color:'#ffbd4b',transparent:true,opacity:.8,side:THREE.DoubleSide,depthWrite:false}));this.telegraph.rotation.x=-Math.PI/2;this.telegraph.visible=false;scene.add(this.telegraph);
   this.impact=new THREE.Mesh(new THREE.RingGeometry(.9,1,48),new THREE.MeshBasicMaterial({color:'#fff1b7',transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}));this.impact.rotation.x=-Math.PI/2;scene.add(this.impact);this.impactAge=1;
  }
- reset(){this.openAmount=0;this.hitFlashes.clear();this.walker.reset();this.setCore(false,0,0);this.core.visible=false;this.shutter.visible=true;this.telegraph.visible=false;this.impact.visible=false;this.impactAge=1;}
+ reset(){this.lanceRaiseAge=0;this.raiseAttack=null;this.torsoYaw=0;this.torsoTime=null;this.openAmount=0;this.hitFlashes.clear();this.walker.reset();this.setCore(false,0,0);this.core.visible=false;this.shutter.visible=true;this.telegraph.visible=false;this.impact.visible=false;this.impactAge=1;}
  pose(pose,time,slam=null){
   const feet=pose.feet.map(f=>{const t=f.swinging?Math.min(1,f.age/f.duration):0;return{...f,ankle:{...f.ankle},pitch:f.swinging?Math.sin(t*Math.PI*2)*this.frame.animation.footPitch:0};});
   if(slam){const t=slam.progress,k=t<.72?t/.72:1-(t-.72)/.28,e=k*k*(3-2*k);feet[1].ankle.y+=e*this.config.melee.footLift;}
   const compression=this.impactAge<.5?Math.sin(this.impactAge*Math.PI/.5)*.09:0;
-  this.walker.applyWalkPose({...pose,y:pose.y-compression,feet});this.frame.animate(pose,time,slam,this.actor,this.impactAge);this.lanceBase={arm:this.nodes.upperarm_r.quaternion.clone(),fore:this.nodes.forearm_r.quaternion.clone()};
+  this.walker.applyWalkPose({...pose,y:pose.y-compression,feet});this.turnLanceTorso(time);this.frame.animate(pose,time,slam,this.actor,this.impactAge);this.lanceBase={arm:this.nodes.upperarm_r.quaternion.clone(),fore:this.nodes.forearm_r.quaternion.clone()};
   this.telegraph.visible=!!slam;if(slam){this.telegraph.position.set(slam.point.x,.13,slam.point.z);this.telegraph.material.opacity=.35+.55*Math.sin(time*Math.PI*this.config.melee.flashHz)**2;}
  }
  targetPosition(id){return this.targets.find(t=>t.id===id)?.mesh.getWorldPosition(new THREE.Vector3());}
@@ -42,9 +44,19 @@ export class ArgusModel {
   for(const c of chunks){if(c.state!=='intact'||c.hidden||c.collisionDisabled)continue;let box=c.bounds;if(!box){const p=c.body.position;box=new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(p.x,p.y,p.z),new THREE.Vector3(...c.size));}if(!broad.intersectsBox(box))continue;if(boxes.some(b=>b.intersectsBox(box)))hits.push(c);}
   return hits;
  }
- aimLance(direction,chunks){const arm=this.nodes.upperarm_r,fore=this.nodes.forearm_r,old=arm.quaternion.clone(),oldFore=fore.quaternion.clone(),local=direction.clone().applyQuaternion(arm.parent.getWorldQuaternion(new THREE.Quaternion()).invert());const attack=this.actor?.attacks?.active,t=attack?.stage==='windup'?THREE.MathUtils.smoothstep(attack.age/this.config.attacks.lance.armRaiseSeconds,0,1):1;arm.quaternion.copy(this.lanceBase?.arm||old).slerp(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,-1,0),local),t);fore.quaternion.copy(this.lanceBase?.fore||oldFore).slerp(new THREE.Quaternion(),t);this.root.updateMatrixWorld(true);if(this.blockers(chunks).length){arm.quaternion.copy(old);fore.quaternion.copy(oldFore);this.root.updateMatrixWorld(true);return false;}this.frame.updateHydraulics();return true;}
+ // Rotate only the upper-body swivel; leg IK and interception root remain independent.
+ turnLanceTorso(time){
+  const dt=this.torsoTime===null?0:Math.max(0,Math.min(.1,time-this.torsoTime));this.torsoTime=time;
+  const a=this.actor?.attacks?.active,c=this.config.attacks.lance,aiming=a?.kind==='lance'&&!this.actor?.stunRemaining;let desired=0,targetYaw=0;
+  if(aiming){this.nodes.waist.updateWorldMatrix(true,false);const local=a.direction.clone().applyQuaternion(this.nodes.waist.getWorldQuaternion(new THREE.Quaternion()).invert());targetYaw=Math.atan2(local.x,local.z);desired=targetYaw-THREE.MathUtils.degToRad(c.torsoAimOffsetDegrees);}
+  const speed=aiming?c.torsoTurnSpeed:c.torsoReturnSpeed;this.torsoYaw+=THREE.MathUtils.clamp(turnDelta(desired,this.torsoYaw),-speed*dt,speed*dt);
+  if(this.raiseAttack!==a){this.raiseAttack=a;this.lanceRaiseAge=0;}
+  if(aiming&&Math.abs(turnDelta(targetYaw,this.torsoYaw))<=THREE.MathUtils.degToRad(c.armRaiseStartDegrees))this.lanceRaiseAge+=dt;
+ }
+ lanceBodyClear(){this.root.updateMatrixWorld(true);const shoulder=this.nodes.upperarm_r.getWorldPosition(new THREE.Vector3()),elbow=this.nodes.forearm_r.getWorldPosition(new THREE.Vector3()),muzzle=this.nodes.forearm_r.localToWorld(new THREE.Vector3(...this.config.attacks.lance.muzzleOffset)),segments=[[shoulder.clone().lerp(elbow,.3),elbow],[elbow.clone().lerp(muzzle,.12),muzzle]],radius=.42+this.config.attacks.lance.armClearance;for(const name of['chest','waist','pelvis','reactor']){const box=this.frame.boxes[name],node=this.nodes[name],center=node.localToWorld(box.center.clone()),half={x:box.size.x/2,y:box.size.y/2,z:box.size.z/2},rotation=node.getWorldQuaternion(new THREE.Quaternion());for(const [from,to]of segments)if(segmentBoxFraction(from,to,center,half,rotation,radius)!==null)return false;}return true;}
+ aimLance(direction,chunks){const arm=this.nodes.upperarm_r,fore=this.nodes.forearm_r,old=arm.quaternion.clone(),oldFore=fore.quaternion.clone(),local=direction.clone().applyQuaternion(arm.parent.getWorldQuaternion(new THREE.Quaternion()).invert()),limit=THREE.MathUtils.degToRad(this.config.attacks.lance.armForwardLimitDegrees),yaw=Math.atan2(local.x,local.z),safeYaw=THREE.MathUtils.clamp(yaw,-limit,limit),horizontal=Math.hypot(local.x,local.z);local.x=Math.sin(safeYaw)*horizontal;local.z=Math.cos(safeYaw)*horizontal;const attack=this.actor?.attacks?.active,t=attack?.stage==='windup'?THREE.MathUtils.smoothstep(this.lanceRaiseAge/this.config.attacks.lance.armRaiseSeconds,0,1):1;arm.quaternion.copy(this.lanceBase?.arm||old).slerp(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,-1,0),local),t);fore.quaternion.copy(this.lanceBase?.fore||oldFore).slerp(new THREE.Quaternion(),t);this.root.updateMatrixWorld(true);if(!this.lanceBodyClear()||this.blockers(chunks).length){arm.quaternion.copy(old);fore.quaternion.copy(oldFore);this.root.updateMatrixWorld(true);return false;}this.frame.updateHydraulics();return Math.abs(yaw)<=limit;}
  // Read the rendered muzzle axis and elbow, rather than trusting the charge timer.
- lanceAligned(direction){this.root.updateMatrixWorld(true);const axis=new THREE.Vector3(0,-1,0).transformDirection(this.nodes.forearm_r.matrixWorld),tolerance=THREE.MathUtils.degToRad(this.config.attacks.lance.fireAlignmentDegrees);return axis.angleTo(direction)<=tolerance&&this.nodes.forearm_r.quaternion.angleTo(new THREE.Quaternion())<=tolerance;}
+ lanceAligned(direction){this.root.updateMatrixWorld(true);const axis=new THREE.Vector3(0,-1,0).transformDirection(this.nodes.forearm_r.matrixWorld),tolerance=THREE.MathUtils.degToRad(this.config.attacks.lance.fireAlignmentDegrees);return this.lanceBodyClear()&&axis.angleTo(direction)<=tolerance&&this.nodes.forearm_r.quaternion.angleTo(new THREE.Quaternion())<=tolerance;}
  flashLance(time){const strength=.15+Math.sin(time*Math.PI*this.config.attacks.lance.chargeFlashHz)**2*5;for(const surface of this.frame.renderRoots.forearm_r.children){if(!surface.isMesh)continue;surface.material.emissive.set('#ff7439');surface.material.emissiveIntensity=strength;}}
  destroy(){this.hitFlashes.clear();this.core.visible=false;this.shutter.visible=true;this.telegraph.visible=false;this.walker.destroy();}
  updateDeath(dt,time){const scaled=dt*1.5/this.config.death.collapseSeconds;this.walker.update(scaled,time,[]);}
