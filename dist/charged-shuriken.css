@@ -2,3 +2,5 @@
 
 #kage-weapons-meter{position:absolute;left:18px;top:165px;background:#102b39e8;border:1px solid #6ad5bc77;border-radius:5px;padding:9px 11px;color:#d6f4ed;font-size:9px;line-height:1.7;pointer-events:none}#kage-weapons-meter b,#kage-weapons-meter span{display:block}.ninja-actions #ninja-shuriken{border-color:#7affdf;color:#baffee}.ninja-actions #ninja-slash{border-color:#ffdfa0;color:#ffdfa0}@media(max-width:700px){#kage-weapons-meter{left:14px;top:152px;font-size:7px;padding:6px 9px}.ninja-actions #ninja-fire{font-size:9px}.ninja-actions{gap:6px}}
 @media(max-width:700px){.ninja-actions{grid-template-columns:repeat(3,56px);max-width:180px}.ninja-actions button{font-size:7px}.ninja-actions #ninja-jump{order:0}.ninja-actions #ninja-dash{order:1}.ninja-actions #ninja-slash{order:2}.ninja-actions #ninja-fire{order:3}.ninja-actions #ninja-shuriken{order:4}.ninja-actions #ninja-teleport{order:5}.ninja-actions #ninja-cancel{order:6}#ninja-teleport,#ninja-cancel{min-width:0;padding:4px 2px;font-size:6.5px}}
+
+.ninja-actions #ninja-smoke{border-color:#c6b6ed;color:#e2dcf4}@media(max-width:700px){.ninja-actions #ninja-bomb{order:7}.ninja-actions #ninja-smoke{order:8}}

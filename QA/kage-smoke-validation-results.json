@@ -1,0 +1,59 @@
+{
+  "revision": "kage-smoke-210",
+  "result": "PASS",
+  "controls": {
+    "desktop": "V",
+    "touch": "SMOKE"
+  },
+  "config": {
+    "key": "v",
+    "radius": 8,
+    "duration": 8,
+    "cooldown": 12,
+    "maxActive": 1,
+    "growSeconds": 0.35,
+    "fadeSeconds": 0.7,
+    "groundTolerance": 0.3,
+    "puffs": 18,
+    "aiInterval": 0.35
+  },
+  "nodeSuites": [
+    "unit",
+    "collision",
+    "argus",
+    "pylons",
+    "bastion",
+    "pulse",
+    "evac",
+    "convoy",
+    "ninja",
+    "shuriken"
+  ],
+  "browserSuites": [
+    "browser",
+    "bombs-browser",
+    "loadout-browser"
+  ],
+  "coverage": [
+    "Allied civilian, infantry, tank, bus, helicopter and hero immunity",
+    "Enemy damage retained inside dome",
+    "Live body-anchor hemisphere checks, entry/exit and relocated stale shapes",
+    "Direct hits, explosions, Walker beam, ARGUS damage/impulse, Bastion damage/stat protection",
+    "Desktop/touch actual input, shaders, cooldown, expiry, reset, CPU defensive deploy",
+    "Kage explosive bomb, kunai, shuriken, slash, jumps and dash regressions"
+  ],
+  "unchangedGameplayFiles": [
+    "dist/ninja-motion.js",
+    "dist/kage-bombs.js",
+    "dist/kage-attacks.js",
+    "dist/charged-shuriken.js",
+    "dist/evacuation.js",
+    "dist/convoy-mission.js",
+    "dist/destruction.js"
+  ],
+  "limits": [
+    "Physical phone FPS/thermals unmeasured",
+    "Vehicle/hero coverage uses live body anchor rather than entire mesh",
+    "Roof smoke stays stationary if support is destroyed"
+  ]
+}

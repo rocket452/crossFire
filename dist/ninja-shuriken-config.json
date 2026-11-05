@@ -139,5 +139,17 @@
     "maxActive": 12,
     "maxStep": 0.008333333333333333,
     "inheritVelocity": 0.5
+  },
+  "smoke": {
+    "key": "v",
+    "radius": 8,
+    "duration": 8,
+    "cooldown": 12,
+    "maxActive": 1,
+    "growSeconds": 0.35,
+    "fadeSeconds": 0.7,
+    "groundTolerance": 0.3,
+    "puffs": 18,
+    "aiInterval": 0.35
   }
 }
