@@ -1,0 +1,25 @@
+{
+  "revision": "evac-fallback-221",
+  "policy": {
+    "normalCivilianPriority": "one committed attack per new group",
+    "repeatCivilianCondition": "no visible hero or eligible helicopter in range",
+    "acquisitionRangeMetres": 140,
+    "committedAttackTracking": "unchanged"
+  },
+  "passed": [
+    "evacuation-civilian-fallback-test.mjs: first-wave priority, repeated spent-wave fallback, 140m edge, cover, helicopter eligibility, fresh wave, phasing and reset",
+    "evacuation-civilian-fallback-browser.cjs: desktop + touch actual beam acquisition, six-shot missile salvos, plasma volley starts, repeated fallback, nearby hero return, cover and fresh wave",
+    "evacuation-policy-test.mjs",
+    "evacuation-open-lane-test.mjs",
+    "evacuation-lifecycle-test.mjs",
+    "plasma-civilian-lead-test.mjs"
+  ],
+  "unchanged": [
+    "attack telegraphs, timing and damage",
+    "civilian spawn schedule and rescue lifecycle",
+    "other scenes"
+  ],
+  "limits": [
+    "A committed attack or launched projectile retains its existing target/tracking behavior until normal completion."
+  ]
+}
