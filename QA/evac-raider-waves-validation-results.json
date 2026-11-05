@@ -1,0 +1,48 @@
+{
+  "revision": "evac-edge-waves-214",
+  "waves": [
+    {
+      "edge": "south",
+      "spawnSeconds": 65,
+      "count": 3
+    },
+    {
+      "edge": "east",
+      "spawnSeconds": 85,
+      "count": 3
+    },
+    {
+      "edge": "north",
+      "spawnSeconds": 105,
+      "count": 3
+    },
+    {
+      "edge": "west",
+      "spawnSeconds": 125,
+      "count": 3
+    }
+  ],
+  "staggerSeconds": 20,
+  "repeats": "once per city reset",
+  "totalEnemies": 12,
+  "passed": [
+    "evac-raider-waves-test.mjs: exact stagger, clear full routes, arrival, unique IDs, damage, reset without leaks, large-dt scheduling",
+    "evac-raider-waves-browser.cjs: desktop + touch, real civilian-triggered timings, minimap markers, movement, rescue, combat/damage/reset/replay, battle scene isolation",
+    "evacuation-long-map-test.mjs",
+    "evac-raider-test.mjs",
+    "evacuation-open-lane-test.mjs",
+    "evacuation-square-map-test.mjs",
+    "enemy-separation-test.mjs",
+    "kage-smoke-test.mjs"
+  ],
+  "preserved": [
+    "60-second civilian spawn interval and five-second warning",
+    "336m square city",
+    "Siege Walker placement",
+    "existing Bruiser weapons and hero interactions"
+  ],
+  "limitations": [
+    "Physical phone performance with all twelve robots is unmeasured.",
+    "Street routes stop at obstructions using existing collision checks; no new dynamic pathfinder."
+  ]
+}
