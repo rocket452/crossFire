@@ -1,0 +1,42 @@
+{
+  "revision": "bruiser-model-218",
+  "model": {
+    "trianglesIncludingTracks": 2740,
+    "renderMeshesIncludingTracks": 30,
+    "retainedScale": 1.3,
+    "features": [
+      "chamfered layered armor",
+      "rear vents and reactor",
+      "segmented arms",
+      "sensor helmet",
+      "recoiling plasma cannon",
+      "animated tank treads"
+    ]
+  },
+  "headshots": {
+    "multiplier": 2,
+    "effectSeconds": 0.35,
+    "sparks": 18,
+    "effect": "gold-white ring, visor flash, sparks and cosmetic head recoil"
+  },
+  "passed": [
+    "bruiser-model-headshot-test.mjs",
+    "bruiser-model-headshot-browser.cjs: desktop + touch, shared player hit route 50 head/25 body from 25 base damage, VFX/expiry/material isolation, lethal hit/five physical wrecks/reset, all 12 evacuation Bruisers use model",
+    "raider-burst-test.mjs",
+    "evac-raider-test.mjs",
+    "evac-raider-waves-test.mjs",
+    "experimental-robots-test.mjs",
+    "mireguard-test.mjs",
+    "enemy-separation-test.mjs",
+    "kage-smoke-test.mjs"
+  ],
+  "visualReview": "Arena screenshots of the new model and headshot effect inspected; cannon proportions and muzzle alignment corrected.",
+  "preserved": [
+    "Bruiser health, movement, burst cadence, independent 33% lead chance, projectile speed",
+    "other enemy models/damage behavior",
+    "civilian evacuation scheduling and map"
+  ],
+  "limits": [
+    "Physical phone FPS/thermal performance unmeasured."
+  ]
+}
