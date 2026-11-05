@@ -1,6 +1,6 @@
 import {predictCivilianPosition} from './civilian-prediction.js?v=plasma-lead-91';
 import * as THREE from './vendor/three.module.js';
-import {EVACUATION_CONFIG,CIVILIAN_SPAWN_INTERVAL,EVACUATION_ENTRANCES,EVACUATION_LANDING,EVACUATION_FLIGHT} from './evacuation-config.js?v=evac-length-211';
+import {EVACUATION_CONFIG,CIVILIAN_SPAWN_INTERVAL,EVACUATION_ENTRANCES,EVACUATION_LANDING,EVACUATION_FLIGHT} from './evacuation-config.js?v=evac-cadence-212';
 import {EvacuationNavigation} from './evacuation-navigation.js?v=evacuation-57';
 export const CIVILIAN_WAVE_SIZE=12,MAX_CIVILIANS=72;
 const SPAWN_AMBER=new THREE.Color('#ffbd45');

@@ -29,3 +29,7 @@ The Civilian evacuation map is now 120m wide and 336m long, double its previous 
 The Chinook escape waypoint moves from Z `132` to `300`, beyond the enlarged boundary. The scene-only cruise speed scales from 20 to 60m/s to preserve the original 4.2-second horizontal flight legs from the pad at Z `48`. Vertical landing speed, boarding, capacity, spawn warnings, 30-second civilian waves and rescue scoring are unchanged. Base transport defaults remain available to unrelated fixtures.
 
 `QA/evacuation-long-map-test.mjs` verifies dimensions, road matrices, flight timing, boundaries and a complete three-Bruiser march. `QA/evacuation-long-map-browser.cjs` checks the live scene on desktop/touch, the second-wave far-edge spawn, autonomous rescue, full squad approach, actual Kage/Volt controls across the extended map, reset and original battle isolation. The existing evacuation-cycle browser suite covers boarding, escape-only scoring, destruction, replacement and repeated cycles on both input modes. Physical phone performance remains unmeasured.
+
+## Slower civilian waves — revision 212
+
+`CIVILIAN_SPAWN_INTERVAL` is now 60 simulation seconds (previously 30). The opening five-second warning and twelve-person groups are unchanged: waves arrive at 5s, 65s, 125s and so on. Reset restarts the same schedule. The three-Bruiser squad still follows the second wave, now at 65s. Helicopter timings, civilian movement and all other scenes are unchanged. This supersedes the 30-second interval documented in earlier revisions. Cache revision: `evac-cadence-212`.
