@@ -1,0 +1,38 @@
+{
+  "revision": "plasma-impact-220",
+  "visuals": [
+    "white-hot core flash",
+    "emerald pressure bubble",
+    "two expanding ground shockwaves",
+    "28 energy streaks",
+    "eight soft discharge puffs",
+    "ten rolling smoke puffs"
+  ],
+  "bounds": {
+    "maximumOverlappingImpacts": 8,
+    "effectDrawCallsMaximum": 5,
+    "lifetimeSeconds": 3.2
+  },
+  "unchanged": {
+    "blastPower": 160,
+    "blastRadiusMetres": 7,
+    "physicsImpactPower": 32,
+    "ballisticsAndWarnings": true,
+    "civilianLeadingAndHeroCounterplay": true
+  },
+  "passed": [
+    "plasma-impact-effects-test.mjs: 30/60/120Hz and irregular dt, phases, finite capped pools, surface placement, expiry/reset",
+    "plasma-artillery-test.mjs: ballistics, landing, damage, barriers/cover, rescue/weapon rotation/death/reset",
+    "plasma-civilian-lead-test.mjs: route predictions, moving-group danger and gun alignment",
+    "plasma-impact-effects-browser.cjs: desktop + touch actual ground shell/impact at (-8,0.08,48), damage stable after FX, <=5 draw pools, smoke/expiry, shield absorption without impact FX, reset and shader validation"
+  ],
+  "browserDamageExample": {
+    "targetHealthBefore": 300,
+    "targetHealthAfter": 233.57753754452196,
+    "damageReappliedDuringEffects": false
+  },
+  "visualReview": "Ground impact and smoke screenshots inspected.",
+  "limits": [
+    "Physical phone FPS/thermal performance unmeasured."
+  ]
+}
