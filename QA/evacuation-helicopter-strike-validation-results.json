@@ -1,0 +1,25 @@
+{
+  "revision": "heli-missiles-222",
+  "scope": "Civilian evacuation Chinook",
+  "behavior": {
+    "allowedWeapon": "missiles only",
+    "outOfRotationOverride": true,
+    "warningSeconds": 2,
+    "salvoSize": 6,
+    "afterAttack": "resume interrupted turn after missile clearance and normal recovery",
+    "retainedEligibility": "high-altitude departure chance, visibility, 140m acquisition range, intact missile pod"
+  },
+  "passed": [
+    "evacuation-helicopter-strike-test.mjs: beam/plasma/recovery/missile turn override, 2s warning, original turn restoration, firing/flight/startup/stun deferral, unlaunched charge cancellation, eligibility/pod/death and reset",
+    "evacuation-helicopter-strike-browser.cjs: desktop + touch actual beam/plasma turns produce six Chinook-targeted missiles and no beam/plasma launch; rotation recovery, eligibility loss, destroyed pod, reset, ordinary scene isolation",
+    "evacuation-civilian-fallback-test.mjs (including unattackable helicopter exclusion)",
+    "evacuation-policy-test.mjs",
+    "evacuation-open-lane-test.mjs",
+    "evacuation-lifecycle-test.mjs",
+    "plasma-artillery-test.mjs"
+  ],
+  "limits": [
+    "Existing attacks already firing/in flight finish before a queued override can start.",
+    "Incidental projectile/blast collision behavior is unchanged."
+  ]
+}
