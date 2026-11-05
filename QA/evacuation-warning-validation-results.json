@@ -1,0 +1,34 @@
+{
+  "revision": "evac-warning-209",
+  "result": "PASS",
+  "warningSeconds": 5,
+  "pulseHz": 2.5,
+  "spawnTimesSeconds": [
+    5,
+    35,
+    65,
+    95
+  ],
+  "visuals": [
+    "Amber pulse on subway materials/sign",
+    "Pulsing ground ring",
+    "Original colors restored when spawning"
+  ],
+  "nodeChecks": [
+    "Opening/recurring warnings and reset",
+    "30s interval",
+    "Route, boarding, losses, per-wave attack priority",
+    "Convoy lifecycle"
+  ],
+  "browserChecks": [
+    "Desktop/touch warning visibility and intensity change",
+    "Opening and second-wave timing",
+    "Reset restarts warning",
+    "150s boarding/escape cycles",
+    "100s combat with live per-wave attack priorities",
+    "Battle and convoy scene isolation"
+  ],
+  "limits": [
+    "Physical-phone performance unmeasured"
+  ]
+}
