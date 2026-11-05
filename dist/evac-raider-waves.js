@@ -1,4 +1,4 @@
-import {EvacRaiderSquad} from './evac-raider-squad.js?v=evac-centered-215';
+import {EvacRaiderSquad} from './evac-raider-squad.js?v=bruiser-lead-216';
 import {ESCORT_APPROACH as bounds} from './evac-approach.js?v=evac-centered-215';
 
 // One three-Bruiser wave per edge. Civilian wave two arms the sequence.

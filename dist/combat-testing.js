@@ -1,9 +1,9 @@
-import {Mireguard} from './mireguard.js?v=mireguard-squads-191';
+import {Mireguard} from './mireguard.js?v=bruiser-lead-216';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-squads-191';
 import {BastionTesting} from './bastion-testing.js?v=kage-smoke-210';
-import {ExperimentalRobot} from './experimental-robots.js?v=charged-shuriken-130';
+import {ExperimentalRobot} from './experimental-robots.js?v=bruiser-lead-216';
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider} from './evac-raider.js?v=charged-shuriken-130';
+import {EvacRaider} from './evac-raider.js?v=bruiser-lead-216';
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';
 // Reuses the live drone, projectile, damage and wreck systems; no mission spawning.
 export class CombatTesting {

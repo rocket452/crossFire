@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import * as THREE from '../dist/vendor/three.module.js';
 import {EvacRaider,RAIDER_COMBAT} from '../dist/evac-raider.js';
 import {UnitDamage} from '../dist/combat-collision.js';
-function fixture(){
+function fixture(options={}){
  const target=id=>({id,kind:'hero',alive:true,shapes:[{center:{x:0,y:3,z:25},half:{x:.5,y:1,z:.5}}]}),first=target('first'),second=target('second');let selected=first,blocked=false;
- const robot=new EvacRaider(new THREE.Scene(),new UnitDamage(),{spawnPosition:{x:0,y:.1,z:0},objective:()=>new THREE.Vector3(0,.1,0),moveSpeed:0,initialCooldown:0,getTargets:()=>[selected],visible:()=>!blocked,trace:()=>null}),fired=[];const fire=robot.fireBolt.bind(robot);robot.fireBolt=aim=>{const bolt=fire(aim);fired.push({age:robot.age,target:bolt.target,dir:bolt.dir.clone(),speed:bolt.speed,radius:bolt.radius,mode:bolt.aimMode,point:aim.point.clone(),current:aim.current?.clone(),velocity:robot.targetMotion?.velocity.clone(),from:aim.from.clone(),forward:new THREE.Vector3(0,0,1).transformDirection(robot.barrel.matrixWorld),lead:bolt.leadSeconds});return bolt;};robot.spawn();
+ const robot=new EvacRaider(new THREE.Scene(),new UnitDamage(),{spawnPosition:{x:0,y:.1,z:0},objective:()=>new THREE.Vector3(0,.1,0),moveSpeed:0,initialCooldown:0,getTargets:()=>[selected],visible:()=>!blocked,trace:()=>null,shotModes:['direct','direct','lead','lead'],...options}),fired=[];const fire=robot.fireBolt.bind(robot);robot.fireBolt=aim=>{const bolt=fire(aim);fired.push({age:robot.age,target:bolt.target,dir:bolt.dir.clone(),speed:bolt.speed,radius:bolt.radius,mode:bolt.aimMode,point:aim.point.clone(),current:aim.current?.clone(),velocity:robot.targetMotion?.velocity.clone(),from:aim.from.clone(),forward:new THREE.Vector3(0,0,1).transformDirection(robot.barrel.matrixWorld),lead:bolt.leadSeconds});return bolt;};robot.spawn();
  return{robot,fired,first,second,block:()=>blocked=true,switchTarget:()=>selected=second};
 }
 for(const dt of[1/30,1/60,1/120,.075]){
@@ -33,4 +33,13 @@ for(const dt of[1/30,1/60,1/120,.075]){
 }
 {
  const f=fixture(),r=f.robot;let seed=42;r.random=()=>((seed=(1664525*seed+1013904223)>>>0)/4294967296);const orders=new Set();for(let i=0;i<200;i++){r.burstPlan=[];r.prepareBurst();assert.deepEqual([...r.burstPlan].sort(),['direct','direct','lead','lead']);orders.add(r.burstPlan.join(','));}assert.equal(orders.size,6,'all six valid two/direct two/lead orders occur');console.log('PASS shuffled burst plans preserve exact counts and vary among all 6 valid orders');
+}
+
+// Default Bruisers independently roll each round; explicit specialist plans stay supported.
+{
+ const f=fixture({shotModes:null}),r=f.robot;assert.equal(r.leadChance,.33);const rolls=[0,.329999,.33,.999];let index=0;r.random=()=>rolls[index++];r.prepareBurst();assert.deepEqual(r.burstPlan,['lead','lead','direct','direct']);r.prepareBurst();assert.equal(index,4,'aiming keeps the selected modes stable');
+ let seed=42;r.random=()=>((seed=(1664525*seed+1013904223)>>>0)/4294967296);let lead=0;const counts=new Set();for(let i=0;i<10000;i++){r.burstPlan=[];r.prepareBurst();const n=r.burstPlan.filter(m=>m==='lead').length;counts.add(n);lead+=n;}assert(Math.abs(lead/40000-.33)<.01);assert.deepEqual([...counts].sort(),[0,1,2,3,4]);console.log('PASS 40,000 independent shots: '+lead+' lead ('+(100*lead/40000).toFixed(2)+'%); all 0–4 lead-shot burst counts occur');
+}
+{
+ const f=fixture({shotModes:null}),r=f.robot;let i=0;r.random=()=>[.1,.9,.9,.9,.9,.9,.9,.9][i++%8];for(let n=0;n<1200&&f.fired.length<8;n++)r.update(1/60,n/60);assert.deepEqual(f.fired.map(s=>s.mode),['lead','direct','direct','direct','direct','direct','direct','direct']);assert.equal(r.leadShots,1);assert.equal(r.directShots,7);console.log('PASS real four-shot firing uses independent rolls, including an all-direct burst; original timing/collision path retained');
 }

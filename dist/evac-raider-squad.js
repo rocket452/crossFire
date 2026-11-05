@@ -1,6 +1,6 @@
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=charged-shuriken-130';
+import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=bruiser-lead-216';
 import {ESCORT_APPROACH} from './evac-approach.js?v=evac-centered-215';
 export class EvacRaiderSquad {
  constructor(scene,damage,{landing,idPrefix='evac-raider',route=null,label='outer boulevard',getHelicopter,getTargets,visible,trace,isPathClear,redirect,onHeroHit=()=>{},onDebris=()=>null,onRemoveDebris=()=>{},onDeath=()=>{},onWreck=()=>{},onEvent=()=>{}}){

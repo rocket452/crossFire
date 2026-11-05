@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=charged-shuriken-130';
+import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=bruiser-lead-216';
 // Simulation seconds, metres and damage. Each type owns exactly one special.
 export const ROBOT_EXPERIMENTS=Object.freeze({
  aegis:{health:900,speed:1.5,turn:Math.PI/2,shieldReduction:.9,coverage:120,range:32,damage:14,cooldown:1.25},
