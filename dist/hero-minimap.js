@@ -25,7 +25,7 @@ export class HeroMinimap {
   for(const lane of roadLanes){
    svg('path',{d:`M${bounds.minX} ${lane}H${bounds.maxX}M${lane} ${bounds.minZ}V${roadExtent}`,class:'minimap-road'},this.world);
   }
-  if(landing&&bounds.maxZ>60)svg('path',{d:`M0 54V${roadExtent}`,class:'minimap-approach'},this.world);
+  if(landing&&bounds.maxZ>60)svg('path',{d:`M${landing.x} 54V${bounds.maxZ}`,class:'minimap-approach'},this.world);
   for(const b of buildings){const rect=svg('rect',{x:b.x-5,y:b.z-5,width:10,height:10,class:'minimap-building'},this.world);this.structures.push({id:b.id,node:rect});}
   this.staticMarkers=subways.map((p,i)=>({...p,id:'subway-'+i,kind:'subway',label:'Subway entrance'}));if(landing)this.staticMarkers.push({...landing,id:'evac-zone',kind:'landing',label:'Evacuation landing zone'});
   if(route)svg('path',{d:route.map((p,i)=>(i?'L':'M')+p[0]+' '+p[1]).join(' '),class:'minimap-convoy-route'},this.world);

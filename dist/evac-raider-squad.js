@@ -1,7 +1,7 @@
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';
 import * as THREE from './vendor/three.module.js';
 import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=charged-shuriken-130';
-import {ESCORT_APPROACH} from './evac-approach.js?v=raider-burst-92';
+import {ESCORT_APPROACH} from './evac-approach.js?v=evac-length-211';
 export class EvacRaiderSquad {
  constructor(scene,damage,{landing,getHelicopter,getTargets,visible,trace,isPathClear,redirect,onHeroHit=()=>{},onDebris=()=>null,onRemoveDebris=()=>{},onDeath=()=>{},onWreck=()=>{},onEvent=()=>{}}){
   this.landing=landing;this.onEvent=onEvent;this.energyEffects=new RaiderEnergyEffects(scene);

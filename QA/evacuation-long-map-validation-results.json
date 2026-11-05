@@ -1,0 +1,47 @@
+{
+  "revision": "evac-length-211",
+  "map": {
+    "width": 120,
+    "length": 336,
+    "minZ": -60,
+    "maxZ": 276,
+    "bruiserSpawnZ": 270,
+    "bruiserCount": 3
+  },
+  "preserved": {
+    "civilianSpawnInterval": 30,
+    "civilianWaveSize": 12,
+    "subway": [
+      48,
+      48
+    ],
+    "landing": [
+      -48,
+      48
+    ],
+    "siegeWalker": "original city-centre placement"
+  },
+  "flight": {
+    "escapeZ": 300,
+    "cruiseSpeed": 60,
+    "horizontalLegSeconds": 4.2
+  },
+  "passed": [
+    "evacuation-long-map-test.mjs",
+    "evacuation-long-map-browser.cjs (desktop and touch, actual keyboard/stick traversal)",
+    "evacuation-cycle-browser.cjs (desktop and touch)",
+    "evacuation-open-lane-test.mjs",
+    "evacuation-lifecycle-test.mjs",
+    "hero-minimap-test.mjs",
+    "evacuation-navigation-test.mjs",
+    "evacuation-policy-test.mjs",
+    "evac-raider-test.mjs",
+    "enemy-separation-test.mjs",
+    "kage-smoke-test.mjs",
+    "convoy-test.mjs",
+    "argus-test.mjs"
+  ],
+  "limitations": [
+    "Software WebGL browser tests; physical phone FPS/thermal performance unmeasured."
+  ]
+}
