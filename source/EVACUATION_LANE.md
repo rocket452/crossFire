@@ -33,3 +33,11 @@ The Chinook escape waypoint moves from Z `132` to `300`, beyond the enlarged bou
 ## Slower civilian waves — revision 212
 
 `CIVILIAN_SPAWN_INTERVAL` is now 60 simulation seconds (previously 30). The opening five-second warning and twelve-person groups are unchanged: waves arrive at 5s, 65s, 125s and so on. Reset restarts the same schedule. The three-Bruiser squad still follows the second wave, now at 65s. Helicopter timings, civilian movement and all other scenes are unchanged. This supersedes the 30-second interval documented in earlier revisions. Cache revision: `evac-cadence-212`.
+
+## Square city expansion — revision 213
+
+The map keeps its 336m length (Z `[-60,276]`) and widens to 336m (X `[-168,168]`). `evac-city-map.js` adds 28 destructible two-to-five-storey buildings to the six retained central buildings, for 34 total. These use the existing wall/slab/column kit, damage, collapse, smoke and reset systems. A street grid connects the new outer districts; asphalt stays instanced. New district roads and building footprints appear on the hero minimap. Hero and enemy-separation bounds follow the square.
+
+The existing east subway `(48,48)`, west Chinook `(-48,48)`, central Siege Walker and three-Bruiser far-edge spawn at Z `270` are unchanged. New blocks leave the exposed civilian crossing, Walker sight lines and helicopter/Bruiser boulevard clear. Waves still arrive at 5s, 65s, 125s, with five-second warnings. Other scene layouts are not mutated.
+
+`QA/evacuation-square-map-test.mjs` checks square dimensions, unique building IDs, no road/building overlaps, civilian and aircraft clearance, hero bounds and original-layout isolation. `QA/evacuation-square-map-browser.cjs` verifies live district destruction, street markers, original-scene isolation, evacuation cycles, and keyboard/touch travel along both axes. Physical phone performance remains unmeasured; additional buildings increase static physics/render work while reusing the existing shared mesh batches and bounded debris budget.

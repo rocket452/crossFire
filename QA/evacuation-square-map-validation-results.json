@@ -1,0 +1,50 @@
+{
+  "revision": "evac-square-213",
+  "map": {
+    "width": 336,
+    "length": 336,
+    "bounds": {
+      "minX": -168,
+      "maxX": 168,
+      "minZ": -60,
+      "maxZ": 276
+    },
+    "buildings": 34,
+    "addedBuildings": 28,
+    "staticBuildingSections": 3944
+  },
+  "preserved": {
+    "civilianSpawnIntervalSeconds": 60,
+    "openingWarningSeconds": 5,
+    "groupSize": 12,
+    "subway": [
+      48,
+      48
+    ],
+    "landing": [
+      -48,
+      48
+    ],
+    "bruiserSpawnZ": 270,
+    "siegeWalker": "unchanged centre placement"
+  },
+  "passed": [
+    "evacuation-square-map-test.mjs",
+    "evacuation-square-map-browser.cjs (desktop + touch; real controls on both axes, live district damage/reset, safe rescue, squad march, original battle scene isolation)",
+    "evacuation-long-map-test.mjs",
+    "evacuation-long-map-browser.cjs (desktop + touch)",
+    "evacuation-open-lane-test.mjs",
+    "hero-minimap-test.mjs",
+    "evacuation-lifecycle-test.mjs",
+    "enemy-separation-test.mjs",
+    "kage-smoke-test.mjs",
+    "evac-raider-test.mjs"
+  ],
+  "visualChecks": [
+    "Expanded district screenshots inspected; removed overlapping decorative pavement along the approach.",
+    "Fresh normal scene load verified with 34 buildings / 3944 sections."
+  ],
+  "limits": [
+    "Software WebGL and touch emulation; physical phone FPS and thermal performance unmeasured."
+  ]
+}

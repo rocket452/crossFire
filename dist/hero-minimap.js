@@ -19,12 +19,13 @@ export class HeroMinimap {
   svg('path',{d:'M0 -6L4.8 4L0 2L-4.8 4Z',class:'minimap-player'},this.svg);
   this.civilianCount=root.querySelector('[data-minimap-civilians]');this.enemyCount=root.querySelector('[data-minimap-enemies]');
  }
- setWorld({bounds,buildings,subways=[],landing=null,roadLanes=[-48,-24,0,24,48],roadExtent=60,route=null}){
+ setWorld({bounds,buildings,subways=[],landing=null,roadLanes=[-48,-24,0,24,48],roadExtent=60,route=null,roadSegments=[]}){
   this.world.replaceChildren();this.structures=[];
   svg('rect',{x:bounds.minX,y:bounds.minZ,width:bounds.maxX-bounds.minX,height:bounds.maxZ-bounds.minZ,class:'minimap-ground'},this.world);
   for(const lane of roadLanes){
    svg('path',{d:`M${bounds.minX} ${lane}H${bounds.maxX}M${lane} ${bounds.minZ}V${roadExtent}`,class:'minimap-road'},this.world);
   }
+  for(const r of roadSegments)svg('rect',{x:r.x-r.width/2,y:r.z-r.depth/2,width:r.width,height:r.depth,fill:'#14242e',stroke:'none',class:'minimap-street'},this.world);
   if(landing&&bounds.maxZ>60)svg('path',{d:`M${landing.x} 54V${bounds.maxZ}`,class:'minimap-approach'},this.world);
   for(const b of buildings){const rect=svg('rect',{x:b.x-5,y:b.z-5,width:10,height:10,class:'minimap-building'},this.world);this.structures.push({id:b.id,node:rect});}
   this.staticMarkers=subways.map((p,i)=>({...p,id:'subway-'+i,kind:'subway',label:'Subway entrance'}));if(landing)this.staticMarkers.push({...landing,id:'evac-zone',kind:'landing',label:'Evacuation landing zone'});
