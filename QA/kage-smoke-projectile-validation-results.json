@@ -1,0 +1,33 @@
+{
+  "revision": "smoke-projectile-219",
+  "behavior": {
+    "input": [
+      "V",
+      "mobile SMOKE"
+    ],
+    "launch": "right hand, current aim",
+    "sharedBallistics": "KageBombs with normal bomb speed/lift/gravity/bounces/inherited velocity/gateway routing",
+    "fuseSeconds": 1.5,
+    "enemyContact": "releases smoke immediately without damage",
+    "domeDurationSeconds": 8,
+    "cooldownFromThrowSeconds": 12,
+    "maxInFlight": 1,
+    "airborneImmunity": false
+  },
+  "passed": [
+    "kage-smoke-projectile-test.mjs: 30/60/120Hz and irregular dt; arc, floor/wall bounce, fuse, contact, non-damage, remote dome, cooldown, expiry, reset, gateway redirect",
+    "kage-smoke-projectile-browser.cjs: desktop V + touch SMOKE, visible remote flight/dome, real civilian protection, expiry/cooldown/reset, CPU throw, no shader errors",
+    "kage-smoke-test.mjs: allied hemisphere immunity and ARGUS/Bastion gates",
+    "kage-smoke-browser.cjs: desktop + touch direct, rocket, plasma, Walker beam, Kage/Volt/Chinook, enemy vulnerability, entry/exit and reset",
+    "kage-bombs-test.mjs: unchanged explosive bomb behavior",
+    "kage-bombs-browser.cjs: desktop C + touch BOMB throw/arc/damage/explosion/cooldown/reset"
+  ],
+  "visualReview": [
+    "Canister flight screenshot inspected",
+    "Remote smoke dome screenshot inspected"
+  ],
+  "limits": [
+    "Physical phone FPS/thermal performance unmeasured.",
+    "Invalid detonation support yields no dome; a thrown canister has already consumed cooldown."
+  ]
+}

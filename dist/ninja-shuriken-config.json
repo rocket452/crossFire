@@ -150,6 +150,7 @@
     "fadeSeconds": 0.7,
     "groundTolerance": 0.3,
     "puffs": 18,
-    "aiInterval": 0.35
+    "aiInterval": 0.35,
+    "projectileFuseSeconds": 1.5
   }
 }
