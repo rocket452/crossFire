@@ -1,0 +1,51 @@
+{
+  "revision": "evac-centered-215",
+  "bounds": {
+    "minX": -216,
+    "maxX": 120,
+    "minZ": -120,
+    "maxZ": 216
+  },
+  "size": [
+    336,
+    336
+  ],
+  "centerAndLanding": [
+    -48,
+    48
+  ],
+  "buildings": 42,
+  "newTowers": 8,
+  "towerHeightMetres": [
+    30,
+    42
+  ],
+  "clearSightLineSamples": 25,
+  "edgeSpawnCoordinates": {
+    "southZ": 210,
+    "eastX": 114,
+    "northZ": -114,
+    "westX": -210
+  },
+  "preserved": [
+    "Subway (48,48), civilian path and Walker (0,0)",
+    "60s civilian interval / 5s opening warning",
+    "65/85/105/125s staggered 3-Bruiser edge waves",
+    "4.2s helicopter horizontal flight leg"
+  ],
+  "passed": [
+    "evacuation-square-map-test.mjs",
+    "evacuation-long-map-test.mjs",
+    "evac-raider-waves-test.mjs",
+    "evacuation-open-lane-test.mjs",
+    "evacuation-centered-map-browser.cjs (desktop + touch: exact ground centre, 42 buildings/8 towers, real-chunk sight lines, tower damage/reset, rescue, original-scene isolation)",
+    "evac-raider-waves-browser.cjs (desktop + touch: relocated spawns, timing, minimap, combat, cleanup/reset)",
+    "hero-minimap-test.mjs",
+    "evacuation-lifecycle-test.mjs",
+    "enemy-separation-test.mjs",
+    "kage-smoke-test.mjs"
+  ],
+  "limitations": [
+    "Physical phone FPS and thermal performance with additional towers are unmeasured."
+  ]
+}
