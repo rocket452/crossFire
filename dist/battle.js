@@ -1,6 +1,6 @@
 import {evacuationCityBuildings,EVAC_CITY_ROADS,addEvacuationDistrictRoads} from './evac-city-map.js?v=evac-centered-215';
 import {guardHeroInSmoke} from './kage-smoke.js?v=kage-smoke-210';
-import {EVACUATION_ENTRANCES,EVACUATION_LANDING} from './evacuation-config.js?v=evac-centered-215';
+import {EVACUATION_ENTRANCES,EVACUATION_LANDING} from './evacuation-config.js?v=evac-opening-217';
 import {ConvoyResults} from './convoy-results.js?v=argus-sustained-205';
 import {routePoint,routeLength} from './convoy-map-config.js?v=argus-sustained-205';
 import {Argus} from './argus.js?v=kage-smoke-210';
@@ -26,7 +26,7 @@ import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-app
 import {MochiHero,MOCHI} from './mochi-hero.js?v=mochi-56';
 import {VOLT_STUN} from './hero-powers.js?v=combat-hud-102';
 import {RobotStunEffect} from './hero-power-effects.js?v=mochi-56';
-import {EvacuationScene} from './evacuation.js?v=evac-centered-215';
+import {EvacuationScene} from './evacuation.js?v=evac-opening-217';
 import * as THREE from 'three';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {OrbitControls} from './vendor/OrbitControls.js';
