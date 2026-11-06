@@ -29,7 +29,7 @@ export class EvacuationBastionReinforcement {
    for(const [i,clamp]of this.clamps.entries())clamp.position.x=(i<2?-1:1)*(16+(this.phase==='drop'?Math.min(1,this.elapsed/.6)*7:0));
    if(this.phase==='approach'&&this.elapsed>=c.approachSeconds)this.transition('hover');
    else if(this.phase==='hover'&&this.elapsed>=c.hoverSeconds){this.transition('drop');this.onEvent('Bastion deploying · clear the landing zone.');}
-   else if(this.phase==='drop'&&this.elapsed>=c.dropSeconds){this.adapter.reset(true);b.root.position.copy(d);b.model.sync();b.sync();this.marker.visible=false;this.transition('departure');this.onLanding(d.clone());this.onEvent('Bastion deployed · evacuation continues.');}
+   else if(this.phase==='drop'&&this.elapsed>=c.dropSeconds){this.adapter.reset(true);b.root.position.copy(d);b.model.sync();b.sync();this.marker.visible=false;this.transition('departure');this.onLanding(d.clone());this.onEvent('Bastion deployed · engage the new threat.');}
   }
   if(this.phase==='departure'){const a=Math.min(1,this.elapsed/c.departureSeconds);this.root.position.set(d.x,d.y+c.cruiseHeight+(c.departureHeight-c.cruiseHeight)*a,d.z-c.approachDistance*a*a);if(a===1){this.root.visible=false;this.transition('deployed');}}
   for(const e of this.engines)e.scale.setScalar(1+Math.sin(this.clock*24)*.08);
