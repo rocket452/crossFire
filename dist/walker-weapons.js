@@ -1,4 +1,4 @@
-// Independent armor modules. Ordinary body damage is unchanged; no bonus hull damage on break.
+// The Walker is defeated by destroying every weapon; their remaining durability is its health.
 export const WALKER_WEAPONS=Object.freeze([
  Object.freeze({id:'beam',part:'forearm_r',label:'BEAM CANNON',short:'BEAM',health:1800}),
  Object.freeze({id:'missiles',part:'rocket_pod',label:'ROCKET POD',short:'ROCKETS',health:1600}),
@@ -8,6 +8,9 @@ export const WALKER_WEAPONS=Object.freeze([
 export class WalkerWeapons {
  constructor({specs=WALKER_WEAPONS,onDestroyed=()=>{}}={}){this.specs=specs;this.onDestroyed=onDestroyed;this.reset();}
  reset(){this.modules=this.specs.map(s=>({...s,maxHealth:s.health,health:s.health,destroyed:false}));}
+ get health(){return this.modules.reduce((sum,m)=>sum+m.health,0);}
+ get maxHealth(){return this.modules.reduce((sum,m)=>sum+m.maxHealth,0);}
+ get remaining(){return this.modules.filter(m=>!m.destroyed).length;}
  working(id){return this.modules.some(m=>m.id===id&&!m.destroyed);}
  forPart(part){return this.modules.find(m=>m.part===part);}
  hurt(part,power){

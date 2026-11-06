@@ -1,0 +1,31 @@
+{
+  "revision": "walker-defeat-225",
+  "defeatCondition": "all four weapons destroyed",
+  "weapons": {
+    "beam": 1800,
+    "missiles": 1600,
+    "plasma": 1800,
+    "eyes": 700
+  },
+  "combinedDurability": 5900,
+  "hullDamageContributes": false,
+  "cpuAllies": "aim at surviving weapons",
+  "passed": [
+    "walker-defeat-condition-test.mjs: all four final-weapon permutations, partial/overkill/body damage, 1HP survivor, single defeat, 18 wrecks/reset",
+    "walker-weapons-test.mjs: real model collision, direct/blast durability, automatic defeat, arsenals and ordnance at multiple rates",
+    "walker-weapons-browser.cjs: desktop + touch actual Speedster fire and shared hero/projectile adapters, precise module/health damage, fourth weapon death, HUD 0%, smoking wreck/reset",
+    "walker-gait-test.mjs",
+    "cannon-tracking-test.mjs",
+    "robot-death-test.mjs"
+  ],
+  "unchanged": [
+    "weapon durability values",
+    "player aiming and movement",
+    "ARGUS/Bastion/small robots",
+    "existing collapse/explosion/wreck pipeline"
+  ],
+  "limits": [
+    "Hull-only debug kill helpers no longer defeat the Walker.",
+    "Physical-phone FPS/thermal performance unmeasured."
+  ]
+}
