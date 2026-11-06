@@ -1,0 +1,40 @@
+{
+  "revision": "evac-towers-223",
+  "additions": {
+    "buildings": 8,
+    "floors": [
+      10,
+      13
+    ],
+    "heightMetres": [
+      30,
+      39
+    ],
+    "placement": "north/south perimeter rows, >=150m footprint clearance from central Chinook"
+  },
+  "totals": {
+    "buildings": 50,
+    "tallBuildings": 16,
+    "staticBuildingSections": 9309
+  },
+  "passed": [
+    "evacuation-square-map-test.mjs: footprints/road separation, central exclusion, civilian sight lines, helicopter and Bruiser corridors, scene isolation",
+    "evac-raider-waves-test.mjs: all four squads finish their street routes",
+    "evacuation-open-lane-test.mjs",
+    "evacuation-centered-map-browser.cjs: desktop + touch exact center, new skyline/minimap, real sight lines, new-tower damage/reset, rescue and other-scene isolation",
+    "evacuation-helicopter-strike-test.mjs",
+    "evacuation-civilian-fallback-test.mjs",
+    "hero-minimap-test.mjs"
+  ],
+  "visualReview": "Wide skyline screenshot inspected.",
+  "unchanged": [
+    "map bounds, existing central buildings and open areas",
+    "civilian/enemy timers",
+    "helicopter placement and flight path",
+    "Walker targeting/weapons",
+    "active-debris budgets"
+  ],
+  "limits": [
+    "Physical-phone FPS/thermal performance with the extra static buildings remains unmeasured."
+  ]
+}

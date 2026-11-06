@@ -13,6 +13,9 @@ export function evacuationCityBuildings(original){
  blocks.forEach((b,i)=>buildings.push({...b,id:'EVAC-'+String(i+1).padStart(2,'0'),floors:2+i%4,tint:tints[i%tints.length],name:'Outer district'}));
  const towers=[];for(const x of[-156,-108,60,108])for(const z of[-60,156])towers.push({x,z});
  towers.forEach((b,i)=>buildings.push({...b,id:'EVAC-TOWER-'+(i+1),floors:10+i%5,tint:tints[(i+1)%tints.length],name:'Evacuation district tower'}));
+ // Keep all additions on the perimeter, at least 150m from the central Chinook.
+ const outerTowers=[];for(const x of[-156,-108,-12,36])for(const z of[-108,204])outerTowers.push({x,z});
+ outerTowers.forEach((b,i)=>buildings.push({...b,id:'EVAC-OUTER-TOWER-'+(i+1),floors:10+i%4,tint:tints[(i+2)%tints.length],name:'Perimeter skyline tower'}));
  return buildings;
 }
 
