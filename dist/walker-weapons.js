@@ -1,9 +1,11 @@
 // The Walker is defeated by destroying every weapon; their remaining durability is its health.
+// TEMPORARY testing override. Set back to 1 to restore normal weapon durability.
+export const WALKER_WEAPON_HEALTH_SCALE=.1;
 export const WALKER_WEAPONS=Object.freeze([
- Object.freeze({id:'beam',part:'forearm_r',label:'BEAM CANNON',short:'BEAM',health:1800}),
- Object.freeze({id:'missiles',part:'rocket_pod',label:'ROCKET POD',short:'ROCKETS',health:1600}),
- Object.freeze({id:'plasma',part:'plasma_cannon',label:'PLASMA CANNON',short:'PLASMA',health:1800}),
- Object.freeze({id:'eyes',part:'visor',label:'EYE EMITTERS',short:'EYES',health:700})
+ Object.freeze({id:'beam',part:'forearm_r',label:'BEAM CANNON',short:'BEAM',health:1800*WALKER_WEAPON_HEALTH_SCALE}),
+ Object.freeze({id:'missiles',part:'rocket_pod',label:'ROCKET POD',short:'ROCKETS',health:1600*WALKER_WEAPON_HEALTH_SCALE}),
+ Object.freeze({id:'plasma',part:'plasma_cannon',label:'PLASMA CANNON',short:'PLASMA',health:1800*WALKER_WEAPON_HEALTH_SCALE}),
+ Object.freeze({id:'eyes',part:'visor',label:'EYE EMITTERS',short:'EYES',health:700*WALKER_WEAPON_HEALTH_SCALE})
 ]);
 export class WalkerWeapons {
  constructor({specs=WALKER_WEAPONS,onDestroyed=()=>{}}={}){this.specs=specs;this.onDestroyed=onDestroyed;this.reset();}

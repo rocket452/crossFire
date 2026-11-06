@@ -1,4 +1,4 @@
-import {WalkerWeapons} from './walker-weapons.js?v=walker-defeat-225';
+import {WalkerWeapons} from './walker-weapons.js?v=walker-test-health-227';
 import {CannonTracking,CANNON_TRACKING} from './cannon-tracking.js?v=beam-tracking-150';
 import * as THREE from './vendor/three.module.js';
 import {trackedBeamWarningPlan} from './beam-aim.js?v=beam-tracking-61';
