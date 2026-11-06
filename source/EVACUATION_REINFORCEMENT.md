@@ -1,6 +1,6 @@
 # Civilian Evacuation: Bastion reinforcement
 
-Civilian Evacuation alone now deploys Bastion once after the Siege Walker dies. Other maps retain their existing boss/spawn behavior. Subway spawning, Chinook cycles and edge Bruiser waves continue independently throughout the transition and second boss fight.
+Civilian Evacuation alone now deploys Bastion once after the Siege Walker dies. Other maps retain their existing boss/spawn behavior. Subway spawning and Chinook cycles continue throughout the transition and second boss fight. Walker defeat permanently cancels all pending Bruiser edge waves until city rebuild; existing Bruisers remain active.
 
 `dist/evacuation-bastion-reinforcement.js` owns the transport model and lifecycle. It captures the Walker's position at defeat, waits for its wreck fall, approaches above the skyline, hovers, opens its cargo clamps and drops the existing Bastion model at that X/Z on terrain. Cargo has no live damage shapes, attacks or traversal surfaces. Touchdown activates the existing Bastion combat adapter with full configured health, its regular attacks/weak points, hero collision and boss HUD. The transport flies out and disappears. Killing Bastion does not repeat the transport. Rebuild resets all stages, cargo, effects, health and the one-time trigger.
 
