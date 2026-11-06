@@ -1,7 +1,7 @@
 const{chromium}=require('/opt/codex/cua_node/lib/node_modules/playwright-core'),fs=require('fs'),assert=require('assert/strict');
 const testedHero=process.env.CINEMATIC_HERO||'volt';
 const hook=`window.__qaStopRender=true;window.cineQA={
- land(){for(const m of robot.weapons.modules)unitDamage.hurt(robot.combatUnit,1e6,null,m.part);for(let i=0;i<275;i++)evacuationReinforcement.update(.05);return this.state();},
+ land(){for(const m of robot.weapons.modules)unitDamage.hurt(robot.combatUnit,1e6,null,m.part);for(let i=0;i<Math.ceil((evacuationReinforcement.config.wreckDelay+evacuationReinforcement.config.approachSeconds+evacuationReinforcement.config.hoverSeconds+evacuationReinforcement.config.dropSeconds+.25)/.05);i++)evacuationReinforcement.update(.05);return this.state();},
  state(){return{...evacuationCinematic.diagnostics(),transport:evacuationReinforcement.diagnostics(),helpers:[hero.enabled,portalHero.enabled],roster:roster.diagnostics(),player:(controlledHero()||runner).root.position.toArray(),runnerActive:runner.active||ninja.active,seconds:simTime,civTime:evacuation.time,bossTime:evacuationReinforcement.adapter.time,camera:camera.position.toArray(),controls:controls.enabled,dialog:evacuationCinematic.dialog.open,shots:evacuationCinematic.shots,impacts:evacuationCinematic.impacts};},
  step(s){for(let i=0;i<Math.round(s*20);i++){if(evacuationCinematic.active){evacuationCinematic.update(.05);evacuationReinforcement.update(.05);updateEffects(.05);}}updateCamera(.05);renderer.render(scene,camera);return this.state();},
  again(){return evacuationCinematic.start(new THREE.Vector3());},start(){evacuationCinematic.reset();return evacuationCinematic.start(new THREE.Vector3(0,.08,0));},

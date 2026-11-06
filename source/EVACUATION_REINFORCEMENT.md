@@ -73,3 +73,8 @@ Civilian Evacuation is now 235.2m square: each side is 70% of its former 336m le
 Ground/road extents, minimap, hero/dash limits and edge enemy entrances use the compact bounds. South Bruisers enter at Z159.6; the east approach's intermediate waypoint is X48 so it stays inside the new east edge. The Chinook escapes at Z189.6 with adjusted cruise speed preserving its original 4.2s outbound horizontal leg. The first civilian spawn remains at 15s, with 60s between waves, and shutdown/cinematic rules remain unchanged.
 
 Verified compact dimensions, 28 real destructible buildings, civilian movement, retained route towers, reset and normal-city isolation on desktop/touch emulation (`evacuation-route-towers-browser.cjs`). Layout trace checks cover streets, civilian and Walker sight lines, helicopter/Bruiser corridors and the Bastion cinematic camera. Bruiser wave, minimap alert, evacuation lifecycle and shutdown unit checks pass. This does not resize other scenes.
+
+
+## Slower delivery (revision 244)
+
+Approach, hover, lowering and departure durations increase by 30%: 9.1 s, 1.56 s, 3.64 s and 7.8 s respectively. The 2.5 s wreck delay is retained; touchdown occurs at about 16.8 s after defeat, instead of 13.5 s. Landing still enables Bastion and triggers the existing cinematic by callback; cinematic beats and combat tuning retain their current timing.
