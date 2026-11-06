@@ -1,4 +1,4 @@
-import {WalkerWeapons} from './walker-weapons.js?v=walker-test-health-227';
+import {WalkerWeapons} from './walker-weapons.js?v=three-walker-weapons-241';
 import {CannonTracking,CANNON_TRACKING} from './cannon-tracking.js?v=beam-tracking-150';
 import * as THREE from './vendor/three.module.js';
 import {trackedBeamWarningPlan} from './beam-aim.js?v=beam-tracking-61';
@@ -41,7 +41,8 @@ export class SiegeWalker {
   this.root.updateMatrixWorld(true);
  }
  modifyDamage(power,point,part){const damage=this.damageWeapon(power,point,part);return this.weapons.remaining===0&&!this.dead?(this.combatUnit?.health??damage):damage;}
- isWeaponWorking(id){return !this.dead&&this.weapons.working(id);}
+ // Eyes are an auxiliary attack, not a durability-bearing mount.
+ isWeaponWorking(id){return !this.dead&&(id==='eyes'||this.weapons.working(id));}
  isPartAvailable(part){return !this.detachedParts.has(part);}
  damageWeapon(power,point,part=null){
   this.lastWeaponHitPart=null;if(this.dead)return 0;
@@ -58,7 +59,6 @@ export class SiegeWalker {
   if(module.id==='beam'){this.weapon.stop();this.aiming=false;this.target=null;this.onBeam(null);}
   if(module.id==='missiles'){this.podWarning={active:false,progress:0,pulse:false};this.podRecoil=0;}
   if(module.id==='plasma'){this.plasmaCharging=false;this.plasmaAim=null;this.plasmaRecoil=0;}
-  if(module.id==='eyes')this.eyeTarget=null;
   const wreck=this.detachPart(module.part);if(wreck)this.onDeath(wreck.group.position.clone(),{large:false});
   this.onWeaponDestroyed(module);
  }
@@ -226,13 +226,11 @@ export class SiegeWalker {
   if(this.broken)return this.wrecks.map(w=>({center:{...w.body.position},half:w.half,rotation:{...w.body.quaternion}}));
   this.root.updateMatrixWorld(true);const result=[];
   for(const [name,mesh]of Object.entries(this.meshes)){
-   if(name==='reactor'||!this.isPartAvailable(name))continue;
+   if(name==='reactor'||name==='visor'||!this.isPartAvailable(name))continue;
    const b=this.boxes[name],local=b.center.clone();
-   // The helmet's coarse box covers the recessed visor. Extend only the thin
-   // eye strip forward so aimed shots reach the emitter before that coarse hull.
-   if(name==='visor')local.z+=.16;
+   // The visor is visual only; the surrounding head remains ordinary armor.
    const c=mesh.localToWorld(local),q=mesh.getWorldQuaternion(new THREE.Quaternion());
-   result.push({part:name,center:{x:c.x,y:c.y,z:c.z},half:{x:b.size.x/2,y:b.size.y/2+(name==='visor'?.06:0),z:b.size.z/2+(name==='visor'?.16:0)},rotation:{x:q.x,y:q.y,z:q.z,w:q.w}});
+   result.push({part:name,center:{x:c.x,y:c.y,z:c.z},half:{x:b.size.x/2,y:b.size.y/2,z:b.size.z/2},rotation:{x:q.x,y:q.y,z:q.z,w:q.w}});
   }return result;
  }
  plasmaForwardError(){const node=this.nodes.plasma_cannon;if(!node)return null;const a=new THREE.Vector3(0,0,1).transformDirection(node.matrixWorld),b=new THREE.Vector3(0,0,1).transformDirection(node.parent.matrixWorld);a.y=b.y=0;a.normalize();b.normalize();return THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp(a.dot(b),-1,1)));}
