@@ -1,4 +1,4 @@
-import {Mireguard} from './mireguard.js?v=bruiser-model-218';
+import {Mireguard} from './mireguard.js?v=larger-mireguard-242';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-squads-191';
 import {BastionTesting} from './bastion-testing.js?v=map-safe-gaps-239';
 import {ExperimentalRobot} from './experimental-robots.js?v=bruiser-model-218';

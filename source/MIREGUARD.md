@@ -1,5 +1,7 @@
 # Mireguard — robotic rifle infantry
 
+Size update (revision 242): Mireguards are 30% larger, increasing nominal height from 10 m to 13 m. The existing root scale also enlarges the articulated body, rifle, head/limb hitboxes and wreck pieces. Street clearance scales to a 3.38 m radius and proportional height samples; soft enemy separation scales to 3.64 m. Health, movement speed and weapon damage/cadence retain their existing values.
+
 Current behavior (revision 180): limb loss is permanent until scene reset. Headshots cause a .32s recoil/firing interruption with a .2s retrigger interval and a brighter, immediately retriggered red flash. Repair logic and repair-field visuals have been removed. The revision-175 notes below describe the original implementation.
 
 Select **Combat Testing → Enemy preset → 1 Mireguard** or **3 Mireguards**, then **Spawn / Reset enemies**. Use **Play / Watch selected hero** to fight as Volt or Kage, or watch the other existing CPU heroes. The city battle, escort spawning and their default enemies are unchanged. A direct launch is `?scene=testing&enemy=mireguard-1` or `enemy=mireguard-3`.
