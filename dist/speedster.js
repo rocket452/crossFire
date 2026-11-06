@@ -5,18 +5,18 @@ import * as THREE from './vendor/three.module.js';
 import {VOLT_STUN} from './hero-powers.js?v=combat-hud-102';
 import {RunnerEnergy,RUNNER_ENERGY} from './runner-energy.js?v=weapon-drain-77';
 import {RunnerHeading} from './runner-heading.js?v=runner-camera-27';
-import {RunnerMotion,terrainHeight} from './runner-motion.js?v=quake-pylons-198';
+import {RunnerMotion,terrainHeight} from './runner-motion.js?v=overall-performance-238';
 import {RunnerAnimator} from './runner-animation.js?v=runner-ai-7';
 import {RunnerLookPose} from './runner-look-pose.js?v=torso-look-75';
 import {RunnerAI} from './runner-ai.js?v=robot-experiments-108';
 import {RunnerElectric} from './runner-electric.js?v=lightning-impact-174';
 import {RunnerBeam,RUNNER_BEAM} from './runner-beam.js?v=weapon-drain-77';
 import {RunnerCharge} from './runner-charge.js?v=instant-lightning-63';
-import {RunnerDash,DASH} from './runner-dash.js?v=damage-dash-113';
+import {RunnerDash,DASH} from './runner-dash.js?v=overall-performance-238';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
 import {selectRunnerAim} from './runner-aim.js?v=light-aim-70';
 import {RunnerFeedback} from './runner-feedback.js?v=wave-dash-62';
-import {HumanoidCharacter} from './humanoid-character.js?v=characters-24';
+import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 export class Speedster {
  constructor({scene,camera,controls,canvas,model,spec,characterModel=null,getSections,traceAim,onElectric,onStun=()=>false,onWhipHit=()=>({}),onDashHit=()=>({}),robotPreparing=()=>false,isPaused,onEnter,onExit,getRobot,getAimTargets=()=>[],getMissileTarget=()=>null,getBuildings=()=>[],getUnits=()=>[],getThreats=()=>[],traceThreat=()=>null,onMoveUnit=()=>{},onPhaseUnit=()=>{},onEvent=()=>{}}){
   Object.assign(this,{onStun,onWhipHit,robotPreparing,scene,camera,controls,canvas,spec,getSections,traceAim,onElectric,isPaused,onEnter,onExit,getRobot,getAimTargets,getMissileTarget,getBuildings});this.root=new THREE.Group();scene.add(this.root);this.nodes={};model.scene.updateMatrixWorld(true);

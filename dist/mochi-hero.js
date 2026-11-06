@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {HumanoidCharacter} from './humanoid-character.js?v=mochi-56';
+import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 const UP=new THREE.Vector3(0,1,0);
 export const MOCHI={speed:16,attackCooldown:7,chargeSeconds:.7,dazeSeconds:1.4,damage:140,bubbleSeconds:6,bubbleCooldown:10,bubbleRadius:5,maxBubbles:2};
 export function bubbleIntersection(a,b,center,radius){const d=new THREE.Vector3(b.x-a.x,b.y-a.y,b.z-a.z),o=new THREE.Vector3(a.x-center.x,a.y-center.y,a.z-center.z),c=o.lengthSq()-radius*radius;if(c<=0)return 0;const aa=d.lengthSq(),bb=o.dot(d),disc=bb*bb-aa*c;if(aa<1e-9||disc<0)return null;const t=(-bb-Math.sqrt(disc))/aa;return t>=0&&t<=1?t:null;}

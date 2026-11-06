@@ -1,7 +1,7 @@
 // Conservative broad phase for gameplay rays. Exact box intersection still decides every hit.
 export class SectionQueryGrid {
  constructor(size=16){this.size=size;this.padding=4;this.cells=new Map();this.moved=new Set();this.nextOrder=0;this.queries=0;this.candidates=0;}
- add(section){section.queryOrder=this.nextOrder++;const r=Math.hypot(...section.size)/2,p=section.body.position,s=this.size;section.queryMinY=p.y-r;section.queryMaxY=p.y+r;for(let x=Math.floor((p.x-r-this.padding)/s);x<=Math.floor((p.x+r+this.padding)/s);x++)for(let z=Math.floor((p.z-r-this.padding)/s);z<=Math.floor((p.z+r+this.padding)/s);z++){const key=x+','+z;let cell=this.cells.get(key);if(!cell)this.cells.set(key,cell=[]);cell.push(section);}}
+ add(section){section.queryOrder=this.nextOrder++;const r=Math.hypot(...section.size)/2,p=section.body.position,s=this.size;section.queryRadius=r;section.queryMinY=p.y-r;section.queryMaxY=p.y+r;for(let x=Math.floor((p.x-r-this.padding)/s);x<=Math.floor((p.x+r+this.padding)/s);x++)for(let z=Math.floor((p.z-r-this.padding)/s);z<=Math.floor((p.z+r+this.padding)/s);z++){const key=x+','+z;let cell=this.cells.get(key);if(!cell)this.cells.set(key,cell=[]);cell.push(section);}}
  release(section){this.moved.add(section);}
  reset(){this.moved.clear();}
  query(from,to,radius=0){const s=this.size,result=[],seen=new Set(),minY=Math.min(from.y,to.y)-radius,maxY=Math.max(from.y,to.y)+radius,add=(c,moved=false)=>{if(c.hidden||c.collisionDisabled||seen.has(c)||!moved&&(c.queryMaxY<minY||c.queryMinY>maxY))return;seen.add(c);result.push(c);};const visited=new Set(),visit=(x,z)=>{const key=x+','+z;if(visited.has(key))return;visited.add(key);for(const c of this.cells.get(key)||[])if(!this.moved.has(c))add(c);};

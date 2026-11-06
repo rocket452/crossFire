@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {SolaraAnimation} from './solara-animation.js?v=surfer-37';
-import {HumanoidCharacter} from './humanoid-character.js?v=solara-female-31';
+import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 export class SolaraCharacter {
  constructor(root,humanoid,model,spec){
   this.root=root;this.character=new HumanoidCharacter(humanoid,{variant:'solara',height:2.59});this.character.variant='solara';for(const mesh of this.character.meshes)mesh.material=mesh.material.clone();root.add(this.character.root);this.animation=new SolaraAnimation();this.handTargets={};this.armNormals={};this.armRotations={};this.footTargets={};this.lastHead=null;this.parts=[];this.flameUniform={value:0};

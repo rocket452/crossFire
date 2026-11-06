@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {SPECTRUM} from './prismwing-character.js?v=prismwing-177';
+import {SPECTRUM} from './prismwing-character.js?v=overall-performance-238';
 export class PrismwingEffects {
  constructor(scene){this.root=new THREE.Group();this.root.name='Prismwing rainbow magic';scene.add(this.root);this.particles=[];this.bursts=[];this.clock=0;this.dummy=new THREE.Object3D();this.up=new THREE.Vector3(0,1,0);this.colors=SPECTRUM.map(c=>new THREE.Color(c));const material=(opacity=1)=>new THREE.MeshBasicMaterial({color:'#ffffff',transparent:opacity<1,opacity,depthWrite:opacity===1,toneMapped:false});this.beam=new THREE.InstancedMesh(new THREE.CylinderGeometry(1,1,1,5,1,true),material(),112);this.glow=new THREE.InstancedMesh(this.beam.geometry,material(.18),112);this.sparks=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),material(),192);this.rings=new THREE.InstancedMesh(new THREE.TorusGeometry(1,.045,4,28),material(.8),28);for(const m of[this.beam,this.glow,this.sparks,this.rings]){m.frustumCulled=false;m.count=0;this.root.add(m);}this.reset();}
  reset(){this.particles.length=this.bursts.length=0;this.clock=0;this.emitTimer=0;this.lastCharge=-1;for(const m of[this.beam,this.glow,this.sparks,this.rings])m.count=0;}

@@ -1,0 +1,85 @@
+{
+  "evacuation": {
+    "cpu": null,
+    "views": {
+      "away": {
+        "medianMs": 7.2000000000116415,
+        "calls": 115,
+        "triangles": 103904,
+        "pixels": [
+          1212,
+          864
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 3392,
+            "visibleInstances": 1024,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 1908,
+            "visibleInstances": 576,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 848,
+            "visibleInstances": 256,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          }
+        ]
+      },
+      "fullscreen": {
+        "medianMs": 2.8999999999650754,
+        "calls": 68,
+        "triangles": 141078,
+        "pixels": [
+          1995,
+          1002
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 3392,
+            "visibleInstances": 1408,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 1908,
+            "visibleInstances": 765,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 848,
+            "visibleInstances": 352,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          }
+        ]
+      }
+    },
+    "rubble": null,
+    "errors": []
+  }
+}

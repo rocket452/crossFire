@@ -63,7 +63,8 @@ export class RunnerMotion {
  }
  step(input,dt,sections=[]){
   if(!(dt>0))return;this.player=!!input.player;if(!this.player)this.stickyWall=false;dt=Math.min(dt,.15);if(input.jump)this.jumpBuffer=RUNNER_FORGIVENESS.jumpBufferSeconds;const start={...this.position},margin=(input.boost?this.boostSpeed:this.runSpeed)*dt+3;
-  this.near=sections.filter(c=>!c.hidden&&!c.collisionDisabled&&(c.state==='intact'||c.state==='settled')&&Math.abs((c.body?.position.x??c.x)-this.position.x)<Math.hypot(...c.size)/2+margin&&Math.abs((c.body?.position.z??c.z)-this.position.z)<Math.hypot(...c.size)/2+margin&&Math.abs((c.body?.position.y??c.y)-this.position.y)<Math.hypot(...c.size)/2+margin+2);
+  const nearby=sections.querySegment?sections.querySegment(this.position,this.position,margin+2).sort((a,b)=>(a.queryOrder??Infinity)-(b.queryOrder??Infinity)):sections;
+  this.near=nearby.filter(c=>{if(c.hidden||c.collisionDisabled||c.state!=='intact'&&c.state!=='settled')return false;const radius=c.queryRadius??Math.hypot(...c.size)/2;return Math.abs((c.body?.position.x??c.x)-this.position.x)<radius+margin&&Math.abs((c.body?.position.z??c.z)-this.position.z)<radius+margin&&Math.abs((c.body?.position.y??c.y)-this.position.y)<radius+margin+2;});
   let forward=clamp(input.forward||0,-1,1),strafe=clamp(input.strafe||0,-1,1),magnitude=Math.hypot(forward,strafe);if(magnitude>1){forward/=magnitude;strafe/=magnitude;}magnitude=Math.min(1,magnitude);
   const speed=(input.boost?this.boostSpeed:this.runSpeed),steps=Math.max(1,Math.ceil(dt/.008)),h=dt/steps;
   for(let i=0;i<steps;i++){

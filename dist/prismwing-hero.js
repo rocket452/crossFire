@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
-import {PrismwingCharacter} from './prismwing-character.js?v=prismwing-177';
-import {PrismwingEffects} from './prismwing-effects.js?v=prismwing-177';
+import {PrismwingCharacter} from './prismwing-character.js?v=overall-performance-238';
+import {PrismwingEffects} from './prismwing-effects.js?v=overall-performance-238';
 export const PRISMWING=Object.freeze({speed:16,acceleration:2.6,orbitRadius:23,orbitRate:.16,chargeSeconds:.45,beamSeconds:.8,cooldown:1.4,damagePerSecond:120,range:150,hitRadius:.16});
 export class PrismwingHero {
  constructor(scene,model,{getRobot,traceRainbow,onRainbowHit,buildings=[]}){Object.assign(this,{scene,getRobot,traceRainbow,onRainbowHit});this.root=new THREE.Group();this.root.name='Prismwing / rainbow parrot heroine';scene.add(this.root);this.art=new PrismwingCharacter(this.root,model);this.character=this.art.character;this.fx=new PrismwingEffects(scene);this.velocity=new THREE.Vector3();this.cruise=Math.max(22,...buildings.map(b=>b.floors*3+5));this.enabled=false;this.reset();}

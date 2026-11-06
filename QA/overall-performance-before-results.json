@@ -1,0 +1,276 @@
+{
+  "evacuation": {
+    "cpu": {
+      "totalMs": 5.190000000000145,
+      "parts": {
+        "evacuation": 2.2875000000014554,
+        "runner": 1.0099999999998546,
+        "violet": 0.20999999999912689,
+        "walker": 0.015000000000145518,
+        "rift": 0.592500000000291,
+        "physics": 0
+      }
+    },
+    "views": {
+      "overview": {
+        "medianMs": 6.2999999999883585,
+        "calls": 247,
+        "triangles": 332878,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "instances": 3392
+          },
+          {
+            "meshes": 1,
+            "instances": 1908
+          },
+          {
+            "meshes": 1,
+            "instances": 848
+          }
+        ]
+      },
+      "street": {
+        "medianMs": 4.100000000005821,
+        "calls": 197,
+        "triangles": 330798,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "instances": 3392
+          },
+          {
+            "meshes": 1,
+            "instances": 1908
+          },
+          {
+            "meshes": 1,
+            "instances": 848
+          }
+        ]
+      },
+      "side": {
+        "medianMs": 4.199999999982538,
+        "calls": 225,
+        "triangles": 330608,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "instances": 3392
+          },
+          {
+            "meshes": 1,
+            "instances": 1908
+          },
+          {
+            "meshes": 1,
+            "instances": 848
+          }
+        ]
+      }
+    },
+    "rubble": {
+      "stats": {
+        "fallingFragments": 125,
+        "collisionlessBuildings": 1,
+        "buildingCollisionReleaseFraction": 0.75,
+        "collisionlessFragments": 145,
+        "nonRobotDamageMultiplier": 0.1,
+        "robotDamageMultiplier": 1,
+        "impacts": 4,
+        "detached": 145,
+        "collapses": 4,
+        "activeBodies": 0,
+        "queued": 0,
+        "seconds": 1.4666666666666663,
+        "playerReserve": 28,
+        "totalChunks": 6148
+      },
+      "cpu": {
+        "totalMs": 9.542499999999563,
+        "parts": {
+          "evacuation": 5.232499999998254,
+          "runner": 1.2325000000026194,
+          "violet": 0.34249999999810826,
+          "walker": 0.002500000000145519,
+          "rift": 0.2750000000007276,
+          "physics": 0.10250000000014552
+        }
+      },
+      "render": {
+        "medianMs": 4.600000000005821,
+        "calls": 198,
+        "triangles": 334220,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "instances": 3392
+          },
+          {
+            "meshes": 1,
+            "instances": 1908
+          },
+          {
+            "meshes": 1,
+            "instances": 848
+          }
+        ]
+      }
+    },
+    "errors": []
+  },
+  "testing&enemy=bastion": {
+    "cpu": {
+      "totalMs": 1.932499999999709,
+      "parts": {
+        "arena": 0.7499999999985448,
+        "runner": 0.8399999999979627,
+        "violet": 0.002500000000873115,
+        "walker": 0.007499999999708962,
+        "rift": 0,
+        "physics": 0.0024999999994179236
+      }
+    },
+    "views": {
+      "overview": {
+        "medianMs": 9.399999999965075,
+        "calls": 329,
+        "triangles": 219488,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "instances": 1792
+          },
+          {
+            "meshes": 1,
+            "instances": 1008
+          },
+          {
+            "meshes": 1,
+            "instances": 448
+          }
+        ]
+      },
+      "street": {
+        "medianMs": 4.900000000023283,
+        "calls": 317,
+        "triangles": 217976,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "instances": 1792
+          },
+          {
+            "meshes": 1,
+            "instances": 1008
+          },
+          {
+            "meshes": 1,
+            "instances": 448
+          }
+        ]
+      },
+      "side": {
+        "medianMs": 5.900000000023283,
+        "calls": 284,
+        "triangles": 216800,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "instances": 1792
+          },
+          {
+            "meshes": 1,
+            "instances": 1008
+          },
+          {
+            "meshes": 1,
+            "instances": 448
+          }
+        ]
+      }
+    },
+    "rubble": {
+      "stats": {
+        "fallingFragments": 0,
+        "collisionlessBuildings": 0,
+        "buildingCollisionReleaseFraction": 0.75,
+        "collisionlessFragments": 20,
+        "nonRobotDamageMultiplier": 0.1,
+        "robotDamageMultiplier": 1,
+        "impacts": 4,
+        "detached": 152,
+        "collapses": 4,
+        "activeBodies": 132,
+        "queued": 196,
+        "seconds": 1.4666666666666663,
+        "playerReserve": 28,
+        "totalChunks": 3248
+      },
+      "cpu": {
+        "totalMs": 10.455000000000291,
+        "parts": {
+          "arena": 0.6125,
+          "runner": 0.9475000000005821,
+          "violet": 0,
+          "walker": 0,
+          "rift": 0,
+          "physics": 8.460000000003493
+        }
+      },
+      "render": {
+        "medianMs": 5.600000000034925,
+        "calls": 321,
+        "triangles": 219156,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "instances": 1792
+          },
+          {
+            "meshes": 1,
+            "instances": 1008
+          },
+          {
+            "meshes": 1,
+            "instances": 448
+          }
+        ]
+      }
+    },
+    "errors": []
+  }
+}

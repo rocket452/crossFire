@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {HumanoidCharacter} from './humanoid-character.js?v=prismwing-177';
+import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 export const SPECTRUM=['#ff4764','#ff983d','#ffe35b','#62ed81','#44d9ff','#5980ff','#c070ff'];
 const Y=new THREE.Vector3(0,1,0);
 export class PrismwingCharacter {

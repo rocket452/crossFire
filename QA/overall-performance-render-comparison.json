@@ -1,0 +1,323 @@
+{
+  "evacuation": {
+    "comparison": {
+      "overview": {
+        "legacy": [
+          {
+            "medianMs": 10.79999999993015,
+            "calls": 114,
+            "triangles": 310838,
+            "pixels": [
+              898,
+              640
+            ],
+            "batches": [
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 3392,
+                "visibleInstances": 2368,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 1908,
+                "visibleInstances": 1332,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 848,
+                "visibleInstances": 592,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              }
+            ]
+          },
+          {
+            "medianMs": 3.800000000046566,
+            "calls": 114,
+            "triangles": 310838,
+            "pixels": [
+              898,
+              640
+            ],
+            "batches": [
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 3392,
+                "visibleInstances": 2368,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 1908,
+                "visibleInstances": 1332,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 848,
+                "visibleInstances": 592,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              }
+            ]
+          }
+        ],
+        "culled": [
+          {
+            "medianMs": 9,
+            "calls": 114,
+            "triangles": 224310,
+            "pixels": [
+              898,
+              640
+            ],
+            "batches": [
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 3392,
+                "visibleInstances": 2368,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 1908,
+                "visibleInstances": 1332,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 848,
+                "visibleInstances": 592,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              }
+            ]
+          },
+          {
+            "medianMs": 5.199999999953434,
+            "calls": 114,
+            "triangles": 224310,
+            "pixels": [
+              898,
+              640
+            ],
+            "batches": [
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 3392,
+                "visibleInstances": 2368,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 1908,
+                "visibleInstances": 1332,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 848,
+                "visibleInstances": 592,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              }
+            ]
+          }
+        ]
+      },
+      "street": {
+        "legacy": [
+          {
+            "medianMs": 3.299999999930151,
+            "calls": 68,
+            "triangles": 309374,
+            "pixels": [
+              898,
+              640
+            ],
+            "batches": [
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 3392,
+                "visibleInstances": 1168,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 1908,
+                "visibleInstances": 657,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 848,
+                "visibleInstances": 292,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              }
+            ]
+          },
+          {
+            "medianMs": 3.699999999953434,
+            "calls": 68,
+            "triangles": 309374,
+            "pixels": [
+              898,
+              640
+            ],
+            "batches": [
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 3392,
+                "visibleInstances": 1168,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 1908,
+                "visibleInstances": 657,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 848,
+                "visibleInstances": 292,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              }
+            ]
+          }
+        ],
+        "culled": [
+          {
+            "medianMs": 3.3999999999068677,
+            "calls": 68,
+            "triangles": 121446,
+            "pixels": [
+              898,
+              640
+            ],
+            "batches": [
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 3392,
+                "visibleInstances": 1168,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 1908,
+                "visibleInstances": 657,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 848,
+                "visibleInstances": 292,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              }
+            ]
+          },
+          {
+            "medianMs": 4.199999999953434,
+            "calls": 68,
+            "triangles": 121446,
+            "pixels": [
+              898,
+              640
+            ],
+            "batches": [
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 3392,
+                "visibleInstances": 1168,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 1908,
+                "visibleInstances": 657,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              },
+              {
+                "meshes": 1,
+                "districts": 24,
+                "instances": 848,
+                "visibleInstances": 292,
+                "mode": "culled",
+                "frustumCulled": true,
+                "shadowBatches": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "errors": []
+  }
+}

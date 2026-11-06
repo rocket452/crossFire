@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {HumanoidCharacter} from './humanoid-character.js?v=characters-24';
+import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 // Shared Blender animation palettes drive instanced, rigid-skinned body segments.
 // The crowd does not allocate one renderer or one skinned draw per soldier.
 export class InfantryCrowd {

@@ -1,4 +1,4 @@
-import {RunnerMotion,terrainHeight} from './runner-motion.js?v=quake-pylons-198';
+import {RunnerMotion,terrainHeight} from './runner-motion.js?v=overall-performance-238';
 // Air steering response is 40% lower, retaining more takeoff momentum during turns.
 // Jump height scales with launch speed squared: sqrt(0.7) lowers only the first jump by 30%.
 export const NINJA=Object.freeze({runSpeed:32.2,airSpeed:32.2,airAcceleration:3,airDrag:.15,wallPushSpeed:12.6,wallJumpSpeed:40,jumpSpeed:34*Math.sqrt(.7),doubleJumpSpeed:30,gravity:32,fallGravity:44,terminalSpeed:52,coyoteSeconds:.1,jumpBufferSeconds:.15,dashRange:48,dashSpeed:128.8,dashCooldown:6,dashDamage:320,slowFallSeconds:2,slowFallGravity:.12,slowFallSpeed:3,shurikenDamage:55,throwInterval:.22,shurikenSpeed:59.5,shurikenScale:2,shurikenRadius:.24,shurikenRange:127.5,maxProjectiles:36});

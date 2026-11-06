@@ -1,0 +1,55 @@
+{
+  "evacuation": {
+    "cpu": null,
+    "views": {
+      "away": {
+        "medianMs": 4.2999999999883585,
+        "calls": 118,
+        "triangles": 307768,
+        "pixels": [
+          1212,
+          864
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "instances": 3392
+          },
+          {
+            "meshes": 1,
+            "instances": 1908
+          },
+          {
+            "meshes": 1,
+            "instances": 848
+          }
+        ]
+      },
+      "fullscreen": {
+        "medianMs": 3,
+        "calls": 68,
+        "triangles": 309374,
+        "pixels": [
+          2592,
+          1301
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "instances": 3392
+          },
+          {
+            "meshes": 1,
+            "instances": 1908
+          },
+          {
+            "meshes": 1,
+            "instances": 848
+          }
+        ]
+      }
+    },
+    "rubble": null,
+    "errors": []
+  }
+}

@@ -5,7 +5,7 @@ import {findPortalRescue,choosePortalExit,roadPortalPositions} from './portal-po
 const UP=new THREE.Vector3(0,1,0),FORWARD=new THREE.Vector3(0,0,1);
 const SHOT_INTERVAL=.25,BOLT_SPEED=65,TRACE_LIMIT=8;
 export const PERSONAL_TELEPORT_TRACE=Object.freeze({speed:160,minDuration:.22,maxDuration:.38,fade:.10,length:6,radius:.045,pathRadius:.025});
-import {HumanoidCharacter} from './humanoid-character.js?v=characters-24';
+import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 export class PortalHero {
  constructor(scene,model,spec,{characterModel=null,getRobot,getUnits,getThreats,traceThreat,traceBolt,isExitClear,onTeleport,onBoltHit,onEvent=()=>{},getTravelPositions=roadPortalPositions}){
   Object.assign(this,{scene,spec,getRobot,getUnits,getThreats,traceThreat,traceBolt,isExitClear,onTeleport,onBoltHit,onEvent,getTravelPositions});this.root=new THREE.Group();this.root.name='Rift Warden';scene.add(this.root);this.nodes={};model.scene.updateMatrixWorld(true);

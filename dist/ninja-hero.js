@@ -2,14 +2,14 @@ import {KageSmoke,guardHeroInSmoke} from './kage-smoke.js?v=smoke-projectile-219
 import {KageBombs} from './kage-bombs.js?v=smoke-projectile-219';
 import {KageAttacks,kageHitPower} from './kage-attacks.js?v=mireguard-balance-189';
 import {ChargedShuriken} from './charged-shuriken.js?v=shuriken-piercing-135';
-import {ShurikenWorld} from './shuriken-world.js?v=shuriken-piercing-135';
+import {ShurikenWorld} from './shuriken-world.js?v=overall-performance-238';
 import {ShurikenEffects} from './shuriken-effects.js?v=kage-loadout-139';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 import {HeroHurt} from './hero-hurt.js?v=hero-hurt-118';
 import * as THREE from './vendor/three.module.js';
-import {HumanoidCharacter} from './humanoid-character.js?v=ninja-82';
-import {NinjaMotion,NINJA} from './ninja-motion.js?v=quake-pylons-198';
-import {terrainHeight} from './runner-motion.js?v=quake-pylons-198';
+import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
+import {NinjaMotion,NINJA} from './ninja-motion.js?v=overall-performance-238';
+import {terrainHeight} from './runner-motion.js?v=overall-performance-238';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 const UP=new THREE.Vector3(0,1,0),Z=new THREE.Vector3(0,0,1),$=id=>document.getElementById(id);

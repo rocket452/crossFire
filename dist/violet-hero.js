@@ -7,7 +7,7 @@ import {advanceVioletFlight,VIOLET_TUNING} from './violet-flight.js?v=violet-ine
 import {RescuePolicy,interceptPoint} from './hero-defense.js?v=evacuation-57';
 
 import {VioletFlightPose} from './violet-flight-pose.js?v=violet-pose-26';
-import {HumanoidCharacter} from './humanoid-character.js?v=characters-24';
+import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 export class VioletHero {
  constructor(scene,gltf,spec,{characterModel=null,getRobot,traceOrb,onOrbHit,onPowerHit=()=>0,redirect=()=>null,onEvent=()=>{},buildings=[],getMissileTarget=()=>null,claimMissile=()=>{}}){
   Object.assign(this,{onPowerHit,redirect,scene,spec,getRobot,traceOrb,onOrbHit,onEvent,buildings,getMissileTarget,claimMissile});this.policy=new RescuePolicy();this.shieldShake=new ShieldShake();

@@ -1,0 +1,396 @@
+{
+  "evacuation": {
+    "cpu": {
+      "totalMs": 6.8125,
+      "parts": {
+        "evacuation": 2.884999999997672,
+        "runner": 0.4475000000005821,
+        "violet": 0.26499999999796275,
+        "walker": 0.002500000000873115,
+        "rift": 0.512499999992724,
+        "physics": 0.005000000000291038
+      }
+    },
+    "views": {
+      "overview": {
+        "medianMs": 7.7000000000116415,
+        "calls": 247,
+        "triangles": 246350,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 3392,
+            "visibleInstances": 2368,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 1908,
+            "visibleInstances": 1332,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 848,
+            "visibleInstances": 592,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          }
+        ]
+      },
+      "street": {
+        "medianMs": 5,
+        "calls": 197,
+        "triangles": 142870,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 3392,
+            "visibleInstances": 1168,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 1908,
+            "visibleInstances": 657,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 848,
+            "visibleInstances": 292,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          }
+        ]
+      },
+      "side": {
+        "medianMs": 7,
+        "calls": 225,
+        "triangles": 173776,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 3392,
+            "visibleInstances": 1536,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 1908,
+            "visibleInstances": 864,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 848,
+            "visibleInstances": 384,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          }
+        ]
+      }
+    },
+    "rubble": {
+      "stats": {
+        "fallingFragments": 125,
+        "collisionlessBuildings": 1,
+        "buildingCollisionReleaseFraction": 0.75,
+        "collisionlessFragments": 145,
+        "nonRobotDamageMultiplier": 0.1,
+        "robotDamageMultiplier": 1,
+        "impacts": 4,
+        "detached": 145,
+        "collapses": 4,
+        "activeBodies": 0,
+        "queued": 0,
+        "seconds": 1.4666666666666663,
+        "playerReserve": 28,
+        "totalChunks": 6148
+      },
+      "cpu": {
+        "totalMs": 7.615000000000873,
+        "parts": {
+          "evacuation": 4.257500000004074,
+          "runner": 1.4549999999973806,
+          "violet": 0.23249999999679857,
+          "walker": 0.007499999999708962,
+          "rift": 0.3375000000014552,
+          "physics": 0.1974999999976717
+        }
+      },
+      "render": {
+        "medianMs": 4.100000000034925,
+        "calls": 198,
+        "triangles": 146292,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 3392,
+            "visibleInstances": 1168,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 1908,
+            "visibleInstances": 657,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 24,
+            "instances": 848,
+            "visibleInstances": 292,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          }
+        ]
+      }
+    },
+    "errors": []
+  },
+  "testing&enemy=bastion": {
+    "cpu": {
+      "totalMs": 1.7900000000008731,
+      "parts": {
+        "arena": 0.852499999999418,
+        "runner": 0.38250000000116413,
+        "violet": 0,
+        "walker": 0.002500000000873115,
+        "rift": 0,
+        "physics": 0
+      }
+    },
+    "views": {
+      "overview": {
+        "medianMs": 20,
+        "calls": 329,
+        "triangles": 219488,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "districts": 12,
+            "instances": 1792,
+            "visibleInstances": 1792,
+            "mode": "direct",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 12,
+            "instances": 1008,
+            "visibleInstances": 1008,
+            "mode": "direct",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 12,
+            "instances": 448,
+            "visibleInstances": 448,
+            "mode": "direct",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          }
+        ]
+      },
+      "street": {
+        "medianMs": 7.2999999999883585,
+        "calls": 316,
+        "triangles": 126784,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "districts": 12,
+            "instances": 1792,
+            "visibleInstances": 672,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 12,
+            "instances": 1008,
+            "visibleInstances": 486,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 12,
+            "instances": 448,
+            "visibleInstances": 216,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          }
+        ]
+      },
+      "side": {
+        "medianMs": 4,
+        "calls": 283,
+        "triangles": 131720,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "districts": 12,
+            "instances": 1792,
+            "visibleInstances": 800,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 12,
+            "instances": 1008,
+            "visibleInstances": 450,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 12,
+            "instances": 448,
+            "visibleInstances": 200,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          }
+        ]
+      }
+    },
+    "rubble": {
+      "stats": {
+        "fallingFragments": 0,
+        "collisionlessBuildings": 0,
+        "buildingCollisionReleaseFraction": 0.75,
+        "collisionlessFragments": 20,
+        "nonRobotDamageMultiplier": 0.1,
+        "robotDamageMultiplier": 1,
+        "impacts": 4,
+        "detached": 152,
+        "collapses": 4,
+        "activeBodies": 132,
+        "queued": 196,
+        "seconds": 1.4666666666666663,
+        "playerReserve": 28,
+        "totalChunks": 3248
+      },
+      "cpu": {
+        "totalMs": 9.214999999999417,
+        "parts": {
+          "arena": 0.6724999999947613,
+          "runner": 0.5925000000032015,
+          "violet": 0,
+          "walker": 0,
+          "rift": 0,
+          "physics": 7.504999999995926
+        }
+      },
+      "render": {
+        "medianMs": 4.600000000034925,
+        "calls": 321,
+        "triangles": 129220,
+        "pixels": [
+          898,
+          640
+        ],
+        "batches": [
+          {
+            "meshes": 1,
+            "districts": 12,
+            "instances": 1792,
+            "visibleInstances": 672,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 12,
+            "instances": 1008,
+            "visibleInstances": 486,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          },
+          {
+            "meshes": 1,
+            "districts": 12,
+            "instances": 448,
+            "visibleInstances": 216,
+            "mode": "culled",
+            "frustumCulled": true,
+            "shadowBatches": 1
+          }
+        ]
+      }
+    },
+    "errors": []
+  }
+}
