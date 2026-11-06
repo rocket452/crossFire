@@ -3,8 +3,8 @@ import {Bastion} from './bastion.js?v=kage-smoke-210';
 
 // Adapter for the existing combat arena: no scene, renderer or player controller of its own.
 export class BastionTesting {
- constructor(scene,damage,config,{getHeroes,onEvent=()=>{},traceProjectile,onProjectileImpact,rainLanding,onRainImpact}){
-  Object.assign(this,{config,getHeroes,onEvent});this.enabled=false;this.time=0;this.scale=1;
+ constructor(scene,damage,config,{getHeroes,onEvent=()=>{},traceProjectile,onProjectileImpact,rainLanding,onRainImpact,mission=false}){
+  Object.assign(this,{config,getHeroes,onEvent,mission});this.enabled=false;this.time=0;this.scale=1;
   this.boss=new Bastion(scene,damage,config,{onEvent,onPlayerHit:(p,power,impact)=>this.hitHero(p,power,impact),onWindup:()=>this.windupSound()});
   this.boss.getPulseTargets=()=>this.getHeroes().filter(h=>h&&h.enabled!==false).map(h=>({position:h.root.position,motion:h.motion?.body||h.motion}));this.boss.rainLanding=rainLanding;this.boss.onRainImpact=onRainImpact;this.boss.traceProjectile=traceProjectile;this.boss.onProjectileImpact=onProjectileImpact;this.boss.suppressDamageFlash=false;this.boss.recordHit=()=>{};this.boss.stun=seconds=>this.boss.interrupt(seconds);
   Object.defineProperty(this.boss,'windup',{get:()=>this.boss.state.phase==='windup'?this.boss.state.duration-this.boss.state.elapsed:0});
@@ -15,14 +15,14 @@ export class BastionTesting {
   this.panel.querySelector('[data-scale]').value=config.dilation.scale*100;
   this.panel.querySelector('[data-slow]').onclick=()=>this.toggleSlow();this.panel.querySelector('[data-debug]').onclick=()=>this.setDebug(!this.debug);
   this.panel.querySelector('[data-scale]').oninput=e=>{config.dilation.scale=THREE.MathUtils.clamp(Number(e.target.value)/100,config.dilation.minimum,config.dilation.maximum);if(this.scale!==1){this.scale=config.dilation.scale;this.slowLabel();}};
-  window.addEventListener('keydown',e=>{if(!this.enabled||e.target.closest?.('input,select,textarea')||document.querySelector('dialog[open]'))return;if(e.code==='KeyT'){e.preventDefault();this.toggleSlow();}if(e.code==='F2'){e.preventDefault();this.setDebug(!this.debug);}});
+  window.addEventListener('keydown',e=>{if(!this.enabled||e.target.closest?.('input,select,textarea')||document.querySelector('dialog[open]'))return;if(e.code==='KeyT'&&!this.mission){e.preventDefault();this.toggleSlow();}if(e.code==='F2'){e.preventDefault();this.setDebug(!this.debug);}});
   for(const h of getHeroes())if(h?.aimDirection&&h.heading)this.attachCamera(h);this.reset(false);
  }
  setDebug(value){this.debug=!!value;this.boss.model.setDebug(this.debug);this.boss.effects.setDebug(this.debug);this.panel.querySelector('pre').hidden=!this.debug;this.panel.hidden=!this.enabled||!this.debug;}
  slowLabel(){this.panel.querySelector('[data-slow]').textContent=this.scale===1?'World slowdown OFF · T':'World speed '+Math.round(this.scale*100)+'% · T';}
  toggleSlow(){this.scale=this.scale===1?THREE.MathUtils.clamp(this.config.dilation.scale,this.config.dilation.minimum,this.config.dilation.maximum):1;this.slowLabel();}
  reset(enabled){this.enabled=enabled;this.time=0;this.scale=this.config.dilation.enabled?THREE.MathUtils.clamp(this.config.dilation.scale,this.config.dilation.minimum,this.config.dilation.maximum):1;this.boss.reset(Number(this.seedInput.value));this.boss.root.position.fromArray(this.config.arena.testingPosition);this.boss.model.sync();this.boss.sync();this.boss.root.visible=enabled;this.boss.effects.group.visible=enabled;for(const m of[this.boss.projectiles.mesh,this.boss.projectiles.outline,this.boss.projectiles.halo,this.boss.projectiles.debugMesh])m.visible=enabled;
-  if(!enabled){this.boss.combatUnit.alive=false;this.boss.combatUnit.health=0;this.boss.combatUnit.shapes=[];}this.setDebug(enabled&&this.config.debug.enabled);document.querySelector('.viewer').classList.toggle('has-bastion',enabled);this.slowLabel();this.hud();}
+  if(!enabled){this.boss.combatUnit.alive=false;this.boss.combatUnit.health=0;this.boss.combatUnit.shapes=[];}this.setDebug(enabled&&this.config.debug.enabled);if(!this.mission)document.querySelector('.viewer').classList.toggle('has-bastion',enabled);this.slowLabel();this.hud();}
  get sections(){return this.enabled?this.boss.sections:[];}
  player(){const heroes=this.getHeroes();this.hero=heroes.find(h=>h.active&&h.enabled!==false)||heroes.find(h=>h.enabled!==false);const h=this.hero,motion=h?.motion?.body||h?.motion;return{entity:h,position:h?.root.position.clone()||new THREE.Vector3(0,.08,30),motion:motion?.normal?motion:{mode:'air',normal:{x:0,y:1,z:0},velocity:h?.velocity||null},phased:!!h?.dash?.active||!!h?.motion?.dash};}
  hitHero(point,power,impact){const h=this.hero;if(!h||h.isDamageProtected?.())return;h.receiveEyeHit?.(point,power);if(impact?.kind!=='pulse')return;const c=impact.knockback,m=h.motion?.body||h.motion,away=h.root.position.clone().sub(impact.origin).setY(0);if(away.lengthSq()<1e-6)away.set(Math.sin(this.boss.root.rotation.y),0,Math.cos(this.boss.root.rotation.y));away.normalize().multiplyScalar(c.horizontalSpeed);away.y=c.upwardSpeed;m?.applyKnockback?.(away,c);this.boss.model.anchor=null;}

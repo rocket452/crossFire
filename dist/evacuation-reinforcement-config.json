@@ -1,0 +1,12 @@
+{
+  "wreckDelay": 2.5,
+  "approachSeconds": 7,
+  "hoverSeconds": 1.2,
+  "dropSeconds": 2.8,
+  "departureSeconds": 6,
+  "approachDistance": 300,
+  "cruiseHeight": 76,
+  "cargoHeight": 26,
+  "departureHeight": 110,
+  "approachHeight": 125
+}
