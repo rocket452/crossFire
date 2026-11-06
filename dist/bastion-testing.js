@@ -1,12 +1,13 @@
 import * as THREE from './vendor/three.module.js';
-import {Bastion} from './bastion.js?v=kage-smoke-210';
+import {Bastion} from './bastion.js?v=player-pulse-236';
 
 // Adapter for the existing combat arena: no scene, renderer or player controller of its own.
 export class BastionTesting {
  constructor(scene,damage,config,{getHeroes,onEvent=()=>{},traceProjectile,onProjectileImpact,rainLanding,onRainImpact,mission=false}){
   Object.assign(this,{config,getHeroes,onEvent,mission});this.enabled=false;this.time=0;this.scale=1;
   this.boss=new Bastion(scene,damage,config,{onEvent,onPlayerHit:(p,power,impact)=>this.hitHero(p,power,impact),onWindup:()=>this.windupSound()});
-  this.boss.getPulseTargets=()=>this.getHeroes().filter(h=>h&&h.enabled!==false).map(h=>({position:h.root.position,motion:h.motion?.body||h.motion}));this.boss.rainLanding=rainLanding;this.boss.onRainImpact=onRainImpact;this.boss.traceProjectile=traceProjectile;this.boss.onProjectileImpact=onProjectileImpact;this.boss.suppressDamageFlash=false;this.boss.recordHit=()=>{};this.boss.stun=seconds=>this.boss.interrupt(seconds);
+  // Nearby CPU allies must not provoke a pulse when the controlled hero is far away.
+  this.boss.getPulseTargets=()=>this.boss.player?[this.boss.player]:[];this.boss.rainLanding=rainLanding;this.boss.onRainImpact=onRainImpact;this.boss.traceProjectile=traceProjectile;this.boss.onProjectileImpact=onProjectileImpact;this.boss.suppressDamageFlash=false;this.boss.recordHit=()=>{};this.boss.stun=seconds=>this.boss.interrupt(seconds);
   Object.defineProperty(this.boss,'windup',{get:()=>this.boss.state.phase==='windup'?this.boss.state.duration-this.boss.state.elapsed:0});
   const css=document.createElement('link');css.rel='stylesheet';css.href='bastion-testing.css?v=charged-shuriken-130';document.head.append(css);
   this.panel=document.createElement('div');this.panel.id='bastion-status';this.panel.hidden=true;

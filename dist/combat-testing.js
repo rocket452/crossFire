@@ -1,6 +1,6 @@
 import {Mireguard} from './mireguard.js?v=bruiser-model-218';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-squads-191';
-import {BastionTesting} from './bastion-testing.js?v=kage-smoke-210';
+import {BastionTesting} from './bastion-testing.js?v=player-pulse-236';
 import {ExperimentalRobot} from './experimental-robots.js?v=bruiser-model-218';
 import * as THREE from './vendor/three.module.js';
 import {EvacRaider} from './evac-raider.js?v=bruiser-model-218';

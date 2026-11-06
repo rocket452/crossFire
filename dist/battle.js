@@ -1,6 +1,6 @@
 import {EvacuationBastionCinematic} from './evacuation-bastion-cinematic.js?v=bastion-rescue-230';
 import {EvacuationBastionReinforcement} from './evacuation-bastion-reinforcement.js?v=evac-shutdown-231';
-import {BastionTesting} from './bastion-testing.js?v=evac-dropship-226';
+import {BastionTesting} from './bastion-testing.js?v=player-pulse-236';
 import {EvacuationHelicopterStrike} from './evacuation-helicopter-strike.js?v=heli-missiles-222';
 import {evacuationCityBuildings,EVAC_CITY_ROADS,addEvacuationDistrictRoads} from './evac-city-map.js?v=route-towers-232';
 import {guardHeroInSmoke} from './kage-smoke.js?v=smoke-projectile-219';
@@ -14,7 +14,7 @@ import {PrismwingHero,PRISMWING} from './prismwing-hero.js?v=prismwing-177';
 import {BuildingSmoke} from './building-smoke.js?v=building-smoke-155';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=argus-sustained-205';
 import {EnemySeparation} from './enemy-separation.js?v=mireguard-175';
-import {CombatTesting} from './combat-testing.js?v=bruiser-model-218';
+import {CombatTesting} from './combat-testing.js?v=player-pulse-236';
 import {ActorSilhouettes} from './actor-silhouettes.js?v=argus-sustained-205';
 import {RAIDER_COMBAT} from './evac-raider.js?v=bruiser-model-218';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=raider-burst-92';
