@@ -16,6 +16,8 @@ export function evacuationCityBuildings(original){
  // Keep all additions on the perimeter, at least 150m from the central Chinook.
  const outerTowers=[];for(const x of[-156,-108,-12,36])for(const z of[-108,204])outerTowers.push({x,z});
  outerTowers.forEach((b,i)=>buildings.push({...b,id:'EVAC-OUTER-TOWER-'+(i+1),floors:10+i%4,tint:tints[(i+2)%tints.length],name:'Perimeter skyline tower'}));
+ // Route-side skyline south of the civilian crossing; keep the Walker and flight lane open.
+ for(const [i,p]of [[-12,60],[12,60],[60,60],[-12,84],[12,84],[60,84]].entries())buildings.push({id:'EVAC-ROUTE-TOWER-'+(i+1),x:p[0],z:p[1],floors:10+i%5,tint:tints[i%tints.length],name:'Evacuation route tower'});
  return buildings;
 }
 

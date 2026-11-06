@@ -6,8 +6,8 @@ import {ESCORT_APPROACH as bounds,escortMovementBounds} from '../dist/evac-appro
 import {traceImpact} from '../dist/combat-collision.js';
 const original=JSON.parse(fs.readFileSync('dist/city-assets/city-layout.json')).buildings,before=JSON.stringify(original),buildings=evacuationCityBuildings(original);
 assert.equal(JSON.stringify(original),before,'scene-specific layout must not mutate other maps');
-assert.equal(bounds.maxX-bounds.minX,336);assert.equal(bounds.maxZ-bounds.minZ,336);assert.equal(buildings.length,50);assert.equal(new Set(buildings.map(b=>b.id  )).size,50);
-assert.equal((bounds.minX+bounds.maxX)/2,-48);assert.equal((bounds.minZ+bounds.maxZ)/2,48);assert.equal(buildings.filter(b=>b.floors>=10).length,16);
+assert.equal(bounds.maxX-bounds.minX,336);assert.equal(bounds.maxZ-bounds.minZ,336);assert.equal(buildings.length,56);assert.equal(new Set(buildings.map(b=>b.id  )).size,56);
+assert.equal((bounds.minX+bounds.maxX)/2,-48);assert.equal((bounds.minZ+bounds.maxZ)/2,48);assert.equal(buildings.filter(b=>b.floors>=10).length,22);
 assert.equal(escortMovementBounds().minX,-212);assert.equal(escortMovementBounds().maxX,116);
 const additions=buildings.filter(b=>b.id.startsWith('EVAC-OUTER-TOWER-'));assert.equal(additions.length,8);assert(additions.every(b=>Math.hypot(b.x+48,b.z-48)-Math.sqrt(50)>=150),'new towers keep central evacuation space clear');
 const sections=buildings.map(b=>({state:'intact',x:b.x,y:b.floors*1.5,z:b.z,size:[10,b.floors*3,10]}));
@@ -16,4 +16,8 @@ for(let x=-48;x<=48;x+=4){assert(!traceImpact({x:0,y:18,z:0},{x,y:1,z:48},{secti
 assert(!traceImpact({x:-48,y:1.3,z:210},{x:-48,y:1.3,z:36},{sections,ground:false,radius:2}));
 assert(!traceImpact({x:-48,y:26,z:240},{x:-48,y:26,z:48},{sections,ground:false,radius:10}));
 const root=addEvacuationDistrictRoads(new THREE.Scene()),road=root.getObjectByName('District asphalt');assert.equal(road.count,EVAC_CITY_ROADS.length);assert(road.count>30);
-console.log('PASS 336m square, 44 new/50 total independent destructible building specs, road/building clearance, wider hero bounds, clear civilian/Walker sight lines, Bruiser and Chinook corridors, instanced roads and no source-layout mutation');
+console.log('PASS 336m square, 50 new/56 total independent destructible building specs, road/building clearance, wider hero bounds, clear civilian/Walker sight lines, Bruiser and Chinook corridors, instanced roads and no source-layout mutation');
+
+const routeTowers=buildings.filter(b=>b.id.startsWith('EVAC-ROUTE-TOWER-'));assert.equal(routeTowers.length,6);assert(routeTowers.every(b=>b.floors>=10&&b.z>=60&&Math.hypot(b.x,b.z)-Math.sqrt(50)>50));console.log('PASS six route-side towers, 30–42m tall, over 50m clear of Walker origin');
+
+assert(!traceImpact({x:42,y:28,z:65},{x:0,y:18,z:5},{sections,ground:false}),'Bastion cinematic establishing shot stays clear');
