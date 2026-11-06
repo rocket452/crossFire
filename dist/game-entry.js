@@ -1,4 +1,4 @@
 const url=new URL(location.href);
 if(url.searchParams.get('scene')==='bastion'){url.searchParams.set('scene','testing');url.searchParams.set('enemy','bastion');history.replaceState(null,'',url);}
-if(url.searchParams.get('scene')==='shuriken')await import('./ninja-lab.js?v=overall-performance-238');
-else await import('./battle.js?v=slower-delivery-244');
+if(url.searchParams.get('scene')==='shuriken'){url.searchParams.set('scene','testing');history.replaceState(null,'',url);}
+await import('./battle.js?v=remove-shuriken-lab-245');
