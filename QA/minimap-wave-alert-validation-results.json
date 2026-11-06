@@ -1,16 +1,16 @@
 {
-  "revision": "wave-radar-224",
+  "revision": "wave-arrow-228",
   "scope": "four staggered Bruiser waves in Civilian evacuation",
   "alerts": {
     "durationSimulationSeconds": 8,
-    "banner": "ENEMY WAVE + live enemy count and entry edge",
+    "banner": "removed; incoming squad feed messages suppressed",
     "visuals": [
-      "orange pulsing radar border",
-      "large expanding entry ping",
-      "camera-relative incoming chevron",
+      "red pulsing radar border",
+      "large flashing solid red arrow toward spawn location",
+      "arrow follows camera rotation",
       "new squad markers flash"
     ],
-    "offscreen": "entry ping clamped to radar rim",
+    "offscreen": "arrow clamped to radar rim",
     "observer": "radar reveals briefly for the alert",
     "clearsOn": [
       "expiry",

@@ -11,7 +11,7 @@ export const EVAC_RAIDER_WAVES=Object.freeze({staggerSeconds:20,alertSeconds:8,w
 
 export class EvacRaiderWaves {
  constructor(scene,damage,options){
-  this.landing=options.landing;this.squads=EVAC_RAIDER_WAVES.waves.map((wave,i)=>new EvacRaiderSquad(scene,damage,{...options,idPrefix:i?'evac-raider-'+wave.edge:'evac-raider',route:wave.route,label:wave.label}));
+  this.landing=options.landing;this.squads=EVAC_RAIDER_WAVES.waves.map((wave,i)=>new EvacRaiderSquad(scene,damage,{...options,idPrefix:i?'evac-raider-'+wave.edge:'evac-raider',route:wave.route,label:wave.label,onEvent:message=>{if(!message.startsWith('Bruiser squad inbound'))options.onEvent?.(message);}}));
   this.reset();
  }
  get members(){return this.squads.flatMap(s=>s.members);}
