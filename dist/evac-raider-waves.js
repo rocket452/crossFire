@@ -1,10 +1,10 @@
-import {EvacRaiderSquad} from './evac-raider-squad.js?v=bruiser-model-218';
-import {ESCORT_APPROACH as bounds} from './evac-approach.js?v=evac-centered-215';
+import {EvacRaiderSquad} from './evac-raider-squad.js?v=compact-evac-237';
+import {ESCORT_APPROACH as bounds} from './evac-approach.js?v=compact-evac-237';
 
 // One three-Bruiser wave per edge. Civilian wave two arms the sequence.
 export const EVAC_RAIDER_WAVES=Object.freeze({staggerSeconds:20,alertSeconds:8,waves:Object.freeze([
  Object.freeze({edge:'south',label:'the far boulevard',route:null}),
- Object.freeze({edge:'east',label:'the east streets',route:[[bounds.maxX-6,24],[72,24],[-30,24]]}),
+ Object.freeze({edge:'east',label:'the east streets',route:[[bounds.maxX-6,24],[48,24],[-30,24]]}),
  Object.freeze({edge:'north',label:'the north streets',route:[[-48,bounds.minZ+6],[-48,-24],[-48,12]]}),
  Object.freeze({edge:'west',label:'the west streets',route:[[bounds.minX+6,48],[-96,48],[-66,48]]})
 ])});

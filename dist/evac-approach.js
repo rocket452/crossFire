@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-export const ESCORT_APPROACH=Object.freeze({minX:-216,maxX:120,minZ:-120,maxZ:216,spawnZ:210,stopZ:36,speed:3.2,squadSize:3,rowSpacing:6,lanes:Object.freeze([-4,0,4])});
+export const ESCORT_APPROACH=Object.freeze({minX:-165.6,maxX:69.6,minZ:-69.6,maxZ:165.6,spawnZ:159.6,stopZ:36,speed:3.2,squadSize:3,rowSpacing:6,lanes:Object.freeze([-4,0,4])});
 export const escortMovementBounds=(inset=4)=>({minX:ESCORT_APPROACH.minX+inset,maxX:ESCORT_APPROACH.maxX-inset,minZ:ESCORT_APPROACH.minZ+inset,maxZ:ESCORT_APPROACH.maxZ-inset});
 // Open boulevard beyond the original city: no new buildings on the squad's approach.
 export function addEscortApproach(scene,{x=0}={}){

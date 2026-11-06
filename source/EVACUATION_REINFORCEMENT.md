@@ -65,3 +65,11 @@ Checks: `node QA/evacuation-shutdown-test.mjs` covers all six possible transport
 Six additional destructible towers use the existing building kit at X -12 / 12 / 60, Z 60 / 84, with 10–14 floors (30–42m). They frame the south side of the civilian crossing at Z48 while retaining the open area around the Walker origin. Every footprint stays more than 50m from that origin. The map now has 56 buildings, including 22 tall towers. Civilian routes, Walker sight lines, street geometry, Chinook clearance and all four Bruiser approaches are unchanged. The layout remains exclusive to Civilian Evacuation.
 
 `QA/evacuation-square-map-test.mjs` checks all building/street overlaps, route and sightline traces, helicopter/Bruiser corridors and unchanged source layout. `QA/evacuation-route-towers-browser.cjs` checks the real destructible sections, desktop/touch rendering, civilian movement, reset and normal-city isolation.
+
+## Compact evacuation district (revision 237)
+
+Civilian Evacuation is now 235.2m square: each side is 70% of its former 336m length (49% of the former area). The map remains centered on the Chinook pad at (-48,48), with X bounds [-165.6,69.6] and Z bounds [-69.6,165.6]. Outer blocks beyond a 6m border margin are trimmed rather than compressing buildings or narrowing streets. There are 28 buildings, including 12 tall towers; all six route-side towers remain. The subway, civilian crossing and Walker/Bastion locations stay unchanged.
+
+Ground/road extents, minimap, hero/dash limits and edge enemy entrances use the compact bounds. South Bruisers enter at Z159.6; the east approach's intermediate waypoint is X48 so it stays inside the new east edge. The Chinook escapes at Z189.6 with adjusted cruise speed preserving its original 4.2s outbound horizontal leg. The first civilian spawn remains at 15s, with 60s between waves, and shutdown/cinematic rules remain unchanged.
+
+Verified compact dimensions, 28 real destructible buildings, civilian movement, retained route towers, reset and normal-city isolation on desktop/touch emulation (`evacuation-route-towers-browser.cjs`). Layout trace checks cover streets, civilian and Walker sight lines, helicopter/Bruiser corridors and the Bastion cinematic camera. Bruiser wave, minimap alert, evacuation lifecycle and shutdown unit checks pass. This does not resize other scenes.

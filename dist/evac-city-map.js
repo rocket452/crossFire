@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {ESCORT_APPROACH} from './evac-approach.js?v=evac-centered-215';
+import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
 import {evacuationBuildingAllowed} from './evacuation-config.js?v=evac-centered-215';
 
 // Preserve the exposed civilian crossing and the entire Chinook/Bruiser boulevard.
@@ -18,7 +18,7 @@ export function evacuationCityBuildings(original){
  outerTowers.forEach((b,i)=>buildings.push({...b,id:'EVAC-OUTER-TOWER-'+(i+1),floors:10+i%4,tint:tints[(i+2)%tints.length],name:'Perimeter skyline tower'}));
  // Route-side skyline south of the civilian crossing; keep the Walker and flight lane open.
  for(const [i,p]of [[-12,60],[12,60],[60,60],[-12,84],[12,84],[60,84]].entries())buildings.push({id:'EVAC-ROUTE-TOWER-'+(i+1),x:p[0],z:p[1],floors:10+i%5,tint:tints[i%tints.length],name:'Evacuation route tower'});
- return buildings;
+ return buildings.filter(b=>b.x-6>=ESCORT_APPROACH.minX&&b.x+6<=ESCORT_APPROACH.maxX&&b.z-6>=ESCORT_APPROACH.minZ&&b.z+6<=ESCORT_APPROACH.maxZ);
 }
 
 // Only new road segments; the original city grid and approach remain in place.

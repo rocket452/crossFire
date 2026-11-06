@@ -2,9 +2,9 @@ import {EvacuationBastionCinematic} from './evacuation-bastion-cinematic.js?v=ba
 import {EvacuationBastionReinforcement} from './evacuation-bastion-reinforcement.js?v=evac-shutdown-231';
 import {BastionTesting} from './bastion-testing.js?v=player-pulse-236';
 import {EvacuationHelicopterStrike} from './evacuation-helicopter-strike.js?v=heli-missiles-222';
-import {evacuationCityBuildings,EVAC_CITY_ROADS,addEvacuationDistrictRoads} from './evac-city-map.js?v=route-towers-232';
+import {evacuationCityBuildings,EVAC_CITY_ROADS,addEvacuationDistrictRoads} from './evac-city-map.js?v=compact-evac-237';
 import {guardHeroInSmoke} from './kage-smoke.js?v=smoke-projectile-219';
-import {EVACUATION_ENTRANCES,EVACUATION_LANDING} from './evacuation-config.js?v=evac-fallback-221';
+import {EVACUATION_ENTRANCES,EVACUATION_LANDING} from './evacuation-config.js?v=compact-evac-237';
 import {ConvoyResults} from './convoy-results.js?v=argus-sustained-205';
 import {routePoint,routeLength} from './convoy-map-config.js?v=argus-sustained-205';
 import {Argus} from './argus.js?v=kage-smoke-210';
@@ -25,12 +25,12 @@ import {EnemyDamageFlash} from './enemy-damage-flash.js?v=mireguard-headshots-18
 import {HeroMinimap} from './hero-minimap.js?v=subway-marker-235';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
-import {EvacRaiderWaves} from './evac-raider-waves.js?v=walker-wave-stop-229';
-import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-approach.js?v=evac-centered-215';
+import {EvacRaiderWaves} from './evac-raider-waves.js?v=compact-evac-237';
+import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-approach.js?v=compact-evac-237';
 import {MochiHero,MOCHI} from './mochi-hero.js?v=mochi-56';
 import {VOLT_STUN} from './hero-powers.js?v=combat-hud-102';
 import {RobotStunEffect} from './hero-power-effects.js?v=mochi-56';
-import {EvacuationScene} from './evacuation.js?v=evac-shutdown-231';
+import {EvacuationScene} from './evacuation.js?v=compact-evac-237';
 import * as THREE from 'three';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {OrbitControls} from './vendor/OrbitControls.js';
