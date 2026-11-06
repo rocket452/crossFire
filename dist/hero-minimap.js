@@ -36,7 +36,7 @@ export class HeroMinimap {
   const data=this.getSnapshot(),people=data.civilians||[],enemies=data.enemies||[];
   this.counts={civilians:data.civilianTotal??people.length,enemies:enemies.length};this.civilianCount.textContent=this.counts.civilians;this.enemyCount.textContent=enemies.length;
   this.activeWaves=data.waves||[];const waveEnemies=new Set(this.activeWaves.flatMap(w=>w.enemyIds||[])),latest=this.activeWaves.at(-1);this.root.classList.toggle('has-wave-alert',!!latest);if(latest)this.root.style.setProperty('--wave-pulse',String(.5+.5*Math.sin(latest.age*10)));
-  const entries=[...this.activeWaves.map(w=>({...w,id:'alert-'+w.id,kind:'wave',label:'Enemy wave: '+w.count+' Bruiser'+(w.count===1?'':'s')+' from the '+w.edge+' edge'})),...this.staticMarkers,...civilianClusters(people).map(g=>({...g,id:'group-'+g.id,kind:'civilian',label:g.count+' civilians'+(g.targeted?' — targeted by enemy attack':'')})),...enemies.map(e=>({...e,kind:e.boss?'boss':'enemy',label:e.name||(e.boss?'Siege Walker':'Robot drone')})),...(data.allies||[]).map(a=>({...a,kind:'ally',label:'Allied hero'}))];
+  const entries=[...this.activeWaves.map(w=>({...w,id:'alert-'+w.id,kind:'wave',label:'Enemy wave: '+w.count+' Bruiser'+(w.count===1?'':'s')+' from the '+w.edge+' edge'})),...this.staticMarkers.map(e=>e.kind==='subway'?{...e,warning:!!data.spawnWarning?.active&&e.id==='subway-'+data.spawnWarning.entrance,warningTime:data.spawnWarning?.time||0,warningHz:data.spawnWarning?.hz||2.5,closed:!!data.spawnWarning?.ended,label:data.spawnWarning?.ended?'Civilian spawn closed':data.spawnWarning?.active?'Civilian spawn incoming in '+Math.ceil(data.spawnWarning.remaining)+' seconds':'Civilian spawn · subway'}:e),...civilianClusters(people).map(g=>({...g,id:'group-'+g.id,kind:'civilian',label:g.count+' civilians'+(g.targeted?' — targeted by enemy attack':'')})),...enemies.map(e=>({...e,kind:e.boss?'boss':'enemy',label:e.name||(e.boss?'Siege Walker':'Robot drone')})),...(data.allies||[]).map(a=>({...a,kind:'ally',label:'Allied hero'}))];
   for(const p of data.plasma||[])entries.push({...p,id:'impact-'+p.id,kind:'plasma',label:'Plasma impact in '+Math.max(0,p.eta).toFixed(1)+' seconds'});
   for(const b of data.buses||[])entries.push({...b,kind:'bus',label:'Evacuation bus'});for(const p of data.pickups||[])entries.push({...p,kind:'pickup'});
   if(data.exit)entries.push({...data.exit,kind:'exit',label:'Convoy evacuation exit'});
@@ -49,6 +49,7 @@ export class HeroMinimap {
   const node=svg('g',{'data-kind':entry.kind,'data-id':entry.id,class:'minimap-marker '+entry.kind},this.markers),title=svg('title',{},node);title.textContent=entry.label;
   const arrow=entry.kind==='civilian'||entry.kind==='wave'?null:svg('path',{d:'M0 -13L4 -7H-4Z',class:'minimap-edge-arrow'},node);
   let waveChevron=null;if(entry.kind==='wave'){waveChevron=svg('path',{d:'M0 -16L11 -3H5V14H-5V-3H-11Z',class:'minimap-wave-arrow'},node);}
+  else if(entry.kind==='subway'){svg('circle',{r:12,class:'minimap-spawn-ring'},node);svg('rect',{x:-8,y:-8,width:16,height:16,rx:3,class:'minimap-symbol'},node);const text=svg('text',{'text-anchor':'middle','dominant-baseline':'central',class:'minimap-map-label'},node);text.textContent='S';}
   else if(entry.kind==='civilian')svg('circle',{r:4,class:'minimap-symbol'},node);
   else if(entry.kind==='boss'){svg('circle',{r:8,class:'minimap-boss-ring'},node);svg('path',{d:'M0 -6L6 0L0 6L-6 0Z',class:'minimap-symbol'},node);}
   else if(entry.kind==='enemy'){svg('path',{d:'M0 -5.5L5.5 0L0 5.5L-5.5 0Z',class:'minimap-symbol'},node);svg('circle',{r:1.2,class:'minimap-enemy-core'},node);}
@@ -72,6 +73,7 @@ export class HeroMinimap {
   for(const marker of this.nodes.values()){
    const p=projectMinimap(marker.entry,this.center,this.heading);marker.projected=p;marker.node.setAttribute('transform',`translate(${p.x} ${p.y})`);marker.node.classList.toggle('at-edge',p.edge);
    if(marker.waveChevron){const age=marker.entry.age||0;marker.waveChevron.setAttribute('transform',`rotate(${Math.atan2(p.y,p.x)*180/Math.PI+90})`);marker.waveChevron.setAttribute('opacity',.3+.7*(.5+.5*Math.sin(age*10)));this.markers.append(marker.node);}
+   if(marker.entry.kind==='subway'){const e=marker.entry,pulse=.5+.5*Math.sin(e.warningTime*Math.PI*2*e.warningHz);marker.node.classList.toggle('spawn-warning',!!e.warning);marker.node.classList.toggle('spawn-closed',!!e.closed);marker.node.style.setProperty('--spawn-pulse',e.warning?String(pulse):'0');this.markers.append(marker.node);}
    marker.arrow?.setAttribute('transform',`rotate(${Math.atan2(p.y,p.x)*180/Math.PI+90})`);
   }
  }
