@@ -2,7 +2,7 @@ import {viewportPixelRatio} from './render-budget.js?v=overall-performance-238';
 import {SpatialChunkBatch} from './spatial-chunk-batch.js?v=overall-performance-238';
 import {EvacuationBastionCinematic} from './evacuation-bastion-cinematic.js?v=bastion-rescue-230';
 import {EvacuationBastionReinforcement} from './evacuation-bastion-reinforcement.js?v=evac-shutdown-231';
-import {BastionTesting} from './bastion-testing.js?v=player-pulse-236';
+import {BastionTesting} from './bastion-testing.js?v=map-safe-gaps-239';
 import {EvacuationHelicopterStrike} from './evacuation-helicopter-strike.js?v=heli-missiles-222';
 import {evacuationCityBuildings,EVAC_CITY_ROADS,addEvacuationDistrictRoads} from './evac-city-map.js?v=compact-evac-237';
 import {guardHeroInSmoke} from './kage-smoke.js?v=smoke-projectile-219';
@@ -16,7 +16,7 @@ import {PrismwingHero,PRISMWING} from './prismwing-hero.js?v=overall-performance
 import {BuildingSmoke} from './building-smoke.js?v=building-smoke-155';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=argus-sustained-205';
 import {EnemySeparation} from './enemy-separation.js?v=mireguard-175';
-import {CombatTesting} from './combat-testing.js?v=player-pulse-236';
+import {CombatTesting} from './combat-testing.js?v=map-safe-gaps-239';
 import {ActorSilhouettes} from './actor-silhouettes.js?v=argus-sustained-205';
 import {RAIDER_COMBAT} from './evac-raider.js?v=bruiser-model-218';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=raider-burst-92';
@@ -287,7 +287,7 @@ if(testingMode){runner.motion.bounds={...COMBAT_ARENA.movementBounds};runner.das
 if(evacuationMode){
  const [bossConfig,transportConfig]=await Promise.all([fetch('bastion-config.json?v=yellow-pulse-182').then(r=>r.json()),fetch('evacuation-reinforcement-config.json?v=bastion-rescue-230').then(r=>r.json())]);
  bossConfig.dilation.enabled=false;bossConfig.debug.enabled=false;bossConfig.rain.bounds=[ESCORT_APPROACH.minX+8,ESCORT_APPROACH.maxX-8];
- const adapter=new BastionTesting(scene,unitDamage,bossConfig,{mission:true,getHeroes:()=>[runner,hero,solara,portalHero,mochi,ninja,prism],onEvent:feed,traceProjectile:(a,b,r)=>traceRaiderProjectile(a,b,'bastion',r),onProjectileImpact:hit=>{if(hit.section)physics.impact(new THREE.Vector3().copy(hit.point),18,3.8,hit.section,{source:'bastion'});},rainLanding:(x,z)=>{const hit=traceImpact({x,y:130,z},{x,y:-1,z},{sections:physics.chunks.filter(c=>!c.collisionDisabled&&!c.hidden&&c.state==='intact'),ground:false});return hit?new THREE.Vector3().copy(hit.point):new THREE.Vector3(x,terrainHeight(x,z),z);},onRainImpact:(point,radius,power,hit)=>physics.impact(point,32,radius,hit?.section||null,{source:'bastion'})});
+ const adapter=new BastionTesting(scene,unitDamage,bossConfig,{mission:true,arenaBounds:escortMovementBounds(),getHeroes:()=>[runner,hero,solara,portalHero,mochi,ninja,prism],onEvent:feed,traceProjectile:(a,b,r)=>traceRaiderProjectile(a,b,'bastion',r),onProjectileImpact:hit=>{if(hit.section)physics.impact(new THREE.Vector3().copy(hit.point),18,3.8,hit.section,{source:'bastion'});},rainLanding:(x,z)=>{const hit=traceImpact({x,y:130,z},{x,y:-1,z},{sections:physics.chunks.filter(c=>!c.collisionDisabled&&!c.hidden&&c.state==='intact'),ground:false});return hit?new THREE.Vector3().copy(hit.point):new THREE.Vector3(x,terrainHeight(x,z),z);},onRainImpact:(point,radius,power,hit)=>physics.impact(point,32,radius,hit?.section||null,{source:'bastion'})});
  evacuationReinforcement=new EvacuationBastionReinforcement(scene,adapter,transportConfig,{getWalker:()=>robot,getGroundHeight:terrainHeight,onEvent:feed,onLanding:point=>{emitParticle('smoke',point,24,5);robotDeathEffects.explode(point,{large:true,secondary:true});evacuationCinematic?.start(point);}});
 
  evacuationCinematic=new EvacuationBastionCinematic({scene,camera,controls,viewport,transport:evacuationReinforcement,violet:hero,rift:portalHero,getPlayer:()=>controlledHero()||[runner,ninja,solara,mochi,prism].find(h=>h.enabled!==false)||runner,clearInput:()=>{keys.clear();heightInput=0;runner.clearInput();ninja.clearInput();pilot?.clearInput();},isSelected:h=>roster.has(h===hero?'violet':'rift'),onComplete:()=>{$('hero-readout').hidden=false;$('portal-readout').hidden=false;feed('Violet Sentinel and Rift Warden join the fight.');if(runner.active)runner.requestMouseLock();if(ninja.active)ninja.requestLock();updateStats();}});

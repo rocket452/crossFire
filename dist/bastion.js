@@ -1,4 +1,4 @@
-import {BastionBeamWalls} from './bastion-beam-walls.js?v=opposite-edge-walls-171';
+import {BastionBeamWalls} from './bastion-beam-walls.js?v=map-safe-gaps-239';
 import {BastionRain} from './bastion-rain.js?v=opposite-edge-walls-171';
 import * as THREE from './vendor/three.module.js';
 import {BastionModel} from './bastion-model.js?v=permanent-weakpoints-172';
@@ -8,7 +8,7 @@ import {BastionEffects} from './bastion-effects.js?v=pulse-knockback-173';
 import {angleDistance} from './bastion-geometry.js?v=charged-shuriken-130';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 export class Bastion {
- constructor(scene,damage,config,{onEvent=()=>{},onPlayerHit=()=>{},onWindup=()=>{}}={}){Object.assign(this,{scene,damage,config,onEvent,onPlayerHit,onWindup});this.model=new BastionModel(scene,config);this.root=this.model.root;this.state=new BastionState(config);this.evac=true;this.projectiles=null;this.waves=[];this.stunRemaining=0;this.feedback='';this.hitCooldown=0;this.reset();this.effects=new BastionEffects(this);this.projectiles=new BastionProjectiles(this);this.rain=new BastionRain(this);this.beamWalls=new BastionBeamWalls(this);}
+ constructor(scene,damage,config,{onEvent=()=>{},onPlayerHit=()=>{},onWindup=()=>{},arenaBounds}={}){Object.assign(this,{scene,damage,config,onEvent,onPlayerHit,onWindup,arenaBounds});this.model=new BastionModel(scene,config);this.root=this.model.root;this.state=new BastionState(config);this.evac=true;this.projectiles=null;this.waves=[];this.stunRemaining=0;this.feedback='';this.hitCooldown=0;this.reset();this.effects=new BastionEffects(this);this.projectiles=new BastionProjectiles(this);this.rain=new BastionRain(this);this.beamWalls=new BastionBeamWalls(this);}
  get sections(){return this.model.sections;}
  get dead(){return this.state.phase==='defeated';}
  get coreOpen(){return this.state.exposed&&this.stunRemaining<=0;}

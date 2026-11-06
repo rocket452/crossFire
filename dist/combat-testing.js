@@ -1,6 +1,6 @@
 import {Mireguard} from './mireguard.js?v=bruiser-model-218';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-squads-191';
-import {BastionTesting} from './bastion-testing.js?v=player-pulse-236';
+import {BastionTesting} from './bastion-testing.js?v=map-safe-gaps-239';
 import {ExperimentalRobot} from './experimental-robots.js?v=bruiser-model-218';
 import * as THREE from './vendor/three.module.js';
 import {EvacRaider} from './evac-raider.js?v=bruiser-model-218';
@@ -8,7 +8,7 @@ import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86
 // Reuses the live drone, projectile, damage and wreck systems; no mission spawning.
 export class CombatTesting {
  constructor(scene,damage,{getHeroes,readConfig,bastionConfig,...options}){
-  this.bastion=new BastionTesting(scene,damage,bastionConfig,{getHeroes,onEvent:options.onEvent,traceProjectile:(a,b,r)=>options.trace(a,b,'bastion',r),onProjectileImpact:options.onBastionImpact,rainLanding:options.rainLanding,onRainImpact:options.onBastionRainImpact});this.getHeroes=getHeroes;this.readConfig=readConfig;this.targets=new Map();this.energyEffects=new RaiderEnergyEffects(scene);
+  this.bastion=new BastionTesting(scene,damage,bastionConfig,{getHeroes,arenaBounds:COMBAT_ARENA.movementBounds,onEvent:options.onEvent,traceProjectile:(a,b,r)=>options.trace(a,b,'bastion',r),onProjectileImpact:options.onBastionImpact,rainLanding:options.rainLanding,onRainImpact:options.onBastionRainImpact});this.getHeroes=getHeroes;this.readConfig=readConfig;this.targets=new Map();this.energyEffects=new RaiderEnergyEffects(scene);
   this.basic=Array.from({length:7},(_,i)=>new EvacRaider(scene,damage,{...options,id:'evac-raider-test-'+i,spawnPosition:{x:COMBAT_ARENA.enemyCorner.x+(i-3)*7*COMBAT_ARENA.formationScale,y:.1,z:COMBAT_ARENA.enemyCorner.z+14*COMBAT_ARENA.formationScale},getTargets:()=>this.heroUnits(),initialCooldown:3+i*.2,energyEffects:this.energyEffects,onEvent:()=>{}}));
   this.experimental=['aegis','scythe','breaker'].flatMap((type,row)=>Array.from({length:3},(_,i)=>new ExperimentalRobot(scene,damage,{...options,type,id:'evac-raider-'+type+'-'+i,spawnPosition:{x:COMBAT_ARENA.enemyCorner.x+(i-1)*7*COMBAT_ARENA.formationScale,y:.1,z:COMBAT_ARENA.enemyCorner.z+(14+row*8)*COMBAT_ARENA.formationScale},getTargets:()=>this.heroUnits(),initialCooldown:1+i*.7,energyEffects:this.energyEffects,onEvent:()=>{}})));this.mireguards=Array.from({length:20},(_,i)=>new Mireguard(scene,damage,{...options,id:'evac-raider-mireguard-'+i,getTargets:()=>this.heroUnits(),energyEffects:this.energyEffects}));this.members=[...this.basic,...this.experimental,...this.mireguards];
  }

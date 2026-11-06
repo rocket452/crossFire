@@ -285,3 +285,33 @@ Proximity Node checks cover approaches during Gatling, artillery and wall phases
 Bastion's armour flashes yellow during both scheduled and reactive close-range pulse windups. It covers primary body sections and decorative armour/tread materials, while preserving energy cores. Tune `pulse.warningColor`, `warningHz=4` and `warningIntensity=2.8`. The warning requires a nearby enemy and stops on release, stun, leaving range, death or reset. The existing red incoming-damage flash can briefly overlay it.
 
 Proximity tests verify scheduled windup color/modulation and cancellation/reset. Desktop/touch live beam-wall approach tests check the reactive yellow warning, then actual 50-damage knockback for both Volt and Kage. The warning screenshot was visually inspected. No attack damage, radius, timing or cooldown values changed.
+
+## Playable beam-wall gaps (revision 239)
+
+The attack previously assumed a square centered on world zero. In the shifted
+evacuation district this could place a gap tens of metres outside the hero's
+movement bounds. Both Bastion adapters now pass their scene's actual playable
+bounds: `COMBAT_ARENA.movementBounds` or `escortMovementBounds()`.
+
+The wall frame centers on those bounds and locks its direction at the start of
+the attack. Width and travel extents follow the map, with the existing 6 m
+overscan derived from `beamWalls.min/max` and `arena.radius`. The entire 12 m
+gap, plus 0.7 m character clearance, must fit inside the playable lateral
+interval. Planning reserves space for all three gaps before choosing a seeded
+start/direction; successive gaps retain their 60 m spacing in both current
+maps. A smaller future map limits spacing to the available interval instead of
+placing a gap outside it. Gap width, speed, charge, wave interval and damage
+settings are unchanged. Warning corridors, edge posts, instanced beams and swept
+collision all use the same translated attack frame. Sweep duration reflects the
+actual distance to the opposite edge; walls still do not damage buildings.
+
+`QA/bastion-beam-walls-bounds-test.mjs` reproduces the old evacuation failure and
+checks 864 seeded center/edge/corner layouts across the arena, evacuation map
+and a translated rectangle. It verifies whole-opening containment, 60 m shifts,
+locked coordinates, far-edge travel and safe world-space crossings. The browser
+counterpart checks both live scene adapters with a controlled speedster on
+desktop/touch, including visible three-wave passes, safe gaps and reset.
+All 864 unit layouts and 180 live browser layouts passed. Existing swept-wall
+damage, sky-charge lifecycle, state/weapon/proximity and no-building-damage
+regressions passed as well; desktop overview and touch gap screenshots were
+visually inspected.
