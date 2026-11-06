@@ -14,7 +14,7 @@ export class EvacuationBastionReinforcement {
   for(const side of[-1,1])for(const z of[-15,18]){this.clamps.push(part([3,14,4],[side*16,-11,z],'dark'));part([7,3,9],[side*33,-4,z],'dark');const flame=new THREE.Mesh(new THREE.ConeGeometry(3,17,8),materials.engine);flame.position.set(side*33,-14,z);flame.rotation.z=Math.PI;this.root.add(flame);this.engines.push(flame);}
   this.marker=new THREE.Mesh(new THREE.RingGeometry(17,18,64),new THREE.MeshBasicMaterial({color:'#ffbf66',transparent:true,opacity:.5,depthWrite:false,side:THREE.DoubleSide}));this.marker.rotation.x=-Math.PI/2;scene.add(this.marker);this.reset();
  }
- reset(){this.phase='waiting';this.elapsed=0;this.clock=0;this.adapter.reset(false);this.root.visible=false;this.marker.visible=false;this.destination=new THREE.Vector3();}
+ reset(){this.combatPaused=false;this.phase='waiting';this.elapsed=0;this.clock=0;this.adapter.reset(false);this.root.visible=false;this.marker.visible=false;this.destination=new THREE.Vector3();}
  transition(phase){this.phase=phase;this.elapsed=0;}
  update(dt){
   this.clock+=dt;const c=this.config,b=this.adapter.boss;
@@ -33,8 +33,8 @@ export class EvacuationBastionReinforcement {
   }
   if(this.phase==='departure'){const a=Math.min(1,this.elapsed/c.departureSeconds);this.root.position.set(d.x,d.y+c.cruiseHeight+(c.departureHeight-c.cruiseHeight)*a,d.z-c.approachDistance*a*a);if(a===1){this.root.visible=false;this.transition('deployed');}}
   for(const e of this.engines)e.scale.setScalar(1+Math.sin(this.clock*24)*.08);
-  this.adapter.update(dt);
+  if(!this.combatPaused)this.adapter.update(dt);
  }
- afterHeroes(dt){this.adapter.afterHeroes(dt);}
+ afterHeroes(dt){if(!this.combatPaused)this.adapter.afterHeroes(dt);}
  diagnostics(){return{phase:this.phase,elapsed:this.elapsed,destination:this.destination.toArray(),shipVisible:this.root.visible,active:this.adapter.enabled,bossAlive:this.adapter.boss.combatUnit.alive};}
 }

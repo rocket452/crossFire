@@ -8,5 +8,21 @@
   "cruiseHeight": 76,
   "cargoHeight": 26,
   "departureHeight": 110,
-  "approachHeight": 125
+  "approachHeight": 125,
+  "cinematic": {
+    "duration": 12,
+    "fireStart": 3.3,
+    "fireEnd": 5.7,
+    "shotInterval": 0.14,
+    "shotSpeed": 65,
+    "shotRadius": 0.7,
+    "violetArrivalStart": 1.5,
+    "violetArrivalEnd": 3.05,
+    "riftArrivalStart": 6.7,
+    "riftArrivalEnd": 8.3,
+    "stageDistance": 32,
+    "stageHalfWidth": 3,
+    "violetLineAt": 5.7,
+    "riftLineAt": 8.4
+  }
 }
