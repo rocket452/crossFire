@@ -1,0 +1,38 @@
+{
+  "revision": "wave-radar-224",
+  "scope": "four staggered Bruiser waves in Civilian evacuation",
+  "alerts": {
+    "durationSimulationSeconds": 8,
+    "banner": "ENEMY WAVE + live enemy count and entry edge",
+    "visuals": [
+      "orange pulsing radar border",
+      "large expanding entry ping",
+      "camera-relative incoming chevron",
+      "new squad markers flash"
+    ],
+    "offscreen": "entry ping clamped to radar rim",
+    "observer": "radar reveals briefly for the alert",
+    "clearsOn": [
+      "expiry",
+      "squad defeat",
+      "city reset"
+    ]
+  },
+  "passed": [
+    "minimap-wave-alert-test.mjs: all four edge events, live IDs/counts, 8s lifetime/pause, off-range projection/rotation, defeat cleanup, event bound and reset",
+    "minimap-wave-alert-browser.cjs: desktop + touch actual spawn schedule, observer reveal, banner/count/direction, highlighted enemies, rim ping/camera rotation, pause/expiry, defeat/reset/replay, viewport fit and ordinary-scene isolation",
+    "hero-minimap-test.mjs",
+    "evac-raider-waves-test.mjs",
+    "evacuation-civilian-fallback-test.mjs",
+    "evacuation-helicopter-strike-test.mjs"
+  ],
+  "visualReview": "Observer and hero radar screenshots inspected.",
+  "unchanged": [
+    "enemy/civilian timers",
+    "combat and targeting",
+    "civilian danger markers"
+  ],
+  "limits": [
+    "Physical-phone FPS/thermal performance unmeasured."
+  ]
+}
