@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-export const RUNNER_AIM=Object.freeze({robotConeDegrees:2.5,missileConeDegrees:3,maxRange:110,armorInset:.15,stickiness:.08});
+export const RUNNER_AIM=Object.freeze({robotConeDegrees:1.25,missileConeDegrees:1.5,maxRange:110,armorInset:.15,stickiness:.08});
 // Correct only a small near-miss. Bounds let large armor assist at its silhouette,
 // rather than requiring the reticle to be near the center of a huge robot.
 function armorPoint(origin,direction,candidate){

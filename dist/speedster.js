@@ -14,7 +14,7 @@ import {RunnerBeam,RUNNER_BEAM} from './runner-beam.js?v=weapon-drain-77';
 import {RunnerCharge} from './runner-charge.js?v=instant-lightning-63';
 import {RunnerDash,DASH} from './runner-dash.js?v=overall-performance-238';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
-import {selectRunnerAim} from './runner-aim.js?v=light-aim-70';
+import {selectRunnerAim} from './runner-aim.js?v=half-lightning-aim-240';
 import {RunnerFeedback} from './runner-feedback.js?v=wave-dash-62';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 export class Speedster {
