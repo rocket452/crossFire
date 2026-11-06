@@ -5,6 +5,16 @@ export class MireguardModel {
  constructor(root,config){this.root=root;this.config=config;this.parts={};this.box=new THREE.BoxGeometry(1,1,1);this.ball=new THREE.IcosahedronGeometry(.5,1);this.joint=new THREE.CylinderGeometry(1,1,1,8);this.armor=new THREE.MeshStandardMaterial({color:'#526c3c',roughness:.7,metalness:.55});this.edge=new THREE.MeshStandardMaterial({color:'#859563',roughness:.6,metalness:.5});this.dark=new THREE.MeshStandardMaterial({color:'#202c2b',roughness:.6,metalness:.65});this.belly=new THREE.MeshStandardMaterial({color:'#b6b998',roughness:.7,metalness:.4});this.energy=new THREE.MeshStandardMaterial({color:'#b7ffce',emissive:'#51ff9f',emissiveIntensity:1.8});this.frame=this.node('frame',root,[0,5,0]);
   const torso=this.node('torso',this.frame,[0,1.25,0]);this.block(torso,[0,0,0],[3.3,2.8,2],this.armor,this.ball);this.block(torso,[0,-.15,.85],[2.8,2.2,.6],this.belly,this.ball);this.block(torso,[0,-1.5,0],[2.7,.85,1.7],this.dark);for(let i=0;i<4;i++)this.block(torso,[0,-1+i*.5,1.16],[2.15,.14,.12],this.edge);this.block(torso,[0,.1,-1.05],[2.6,2.6,.65],this.dark);for(const x of[-.7,.7])this.block(torso,[x,.25,-1.5],[.55,1.7,.45],this.edge);for(const x of[-1.25,1.25])this.block(torso,[x,.5,1.04],[.3,.3,.14],this.energy);
   const head=this.node('head',torso,[0,2.2,.1]);this.block(head,[0,0,0],[3.35,1.65,1.85],this.armor,this.ball);this.block(head,[0,-.5,.6],[3.25,.55,1.7],this.edge,this.ball);this.block(head,[0,-.32,1.38],[2.65,.12,.13],this.dark);for(const x of[-1.25,1.25]){this.block(head,[x,.6,.25],[.9,.9,1],this.dark,this.ball);this.block(head,[x,.64,.78],[.58,.42,.2],this.energy,this.ball);}for(const x of[-.35,.35])this.block(head,[x,.09,1.02],[.12,.1,.13],this.dark);
+  // Layered plates and recessed machinery share the existing material batches.
+  for(const sign of[-1,1]){
+   const plate=this.block(torso,[sign*.85,.65,1.02],[1.45,.8,.28],this.edge);plate.rotation.z=sign*.14;
+   for(let j=0;j<3;j++)this.block(torso,[sign*1.47,-.55+j*.35,-.15],[.18,.16,1.4],this.dark);
+   this.block(head,[sign*1.15,.22,.97],[1,.25,.28],this.edge);
+   this.block(head,[sign*1.25,.64,.9],[.3,.18,.08],this.dark);
+   for(let j=0;j<3;j++)this.block(head,[sign*(.65+j*.24),-.48,1.32],[.12,.25,.12],this.dark);
+  }
+  this.block(torso,[0,.1,-1.7],[1.1,1.8,.55],this.armor);
+  for(let j=0;j<4;j++)this.block(torso,[0,-.45+j*.35,-2],[.8,.12,.12],this.dark);
   this.hitParts=[{id:'torso',node:torso,center:[0,0,0],size:[3.2,2.9,2.1]},{id:'head',node:head,center:[0,.1,.15],size:[3.4,1.9,2.1]}];
   for(const [side,sign]of[['left',-1],['right',1]]){
    const upper=this.node(side+'-upper-arm',torso,[sign*2.1,.85,0]);this.block(upper,[0,-.75,0],[.95,1.85,1],this.armor,this.ball);this.block(upper,[0,0,0],[1.25,1.2,1.2],this.edge,this.ball);const lower=this.node(side+'-lower-arm',upper,[0,-1.65,0]);this.block(lower,[0,0,0],[.8,.8,.85],this.dark,this.ball);this.block(lower,[0,-.8,0],[1,1.65,1.05],this.armor);const hand=this.node(side+'-hand',lower,[0,-1.55,.1]);this.block(hand,[0,0,0],[.85,.65,.85],this.dark);for(let i=0;i<3;i++)this.block(hand,[(i-1)*.25,-.15,.42],[.18,.55,.4],this.edge);this.hitParts.push({id:side+'-upper-arm',node:upper,center:[0,-.7,0],size:[1.3,2.1,1.25]},{id:side+'-lower-arm',node:lower,center:[0,-.85,0],size:[1.1,2.2,1.15]});
@@ -12,6 +22,15 @@ export class MireguardModel {
   }
   // Held on the right forearm so removing either right arm section really removes the rifle.
   const rifle=this.rifle=this.node('rifle',this.parts['right-lower-arm'],[0,-1.1,.7]);this.block(rifle,[0,0,.9],[1.1,1.05,2.9],this.dark);this.block(rifle,[0,.2,1],[1.25,.65,2.3],this.edge);this.block(rifle,[0,-.75,.45],[.65,1.2,.9],this.dark);this.block(rifle,[0,-.08,2.8],[.65,.7,1.5],this.dark);for(const z of[2.35,2.75,3.15])this.block(rifle,[0,-.08,z],[.85,.85,.18],this.edge);this.block(rifle,[0,-.08,3.6],[.5,.5,.15],this.energy);this.block(rifle,[0,.75,.7],[.35,.4,1.1],this.dark);for(const x of[-.64,.64])for(let i=0;i<3;i++)this.block(rifle,[x,.22,.3+i*.55],[.08,.25,.25],this.energy);this.muzzle=this.node('muzzle',rifle,[0,-.08,3.8]);
+  for(const [side,sign]of[['left',-1],['right',1]]){
+   const upper=this.parts[side+'-upper-arm'],lower=this.parts[side+'-lower-arm'],shin=this.parts[side+'-lower-leg'];
+   const shoulder=this.block(upper,[sign*.18,.12,.05],[1.25,.55,1.3],this.armor);shoulder.rotation.z=sign*.15;
+   this.block(lower,[0,-.75,.56],[.75,1.15,.18],this.edge);
+   this.block(shin,[0,-.05,.6],[1.15,.8,.35],this.armor,this.ball);
+   for(const x of[-.45,.45])this.block(shin,[x,-1.25,.15],[.12,1.55,.14],this.edge);
+  }
+  this.block(rifle,[0,.43,.5],[.7,.25,1.75],this.armor);
+  for(let j=0;j<4;j++)this.block(rifle,[0,.62,.05+j*.4],[.55,.08,.12],this.dark);
   this.hitParts.push({id:'right-lower-arm',node:rifle,center:[0,0,1.7],size:[1.3,1.5,4.2]});
   this.flash=new THREE.Mesh(this.ball,new THREE.MeshBasicMaterial({color:'#e6fffa',toneMapped:false}));this.flash.scale.setScalar(.45);this.muzzle.add(this.flash);this.flash.visible=false;
   this.repairs=[];
@@ -21,15 +40,19 @@ export class MireguardModel {
  batch(){for(const node of Object.values(this.parts)){const groups=new Map();for(const mesh of node.children){if(!mesh.isMesh||mesh===this.flash)continue;let list=groups.get(mesh.material);if(!list)groups.set(mesh.material,list=[]);list.push(mesh);}for(const [material,meshes]of groups){if(meshes.length<2)continue;const inputs=meshes.map(mesh=>{mesh.updateMatrix();const g=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry.clone();return g.applyMatrix4(mesh.matrix);}),geometry=mergeGeometries(inputs);for(const g of inputs)g.dispose();if(!geometry)continue;for(const mesh of meshes)node.remove(mesh);const batch=new THREE.Mesh(geometry,material);batch.castShadow=batch.receiveShadow=true;node.add(batch);}}}
  node(id,parent,position){const g=new THREE.Group();g.name=id;g.position.set(...position);parent.add(g);this.parts[id]=g;return g;}
  block(parent,position,size,material,geometry=this.box){const mesh=new THREE.Mesh(geometry,material);mesh.position.set(...position);mesh.scale.set(...size);mesh.castShadow=mesh.receiveShadow=true;parent.add(mesh);return mesh;}
- reset(){for(const [p,b]of this.bind){p.position.copy(b.p);p.quaternion.copy(b.q);p.scale.setScalar(1);p.visible=true;}this.flash.visible=false;for(const r of this.repairs)r.ring.visible=false;}
+ reset(){for(const [p,b]of this.bind){p.position.copy(b.p);p.quaternion.copy(b.q);p.scale.setScalar(1);p.visible=true;}this.flash.visible=false;this.poseWeight=0;for(const r of this.repairs)r.ring.visible=false;}
  visible(node){while(node&&node!==this.root){if(!node.visible)return false;node=node.parent;}return true;}
  shapes(limbs){this.root.updateWorldMatrix(true,true);return this.hitParts.filter(p=>this.visible(p.node)&&(!limbs[p.id]||limbs[p.id].health>0)).map(p=>({part:p.id,center:p.node.localToWorld(new THREE.Vector3(...p.center)),half:{x:p.size[0]*this.root.scale.x/2,y:p.size[1]*this.root.scale.x/2,z:p.size[2]*this.root.scale.x/2},rotation:p.node.getWorldQuaternion(new THREE.Quaternion())}));}
  point(id='torso'){return this.parts[id].getWorldPosition(new THREE.Vector3());}
  animate(dt,time,actor){const p=this.parts,c=actor.config,legCount=['left','right'].filter(s=>actor.legWorking(s)).length,blend=1-Math.exp(-9*dt),low=legCount===2?0:legCount===1?1.9:2.7;this.frame.position.y+=(5-low-this.frame.position.y)*blend;this.frame.rotation.x+=((legCount===0?.65:0)-this.frame.rotation.x)*blend;
   const gait=actor.walkPhase||0,moving=actor.moving&&!actor.stunRemaining;this.frame.rotation.z=legCount===1?Math.sin(time*3)*.08:0;
-  this.frame.position.y+=moving?Math.sin(gait*2)*.015:Math.sin(time*1.8)*.004;
-  for(const [side,sign]of[['left',-1],['right',1]]){const upper=p[side+'-upper-leg'],lower=p[side+'-lower-leg'],step=gait+(sign===1?Math.PI:0);upper.rotation.x=moving&&legCount===2?Math.sin(step)*.32:legCount<2?-.55:0;lower.rotation.x=moving&&legCount===2?Math.max(0,-Math.sin(step))*.55:legCount<2?1.1:.08;p[side+'-upper-arm'].rotation.z=sign*-.08;}
-  const yaw=actor.aimYaw||0;p.torso.rotation.y=THREE.MathUtils.clamp(yaw,-1,1);const aim=actor.aimPitch||0;p['right-upper-arm'].rotation.x=-1.12+aim;p['right-lower-arm'].rotation.x=.34;p['left-upper-arm'].rotation.x=actor.armWorking('left')?-1.25+aim:0;p['left-upper-arm'].rotation.z=-.4;p['left-lower-arm'].rotation.x=.5;p['left-lower-arm'].rotation.z=-.6;p.head.rotation.y=p.torso.rotation.y*.15+(actor.mode==='searching'?Math.sin(time*1.7)*.4:0);p.head.rotation.x=0;p.head.rotation.z=0;p.torso.rotation.x=0;p.torso.rotation.z=0;p.torso.position.z=0;
+  this.poseWeight=THREE.MathUtils.damp(this.poseWeight||0,moving?1:0,7,dt);
+  const stride=this.poseWeight;
+  this.frame.position.y+=((5-low+(legCount===2?Math.cos(gait*2)*.035*stride:0))-this.frame.position.y)*blend;
+  this.frame.rotation.z+=Math.sin(gait)*.025*stride;
+  this.frame.rotation.x+=(legCount===2?(.07*stride-this.frame.rotation.x):0)*blend;
+  for(const [side,sign]of[['left',-1],['right',1]]){const upper=p[side+'-upper-leg'],lower=p[side+'-lower-leg'],step=gait+(sign===1?Math.PI:0);upper.rotation.x=legCount===2?Math.sin(step)*.32*stride:legCount<2?-.55:0;lower.rotation.x=legCount===2?Math.max(0,-Math.sin(step))*.55*stride:legCount<2?1.1:.08;p[side+'-upper-arm'].rotation.z=sign*-.08;}
+  const yaw=actor.aimYaw||0;p.torso.rotation.y=THREE.MathUtils.damp(p.torso.rotation.y,THREE.MathUtils.clamp(yaw,-1,1),8,dt);const aim=actor.aimPitch||0;p['right-upper-arm'].rotation.x=-1.12+aim;p['right-lower-arm'].rotation.x=.34;p['left-upper-arm'].rotation.x=actor.armWorking('left')?-1.25+aim:0;p['left-upper-arm'].rotation.z=-.4;p['left-lower-arm'].rotation.x=.5;p['left-lower-arm'].rotation.z=-.6;p.head.rotation.y=p.torso.rotation.y*.15+(actor.mode==='searching'?Math.sin(time*1.7)*.4:0);p.head.rotation.x=0;p.head.rotation.z=0;p.torso.rotation.x=-actor.recoil*.55;p.torso.rotation.z=Math.sin(gait)*.018*stride;p.torso.position.z=-actor.recoil*.5;
   if(actor.reaction){const r=actor.reaction,t=r.age,w=t<.065?Math.sin(t/.065*Math.PI/2):1-THREE.MathUtils.smoothstep(t,.12,r.duration),strength=r.head?1:.7;p.head.rotation.x=-.62*w*strength;p.head.rotation.z=r.side*.09*w;p.torso.rotation.x=-.25*w*strength;p.torso.rotation.z=r.side*.1*w;p.torso.position.z=-.28*w;for(const side of['left','right']){p[side+'-upper-arm'].rotation.x+=.5*w;p[side+'-lower-arm'].rotation.x+=.2*w;p[side+'-upper-leg'].rotation.x-=.06*w;p[side+'-lower-leg'].rotation.x+=.12*w;}this.frame.rotation.z+=r.side*.045*w;}
 
   // The rifle's axis is independently servo-aimed; forearm/hand remain articulated.

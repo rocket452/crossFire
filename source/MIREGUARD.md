@@ -1,5 +1,7 @@
 # Mireguard — robotic rifle infantry
 
+Art/animation update (revision 243): layered chest and shoulder armor, cheek/brow plates, jaw grilles, backpack vents, shin rails and rifle furniture retain the articulated limb hierarchy. Smoothed locomotion weight and torso aiming, stride-linked body sway and firing recoil improve weight and transitions. Existing headshot reactions and world-space rifle aiming remain. Model budget is 2,872 triangles / 38 meshes before silhouette overlays, with static detail merged by material. Size and combat tuning retain revision 242 values.
+
 Size update (revision 242): Mireguards are 30% larger, increasing nominal height from 10 m to 13 m. The existing root scale also enlarges the articulated body, rifle, head/limb hitboxes and wreck pieces. Street clearance scales to a 3.38 m radius and proportional height samples; soft enemy separation scales to 3.64 m. Health, movement speed and weapon damage/cadence retain their existing values.
 
 Current behavior (revision 180): limb loss is permanent until scene reset. Headshots cause a .32s recoil/firing interruption with a .2s retrigger interval and a brighter, immediately retriggered red flash. Repair logic and repair-field visuals have been removed. The revision-175 notes below describe the original implementation.
