@@ -6,9 +6,12 @@ function material(color){return new THREE.MeshBasicMaterial({color,transparent:t
 function mark(source){source.renderOrder=10;for(const m of [].concat(source.material)){m.stencilWrite=true;m.stencilRef=BIT;m.stencilWriteMask=BIT;m.stencilFunc=THREE.AlwaysStencilFunc;m.stencilZPass=THREE.ReplaceStencilOp;}}
 function setup(mesh){mesh.name='Through-cover actor silhouette';mesh.userData.actorSilhouette=true;mesh.renderOrder=101;mesh.frustumCulled=false;mesh.castShadow=mesh.receiveShadow=false;return mesh;}
 export class ActorSilhouettes {
- constructor(){this.enemyMaterial=material('#791d26');this.civilianMaterial=material('#ffffff');this.registered=new WeakSet();this.enemies=[];this.crowd=null;this.dark=new THREE.Color('#8c730c');this.warning=new THREE.Color('#d9a51b');this.flash=new THREE.Color('#b52d24');this.threatened=0;}
+ constructor(){this.enemyMaterial=material('#791d26');this.civilianMaterial=material('#ffffff');this.registered=new WeakSet();this.occluders=new WeakSet();this.enemies=[];this.crowd=null;this.dark=new THREE.Color('#8c730c');this.warning=new THREE.Color('#d9a51b');this.flash=new THREE.Color('#b52d24');this.threatened=0;}
+ // Visible opaque hero bodies block overlays; hidden bodies fail depth and do not mask buildings.
+ occlude(actor){if(!actor?.root||this.occluders.has(actor.root))return;this.occluders.add(actor.root);actor.root.traverse(o=>{if(o.isMesh&&!o.userData.actorSilhouette&&[].concat(o.material).every(m=>!m.transparent&&m.depthWrite))mark(o);});}
  register(actor){if(!actor?.root||this.registered.has(actor))return;this.registered.add(actor);const sources=[];actor.root.traverse(o=>{if(o.isMesh&&!o.userData.actorSilhouette&&!o.material?.transparent)sources.push(o);});for(const source of sources){mark(source);const overlay=setup(source.isInstancedMesh?new THREE.InstancedMesh(source.geometry,this.enemyMaterial,source.instanceMatrix.count):new THREE.Mesh(source.geometry,this.enemyMaterial));if(source.isInstancedMesh){overlay.instanceMatrix=source.instanceMatrix;overlay.count=source.count;}source.add(overlay);this.enemies.push({actor,source,overlay});}}
- update(actors,evacuation,danger,time){
+ update(actors,evacuation,danger,time,occluders=[]){
+  for(const actor of occluders)this.occlude(actor);
   this.enemies=this.enemies.filter(e=>{if(e.actor.faction==='argus'&&!e.actor.root.parent){e.overlay.removeFromParent();return false;}return true;});for(const actor of actors)this.register(actor);
   for(const e of this.enemies)e.overlay.visible=!e.actor.dead&&e.actor.combatUnit?.alive!==false;
   const source=evacuation?.people;if(source&&this.crowd?.source!==source){mark(source);const overlay=setup(new THREE.InstancedMesh(source.geometry,this.civilianMaterial,source.instanceMatrix.count));overlay.instanceMatrix=source.instanceMatrix;source.add(overlay);this.crowd={source,overlay};}
