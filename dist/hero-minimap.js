@@ -40,6 +40,7 @@ export class HeroMinimap {
   for(const p of data.plasma||[])entries.push({...p,id:'impact-'+p.id,kind:'plasma',label:'Plasma impact in '+Math.max(0,p.eta).toFixed(1)+' seconds'});
   for(const b of data.buses||[])entries.push({...b,kind:'bus',label:'Evacuation bus'});for(const p of data.pickups||[])entries.push({...p,kind:'pickup'});
   if(data.exit)entries.push({...data.exit,kind:'exit',label:'Convoy evacuation exit'});
+  if(data.dropship)entries.push({...data.dropship,id:'bastion-dropship',kind:'dropship',label:'Bastion dropship incoming'});
   if(data.helicopter)entries.push({...data.helicopter,id:'evac-helicopter',kind:'helicopter',label:'Evacuation helicopter'});
   const live=new Set(entries.map(e=>e.id));for(const[id,m]of this.nodes)if(!live.has(id)){m.node.remove();this.nodes.delete(id);}
   for(const entry of entries){let marker=this.nodes.get(entry.id);if(!marker){marker=this.makeMarker(entry);this.nodes.set(entry.id,marker);}marker.entry=entry;marker.title.textContent=entry.label;marker.node.classList.toggle('new-wave',entry.kind==='enemy'&&waveEnemies.has(entry.id));marker.node.classList.toggle('targeted',entry.kind==='civilian'&&!!entry.targeted);marker.node.setAttribute('data-targeted',String(!!entry.targeted));}
@@ -58,13 +59,14 @@ export class HeroMinimap {
   else if(entry.kind==='pickup'){svg('circle',{r:5,fill:'#24392e',stroke:'#e5c874'},node);const number=svg('text',{class:'minimap-pickup-number'},node);number.textContent=entry.number||'';}
   else if(entry.kind==='exit')svg('path',{d:'M-4 6V-7H6L2 -2H-4Z'},node);
   else if(entry.kind==='ally')svg('circle',{r:2.6,class:'minimap-symbol'},node);
+  else if(entry.kind==='dropship'){svg('circle',{r:14,fill:'none',stroke:'#ff9299','stroke-width':2},node);svg('circle',{r:11,fill:'#ff1836',stroke:'#650715','stroke-width':1.5},node);}
   else if(entry.kind==='helicopter')svg('path',{d:'M-5 0H5M0 -4V4M-6 -4H6',class:'minimap-helicopter'},node);
   else{svg('rect',{x:-5.5,y:-5.5,width:11,height:11,rx:2,class:'minimap-symbol'},node);const text=svg('text',{'text-anchor':'middle','dominant-baseline':'central',class:'minimap-map-label'},node);text.textContent=entry.kind==='landing'?'H':'S';}
   return{node,arrow,title,entry,waveChevron};
  }
  clearWaveAlerts(){this.activeWaves=[];this.root.classList.remove('has-wave-alert');for(const [id,m]of this.nodes){m.node.classList.remove('new-wave');if(m.entry?.kind==='wave'){m.node.remove();this.nodes.delete(id);}}}
  update(dt,pose){
-  const active=!!pose;if(this.visible!==active)this.root.hidden=!active;if(!active){this.clearWaveAlerts();this.visible=false;this.timer=this.structureTimer=0;return;}
+  const active=!!pose;if(this.visible!==active)this.root.hidden=!active;if(!active){for(const[id,m]of this.nodes)if(m.entry.kind==='dropship'){m.node.remove();this.nodes.delete(id);}this.clearWaveAlerts();this.visible=false;this.timer=this.structureTimer=0;return;}
   this.visible=true;this.center={x:pose.position.x,z:pose.position.z};if(Number.isFinite(pose.yaw))this.heading=pose.yaw;
   this.timer-=Math.max(0,dt);this.structureTimer-=Math.max(0,dt);if(this.timer<=0){this.refresh();this.timer=MINIMAP.refreshSeconds;}
   if(this.structureTimer<=0){for(const b of this.structures)b.node.classList.toggle('rubble',!this.getStructureAlive(b.id));this.structureTimer=MINIMAP.structureSeconds;}
@@ -73,6 +75,7 @@ export class HeroMinimap {
   for(const marker of this.nodes.values()){
    const p=projectMinimap(marker.entry,this.center,this.heading);marker.projected=p;marker.node.setAttribute('transform',`translate(${p.x} ${p.y})`);marker.node.classList.toggle('at-edge',p.edge);
    if(marker.waveChevron){const age=marker.entry.age||0;marker.waveChevron.setAttribute('transform',`rotate(${Math.atan2(p.y,p.x)*180/Math.PI+90})`);marker.waveChevron.setAttribute('opacity',.3+.7*(.5+.5*Math.sin(age*10)));this.markers.append(marker.node);}
+   if(marker.entry.kind==='dropship'){marker.node.setAttribute('opacity',.25+.75*(.5+.5*Math.sin((marker.entry.time||0)*Math.PI*6)));this.markers.append(marker.node);}
    if(marker.entry.kind==='subway'){const e=marker.entry,pulse=.5+.5*Math.sin(e.warningTime*Math.PI*2*e.warningHz);marker.node.classList.toggle('spawn-warning',!!e.warning);marker.node.classList.toggle('spawn-closed',!!e.closed);marker.node.style.setProperty('--spawn-pulse',e.warning?String(pulse):'0');this.markers.append(marker.node);}
    marker.arrow?.setAttribute('transform',`rotate(${Math.atan2(p.y,p.x)*180/Math.PI+90})`);
   }

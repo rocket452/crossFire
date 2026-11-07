@@ -81,3 +81,6 @@ Approach, hover, lowering and departure durations increase by 30%: 9.1 s, 1.56 s
 
 
 Revision 247: Violet remains silent during the rescue cinematic; the shield action and sound effects continue. Rift Warden keeps his existing dialogue and its original timing.
+
+
+Revision 248: the visible Bastion dropship has a large red minimap circle flashing at 3 Hz. It follows the ship through approach, hover, delivery and departure, clamps to the radar edge when distant, and disappears when the ship leaves or the scene resets. Its arrival also reveals the minimap in observer mode.
