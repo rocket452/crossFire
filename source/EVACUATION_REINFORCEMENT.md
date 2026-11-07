@@ -84,3 +84,6 @@ Revision 247: Violet remains silent during the rescue cinematic; the shield acti
 
 
 Revision 248: the visible Bastion dropship has a large red minimap circle flashing at 3 Hz. It follows the ship through approach, hover, delivery and departure, clamps to the radar edge when distant, and disappears when the ship leaves or the scene resets. Its arrival also reveals the minimap in observer mode.
+
+
+Revision 249: the staged player faces the landed Bastion using the horizontal direction from their cinematic position to the landing point. The original player rotation is still restored on finish/skip/reset.
