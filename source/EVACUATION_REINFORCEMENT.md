@@ -78,3 +78,6 @@ Verified compact dimensions, 28 real destructible buildings, civilian movement, 
 ## Slower delivery (revision 244)
 
 Approach, hover, lowering and departure durations increase by 30%: 9.1 s, 1.56 s, 3.64 s and 7.8 s respectively. The 2.5 s wreck delay is retained; touchdown occurs at about 16.8 s after defeat, instead of 13.5 s. Landing still enables Bastion and triggers the existing cinematic by callback; cinematic beats and combat tuning retain their current timing.
+
+
+Revision 247: Violet remains silent during the rescue cinematic; the shield action and sound effects continue. Rift Warden keeps his existing dialogue and its original timing.

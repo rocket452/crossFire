@@ -48,7 +48,7 @@ export class EvacuationBastionCinematic {
   for(let i=0;i<48;i++){const a=i/48*Math.PI*2+t*.6;this.dummy.position.set(Math.cos(a)*(1.9+.12*Math.sin(t*12+i)),Math.sin(a)*2,.06);this.dummy.scale.setScalar(.7+.5*Math.sin(t*7+i)**2);this.dummy.updateMatrix();this.portalSparks.setMatrixAt(i,this.dummy.matrix);}this.portalSparks.instanceMatrix.needsUpdate=true;
   const rift=smooth(c.riftArrivalStart+.4,c.riftArrivalEnd,t);r.root.visible=rift>0;r.root.position.copy(this.stage).add(new THREE.Vector3(-c.stageHalfWidth,0,1+rift*1.4));r.root.scale.setScalar(Math.max(.01,rift));r.root.rotation.y=Math.atan2(2+c.stageHalfWidth,2);r.character?.update(rift<1?'Walk':'Idle',dt);if(r.character&&t<c.riftArrivalEnd+.2&&rift>0)r.spell.pose(r.root,r.character,Math.min(1,rift));r.spell.update(dt,t,{root:r.root,nodes:r.nodes,character:r.character,active:rift>0&&t<c.riftArrivalEnd+.2,progress:rift});r.renderEffects(dt);
   if(previous<c.riftArrivalStart&&t>=c.riftArrivalStart)this.tone(220,700,.45);
-  if(t>=c.riftLineAt)this.caption('RIFT WARDEN',"You're not fighting alone. We'll help you bring him down.");else if(t>=c.violetLineAt)this.caption('VIOLET SENTINEL',"I've got you. Stay behind my shield!");else this.caption('','');
+  if(t>=c.riftLineAt)this.caption('RIFT WARDEN',"You're not fighting alone. We'll help you bring him down.");else this.caption('','');
   this.frameCamera();if(t>=c.duration)this.finish();
  }
  frameCamera(){if(!this.active)return;const t=this.elapsed,c=this.camera,o=this.origin,s=this.stage;let position,target;
