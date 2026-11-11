@@ -1,6 +1,6 @@
 import {WALKER_WEAPON_HEALTH_SCALE} from './walker-weapons.js?v=city-walker-health-255';
 import {EmbercatHero,EMBERCAT} from './embercat-hero.js?v=firecat-flight-254';
-import {AxolotlHero,AXO} from './axolotl-hero.js?v=axo-flight-253';
+import {AxolotlHero,AXO} from './axolotl-hero.js?v=axo-steering-256';
 import {MIREGUARD} from './mireguard-config.js?v=larger-mireguard-242';
 import {viewportPixelRatio} from './render-budget.js?v=overall-performance-238';
 import {SpatialChunkBatch} from './spatial-chunk-batch.js?v=overall-performance-238';
