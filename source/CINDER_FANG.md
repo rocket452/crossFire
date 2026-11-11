@@ -2,7 +2,7 @@
 
 Optional hero ID `ember`, registered in the existing Heroes menu and Combat Testing dropdown. The default lineup and three-hero limit stay unchanged. The Cinder Fang camera follows her in either form.
 
-The supplied drawings guide both original adaptations: a red/orange quadruped with charcoal markings, bright eyes, pointed ears, a golden chest and a long flame tail; a human heroine with asymmetrical black/red hair, dark jacket, red outfit, tall boots and gold earrings. The human form uses the existing licensed female weighted rig, with separate costume geometry/materials so other heroes are unchanged. Original cat geometry uses a lean, long-legged predator silhouette with four articulated legs, outward swept ears, sharp cheek tufts, slanted glowing eyes, fangs, jagged charcoal markings and a continuous 16-section flame tail. A paired bounding gait bends the lower legs/paws and flexes the spine; the tail deforms continuously rather than using visible bead segments. `dist/fire-cat-model.js` owns this cosmetic model and animation. Transformation is a short flame-obscured scale transition between the two forms, rather than a vertex morph.
+The supplied drawings guide both original adaptations: a red/orange quadruped with charcoal markings, bright eyes, pointed ears, a golden chest and a long flame tail; a human heroine with asymmetrical black/red hair, dark jacket, red outfit, tall boots and gold earrings. The human form uses the existing licensed female weighted rig, with separate costume geometry/materials so other heroes are unchanged. Original cat geometry uses a lean, long-legged predator silhouette with four articulated legs, outward swept ears, sharp cheek tufts, slanted glowing eyes, fangs, jagged charcoal markings and a continuous 16-section flame tail. A continuous speed-blended bounding gait bends the lower legs/paws, gathers and extends the limbs, banks into turns and leans into climbs; the tail deforms continuously rather than using visible bead segments. `dist/fire-cat-model.js` owns this cosmetic model and animation. Transformation is a short flame-obscured scale transition between the two forms, rather than a vertex morph.
 
 ## Autonomous cycle
 
@@ -19,8 +19,10 @@ Landing points include roof centers/corners and open positions around the enemy.
 
 | Setting | Default | Meaning |
 |---|---:|---|
-| speed | 26 | Air-running/takeoff speed, world units/sec |
-| landingSpeed | 22 | Approach/descent speed |
+| speed | 33.8 | Air-running/takeoff speed, world units/sec |
+| landingSpeed | 28.6 | Approach/descent speed |
+| orbitRate | 0.312 | Patrol angular speed, radians/sec (30% faster) |
+| flightTrailLifeScale | 2.5 | Lifetime multiplier for flight flames/embers only |
 | cruiseClearance | 7 | Roof clearance used when the game constructs the hero |
 | airSeconds | 6 | Patrol duration before selecting a landing |
 | castSeconds | 7 | Human-form attack window |
@@ -34,7 +36,7 @@ Landing points include roof centers/corners and open positions around the enemy.
 | maxShots | 8 | Pooled active projectile cap |
 | surfaceCheckSeconds | 0.25 | Landing support revalidation interval |
 
-Flight bounds come from the active scene. Fire VFX reuse `SolaraFireTrail` (384 flame puffs + 128 embers maximum); projectiles and transformation/impact flashes use bounded instanced meshes. Reset or deselection clears all shots, particles, transitions and counters.
+Flight bounds come from the active scene. Flight particles live 2.5 times longer (0.9–1.4 seconds for flame, 1.375–2.25 seconds for embers), while fireballs and transformation particles retain their previous lifetimes. Fire VFX reuse `SolaraFireTrail` (384 flame puffs + 128 embers maximum); projectiles and transformation/impact flashes use bounded instanced meshes. Reset or deselection clears all shots, particles, transitions and counters.
 
 ## Verification
 

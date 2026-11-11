@@ -14,8 +14,8 @@ export class SolaraFireTrail {
  emitSegment(shot,from,to,direction,dt){
   const delta=to.clone().sub(from),distance=delta.length();if(distance<1e-6)return;const axis=direction.clone().normalize(),side=new THREE.Vector3().crossVectors(axis,Math.abs(axis.y)>.95?new THREE.Vector3(1,0,0):UP).normalize(),up=new THREE.Vector3().crossVectors(side,axis).normalize();let sample=FIRE_TRAIL.spacing-(shot.flameDistance||0);
   for(;sample<=distance+1e-8;sample+=FIRE_TRAIL.spacing){const t=Math.min(1,sample/distance),position=from.clone().lerp(to,t),angle=this.random()*Math.PI*2,spread=.3+this.random()*.8,velocity=side.clone().multiplyScalar(Math.cos(angle)*spread).addScaledVector(up,Math.sin(angle)*spread).addScaledVector(axis,-.8-this.random()*1.2);velocity.y+=.9;
-   const p={position,velocity,direction:axis.clone(),age:0,life:.36+this.random()*.20,size:.20+this.random()*.13,seed:this.random()*20};this.advance(p,(1-t)*dt);if(this.puffs.length>=FIRE_TRAIL.flames)this.puffs.shift();this.puffs.push(p);this.emitted++;
-   if(this.emitted%3===0){const spark={position:position.clone(),velocity:velocity.clone().multiplyScalar(2.4).addScaledVector(axis,-1.8),direction:axis.clone(),age:0,life:.55+this.random()*.35,size:.025+this.random()*.035,seed:p.seed,ember:true};if(this.sparks.length>=FIRE_TRAIL.embers)this.sparks.shift();this.sparks.push(spark);}
+   const p={position,velocity,direction:axis.clone(),age:0,life:(.36+this.random()*.20)*(shot.flameLifeScale||1),size:.20+this.random()*.13,seed:this.random()*20};this.advance(p,(1-t)*dt);if(this.puffs.length>=FIRE_TRAIL.flames)this.puffs.shift();this.puffs.push(p);this.emitted++;
+   if(this.emitted%3===0){const spark={position:position.clone(),velocity:velocity.clone().multiplyScalar(2.4).addScaledVector(axis,-1.8),direction:axis.clone(),age:0,life:(.55+this.random()*.35)*(shot.flameLifeScale||1),size:.025+this.random()*.035,seed:p.seed,ember:true};if(this.sparks.length>=FIRE_TRAIL.embers)this.sparks.shift();this.sparks.push(spark);}
   }
   shot.flameDistance=((shot.flameDistance||0)+distance)%FIRE_TRAIL.spacing;
  }

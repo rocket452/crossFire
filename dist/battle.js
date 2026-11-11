@@ -1,4 +1,4 @@
-import {EmbercatHero,EMBERCAT} from './embercat-hero.js?v=firecat-predator-252';
+import {EmbercatHero,EMBERCAT} from './embercat-hero.js?v=firecat-flight-254';
 import {AxolotlHero,AXO} from './axolotl-hero.js?v=axo-flight-253';
 import {MIREGUARD} from './mireguard-config.js?v=larger-mireguard-242';
 import {viewportPixelRatio} from './render-budget.js?v=overall-performance-238';

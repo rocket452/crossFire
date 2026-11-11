@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {FireCatModel} from './fire-cat-model.js?v=firecat-predator-252';
+import {FireCatModel} from './fire-cat-model.js?v=firecat-flight-254';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 // Two original silhouettes, with the existing weighted female rig for human casting.
 export class EmbercatCharacter {
@@ -18,10 +18,10 @@ export class EmbercatCharacter {
   const head=attach('B_Head',[0,.08,0]);mesh(head,ball,coal,[0,.06,-.035],[.28,.31,.27]);for(let i=0;i<5;i++){const lock=mesh(head,ball,i%2?red:coal,[-.18+i*.07,.08-i*.04,.16],[.11,.3,.12]);lock.rotation.z=-.45;}mesh(head,ball,red,[.21,-.15,-.07],[.13,.44,.18]);mesh(head,box,coal,[0,-.04,.23],[.36,.075,.045]);for(const s of[-1,1])mesh(head,new THREE.TorusGeometry(.075,.013,4,10),gold,[s*.24,-.12,0],[1,1,1]);
   const jacket=attach('B_Spine2',[0,0,0]);for(const sign of[-1,1]){const panel=mesh(jacket,box,coal,[sign*.22,-.08,.16],[.16,.48,.12]);panel.rotation.z=-sign*.18;}mesh(jacket,cone,gold,[0,-.1,.25],[.045,.12,.03]);this.human.visible=false;this.reset();
  }
- reset(){this.character.reset();this.catArt.pose(0,new THREE.Vector3());this.cat.visible=true;this.human.visible=false;this.cat.scale.setScalar(1);this.human.scale.setScalar(1);}
- pose(dt,time,{cat=true,blend=0,velocity=new THREE.Vector3(),target=null,charge=0,release=0}={}){
+ reset(){this.character.reset();this.catArt.reset();this.cat.visible=true;this.human.visible=false;this.cat.scale.setScalar(1);this.human.scale.setScalar(1);}
+ pose(dt,time,{cat=true,blend=0,velocity=new THREE.Vector3(),target=null,charge=0,release=0,turn=0}={}){
   this.cat.visible=cat||blend>0;this.human.visible=!cat||blend>0;this.cat.scale.setScalar(blend>0?(cat?blend:1-blend):1);this.human.scale.setScalar(blend>0?(cat?1-blend:blend):1);
-  this.catArt.pose(time,velocity);
+  this.catArt.pose(time,velocity,dt,turn);
   if(this.human.visible){const c=this.character;c.update('Idle',dt);for(let i=0;i<c.bones.length;i++){c.bones[i].position.copy(c.rest[i].p);c.bones[i].quaternion.copy(c.rest[i].q);}c.nodes.B_Spine.rotation.y+=charge*.2-release*.3;c.nodes.B_L_Thigh.rotation.x+=.08;c.nodes.B_R_Thigh.rotation.x-=.08;c.root.updateWorldMatrix(true,true);const gather=this.human.localToWorld(new THREE.Vector3(-.45,1.65,-.1)),relax=this.human.localToWorld(new THREE.Vector3(.5,1.25,.3));c.arm('R',target?gather.lerp(target,Math.min(1,release*2)):relax);c.arm('L',this.human.localToWorld(new THREE.Vector3(-.5,1.2,.3)));}
   this.root.updateWorldMatrix(true,true);
  }
