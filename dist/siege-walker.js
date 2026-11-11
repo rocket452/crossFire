@@ -1,4 +1,4 @@
-import {WalkerWeapons} from './walker-weapons.js?v=three-walker-weapons-241';
+import {WalkerWeapons} from './walker-weapons.js?v=city-walker-health-255';
 import {CannonTracking,CANNON_TRACKING} from './cannon-tracking.js?v=beam-tracking-150';
 import * as THREE from './vendor/three.module.js';
 import {trackedBeamWarningPlan} from './beam-aim.js?v=beam-tracking-61';
@@ -7,7 +7,7 @@ import {WalkerGait,solveLegKnee,angleDelta,WALKER_TURN_SPEED} from './walker-gai
 
 // Blender-built rigid components; combined weapon durability is the combat health pool.
 export class SiegeWalker {
- constructor(scene,gltf,spec,{onFire,onDebris,onEffect,onFootfall=()=>{},onBeam=()=>{},onDeath=null,onWeaponDestroyed=()=>{},onWreck=()=>{},onRemoveDebris=()=>{}}){
+ constructor(scene,gltf,spec,{onFire,onDebris,onEffect,onFootfall=()=>{},onBeam=()=>{},onDeath=null,onWeaponDestroyed=()=>{},onWreck=()=>{},onRemoveDebris=()=>{},weaponHealthMultiplier=1}){
   Object.assign(this,{scene,spec,onFire,onDebris,onEffect,onFootfall,onBeam,onWreck,onRemoveDebris,onWeaponDestroyed});this.onDeath=onDeath||((p)=>this.onEffect(p,false));
   this.root=new THREE.Group();this.root.name='Siege Walker';scene.add(this.root);
   this.nodes={};this.meshes={};this.boxes={};this.restPositions={};this.wrecks=[];this.gait=new WalkerGait();this.cannonTracking=new CannonTracking();this.weapon=new BeamCycle();
@@ -28,7 +28,7 @@ export class SiegeWalker {
    this.restPositions[p.name]=node.position.clone();this.nodes[p.name]=node;this.meshes[p.name]=mesh;
    const b=geometry.boundingBox;this.boxes[p.name]={center:b.getCenter(new THREE.Vector3()),size:b.getSize(new THREE.Vector3())};
   }
-  this.detachedParts=new Set();this.weapons=new WalkerWeapons({onDestroyed:m=>this.destroyWeapon(m)});this.reset();
+  this.detachedParts=new Set();this.weapons=new WalkerWeapons({healthMultiplier:weaponHealthMultiplier,onDestroyed:m=>this.destroyWeapon(m)});this.reset();
  }
  reset(){
   for(const w of this.wrecks){this.onRemoveDebris(w.body);w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
