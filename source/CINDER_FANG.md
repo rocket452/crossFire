@@ -2,7 +2,7 @@
 
 Optional hero ID `ember`, registered in the existing Heroes menu and Combat Testing dropdown. The default lineup and three-hero limit stay unchanged. The Cinder Fang camera follows her in either form.
 
-The supplied drawings guide both original adaptations: a red/orange quadruped with charcoal markings, bright eyes, pointed ears, a golden chest and a long flame tail; a human heroine with asymmetrical black/red hair, dark jacket, red outfit, tall boots and gold earrings. The human form uses the existing licensed female weighted rig, with separate costume geometry/materials so other heroes are unchanged. Original cat geometry uses four animated legs and five tail joints. Transformation is a short flame-obscured scale transition between the two forms, rather than a vertex morph.
+The supplied drawings guide both original adaptations: a red/orange quadruped with charcoal markings, bright eyes, pointed ears, a golden chest and a long flame tail; a human heroine with asymmetrical black/red hair, dark jacket, red outfit, tall boots and gold earrings. The human form uses the existing licensed female weighted rig, with separate costume geometry/materials so other heroes are unchanged. Original cat geometry uses a lean, long-legged predator silhouette with four articulated legs, outward swept ears, sharp cheek tufts, slanted glowing eyes, fangs, jagged charcoal markings and a continuous 16-section flame tail. A paired bounding gait bends the lower legs/paws and flexes the spine; the tail deforms continuously rather than using visible bead segments. `dist/fire-cat-model.js` owns this cosmetic model and animation. Transformation is a short flame-obscured scale transition between the two forms, rather than a vertex morph.
 
 ## Autonomous cycle
 

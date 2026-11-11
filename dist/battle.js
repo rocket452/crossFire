@@ -1,4 +1,4 @@
-import {EmbercatHero,EMBERCAT} from './embercat-hero.js?v=embercat-251';
+import {EmbercatHero,EMBERCAT} from './embercat-hero.js?v=firecat-predator-252';
 import {AxolotlHero} from './axolotl-hero.js?v=axolotl-250';
 import {MIREGUARD} from './mireguard-config.js?v=larger-mireguard-242';
 import {viewportPixelRatio} from './render-budget.js?v=overall-performance-238';
@@ -52,7 +52,7 @@ import {RobotMissiles} from './robot-missiles.js?v=charged-shuriken-130';
 import {MissileExplosions} from './missile-explosions.js?v=robot-death-80';
 import {PortalHero} from './portal-hero.js?v=overall-performance-238';
 import {SolaraHero} from './solara-hero.js?v=overall-performance-238';
-import {HeroRoster} from './hero-roster.js?v=embercat-251';
+import {HeroRoster} from './hero-roster.js?v=firecat-predator-252';
 import {segmentBoxFraction} from './combat-collision.js?v=evac-performance-233';
 import {PlasmaArtillery} from './plasma-artillery.js?v=plasma-impact-220';
 import {RobotEyeBeams} from './robot-eye-beams.js?v=charged-shuriken-130';

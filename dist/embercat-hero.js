@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {EmbercatCharacter} from './embercat-character.js?v=embercat-251';
+import {EmbercatCharacter} from './embercat-character.js?v=firecat-predator-252';
 import {SolaraFireTrail} from './solara-fire-trail.js?v=fire-trail-36';
 export const EMBERCAT=Object.freeze({speed:26,landingSpeed:22,cruiseClearance:7,airSeconds:6,castSeconds:7,transformSeconds:.8,chargeSeconds:.45,shotCooldown:1.1,shotSpeed:48,shotDamage:65,shotLife:4,range:160,maxShots:8,surfaceCheckSeconds:.25});
 export class EmbercatHero {
