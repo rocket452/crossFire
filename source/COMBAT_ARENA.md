@@ -13,3 +13,7 @@ Replaced the three-Mireguard dropdown choice with **5 squads of 4 Mireguards (20
 Static pieces sharing an attachment and material are merged without changing the rig, collision or damage: Mireguard remains 2,280 triangles, with render meshes reduced from 71 to 35 per enemy. The existing bundled geometry utility uses a relative Three.js import so both browser and Node checks use the same local dependency.
 
 `QA/mireguard-squads-browser.cjs` passes desktop/touch: twenty unique enemies, five exact groups of four, unobstructed placement, separated squads, live five-second combat, exact reset, batched models and switching back to the single enemy. Existing Mireguard lifecycle/animation, search and Kage hit-count Node suites pass. The existing desktop/touch Mireguard browser suite also passes with the replacement preset. Physical-phone FPS for twenty enemies is not measured.
+
+## Revision 260 — two-member Mireguard squads
+
+The multiple-Mireguard preset now spawns **5 squads of 2 (10 total)**. Existing squad centers and eight-metre spacing are retained; each pair stands side by side centered on its squad location. `COMBAT_ARENA.mireguardSquadSize` controls squad size. The single-Mireguard preset, enemy behavior and other scenes are unchanged. The existing `mireguard-3` URL/preset ID remains compatible.
