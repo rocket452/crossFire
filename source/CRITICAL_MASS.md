@@ -68,3 +68,9 @@ Live fixture damage to the same nearby Bruiser was **54.65** on a 0.4 s release 
 - `dist/battle.js`: existing damage/part routing and enemy interrupts.
 - `dist/index.html`, `dist/battle.css`, `dist/game-entry.js`: compact HUD, touch button, binding reminders and entry cache versions.
 - Four `QA/critical-mass-*` scripts and this document.
+
+## Revision 269 — centered moving charge
+
+The held charge sphere, halo and surrounding arcs now anchor to Volt's current body-centered `massOrigin`, the same point used for the eventual explosion, instead of the animated hand midpoint. Hand-to-charge filaments still follow the real hands. There is no smoothing or stored launch position, so running, turning, jumping and wall-oriented movement cannot leave the charge behind or pull its center forward. Released explosions remain at their actual detonation point. Damage, controls, charge thresholds, overload, cooldowns and movement are unchanged.
+
+The desktop gameplay regression measures charge-center error every simulation frame while sprinting, jumping and turning and requires less than 0.000001m offset from the current origin. Existing charge/release, burst, overload and reset checks remain in place.
