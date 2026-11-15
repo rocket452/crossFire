@@ -64,3 +64,7 @@ Revision 272: the separate Breaker enemy has been removed. The same private GLB 
 ## Uploaded Kage shuriken (revision 283)
 
 Raw `Shuriken.blend` and `Shuriken.fbx` live in `/workspace/private-assets/kage-shuriken/`, outside public GitHub. Run Blender with `--factory-startup --disable-autoexec -b /private/Shuriken.blend --python source/convert_kage_shuriken.py -- /private/runtime`. Copy only `kage-shuriken.glb` and `kage-shuriken.json` into ignored `dist/city-assets/licensed-weapons/` for local QA and into the private build. Force-add those two files only on `site-licensed-assets`. The private runtime difference now comprises **eight** files: four character files, two robot files and these two weapon files. Never push the source files or generated weapon geometry to public GitHub. See `source/KAGE_SHURIKEN_MODEL.md` and run the uploaded-model asset/browser checks before publication.
+
+## Uploaded Kage kunai (revision 284)
+
+`kunai.zip` and its nested FBX/textures stay under `/workspace/private-assets/kage-kunai/`. `source/convert_kage_kunai.py` exports only `kage-kunai.glb` (with embedded textures) and `kage-kunai.json`; those two files belong in ignored `dist/city-assets/licensed-weapons/` locally and are force-added only to `site-licensed-assets`. The private runtime difference now has **ten** files: four character, two robot, and four weapon runtime files. Never push the archive, FBX, textures or GLB to public GitHub. See `source/KAGE_KUNAI_MODEL.md` for conversion and QA details.

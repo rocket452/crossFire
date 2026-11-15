@@ -1,7 +1,7 @@
 import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
 import {KageSmoke,guardHeroInSmoke} from './kage-smoke.js?v=smoke-projectile-219';
 import {KageBombs} from './kage-bombs.js?v=smoke-projectile-219';
-import {KageAttacks,kageHitPower} from './kage-attacks.js?v=kage-aimed-slash-282';
+import {KageAttacks,kageHitPower} from './kage-attacks.js?v=uploaded-kunai-284';
 import {ChargedShuriken} from './charged-shuriken.js?v=shuriken-piercing-135';
 import {ShurikenWorld} from './shuriken-world.js?v=overall-performance-238';
 import {ShurikenEffects} from './shuriken-effects.js?v=uploaded-shuriken-283';
@@ -15,8 +15,8 @@ import {TouchStick} from './touch-stick.js?v=twin-stick-22';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 const UP=new THREE.Vector3(0,1,0),Z=new THREE.Vector3(0,0,1),$=id=>document.getElementById(id);
 export class NinjaHero {
- constructor({scene,model,shurikenModel=null,camera,controls,canvas,shurikenConfig,isTeleportHazard=()=>false,getSections,traceWorld,onHit,getRobot,getDashEnemies=()=>[],getMissile=()=>null,getAttackThreats=()=>[],getSmokeThreats=()=>[],redirect=()=>null,isPaused,onEnter=()=>{},onExit=()=>{}}){
-  Object.assign(this,{scene,camera,controls,canvas,getSections,traceWorld,onHit,getRobot,getDashEnemies,getMissile,getAttackThreats,getSmokeThreats,redirect,isPaused,onEnter,onExit});
+ constructor({scene,model,shurikenModel=null,kunaiModel=null,camera,controls,canvas,shurikenConfig,isTeleportHazard=()=>false,getSections,traceWorld,onHit,getRobot,getDashEnemies=()=>[],getMissile=()=>null,getAttackThreats=()=>[],getSmokeThreats=()=>[],redirect=()=>null,isPaused,onEnter=()=>{},onExit=()=>{}}){
+  Object.assign(this,{scene,kunaiModel,camera,controls,canvas,getSections,traceWorld,onHit,getRobot,getDashEnemies,getMissile,getAttackThreats,getSmokeThreats,redirect,isPaused,onEnter,onExit});
   this.root=new THREE.Group();this.root.name='Kage / Shadow Ninja';scene.add(this.root);this.visual=new THREE.Group();this.visual.position.y=0;this.somersaultPivot=new THREE.Group();this.somersaultPivot.position.y=1.1;this.root.add(this.somersaultPivot);this.somersaultPivot.add(this.visual);
   this.character=new HumanoidCharacter(model,{variant:'ninja',height:2.25});this.character.root.position.y=-1.1;this.visual.add(this.character.root);this.bodyUp=UP.clone();this.velocity=new THREE.Vector3();
   this.motion=new NinjaMotion({sweep:(a,b,grounded)=>this.traceDash(a,b,grounded),onHit:hit=>this.hit(hit,NINJA.dashDamage,'ninja-dash'),onDashEnd:p=>this.burst(p,12)});this.keys=new Set();this.active=false;this.hud=$('ninja-hud');this.dashResetNotice=document.createElement('div');this.dashResetNotice.id='ninja-dash-reset';this.dashResetNotice.hidden=true;this.dashResetNotice.setAttribute('role','status');this.dashResetNotice.setAttribute('aria-live','polite');this.dashResetNotice.innerHTML='<b>ϟ DASH RESET</b><span></span>';this.hud.append(this.dashResetNotice);this.viewer=document.querySelector('.viewer');
