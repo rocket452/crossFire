@@ -1,4 +1,4 @@
-# Prismwing — parrot-wing rainbow heroine (revision 177)
+# Rainbow Star — parrot-wing rainbow heroine (revision 177)
 
 Prismwing is an optional CPU defender in the existing **Heroes** selection menu. The default Volt/Violet/Rift team and three-hero limit are preserved. She also appears in Combat Testing's single-hero dropdown; **Play / Watch selected hero** and the **Prismwing** camera button follow her autonomous flight. Direct player flight controls and additional defensive/ultimate abilities are outside this addition.
 
@@ -21,3 +21,5 @@ Battle integration includes roster/storage, watch cameras, hero target lists for
 ## Verification
 
 `QA/prismwing-browser.cjs` passes desktop and emulated touch layouts: arena dropdown/watch; main-city hero menu replacing Rift within the existing three-hero limit; actual 574-triangle/23-bone weighted mesh with finite deformation bounds; two animated wings; hand/wand-tip separation; seven-color beam; real enemy damage; continuous flight; miss/cooldown cycles; bounded FX; rebuild and deselection cleanup. Front/side screenshots were inspected on both layouts. `hero-roster-test.mjs`, Kage motion, Mireguard and Bastion permanent weak-point checks also pass. Physical-phone FPS/thermal performance has not been measured.
+
+Revision 279: display name is **Rainbow Star** in hero selection, arena options, tracking labels and diagnostics. Stable roster ID `prism` and module filenames are retained to preserve saved selections. Rainbow Star and Solara already share the uploaded female body mesh and 23-bone rig; their palettes and accessories are separate.

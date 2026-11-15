@@ -1,9 +1,9 @@
 import * as THREE from './vendor/three.module.js';
 import {PrismwingCharacter} from './prismwing-character.js?v=overall-performance-238';
-import {PrismwingEffects} from './prismwing-effects.js?v=overall-performance-238';
+import {PrismwingEffects} from './prismwing-effects.js?v=rainbow-star-279';
 export const PRISMWING=Object.freeze({speed:16,acceleration:2.6,orbitRadius:23,orbitRate:.16,chargeSeconds:.45,beamSeconds:.8,cooldown:1.4,damagePerSecond:120,range:150,hitRadius:.16});
 export class PrismwingHero {
- constructor(scene,model,{getRobot,traceRainbow,onRainbowHit,buildings=[]}){Object.assign(this,{scene,getRobot,traceRainbow,onRainbowHit});this.root=new THREE.Group();this.root.name='Prismwing / rainbow parrot heroine';scene.add(this.root);this.art=new PrismwingCharacter(this.root,model);this.character=this.art.character;this.fx=new PrismwingEffects(scene);this.velocity=new THREE.Vector3();this.cruise=Math.max(22,...buildings.map(b=>b.floors*3+5));this.enabled=false;this.reset();}
+ constructor(scene,model,{getRobot,traceRainbow,onRainbowHit,buildings=[]}){Object.assign(this,{scene,getRobot,traceRainbow,onRainbowHit});this.root=new THREE.Group();this.root.name='Rainbow Star / rainbow parrot heroine';scene.add(this.root);this.art=new PrismwingCharacter(this.root,model);this.character=this.art.character;this.fx=new PrismwingEffects(scene);this.velocity=new THREE.Vector3();this.cruise=Math.max(22,...buildings.map(b=>b.floors*3+5));this.enabled=false;this.reset();}
  reset(){this.art.reset();this.fx.reset();this.velocity.set(0,0,0);this.root.position.set(14,this.cruise,23);this.root.rotation.set(0,Math.PI,0);this.phase='cruise';this.phaseTime=0;this.beamElapsed=0;this.cooldown=.8;this.shots=this.hits=this.damage=this.hitsTaken=0;this.mode='winged-flight';this.root.visible=this.fx.root.visible=this.enabled;}
  setEnabled(value){this.enabled=!!value;this.reset();}
  receiveEyeHit(){this.hitsTaken++;}
@@ -12,5 +12,5 @@ export class PrismwingHero {
   if(this.phase==='firing'&&target){from=this.art.muzzle();const direction=target.clone().sub(from).normalize(),far=from.clone().addScaledVector(direction,c.range),hit=this.traceRainbow(from,far,c.hitRadius);end=hit?new THREE.Vector3().copy(hit.point):far;contact=!!hit;const tick=Math.min(Math.max(0,dt),Math.max(0,c.beamSeconds-this.beamElapsed));this.beamElapsed+=tick;if(hit&&tick>0){const power=c.damagePerSecond*tick,damage=this.onRainbowHit(hit,end,power)||0;this.damage+=damage;if(damage>0)this.hits++;}if(this.beamElapsed>=c.beamSeconds-1e-8){this.phase='cruise';this.phaseTime=0;this.cooldown=c.cooldown;}}
   this.mode=this.phase==='firing'?'rainbow-casting':this.phase==='charge'?'wand-charging':'winged-flight';this.fx.update(dt,time,{from:from||this.art.muzzle(),end,contact,charge:this.phase==='charge'?Math.min(1,this.phaseTime/c.chargeSeconds):0});
  }
- diagnostics(){return{name:'Prismwing',enabled:this.enabled,controller:'cpu',mode:this.mode,phase:this.phase,position:this.root.position.toArray(),speed:this.velocity.length(),shots:this.shots,hits:this.hits,damage:this.damage,hitsTaken:this.hitsTaken,character:this.art.diagnostics(),effects:this.fx.diagnostics()};}
+ diagnostics(){return{name:'Rainbow Star',enabled:this.enabled,controller:'cpu',mode:this.mode,phase:this.phase,position:this.root.position.toArray(),speed:this.velocity.length(),shots:this.shots,hits:this.hits,damage:this.damage,hitsTaken:this.hitsTaken,character:this.art.diagnostics(),effects:this.fx.diagnostics()};}
 }
