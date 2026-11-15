@@ -10,7 +10,7 @@ The ground query combines the existing flat city plane and terrain-height query.
 
 ## Ball Lightning
 
-V spends **two-thirds of the full energy bar** (66.6667 of the current 100 capacity). It requires that amount, rather than taking a fraction of a nearly empty bar. A **2.5 m radius** electrical sphere launches ahead of the actual right hand and travels at **4 m/s**. It stops/parks at buildings and map boundaries, retaining its automatic attack and recharge behavior.
+V spends **two-thirds of the full energy bar** (66.6667 of the current 100 capacity). It requires that amount, rather than taking a fraction of a nearly empty bar. A **2.5 m radius** electrical sphere launches ahead of the actual right hand and travels at **8 m/s**. It stops/parks at buildings and map boundaries, retaining its automatic attack and recharge behavior.
 
 It starts with **100 orb energy** and has a floating, camera-facing energy bar plus a HUD readout. Every **0.45 seconds** it attacks up to **3** nearby robots within **32 m**, respecting building cover and the first armor/shield surface. Each zap costs **6 orb energy** and deals **65 base damage**. A passive drain of **1 energy/sec** prevents unattended orbs lingering forever. At zero energy it disperses. There is no forced lifetime while energy is maintained.
 
@@ -28,7 +28,7 @@ Only one orb exists at a time. After the **16 s ultimate cooldown**, V may repla
 | strikeDamage / strikeRadius / strikeEdge | 320 / 7 m / 0.35 |
 | strikeRange | 100 m aim ray |
 | ultimateCost / ultimateCooldown | RUNNER_ENERGY.capacity × 2/3 / 16 seconds |
-| orbRadius / orbSpeed / orbEnergy | 2.5 m / 4 m/s / 100 |
+| orbRadius / orbSpeed / orbEnergy | 2.5 m / 8 m/s / 100 |
 | orbLife | 0: optional hard lifetime disabled |
 | orbDrain | 1 energy/sec |
 | zapRange / zapInterval | 32 m / 0.45 seconds |
@@ -67,3 +67,7 @@ Ball Lightning now has a 2.5m collision radius (5m diameter), twice its original
 Graphics add an animated additive plasma sphere with flowing ribbons and a bright rim, three rotating energy rings, 36 pooled orbiting spark streaks, stronger internal lightning and brighter pooled zap impact flashes. A larger world energy bar remains visible above the released orb; the casting effect grows in front of the hands and the HUD shows the countdown. Effects use fixed geometry, no extra lights or textures, and preserve the existing 256 line-segment cap. Sky Strike graphics and damage are preserved.
 
 Storm unit tests verify doubled radius/range, the one-second launch boundary, unchanged zap cadence and cancellation/blocked refunds. Desktop and emulated-touch gameplay tests verify real V/button casting, plasma/rings/spark activation, energy cost, automatic attacks, all original recharge attacks, pause/reset, and error-free shader rendering. Physical phone performance is unmeasured.
+
+## Revision 268 — orb travel speed
+
+Doubled `orbSpeed` from 4 to 8 m/s. Casting, damage, targeting range, energy and recharge behavior are unchanged. The storm movement/cover/parking and casting tests pass with the new speed.

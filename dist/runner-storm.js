@@ -2,7 +2,7 @@ import * as THREE from './vendor/three.module.js';
 import {RUNNER_ENERGY} from './runner-energy.js?v=weapon-drain-77';
 import {massContacts} from './critical-mass.js?v=critical-mass-257';
 import {traceImpact} from './combat-collision.js?v=evac-performance-233';
-export const VOLT_STORM=Object.freeze({strikeDelay:3,strikeCooldown:8,strikeDamage:320,strikeRadius:7,strikeEdge:.35,strikeRange:100,ultimateCost:RUNNER_ENERGY.capacity*2/3,ultimateCooldown:16,orbCastSeconds:1,orbRadius:2.5,orbSpeed:4,orbEnergy:100,orbLife:0,orbDrain:1,zapRange:32,zapInterval:.45,zapCost:6,zapDamage:65,zapTargets:3,rechargeFactor:.5});
+export const VOLT_STORM=Object.freeze({strikeDelay:3,strikeCooldown:8,strikeDamage:320,strikeRadius:7,strikeEdge:.35,strikeRange:100,ultimateCost:RUNNER_ENERGY.capacity*2/3,ultimateCooldown:16,orbCastSeconds:1,orbRadius:2.5,orbSpeed:8,orbEnergy:100,orbLife:0,orbDrain:1,zapRange:32,zapInterval:.45,zapCost:6,zapDamage:65,zapTargets:3,rechargeFactor:.5});
 export class RunnerStorm {
  constructor({getUnits,getSections,onHit=()=>0,onEvent=()=>{},groundHeight=()=>.08,bounds={minX:-56,maxX:56,minZ:-56,maxZ:56}}){Object.assign(this,{getUnits,getSections,onHit,onEvent,groundHeight,bounds});this.reset();}
  reset(){this.cancelCast();this.orb=null;this.strike=null;this.events=[];this.strikeCooldown=this.ultimateCooldown=this.strikes=this.casts=this.zaps=this.damage=this.recharged=0;this.sequence=0;}
