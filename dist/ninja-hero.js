@@ -1,7 +1,7 @@
 import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
 import {KageSmoke,guardHeroInSmoke} from './kage-smoke.js?v=smoke-projectile-219';
 import {KageBombs} from './kage-bombs.js?v=smoke-projectile-219';
-import {KageAttacks,kageHitPower} from './kage-attacks.js?v=mireguard-balance-189';
+import {KageAttacks,kageHitPower} from './kage-attacks.js?v=kage-aimed-slash-282';
 import {ChargedShuriken} from './charged-shuriken.js?v=shuriken-piercing-135';
 import {ShurikenWorld} from './shuriken-world.js?v=overall-performance-238';
 import {ShurikenEffects} from './shuriken-effects.js?v=kage-loadout-139';
@@ -90,7 +90,7 @@ export class NinjaHero {
   const pitch=this.motion.active?.35:this.wallPose>0?-.2*Math.sin(this.wallPose/.35*Math.PI):airborne?-.06*Math.min(1,speed/NINJA.airSpeed)-.1*tuck:0,blend=dt?1-Math.exp(-16*dt):1;
   this.visual.rotation.z+=(.05*tuck-this.visual.rotation.z)*blend;this.visual.rotation.x+=(pitch-this.visual.rotation.x)*blend;this.visual.position.y=-.13*land;
   if(!airborne||this.motion.active)this.somersault=0;const flipProgress=1-this.somersault/.5;this.somersaultPivot.rotation.x=this.somersault>0?Math.PI*2*THREE.MathUtils.smoothstep(flipProgress,0,1):0;this.scarf.rotation.x=-.2-Math.min(1,speed/NINJA.runSpeed)*.65+Math.sin(this.time*17)*.1;this.scarf.rotation.y=Math.sin(this.time*10)*.18;
-  this.root.updateMatrixWorld(true);if((this.throwPose>0||this.shuriken?.charging||this.attacks?.loading)&&target){const handTarget=this.root.position.clone().add(new THREE.Vector3(0,1.5,0)).lerp(target,.1);this.character.arm('R',handTarget);}if(this.motion.active){const point=this.root.localToWorld(new THREE.Vector3(-.5,1.7,1));this.character.arm('L',point);}this.heldStar.visible=this.throwPose<=0&&!!this.shuriken?.charging;if(this.attacks?.slashTime>0){const t=1-this.attacks.slashTime/this.shurikenConfig.slash.effectSeconds;n.B_Spine1?.rotateY(Math.sin(t*Math.PI)*.65);this.character.arm('L',this.root.localToWorld(new THREE.Vector3(Math.sin((t-.5)*Math.PI)*2,1.6,1.3)));}this.blade.visible=this.motion.active||this.shurikenEffects?.strikeTime>0||this.attacks?.slashTime>0;this.root.updateMatrixWorld(true);
+  this.root.updateMatrixWorld(true);if((this.throwPose>0||this.shuriken?.charging||this.attacks?.loading)&&target){const handTarget=this.root.position.clone().add(new THREE.Vector3(0,1.5,0)).lerp(target,.1);this.character.arm('R',handTarget);}if(this.motion.active){const point=this.root.localToWorld(new THREE.Vector3(-.5,1.7,1));this.character.arm('L',point);}this.heldStar.visible=this.throwPose<=0&&!!this.shuriken?.charging;if(this.attacks?.slashTime>0){const t=1-this.attacks.slashTime/this.shurikenConfig.slash.effectSeconds;n.B_Spine1?.rotateY(Math.sin(t*Math.PI)*.65);n.B_Spine1?.rotateX(-Math.asin(this.attacks.slashDirection.y)*.3);this.character.arm('L',this.attacks.slashPoint(new THREE.Vector3(Math.sin((t-.5)*Math.PI)*2,.4,1.3)));}this.blade.visible=this.motion.active||this.shurikenEffects?.strikeTime>0||this.attacks?.slashTime>0;this.root.updateMatrixWorld(true);
  }
  renderEffects(dt){
   for(let i=this.particles.length-1;i>=0;i--){const p=this.particles[i];p.life-=dt;if(p.life<=0){this.particles.splice(i,1);continue;}p.p.addScaledVector(p.v,dt);}this.particles=this.particles.slice(-120);
