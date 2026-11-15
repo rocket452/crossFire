@@ -5,3 +5,6 @@ dist/city-assets/licensed-characters/
 
 # Uploaded robot model and rig stay in the private Sites build.
 dist/city-assets/licensed-robots/
+
+# Uploaded weapon meshes stay in the private Sites build.
+dist/city-assets/licensed-weapons/

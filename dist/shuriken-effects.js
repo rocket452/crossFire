@@ -3,9 +3,9 @@ export class ShurikenEffects {
  constructor(hero,config){this.hero=hero;this.config=config;this.group=new THREE.Group();hero.scene.add(this.group);this.flash=0;this.strikeTime=0;this.traceAge=1;this.debug=false;this.note='HOLD SHURIKEN · RELEASE TO THROW';
   const material=(color,opacity=1)=>new THREE.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,toneMapped:false}),line=()=>new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:config.preview.readyColor,transparent:true,opacity:.8,depthWrite:false}));
   this.line=line();this.line.frustumCulled=false;this.trace=line();this.trace.frustumCulled=false;this.group.add(this.line,this.trace);
-  this.ghost=new THREE.Mesh(hero.starGeometry,material(config.preview.readyColor,.55));this.ghost.material.wireframe=true;this.group.add(this.ghost);
+  this.ghost=new THREE.Mesh(hero.starGeometry,material(config.preview.readyColor,.55));this.ghost.material.wireframe=hero.shurikenSource!=='Shuriken.blend';this.group.add(this.ghost);
   this.charge=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),material(config.preview.lineColor,.4));this.group.add(this.charge);
-  this.thrown=new THREE.InstancedMesh(hero.starGeometry,material('#ffffff'),config.collision.maxEarlyStars+1);this.thrown.frustumCulled=false;this.group.add(this.thrown);this.dummy=new THREE.Object3D();
+  const starMaterial=hero.silver.clone();starMaterial.emissiveIntensity=.3;this.thrown=new THREE.InstancedMesh(hero.starGeometry,starMaterial,config.collision.maxEarlyStars+1);this.thrown.frustumCulled=false;this.group.add(this.thrown);this.dummy=new THREE.Object3D();
   this.ring=new THREE.Mesh(new THREE.TorusGeometry(config.feedback.stationaryRingRadius,.055,4,32),material(config.preview.readyColor,.8));this.ring.rotation.x=Math.PI/2;this.group.add(this.ring);
   this.slash=new THREE.Mesh(new THREE.TorusGeometry(1,.08,4,26,Math.PI*1.7),material('#ffe6a0',.9));this.group.add(this.slash);
   this.highlight=[];const box=new THREE.BoxGeometry(1,1,1);for(let i=0;i<config.preview.maxHighlights;i++){const m=new THREE.Mesh(box,material('#ffce67',.65));m.material.wireframe=true;this.group.add(m);this.highlight.push(m);}
