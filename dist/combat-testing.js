@@ -1,7 +1,7 @@
 import {Mireguard} from './mireguard.js?v=mireguard-art-243';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-pairs-260';
 import {BastionTesting} from './bastion-testing.js?v=map-safe-gaps-239';
-import {ExperimentalRobot} from './experimental-robots.js?v=bruiser-model-218';
+import {ExperimentalRobot} from './experimental-robots.js?v=spider-breaker-263';
 import * as THREE from './vendor/three.module.js';
 import {EvacRaider} from './evac-raider.js?v=bruiser-model-218';
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';

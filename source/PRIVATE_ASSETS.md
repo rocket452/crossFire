@@ -52,3 +52,9 @@ blender --factory-startup --disable-autoexec -b /private/female.blend -t 2 --pyt
 ```
 
 Copy `solara-female.glb` and `solara-female.json` into the ignored runtime directory for local QA, and commit them only on `site-licensed-assets`. The runtime GLB is 88,636 bytes; 574 source triangles, 23 bones, no unweighted vertices. The private asset folder now has four tracked files. Other soldiers/heroes continue using the earlier Unity-pack humanoid. Solara's original hair/eye accessory GLB remains public original artwork and is fitted to the new head in runtime code.
+
+## Uploaded Breaker SpiderBot (revision 263)
+
+`LowPoly_SpiderBot_Rzenn.blend` is stored at `/workspace/private-assets/breaker-spider/LowPoly_SpiderBot_Rzenn.blend`, outside public GitHub. Conversion uses `source/convert_breaker_spider.py` with Blender `--factory-startup --disable-autoexec`, preserving the supplied rigid 14-bone rig and all 2,944 evaluated triangles. There are no source animation clips; the game animates the actual joint hierarchy procedurally.
+
+The two runtime files `dist/city-assets/licensed-robots/breaker-spider.glb` and `breaker-spider.json` are ignored publicly. Copy them from `/workspace/private-assets/breaker-spider/runtime/` into the private build and force-add only there. The private build now contains these two robot files **in addition to** the four character runtime files above. Never publish the `.blend`, or push either private runtime folder to public GitHub. See `source/BREAKER_SPIDER.md` and run `node QA/breaker-spider-test.mjs` against the private checkout before publication.

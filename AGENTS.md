@@ -4,7 +4,7 @@ The game is in `dist/`; it is a static Three.js/Cannon-es app. Fetch `origin/mai
 
 ## Licensed character assets
 
-Read `source/PRIVATE_ASSETS.md` before character conversion, GitHub pushes or Site publication. The user-supplied Explosive LLC FBX/PSD package and its generated geometry/animation files must stay out of the PUBLIC GitHub repository. `dist/city-assets/licensed-characters/` is deliberately ignored in the public checkout. Integration code, conversion scripts, tests and documentation can be public. Do not remove the ignore rule or push a private build branch to GitHub.
+Read `source/PRIVATE_ASSETS.md` before character conversion, GitHub pushes or Site publication. The user-supplied Explosive LLC FBX/PSD package and its generated geometry/animation files must stay out of the PUBLIC GitHub repository. `dist/city-assets/licensed-characters/` is deliberately ignored in the public checkout. The uploaded Breaker SpiderBot and its generated runtime files in `dist/city-assets/licensed-robots/` follow the same private-only workflow. Integration code, conversion scripts, tests and documentation can be public. Do not remove the ignore rule or push a private build branch to GitHub.
 
 The private Site build uses an isolated `site-licensed-assets` branch/worktree containing the app-specific runtime GLB and manifest. Publish that exact private commit/archive to Sites. Public `main` is for code only. On later edits, merge the new public code commit into the private build branch, retain its licensed runtime files, validate there, and push only to the Sites credential remote. See the private-assets guide for locations and commands.
 
