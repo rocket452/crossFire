@@ -81,9 +81,9 @@
         5.5
       ],
       [
-        -4,
-        30,
-        -4.8
+        0,
+        31,
+        -8
       ],
       [
         4,
@@ -126,9 +126,9 @@
         9
       ],
       [
-        2.4,
-        2.8,
-        2.5
+        8,
+        11,
+        5
       ],
       [
         2.4,
@@ -387,7 +387,9 @@
     "armLift": 0.16,
     "muzzleExtension": 0.8,
     "fallbackGridStep": 8,
-    "module": 1
+    "module": 1,
+    "weaponHealth": 700,
+    "weaponBossDamageScale": 1
   },
   "beamWalls": {
     "waves": 3,
@@ -405,7 +407,10 @@
     "thickness": 1.3,
     "playerRadius": 0.7,
     "damage": 95,
-    "firstGapOffset": 40
+    "firstGapOffset": 40,
+    "module": 4,
+    "weaponHealth": 900,
+    "weaponBossDamageScale": 1
   },
   "weakPoints": {
     "armHealth": 1200,

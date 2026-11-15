@@ -11,7 +11,7 @@ export class BastionBeamWalls {
  get edgePadding(){const c=this.config,r=this.boss.config.arena.radius;return Math.max(0,-c.min-r,c.max-r);}
  reset(){this.left=this.min=this.config.min;this.right=this.max=this.config.max;this.running=false;this.elapsed=0;this.completed=0;this.sky.visible=this.skyGlow.visible=false;for(const w of this.waves){w.root.visible=w.marker.visible=w.active=false;w.hit=false;w.z=w.previousZ=this.config.min;}}
  begin(){
-  this.reset();if(this.boss.state.launchers[this.boss.config.rain.module].destroyed)return;
+  this.reset();if(this.boss.state.launchers[this.config.module].destroyed)return;
   const c=this.config,b=this.arenaBounds,target=this.boss.player.position,cx=(b.minX+b.maxX)/2,cz=(b.minZ+b.maxZ)/2,dx=target.x-cx,dz=target.z-cz;
   // Lock to this map's center and far edge, independently of the boss's pose.
   this.yaw=Math.abs(dx)>Math.abs(dz)?(dx>=0?Math.PI/2:-Math.PI/2):(dz>=0?0:Math.PI);
@@ -29,7 +29,7 @@ export class BastionBeamWalls {
   for(const w of this.waves){w.gap=gap;gap+=direction*step;w.marker.position.set(w.gap,.12,(this.min+this.max)/2);w.marker.scale.y=(this.max-this.min)/(c.max-c.min);w.z=w.previousZ=this.min;}
   this.running=true;if(this.boss.state.patterns.includes('beam-wall'))this.boss.state.barrageDuration=this.duration*(this.boss.state.gapBonus?1+this.boss.config.timings.gapExtension:1);this.boss.onEvent('SKY BEAM · Three beam walls incoming. Pass through the green gaps!');
  }
- update(dt){if(!this.running)return;const c=this.config;if(this.boss.dead||this.boss.state.launchers[this.boss.config.rain.module].destroyed){this.reset();return;}this.elapsed+=dt;const sky=this.elapsed<c.chargeSeconds;this.sky.visible=this.skyGlow.visible=sky;if(sky){const p=this.boss.model.art.artilleryMuzzle();for(const [mesh,r]of[[this.sky,c.skyRadius],[this.skyGlow,c.skyRadius*2]]){mesh.position.copy(p).y+=c.height/2;mesh.scale.set(r,c.height,r);}}
+ update(dt){if(!this.running)return;const c=this.config;if(this.boss.dead||this.boss.state.launchers[this.config.module].destroyed){this.reset();return;}this.elapsed+=dt;const sky=this.elapsed<c.chargeSeconds;this.sky.visible=this.skyGlow.visible=sky;if(sky){const p=this.boss.model.art.wallMuzzle();for(const [mesh,r]of[[this.sky,c.skyRadius],[this.skyGlow,c.skyRadius*2]]){mesh.position.copy(p).y+=c.height/2;mesh.scale.set(r,c.height,r);}}
   this.completed=0;for(const [i,w]of this.waves.entries()){const age=this.elapsed-c.chargeSeconds-i*c.waveInterval;w.previousZ=w.z;w.z=this.min+Math.max(0,age)*c.speed;w.active=age>=0&&w.z<=this.max;w.root.visible=w.active;w.marker.visible=age<0&&age>=-c.chargeSeconds;if(w.z>this.max)this.completed++;if(!w.active)continue;
    w.root.position.z=w.z;let n=0;for(let x=this.left;x<=this.right;x+=c.spacing){if(Math.abs(x-w.gap)<c.gapWidth/2)continue;this.dummy.position.set(x,c.height/2,0);this.dummy.scale.set(c.radius,c.height,c.radius);this.dummy.updateMatrix();w.beams.setMatrixAt(n,this.dummy.matrix);this.dummy.scale.set(c.spacing*.62,c.height,c.spacing*.62);this.dummy.updateMatrix();w.halo.setMatrixAt(n++,this.dummy.matrix);}w.beams.count=w.halo.count=n;w.beams.instanceMatrix.needsUpdate=w.halo.instanceMatrix.needsUpdate=true;for(const [j,e]of w.edges.entries())e.position.x=w.gap+(j?1:-1)*c.gapWidth/2;}
   if(this.elapsed>this.duration){this.running=false;for(const w of this.waves)w.root.visible=w.marker.visible=w.active=false;}

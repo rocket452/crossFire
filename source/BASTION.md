@@ -325,3 +325,13 @@ Verification: `QA/bastion-proximity-test.mjs` covers late-entry/overlap timing, 
 ## Chest reactor placement (revision 277)
 
 The former rear reactor is now the always-exposed chest reactor (`chest` hit part), attached to the torso at local `[0, 0, 5.4]`. Its face and light bars point forward. Damage remains 2.5x, with unchanged size `[6.2, 7, 1.4]`, arm cores and boss health. Tuning keys are now `weakPoints.chestDamageMultiplier` and `weakPoints.chestSize`. Hit shapes, core effects, fallback aim points, HUD labels and browser tests use the chest; the back no longer has a weak-point collider.
+
+## Separate shoulder artillery and dorsal laser weapon (revision 278)
+
+The shoulder mortar now has a fixed armoured saddle, trunnions, barrel jackets, hydraulic recoil struts, cooling fins and a recessed luminous bore. It retains the existing upward shell trajectory and 32-shot barrage. The laser-wall attack now fires its sky beam from a separate dorsal array: twin charging rails surrounding a large glowing rear capacitor. Rails open slightly and brighten during the 1.8-second wall charge. The chest reactor remains the main always-exposed damage target.
+
+Both weapons accept ordinary hit-shape damage in every phase. Artillery uses `rain.module=1`, `weaponHealth=700`, `weaponBossDamageScale=1`; the dorsal array uses `beamWalls.module=4`, `weaponHealth=900`, `weaponBossDamageScale=1`. Existing launcher slot 4 is relocated to `[0,31,-8]` with base size `[8,11,5]`; animated barrel/rail hit volumes follow their actual rig transforms. Weapon damage contributes once to boss health, capped by the weapon's remaining HP. Destruction removes the weapon geometry and hitboxes with an impact burst. Destroying the array cancels active walls and prevents subsequent wall attacks. Destroying artillery stops pending launches; shells already airborne finish normally. Losing the artillery arm does not disable the independent dorsal array. Rebuild restores both.
+
+The updated model measures 16,524 triangles and 202 render meshes (previously 14,740 and 179). Shared materials and geometry remain batched. The model regression ceiling is now 18,000 triangles / 220 meshes to accommodate the added weapons; physical phone performance remains unmeasured.
+
+Checks: `QA/bastion-weapon-mounts-test.mjs` validates actual traces, independent destruction, attack cancellation, arm independence and rebuild. `QA/bastion-weapon-mounts-browser.cjs` tests actual electric attacks, mount visuals, sky-beam origin, destruction and reset on desktop and touch. Existing state/Gatling, rain, artillery prediction, beam-wall gap and proximity-warning tests cover combat regression.
