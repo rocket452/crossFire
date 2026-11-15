@@ -10,7 +10,7 @@ The ground query combines the existing flat city plane and terrain-height query.
 
 ## Ball Lightning
 
-V spends **two-thirds of the full energy bar** (66.6667 of the current 100 capacity). It requires that amount, rather than taking a fraction of a nearly empty bar. A **2.5 m radius** electrical sphere launches ahead of the actual right hand and travels at **8 m/s**. It stops/parks at buildings and map boundaries, retaining its automatic attack and recharge behavior.
+V spends **two-thirds of the full energy bar** (66.6667 of the current 100 capacity). It requires that amount, rather than taking a fraction of a nearly empty bar. A **2.5 m radius** electrical sphere launches ahead of the actual right hand and travels at **8 m/s**. It stops/parks at buildings, retaining its automatic attack and recharge behavior. At the stage boundary it despawns with a brief fade.
 
 It starts with **100 orb energy** and has a floating, camera-facing energy bar plus a HUD readout. Every **0.45 seconds** it attacks up to **3** nearby robots within **32 m**, respecting building cover and the first armor/shield surface. Each zap costs **6 orb energy** and deals **65 base damage**. A passive drain of **1 energy/sec** prevents unattended orbs lingering forever. At zero energy it disperses. There is no forced lifetime while energy is maintained.
 
@@ -71,3 +71,7 @@ Storm unit tests verify doubled radius/range, the one-second launch boundary, un
 ## Revision 268 — orb travel speed
 
 Doubled `orbSpeed` from 4 to 8 m/s. Casting, damage, targeting range, energy and recharge behavior are unchanged. The storm movement/cover/parking and casting tests pass with the new speed.
+
+## Revision 271 — stage-edge despawn
+
+The orb disperses when its outer radius reaches any stage edge, rather than parking there. It is removed before automatic zap processing that frame, cannot be recharged or hit afterward, and retains its existing ultimate cooldown. Building contact still parks the orb as before. Four-edge checks pass at 30/60/120 Hz, including a single fade and no post-despawn attacks or collisions.

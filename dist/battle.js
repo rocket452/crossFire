@@ -1,5 +1,5 @@
 import {WELDING_BEAM,weldStun} from './runner-welder.js?v=weld-stun-art-266';
-import {VOLT_STORM} from './runner-storm.js?v=orb-speed-268';
+import {VOLT_STORM} from './runner-storm.js?v=orb-edge-271';
 import {BASIC_ATTACKS,recognizedElectricWeakPoint} from './runner-basic-attacks.js?v=volt-storm-259';
 import {massContacts,CRITICAL_MASS} from './critical-mass.js?v=critical-mass-257';
 import {WALKER_WEAPON_HEALTH_SCALE} from './walker-weapons.js?v=city-walker-health-255';
@@ -52,7 +52,7 @@ import {SiegeWalker} from './siege-walker.js?v=city-walker-health-255';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=hero-hurt-118';
 import {VioletHero} from './violet-hero.js?v=overall-performance-238';
-import {Speedster} from './speedster.js?v=hero-camera-270';
+import {Speedster} from './speedster.js?v=orb-edge-271';
 import {RobotMissiles} from './robot-missiles.js?v=charged-shuriken-130';
 import {MissileExplosions} from './missile-explosions.js?v=robot-death-80';
 import {PortalHero} from './portal-hero.js?v=overall-performance-238';
