@@ -315,3 +315,9 @@ All 864 unit layouts and 180 live browser layouts passed. Existing swept-wall
 damage, sky-charge lifecycle, state/weapon/proximity and no-building-damage
 regressions passed as well; desktop overview and touch gap screenshots were
 visually inspected.
+
+## Close-range yellow warning reliability
+
+Every pulse requires at least `pulse.proximityWindup` (1 second) of nearby, unstunned yellow warning before emission, including late approaches and overlap events. An early wave request waits out the remaining warning. Retreat or stun cancels the pending pulse; rebuild clears warning progress. Whole-armour flashes retain `warningColor=#ffe24a`, `warningHz=4`, and `warningIntensity=2.8`. Yellow warnings take priority over red hit flashes; normal red feedback resumes outside the warning. Proximity gating, pulse damage and knockback are unchanged.
+
+Verification: `QA/bastion-proximity-test.mjs` covers late-entry/overlap timing, damage-flash priority, proximity, cancellation and reset; existing pulse knockback and enemy damage-flash suites cover collision and shared feedback regressions.

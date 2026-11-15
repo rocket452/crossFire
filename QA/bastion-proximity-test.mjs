@@ -5,3 +5,16 @@ const far=run([50,.08,50]);assert(!far.sawWave&&!far.sawPulse);assert(far.b.core
 
 for(const pattern of['gatling','skyfall','beam-wall']){const b=new Bastion(new THREE.Scene(),new UnitDamage(),config),p={position:new THREE.Vector3(0,.08,12),motion:{mode:'ground',normal:{x:0,y:1,z:0}}};b.state.patterns=[pattern];b.state.enter('barrage');for(let i=0;i<150;i++)b.updateWorld(1/120,i/120,p);assert.equal(b.reactivePulses,1,'approach during '+pattern+' triggers prompt pulse');assert(b.waves.length);for(let i=0;i<120;i++)b.updateWorld(1/120,(i+150)/120,p);assert.equal(b.reactivePulses,1,'cooldown prevents spam');b.reset();assert.equal(b.proximityWindup,null);assert.equal(b.pulseCooldown,0);}console.log('PASS proximity response during every long ranged attack, cooldown and reset');
 const warning=close.b;warning.pulseCooldown=0;warning.state.phase='windup';warning.paint(0);assert.equal(warning.model.art.materials.armour.emissive.getHexString(),'ffe24a');const dim=warning.model.art.materials.armour.emissiveIntensity;warning.paint(1/(4*config.pulse.warningHz));assert(warning.model.art.materials.armour.emissiveIntensity>dim+1);warning.stunRemaining=1;warning.paint(0);assert.equal(warning.model.art.materials.armour.emissive.getHex(),0);warning.reset();assert.equal(warning.model.art.materials.light.emissive.getHex(),0);console.log('PASS yellow whole-armour flashing during scheduled windup, visible modulation, stun cancellation and reset');
+
+// Late entry and overlap events must not skip the visible one-second warning.
+const {EnemyDamageFlash}=await import('../dist/enemy-damage-flash.js');
+for(const phase of ['windup','barrage']){
+ const b=new Bastion(new THREE.Scene(),new UnitDamage(),config),p={position:new THREE.Vector3(0,.08,12),motion:{mode:'ground',normal:{x:0,y:1,z:0}}};
+ b.player=p;b.state.phase=phase;b.state.elapsed=phase==='windup'?config.timings.windup-.02:0;
+ const flashes=new EnemyDamageFlash();flashes.hit(b.combatUnit,10);flashes.update(.01);
+ b.addWave('late-overlap');assert.equal(b.waves.length,0);
+ for(let i=0;i<100;i++){flashes.beginFrame();b.updateWorld(.01,i*.01,p);flashes.update(.01);if(i<98){assert.equal(b.waves.length,0,'no pulse before full warning');assert.equal(b.model.art.materials.armour.emissive.getHexString(),'ffe24a','yellow warning wins over red damage');}}
+ assert.equal(b.waves.length,1,'one warned pulse');
+ b.reset();assert.equal(b.pendingPulseId,null);assert.equal(b.pulseWarningElapsed,0);
+}
+console.log('PASS late-entry/overlap pulse warning lasts one second, yellow overrides existing damage flashes, single pulse and reset');
