@@ -1,9 +1,9 @@
 import * as THREE from './vendor/three.module.js';
 import {SolaraAnimation} from './solara-animation.js?v=surfer-37';
-import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
+import {createFemaleHeroBody} from './female-hero-body.js?v=rainbow-solara-body-280';
 export class SolaraCharacter {
  constructor(root,humanoid,model,spec){
-  this.root=root;this.character=new HumanoidCharacter(humanoid,{variant:'solara',height:2.59});this.character.variant='solara';for(const mesh of this.character.meshes)mesh.material=mesh.material.clone();root.add(this.character.root);this.animation=new SolaraAnimation();this.handTargets={};this.armNormals={};this.armRotations={};this.footTargets={};this.lastHead=null;this.parts=[];this.flameUniform={value:0};
+  this.root=root;this.character=createFemaleHeroBody(humanoid,'solara');this.character.variant='solara';root.add(this.character.root);this.animation=new SolaraAnimation();this.handTargets={};this.armNormals={};this.armRotations={};this.footTargets={};this.lastHead=null;this.parts=[];this.flameUniform={value:0};
   const c=this.character;for(let i=0;i<c.bones.length;i++){c.bones[i].position.copy(c.rest[i].p);c.bones[i].quaternion.copy(c.rest[i].q);}root.updateMatrixWorld(true);model.scene.updateMatrixWorld(true);
   this.armRoll={};for(const side of['R','L']){const upper=c.nodes['B_'+side+'_UpperArm'],lower=c.nodes['B_'+side+'_Forearm'],hand=c.nodes['B_'+side+'_Hand'],a=c.world(upper.name),b=c.world(lower.name),end=c.world(hand.name),u=b.clone().sub(a),l=end.clone().sub(b),normal=new THREE.Vector3().crossVectors(u,l).normalize();this.armRoll[side]={upper:this.armFrame(u,normal).invert().multiply(upper.getWorldQuaternion(new THREE.Quaternion())),lower:this.armFrame(l,normal).invert().multiply(lower.getWorldQuaternion(new THREE.Quaternion()))};}
 

@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {PrismwingCharacter} from './prismwing-character.js?v=overall-performance-238';
+import {PrismwingCharacter} from './prismwing-character.js?v=rainbow-solara-body-280';
 import {PrismwingEffects} from './prismwing-effects.js?v=rainbow-star-279';
 export const PRISMWING=Object.freeze({speed:16,acceleration:2.6,orbitRadius:23,orbitRate:.16,chargeSeconds:.45,beamSeconds:.8,cooldown:1.4,damagePerSecond:120,range:150,hitRadius:.16});
 export class PrismwingHero {
