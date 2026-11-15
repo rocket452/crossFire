@@ -1,7 +1,7 @@
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';
 import * as THREE from './vendor/three.module.js';
 import {RAIDER_COMBAT} from './evac-raider.js?v=spider-bruiser-272';
-import {SpiderBruiser} from './spider-bruiser.js?v=spider-bruiser-272';
+import {SpiderBruiser} from './spider-bruiser.js?v=wreck-occlusion-273';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
 export class EvacRaiderSquad {
  constructor(scene,damage,{spiderModel,landing,idPrefix='evac-raider',route=null,label='outer boulevard',getHelicopter,getTargets,visible,trace,isPathClear,redirect,onHeroHit=()=>{},onDebris=()=>null,onRemoveDebris=()=>{},onDeath=()=>{},onWreck=()=>{},onEvent=()=>{}}){

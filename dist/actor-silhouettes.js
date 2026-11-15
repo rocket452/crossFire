@@ -13,7 +13,7 @@ export class ActorSilhouettes {
  update(actors,evacuation,danger,time,occluders=[]){
   for(const actor of occluders)this.occlude(actor);
   this.enemies=this.enemies.filter(e=>{if(e.actor.faction==='argus'&&!e.actor.root.parent){e.overlay.removeFromParent();return false;}return true;});for(const actor of actors)this.register(actor);
-  for(const e of this.enemies)e.overlay.visible=!e.actor.dead&&e.actor.combatUnit?.alive!==false;
+  for(const e of this.enemies){let node=e.source;while(node&&node!==e.actor.root)node=node.parent;e.overlay.visible=!e.actor.dead&&e.actor.combatUnit?.alive!==false&&node===e.actor.root;}
   const source=evacuation?.people;if(source&&this.crowd?.source!==source){mark(source);const overlay=setup(new THREE.InstancedMesh(source.geometry,this.civilianMaterial,source.instanceMatrix.count));overlay.instanceMatrix=source.instanceMatrix;source.add(overlay);this.crowd={source,overlay};}
   this.threatened=0;if(!this.crowd)return;const {overlay}=this.crowd;let index=0;
   for(const c of evacuation.civilians){if(!c.unit.alive||c.unit.dashPhased)continue;const threat=danger.has(c.group||c);if(threat)this.threatened++;const color=threat?(Math.sin(time*Math.PI*6)>0?this.flash:this.warning):this.dark;for(let i=0;i<6;i++)overlay.setColorAt(index++,color);}

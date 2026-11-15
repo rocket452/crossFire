@@ -8,3 +8,9 @@ Civilian cohorts flash together between ochre and red at 3Hz when the existing m
 
 
 Revision 246: visible opaque bodies of all seven heroes now reserve the same actor stencil bit as enemies/projectile cores. Enemy and civilian overlays cannot paint over those visible surfaces. Hero fragments hidden by buildings fail depth and leave the building silhouette visible. Transparent energy effects are excluded. The real-WebGL pixel test in `QA/projectile-occlusion-browser.cjs` passes building coverage, a visible hero blocking the overlay, a hidden hero not masking the building, and both projectile visibility cases. Its setup now uses the retained Combat Testing scene.
+
+## Revision 273 — wreckage respects buildings
+
+SpiderBot wreck generation excludes silhouette overlay meshes from copied body geometry. The shared actor overlay pass also requires each source mesh to remain attached to its living actor root, hiding detached weapons/limbs without breaking silhouette restoration on reset. Mireguard wreck copies already strip overlay children and continue doing so.
+
+`QA/spider-bruiser-test.mjs` registers live silhouettes before destruction and verifies all six wreck groups contain only normally depth-tested materials. `QA/wreck-occlusion-browser.cjs` renders the real uploaded Bruiser in desktop/touch Chromium: the living enemy shows through cover, wreck fragments contribute zero pixels through the same opaque wall, exposed wrecks remain visible, reset restores the live silhouette, and detached/reattached parts update correctly.
