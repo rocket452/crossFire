@@ -321,3 +321,7 @@ visually inspected.
 Every pulse requires at least `pulse.proximityWindup` (1 second) of nearby, unstunned yellow warning before emission, including late approaches and overlap events. An early wave request waits out the remaining warning. Retreat or stun cancels the pending pulse; rebuild clears warning progress. Whole-armour flashes retain `warningColor=#ffe24a`, `warningHz=4`, and `warningIntensity=2.8`. Yellow warnings take priority over red hit flashes; normal red feedback resumes outside the warning. Proximity gating, pulse damage and knockback are unchanged.
 
 Verification: `QA/bastion-proximity-test.mjs` covers late-entry/overlap timing, damage-flash priority, proximity, cancellation and reset; existing pulse knockback and enemy damage-flash suites cover collision and shared feedback regressions.
+
+## Chest reactor placement (revision 277)
+
+The former rear reactor is now the always-exposed chest reactor (`chest` hit part), attached to the torso at local `[0, 0, 5.4]`. Its face and light bars point forward. Damage remains 2.5x, with unchanged size `[6.2, 7, 1.4]`, arm cores and boss health. Tuning keys are now `weakPoints.chestDamageMultiplier` and `weakPoints.chestSize`. Hit shapes, core effects, fallback aim points, HUD labels and browser tests use the chest; the back no longer has a weak-point collider.
