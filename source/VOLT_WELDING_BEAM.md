@@ -39,3 +39,9 @@ The previous `runner-whip.js` and its historical tests remain unused archives. C
 - Existing Critical Mass unit/browser and City Battle desktop/touch rescue-dash regression checks pass.
 
 Physical phone performance has not been measured.
+
+## Revision 266 — electrified stun feedback
+
+Successful welding stuns now wrap the victim in bright blue-white crawling arcs and two travelling electrical bands. The effect follows the enemy's current rotated hit shapes, refreshes while welding applies stun, and fades over the existing 0.2-second stun tail when contact ends. Bosses, zero-damage contacts, friendly orbs and killed targets never receive it. Existing damage, energy and stun timings are unchanged.
+
+`WeldElectrifyFX` uses two fixed instanced meshes with a 256-segment cap and at most four recent victims. Normal depth testing preserves building occlusion. Release preserves only the brief stun tail; reset, hero exit, pause cancellation and overload clear it. The real desktop/touch welding browser checks now assert live effect activation, segment bounds and complete expiry after release, in addition to existing damage, energy and boss behavior.
