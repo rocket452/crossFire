@@ -1,6 +1,6 @@
 # Volt Rush — Sky Strike and Ball Lightning
 
-While controlling Volt Rush, **Z** calls Sky Strike at the aimed ground point and **V** launches Ball Lightning in the current aim direction. Matching touch buttons are in the new storm panel. Both are instant inputs: the three-second delay belongs to the ground strike, never to player movement. Existing primary weapons, RMB Critical Mass, X cancel, E rescue dash, Q stun and R welding beam retain their bindings.
+While controlling Volt Rush, **Z** calls Sky Strike at the aimed ground point and **V** launches Ball Lightning in the current aim direction. Matching touch buttons are in the new storm panel. Z marks ground immediately; V gathers Ball Lightning for one second before release. Neither delay limits player movement. Existing primary weapons, RMB Critical Mass, X cancel, E rescue dash, Q stun and R welding beam retain their bindings.
 
 ## Sky Strike
 
@@ -10,9 +10,9 @@ The ground query combines the existing flat city plane and terrain-height query.
 
 ## Ball Lightning
 
-V spends **two-thirds of the full energy bar** (66.6667 of the current 100 capacity). It requires that amount, rather than taking a fraction of a nearly empty bar. A **1.25 m radius** electrical sphere launches ahead of the actual right hand and travels at **4 m/s**. It stops/parks at buildings and map boundaries, retaining its automatic attack and recharge behavior.
+V spends **two-thirds of the full energy bar** (66.6667 of the current 100 capacity). It requires that amount, rather than taking a fraction of a nearly empty bar. A **2.5 m radius** electrical sphere launches ahead of the actual right hand and travels at **4 m/s**. It stops/parks at buildings and map boundaries, retaining its automatic attack and recharge behavior.
 
-It starts with **100 orb energy** and has a floating, camera-facing energy bar plus a HUD readout. Every **0.45 seconds** it attacks up to **3** nearby robots within **16 m**, respecting building cover and the first armor/shield surface. Each zap costs **6 orb energy** and deals **65 base damage**. A passive drain of **1 energy/sec** prevents unattended orbs lingering forever. At zero energy it disperses. There is no forced lifetime while energy is maintained.
+It starts with **100 orb energy** and has a floating, camera-facing energy bar plus a HUD readout. Every **0.45 seconds** it attacks up to **3** nearby robots within **32 m**, respecting building cover and the first armor/shield surface. Each zap costs **6 orb energy** and deals **65 base damage**. A passive drain of **1 energy/sec** prevents unattended orbs lingering forever. At zero energy it disperses. There is no forced lifetime while energy is maintained.
 
 Shoot the orb to refill it: **0.5 orb energy per raw attack-damage point**, capped at 100. The original beam, Lightning Bolt, Rapid Sparks, Electric Needle, Lightning Sweep and R welding beam all recharge it; nearby successful Critical Mass bursts and Sky Strikes can also feed it. The orb flashes white when struck. Shooting it still pays the original weapon's normal energy cost and stops that shot/beam on the orb, trading direct enemy damage for sustained orb output. Needle does not receive its enemy weak-point multiplier against the friendly orb.
 
@@ -28,10 +28,10 @@ Only one orb exists at a time. After the **16 s ultimate cooldown**, V may repla
 | strikeDamage / strikeRadius / strikeEdge | 320 / 7 m / 0.35 |
 | strikeRange | 100 m aim ray |
 | ultimateCost / ultimateCooldown | RUNNER_ENERGY.capacity × 2/3 / 16 seconds |
-| orbRadius / orbSpeed / orbEnergy | 1.25 m / 4 m/s / 100 |
+| orbRadius / orbSpeed / orbEnergy | 2.5 m / 4 m/s / 100 |
 | orbLife | 0: optional hard lifetime disabled |
 | orbDrain | 1 energy/sec |
-| zapRange / zapInterval | 16 m / 0.45 seconds |
+| zapRange / zapInterval | 32 m / 0.45 seconds |
 | zapCost / zapDamage / zapTargets | 6 / 65 / 3 |
 | rechargeFactor | 0.5 |
 
@@ -59,3 +59,11 @@ Sky Strike now has a fixed outer radius marker, contracting inner warning rings,
 `dist/sky-strike-fx.js` owns the rendering and sound. `SKY_STRIKE_ART` exposes the 1.5s visual lifetime, 65m bolt height, 320 pooled line segments and 64 pooled sparks. No new lights, textures, dependencies, post-processing or damage events are added. Ball Lightning rendering and energy behavior remain unchanged. Reset clears the local visual tails, and simulation pause freezes their age. The fixed outer warning ring now accurately marks the existing seven-metre radius instead of changing size during its pulse.
 
 Validation: existing storm unit tests retain the exact three-second strike and all damage/energy behavior; desktop and emulated-touch gameplay checks pass. The desktop check also captures impact and afterglow frames, checks pool limits, verifies the tail survives expiry of the original strike event, and confirms it clears completely. Physical phone performance is unmeasured.
+
+## Revision 265 — larger Ball Lightning and launch wind-up
+
+Ball Lightning now has a 2.5m collision radius (5m diameter), twice its original size, and a 32m automatic targeting range, twice the original. The user clarified that the requested timing change is a launch wind-up, not slower zaps. Because the previous launch was instantaneous, a new configurable **`orbCastSeconds: 1`** supplies a one-second gathering animation; zap cadence remains 0.45s. V/touch reserves the existing 66.7 charge at cast start and releases from the current hand/aim after wind-up. Movement stays available. Cancellation, hero switching, reset or Critical Mass overload clears the cast and refunds its reservation; obstruction at release refunds it without consuming cooldown or replacing an existing orb. Pause freezes the timer. Cooldown begins on successful launch.
+
+Graphics add an animated additive plasma sphere with flowing ribbons and a bright rim, three rotating energy rings, 36 pooled orbiting spark streaks, stronger internal lightning and brighter pooled zap impact flashes. A larger world energy bar remains visible above the released orb; the casting effect grows in front of the hands and the HUD shows the countdown. Effects use fixed geometry, no extra lights or textures, and preserve the existing 256 line-segment cap. Sky Strike graphics and damage are preserved.
+
+Storm unit tests verify doubled radius/range, the one-second launch boundary, unchanged zap cadence and cancellation/blocked refunds. Desktop and emulated-touch gameplay tests verify real V/button casting, plasma/rings/spark activation, energy cost, automatic attacks, all original recharge attacks, pause/reset, and error-free shader rendering. Physical phone performance is unmeasured.
