@@ -1,12 +1,13 @@
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=bruiser-model-218';
+import {RAIDER_COMBAT} from './evac-raider.js?v=spider-bruiser-272';
+import {SpiderBruiser} from './spider-bruiser.js?v=spider-bruiser-272';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
 export class EvacRaiderSquad {
- constructor(scene,damage,{landing,idPrefix='evac-raider',route=null,label='outer boulevard',getHelicopter,getTargets,visible,trace,isPathClear,redirect,onHeroHit=()=>{},onDebris=()=>null,onRemoveDebris=()=>{},onDeath=()=>{},onWreck=()=>{},onEvent=()=>{}}){
+ constructor(scene,damage,{spiderModel,landing,idPrefix='evac-raider',route=null,label='outer boulevard',getHelicopter,getTargets,visible,trace,isPathClear,redirect,onHeroHit=()=>{},onDebris=()=>null,onRemoveDebris=()=>{},onDeath=()=>{},onWreck=()=>{},onEvent=()=>{}}){
   this.landing=landing;this.label=label;this.onEvent=onEvent;this.energyEffects=new RaiderEnergyEffects(scene);
   const count=ESCORT_APPROACH.squadSize,lanes=ESCORT_APPROACH.lanes,rows=Math.ceil(count/lanes.length);
-  this.members=Array.from({length:count},(_,i)=>{const row=Math.floor(i/lanes.length),columns=Math.min(lanes.length,count-row*lanes.length),lane=columns===1?0:lanes[i%lanes.length],id=idPrefix+'-'+i;let member;const direction=route?new THREE.Vector3(route[1][0]-route[0][0],0,route[1][1]-route[0][1]).normalize():null,offset=direction?{x:direction.z*lane,z:-direction.x*lane}:{x:lane,z:0};const points=route?.slice(1).map(p=>new THREE.Vector3(p[0]+offset.x,.1,p[1]+offset.z));return member=new EvacRaider(scene,damage,{
+  this.members=Array.from({length:count},(_,i)=>{const row=Math.floor(i/lanes.length),columns=Math.min(lanes.length,count-row*lanes.length),lane=columns===1?0:lanes[i%lanes.length],id=idPrefix+'-'+i;let member;const direction=route?new THREE.Vector3(route[1][0]-route[0][0],0,route[1][1]-route[0][1]).normalize():null,offset=direction?{x:direction.z*lane,z:-direction.x*lane}:{x:lane,z:0};const points=route?.slice(1).map(p=>new THREE.Vector3(p[0]+offset.x,.1,p[1]+offset.z));return member=new SpiderBruiser(scene,damage,{spiderModel,
    id,spawnPosition:route?{x:route[0][0]+offset.x,y:.1,z:route[0][1]+offset.z}:{x:landing.x+lane,y:.1,z:ESCORT_APPROACH.spawnZ-(rows-1-row)*ESCORT_APPROACH.rowSpacing},
    objective:()=>{if(!points)return new THREE.Vector3(landing.x+lane,.1,ESCORT_APPROACH.stopZ+row*ESCORT_APPROACH.rowSpacing);let index=member.routeIndex||0;while(index<points.length-1&&member.root.position.distanceTo(points[index])<1.15)index++;member.routeIndex=index;return points[index];},moveSpeed:ESCORT_APPROACH.speed,initialCooldown:4+i*.35,
    getTargets:origin=>{const heli=getHelicopter();return[...(heli?.alive&&heli.entity.root.position.y<12?[heli]:[]),...getTargets(origin)];},

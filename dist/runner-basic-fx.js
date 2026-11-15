@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {BASIC_ATTACKS} from './runner-basic-attacks.js?v=basic-attacks-258';
+import {BASIC_ATTACKS} from './runner-basic-attacks.js?v=spider-bruiser-272';
 export class RunnerBasicFX {
  constructor(scene){this.colors=new Map();this.root=new THREE.Group();scene.add(this.root);this.dummy=new THREE.Object3D();this.up=new THREE.Vector3(0,1,0);const mat=(opacity)=>new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false}),geometry=new THREE.CylinderGeometry(1,1,1,5,1,true);this.core=new THREE.InstancedMesh(geometry,mat(.95),384);this.glow=new THREE.InstancedMesh(geometry,mat(.25),384);this.flashes=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),mat(.8),48);for(const p of[this.core,this.glow,this.flashes]){p.frustumCulled=false;this.root.add(p);}this.clear();}
  color(value){if(!this.colors.has(value))this.colors.set(value,new THREE.Color(value));return this.colors.get(value);}

@@ -1,3 +1,7 @@
+# Current model — revision 272
+
+Bruisers now use the uploaded SpiderBot and its 14-bone procedural gait/head animation, formerly used by Breaker. Breaker is removed. See [SPIDER_BRUISER.md](SPIDER_BRUISER.md) for the current integration, tests and private-asset workflow. The notes below describe the superseded revision 218 artwork.
+
 # Bruiser model and headshots — revision 218
 
 `dist/bruiser-model.js` builds original, low-poly articulated armor around the existing Bruiser gameplay anchors. The 1.3 model scale, tread chassis, torso aim pivot, arm aim pivot and muzzle anchor remain. Chamfered chest and shoulder armor, front reactor, rear vents, segmented arms, sensor helmet and a detailed plasma cannon replace the original boxes. Static details merge by articulated parent/material: 2,740 triangles and 30 render meshes including the instanced moving tread/wheel geometry. The cannon has a short cosmetic recoil slide. This requires no new asset downloads or dependencies.

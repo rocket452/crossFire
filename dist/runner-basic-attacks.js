@@ -9,7 +9,7 @@ export const BASIC_ATTACKS=Object.freeze({
  needle:Object.freeze({key:'4',name:'Electric Needle',rate:3,speed:180,range:100,damage:35,weakMultiplier:2.5,spread:0,radius:.025,cost:17.5/3,color:'#e1ffff'})
 });
 export const BASIC_LIMITS=Object.freeze({projectiles:128,effects:48,catchUpShots:32});
-export function recognizedElectricWeakPoint(hit){const e=hit?.unit?.entity,p=hit?.part;if(!e||!hit.unit.alive)return false;const mount=e.weapons?.forPart?.(p);if(mount)return !mount.destroyed;const joint=e.joints?.get?.(p);if(joint)return !joint.destroyed;if((p==='argus-core-open'||p==='argus-core-closed')&&e.coreOpen)return true;if(e.armsHealth){if(p==='arm-left')return e.armsHealth[0]>0;if(p==='arm-right')return e.armsHealth[1]>0;if(p==='back')return !e.dead;}if(e.type==='breaker')return p==='capacitor'&&e.phase==='charging';return p==='head'&&Number.isFinite(e.headshots);}
+export function recognizedElectricWeakPoint(hit){const e=hit?.unit?.entity,p=hit?.part;if(!e||!hit.unit.alive)return false;const mount=e.weapons?.forPart?.(p);if(mount)return !mount.destroyed;const joint=e.joints?.get?.(p);if(joint)return !joint.destroyed;if((p==='argus-core-open'||p==='argus-core-closed')&&e.coreOpen)return true;if(e.armsHealth){if(p==='arm-left')return e.armsHealth[0]>0;if(p==='arm-right')return e.armsHealth[1]>0;if(p==='back')return !e.dead;}return p==='head'&&Number.isFinite(e.headshots);}
 export class RunnerBasicAttacks {
  constructor({trace,getUnits,getSections,getOrbHit=()=>null,onHit=()=>({damage:0}),onShot=()=>{},random=Math.random}={}){Object.assign(this,{trace,getUnits,getSections,getOrbHit,onHit,onShot,random});this.selected='beam';this.reset();}
  get config(){return BASIC_ATTACKS[this.selected];}
