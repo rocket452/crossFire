@@ -51,3 +51,11 @@ Already-committed strikes and orbs continue when the player releases control or 
 Known prototype limits: the orb parks when blocked rather than navigating around buildings; it does not redirect through portals or intercept missiles. Z targets ground, not roof surfaces. Physical phone FPS and thermal behavior are unmeasured.
 
 Files: added `dist/runner-storm.js`, `dist/runner-storm-fx.js`, three storm QA scripts and this document. Updated `dist/speedster.js`, `dist/battle.js`, `dist/runner-basic-attacks.js`, `dist/runner-whip.js`, `dist/index.html`, `dist/battle.css` and `dist/game-entry.js`.
+
+## Revision 264 — Sky Strike visual pass
+
+Sky Strike now has a fixed outer radius marker, contracting inner warning rings, a bright gathering charge and orbiting electrical filaments. In the last 0.39 seconds, a thin descending leader warns of the incoming bolt. Impact creates a thick white core with blue glow and four branching bolts, a shallow expanding flash, three ground shock rings, radial electrical crawling and ballistic sparks. A synthesized filtered thunder crack replaces the original short strike beep and respects Volt's sound preference. The afterglow fades over 1.5 seconds, independently of the damage event's original 0.65-second lifetime.
+
+`dist/sky-strike-fx.js` owns the rendering and sound. `SKY_STRIKE_ART` exposes the 1.5s visual lifetime, 65m bolt height, 320 pooled line segments and 64 pooled sparks. No new lights, textures, dependencies, post-processing or damage events are added. Ball Lightning rendering and energy behavior remain unchanged. Reset clears the local visual tails, and simulation pause freezes their age. The fixed outer warning ring now accurately marks the existing seven-metre radius instead of changing size during its pulse.
+
+Validation: existing storm unit tests retain the exact three-second strike and all damage/energy behavior; desktop and emulated-touch gameplay checks pass. The desktop check also captures impact and afterglow frames, checks pool limits, verifies the tail survives expiry of the original strike event, and confirms it clears completely. Physical phone performance is unmeasured.
