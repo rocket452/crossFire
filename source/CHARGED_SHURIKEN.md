@@ -127,3 +127,7 @@ Bomb cooldown is now 1s. Initial velocity doubles in full: speed 56m/s, upward l
 ## Revision 188 — half the bomb launch angle
 
 For level aim, the added launch angle is halved from about 21.45° to 10.72° by setting lift to `speed * tan(atan2(oldLift, speed) / 2)` (about 10.6m/s). Forward throw speed stays 56m/s; aim direction and inherited movement still affect the actual trajectory. The one-second cooldown, damage, gravity and bounce settings are unchanged. Existing bomb physics tests pass.
+
+## Shorter post-dash float (revision 285)
+
+`NINJA.slowFallSeconds` is now 1 second, reduced from 2. Airborne dash endings and ledge departures use the same shorter window. Float gravity/fall-speed limit, dash range/speed/cooldown, kill resets and ground dash behavior are unchanged. Motion, ground-dash and real hero dash-sweep checks pass at 30/60/120Hz and long frames; the motion test also verifies normal falling resumes after the shortened window.

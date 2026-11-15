@@ -9,7 +9,7 @@ import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 import {HeroHurt} from './hero-hurt.js?v=hero-hurt-118';
 import * as THREE from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
-import {NinjaMotion,NINJA} from './ninja-motion.js?v=overall-performance-238';
+import {NinjaMotion,NINJA} from './ninja-motion.js?v=kage-short-float-285';
 import {terrainHeight} from './runner-motion.js?v=overall-performance-238';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
 import {inputMode} from './input-mode.js?v=device-controls-59';
