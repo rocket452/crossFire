@@ -58,3 +58,7 @@ Node tests verify pursuit beyond the old memory timeout, frozen hidden-position 
 Mireguards now have 275 main HP: five 55-damage kunai body hits kill one. Head HP scales from 1,440 to 165 to preserve its prior 60% ratio and headshot advantage. Limb durability stays at 240. Kage's slash and dash each deal 50% of a Mireguard's maximum HP (137.5), so two of either attack, or one of each, kill a fresh enemy. `kageMeleeFraction=.5` is configured on Mireguard. Other targets retain the existing slash/dash damage, and Kage's AI kill assessment uses the same damage calculation.
 
 `kageHitPower` centralizes this enemy-specific balance in `kage-attacks.js`; `NinjaHero.hit` applies it before the existing damage callback. Node and desktop/touch gameplay checks verify the full HP sequences for all three attacks. Existing multi-sever/animation fixtures use an explicit higher-health test setup so they can continue exercising several limb events; fresh arena/trio checks assert the new 275 HP / 165 head HP defaults. Permanent limb loss, flinches, flash and search behavior remain intact.
+
+## Revision 275 — direct targeting
+
+Removed velocity-based target leading from `chooseTarget` and the unused `leadSeconds` setting. Visible targets now supply their current shape center throughout firing. Existing aim rotation/alignment, spread, projectile speed, burst cadence, line-of-sight checks and last-seen search behavior are unchanged. The Mireguard regression checks current-position targeting with fast lateral, reversed, vertical and approaching motion during a burst.
