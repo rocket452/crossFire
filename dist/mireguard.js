@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider} from './evac-raider.js?v=spider-bruiser-272';
+import {EvacRaider} from './evac-raider.js?v=bruiser-range-281';
 import {MIREGUARD} from './mireguard-config.js?v=mireguard-direct-275';
 import {MireguardModel} from './mireguard-model.js?v=mireguard-art-243';
 import {EvacuationNavigation} from './evacuation-navigation.js?v=evacuation-57';

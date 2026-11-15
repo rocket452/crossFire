@@ -22,3 +22,9 @@ The asset loads once in scenes that create Bruisers (Combat Testing and civilian
 - Shared separation, speedster basic attacks, welding and storm mechanics checks remain the regressions.
 
 Physical phone FPS/thermal performance is unmeasured. The gait retains its existing street-height assumption; this pass does not introduce new terrain navigation.
+
+## Doubled attack range (revision 281)
+
+`BRUISER_RANGE` in `dist/spider-bruiser.js` sets hero acquisition to 84m (was 42m) and firing distance to 95.2m (was 47.6m). The base raider accepts per-instance ranges so Mireguards and experimental enemies retain their existing ranges. Bruiser projectile speed (36m/s), four-second lifetime, burst timing, damage, lead chance and movement are unchanged. The projectile can cover the new firing distance plus its maximum predictive offset within its existing lifetime. Diagnostics expose both ranges.
+
+Checks: actual firing at 75m and 83m, no hero acquisition at 85m; uploaded SpiderBruiser rig/headshot/burst/reset tests; desktop/touch arena and evacuation browser regression with the controlled hero staged 75m away. The old generic `raider-hero-aim-test.mjs` hitbox-order assertion fails identically on the unmodified baseline and is unrelated to this range change.
