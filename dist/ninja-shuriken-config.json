@@ -117,11 +117,10 @@
   "slash": {
     "cooldown": 1,
     "range": 9,
-    "arcDegrees": 180,
-    "verticalReach": 2.8,
     "height": 1.2,
     "damage": 160,
-    "effectSeconds": 0.24
+    "effectSeconds": 0.24,
+    "coneDegrees": 90
   },
   "bomb": {
     "cooldown": 1,
