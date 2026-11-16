@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {RoninAnimation} from './astra-ronin-animation.js?v=301';
+import {RoninAnimation} from './astra-ronin-animation.js?v=302';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 // Original hard-surface design. Armor is batched per material per articulated joint.
 export class AstraRoninModel {
@@ -79,6 +79,24 @@ export class AstraRoninModel {
   const edge=this.plate(this.sword,[.26,0,3.45],[.12,5.25,.19],[[-.5,-.5],[.5,-.5],[.5,.32],[-.5,.5]],this.energy);edge.rotation.x=Math.PI/2;
   this.tip=n('tip',this.sword,[0,0,6.15]);this.bladeBase=n('blade-base',this.sword,[0,0,1]);this.rifle=this.sword;this.muzzle=this.tip;
   this.flash=new THREE.Mesh(new THREE.IcosahedronGeometry(.12,0),this.energy);this.tip.add(this.flash);this.flash.visible=false;
+  // Athletic humanoid proportions: longer load-bearing legs, lighter upper body.
+  this.frame.position.y=5.1;torso.position.y=1.35;neck.position.y=.98;
+  const shapeMeshes=(node,factors)=>{for(const child of node.children)if(child.isMesh){child.position.multiply(factors);child.scale.multiply(factors);}};
+  shapeMeshes(torso,V(.8,.83,.82));shapeMeshes(neck,V(.9,.9,.9));
+  pack.position.set(0,.05,-.9);pack.scale.set(.75,.8,.75);
+  const reshape=(node,factors,stop=new Set())=>{for(const child of node.children){if(stop.has(child))continue;child.position.multiply(factors);if(child.isMesh)child.scale.multiply(factors);else reshape(child,factors,stop);}};
+  for(const [side,sign]of [['left',-1],['right',1]]){
+   const arm=this.parts[side+'-upper-arm'],leg=this.parts[side+'-upper-leg'],shin=this.parts[side+'-lower-leg'],ankle=this.parts[side+'-ankle'];
+   arm.position.x=sign*1.42;this.parts[side+'-shoulder'].scale.set(.5,.6,.65);
+   reshape(arm,V(.8,1,.8),new Set([shield,this.sword]));
+   // Move the leg chains under the pelvis so its rotation actually drives the gait.
+   root.updateWorldMatrix(true,true);hips.attach(leg);leg.position.set(sign*.78,0,0);
+   const upper=2.4/2.05,lower=2.4/2.1;
+   reshape(leg,V(.96,upper,.96),new Set([shin]));shin.position.y=-2.4;
+   reshape(shin,V(.96,lower,.96),new Set([ankle]));ankle.position.y=-2.4;
+   for(const h of this.hitParts){if(h.id===side+'-upper-arm'||h.id===side+'-lower-arm'){h.center[0]*=.8;h.center[2]*=.8;h.size[0]*=.8;h.size[2]*=.8;}if(h.id===side+'-upper-leg'||h.id===side+'-lower-leg'){const factor=h.id.includes('upper')?upper:lower;h.center[1]*=factor;h.size[1]*=factor;}}
+  }
+  const hull=this.hitParts.find(h=>h.id==='torso');hull.center=hull.center.map((v,i)=>v*[.8,.83,.82][i]);hull.size=hull.size.map((v,i)=>v*[.8,.83,.82][i]);
   this.batch();const shieldClones=new Map();this.shieldMaterials=[];shield.traverse(o=>{if(!o.isMesh)return;const source=o.material;if(!shieldClones.has(source)){const material=source.clone();shieldClones.set(source,material);this.shieldMaterials.push({material,emissive:material.emissive.clone(),intensity:material.emissiveIntensity});}o.material=shieldClones.get(source);});this.bind=new Map();for(const p of Object.values(this.parts))this.bind.set(p,{p:p.position.clone(),q:p.quaternion.clone()});root.scale.setScalar(config.height/9.6);
   this.animation=new RoninAnimation(this);this.reset();
  }
