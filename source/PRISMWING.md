@@ -1,6 +1,6 @@
 # Rainbow Star — parrot-wing rainbow heroine (revision 177)
 
-Prismwing is an optional CPU defender in the existing **Heroes** selection menu. The default Volt/Violet/Rift team and three-hero limit are preserved. She also appears in Combat Testing's single-hero dropdown; **Play / Watch selected hero** and the **Prismwing** camera button follow her autonomous flight. Direct player flight controls and additional defensive/ultimate abilities are outside this addition.
+Rainbow Star is an optional CPU defender in the existing **Heroes** selection menu. The default Volt/Violet/Rift team and three-hero limit are preserved. She also appears in Combat Testing's single-hero dropdown; **Play / Watch selected hero** and the **Rainbow Star** camera button follow her autonomous flight. Direct player flight controls and additional defensive/ultimate abilities are outside this addition.
 
 ## Character and flight
 
@@ -25,3 +25,9 @@ Battle integration includes roster/storage, watch cameras, hero target lists for
 Revision 279: display name is **Rainbow Star** in hero selection, arena options, tracking labels and diagnostics. Stable roster ID `prism` and module filenames are retained to preserve saved selections. Rainbow Star and Solara already share the uploaded female body mesh and 23-bone rig; their palettes and accessories are separate.
 
 Revision 280: Rainbow Star explicitly uses the same female-body factory as Solara (`female-hero-body.js`): supplied 574-triangle/23-bone model, 2.59m height, roughness .48, metalness .28. Her `prism` palette, dark hair, multicolor feather crest/skirt, articulated parrot wings and star wand stay independent. Accessories and neutral arm targets are scaled to the matching body proportions. Materials are cloned per hero so Solara’s fire/ice shader cannot affect Rainbow Star. No geometry or animation assets were added. Browser checks compare both actual mesh position buffers/body scales while verifying separate palettes/materials, weighted deformation, real hand/wand attachment, flight, attack damage and reset on desktop/touch; Solara’s existing female/animation checks pass.
+
+## Complete Solara model reuse (revision 290)
+
+Rainbow Star now instantiates `SolaraCharacter` with the rainbow body variant, including all four fitted head parts (`fire_hair`, `ice_hair`, `fire_eye`, `ice_eye`) from the existing Solara asset. This replaces the separate rounded hair/eye/chest ornaments; the original 574-triangle female mesh, 23-bone rig and 2.59m proportions remain exact. `rainbow-star-style.js` independently applies a deep-indigo suit, diagonal rainbow sash, gold trim, natural face/hands, rainbow-tipped hair and cyan/lilac eyes. Solara's fire/ice styling is untouched. The rainbow hero uses Solara's anatomical arm solver and head-part synchronization during her existing flight and casting poses.
+
+Parrot wings, feather crest/tail, star wand and rainbow attacks remain. Wing supports use slim tapered segments and are mounted lower on the back. Fitted accessories have separate materials and follow the actual weighted bones; no new binary asset or hidden body proxy is introduced. Existing browser checks now verify all four Solara head parts and their bone attachment, shared actual body geometry/scale, independent palettes, flight, wand origin and real rainbow damage on desktop and touch. Close model screenshots and Solara's female/animation regression tests were checked.

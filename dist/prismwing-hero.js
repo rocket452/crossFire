@@ -1,9 +1,9 @@
 import * as THREE from './vendor/three.module.js';
-import {PrismwingCharacter} from './prismwing-character.js?v=rainbow-solara-body-280';
-import {PrismwingEffects} from './prismwing-effects.js?v=rainbow-star-279';
+import {PrismwingCharacter} from './prismwing-character.js?v=rainbow-full-solara-290';
+import {PrismwingEffects} from './prismwing-effects.js?v=rainbow-full-solara-290';
 export const PRISMWING=Object.freeze({speed:16,acceleration:2.6,orbitRadius:23,orbitRate:.16,chargeSeconds:.45,beamSeconds:.8,cooldown:1.4,damagePerSecond:120,range:150,hitRadius:.16});
 export class PrismwingHero {
- constructor(scene,model,{getRobot,traceRainbow,onRainbowHit,buildings=[]}){Object.assign(this,{scene,getRobot,traceRainbow,onRainbowHit});this.root=new THREE.Group();this.root.name='Rainbow Star / rainbow parrot heroine';scene.add(this.root);this.art=new PrismwingCharacter(this.root,model);this.character=this.art.character;this.fx=new PrismwingEffects(scene);this.velocity=new THREE.Vector3();this.cruise=Math.max(22,...buildings.map(b=>b.floors*3+5));this.enabled=false;this.reset();}
+ constructor(scene,model,{getRobot,traceRainbow,onRainbowHit,buildings=[],appearanceModel,appearanceSpec}){Object.assign(this,{scene,getRobot,traceRainbow,onRainbowHit});this.root=new THREE.Group();this.root.name='Rainbow Star / rainbow parrot heroine';scene.add(this.root);this.art=new PrismwingCharacter(this.root,model,appearanceModel,appearanceSpec);this.character=this.art.character;this.fx=new PrismwingEffects(scene);this.velocity=new THREE.Vector3();this.cruise=Math.max(22,...buildings.map(b=>b.floors*3+5));this.enabled=false;this.reset();}
  reset(){this.art.reset();this.fx.reset();this.velocity.set(0,0,0);this.root.position.set(14,this.cruise,23);this.root.rotation.set(0,Math.PI,0);this.phase='cruise';this.phaseTime=0;this.beamElapsed=0;this.cooldown=.8;this.shots=this.hits=this.damage=this.hitsTaken=0;this.mode='winged-flight';this.root.visible=this.fx.root.visible=this.enabled;}
  setEnabled(value){this.enabled=!!value;this.reset();}
  receiveEyeHit(){this.hitsTaken++;}
