@@ -63,7 +63,7 @@
     "maxParticles": 120,
     "chargeRadius": 0.3,
     "stationaryRingRadius": 0.85,
-    "spinSpeed": 35,
+    "spinSpeed": 24.5,
     "sound": true,
     "volume": 0.055,
     "chargeHz": 220,
@@ -74,7 +74,8 @@
     "backstabHz": 1320,
     "toneSeconds": 0.16,
     "chimeSeconds": 0.24,
-    "eventHistory": 32
+    "eventHistory": 32,
+    "shurikenVisualScale": 1.3
   },
   "collision": {
     "maxEarlyStars": 16,
