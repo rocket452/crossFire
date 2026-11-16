@@ -1,5 +1,5 @@
 import {WELDING_BEAM,weldStun} from './runner-welder.js?v=weld-stun-art-266';
-import {VOLT_STORM} from './runner-storm.js?v=orb-edge-271';
+import {VOLT_STORM} from './runner-storm.js?v=orb-building-contact-288';
 import {BASIC_ATTACKS,recognizedElectricWeakPoint} from './runner-basic-attacks.js?v=spider-bruiser-272';
 import {massContacts,CRITICAL_MASS} from './critical-mass.js?v=critical-mass-257';
 import {WALKER_WEAPON_HEALTH_SCALE} from './walker-weapons.js?v=city-walker-health-255';
@@ -52,7 +52,7 @@ import {SiegeWalker} from './siege-walker.js?v=city-walker-health-255';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=hero-hurt-118';
 import {VioletHero} from './violet-hero.js?v=overall-performance-238';
-import {Speedster} from './speedster.js?v=centered-camera-274';
+import {Speedster} from './speedster.js?v=orb-building-contact-288';
 import {RobotMissiles} from './robot-missiles.js?v=charged-shuriken-130';
 import {MissileExplosions} from './missile-explosions.js?v=robot-death-80';
 import {PortalHero} from './portal-hero.js?v=overall-performance-238';
@@ -211,7 +211,7 @@ function weldingBeamHit(hit,power){
 function voltGroundTarget(from,direction){
  const c=VOLT_STORM,far=from.clone().addScaledVector(direction,c.strikeRange),terrain=traceTerrain(from,far),flat=traceImpact(from,far,{sections:[],ground:true,radius:0}),ground=terrain&&(!flat||terrain.t<flat.t)?terrain:flat,p=ground?new THREE.Vector3().copy(ground.point):new THREE.Vector3(runner.motion.position.x+Math.sin(runner.yaw)*25,0,runner.motion.position.z+Math.cos(runner.yaw)*25);p.y=terrainHeight(p.x,p.z)+.1;const b=runner.motion.bounds;if(p.x<b.minX+1||p.x>b.maxX-1||p.z<b.minZ+1||p.z>b.maxZ-1)return null;if(traceImpact(from,p,{sections:physics.chunks,ground:false})||traceImpact(p.clone().add(new THREE.Vector3(0,.2,0)),p.clone().add(new THREE.Vector3(0,4,0)),{sections:physics.chunks,ground:false,radius:.3}))return null;return p;
 }
-function voltStormHit(hit,power,kind){if(hit.unit?.kind!=='robot'||!hit.unit.alive)return 0;const damage=damageRobotHit(hit,power,kind,true);if(damage>0){emitParticle('spark',new THREE.Vector3().copy(hit.point),kind==='sky-strike'?20:6,kind==='sky-strike'?1.3:.7);}return damage;}
+function voltStormHit(hit,power,kind){if(kind==='ball-lightning-contact'&&hit.section){const section=hit.section;if(section.state!=='intact'||section.collisionDisabled||section.hp<=0)return 0;const before=section.hp;physics.damageChunk(section,power,{source:'volt-orb'});if(section.hp<=0)physics.queueDetach(section,hit.point,power*.14,true);physics.checkSupports(section.building);return before-section.hp;}if(hit.unit?.kind!=='robot'||!hit.unit.alive)return 0;const damage=damageRobotHit(hit,power,kind,true);if(damage>0){emitParticle('spark',new THREE.Vector3().copy(hit.point),kind==='sky-strike'?20:6,kind==='sky-strike'?1.3:.7);}return damage;}
 
 function experimentalBasicHit(hit,power,meta){
  if(hit.voltOrb){runner.storm.recharge(power);return{damage:0,weak:false};}

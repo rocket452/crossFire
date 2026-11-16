@@ -75,3 +75,13 @@ Doubled `orbSpeed` from 4 to 8 m/s. Casting, damage, targeting range, energy and
 ## Revision 271 — stage-edge despawn
 
 The orb disperses when its outer radius reaches any stage edge, rather than parking there. It is removed before automatic zap processing that frame, cannot be recharged or hit afterward, and retains its existing ultimate cooldown. Building contact still parks the orb as before. Four-edge checks pass at 30/60/120 Hz, including a single fade and no post-despawn attacks or collisions.
+
+## Orb body contact against buildings (revision 288)
+
+The orb now wears through panels touched by its actual 2.5m sphere. It sweeps to spherical contact with intact, oriented building boxes, pauses there, and resumes forward travel when the opening is destroyed. Detached, hidden, collision-disabled and zero-HP panels no longer trap it. The existing section query grid limits contact searches to nearby geometry. Enemy zaps do not target buildings; Sky Strike remains unchanged.
+
+`VOLT_STORM` exposes `buildingDamagePerSecond=20` raw structural damage, `buildingDrainPerSecond=2`, `buildingTickSeconds=.1`, `buildingMaxContacts=6`, `contactTolerance=.015`, and `sweepIterations=24`. Damage is shared between touched panels and goes through `DestructionWorld.damageChunk`, normal scorch/support checks and queued detachment. Existing 90% non-boss building protection applies, so combined effective HP damage starts at 2/s. One shared contact energy budget prevents panel count from multiplying charge cost. The extra 2 charge/s is spent only on successful building damage, in addition to existing passive drain (1/s) and enemy-zap costs; fractional remaining charge limits the final damage tick.
+
+Short surface arcs/impact flashes reuse the bounded storm FX pools. The orb's existing visible bar, player-attack recharging, cast/ultimate cooldown, edge despawn, pause timing and reset remain intact. Diagnostics expose building damage, contact charge spent, successful contact ticks and whether the orb currently touches geometry.
+
+`QA/runner-orb-building-test.mjs` checks real structural damage/reduction, contact-only reach, fixed slow drain, recharge/reset, gradual destruction and resumed travel, rotated-box sweep contacts and released geometry at 30/60/120Hz. `QA/runner-orb-building-browser.cjs` tests the actual arena building callback, contact effects and bar, gradual charge consumption, untouched distant panels, no building zaps, recharge and reset on desktop/touch. Existing storm unit and browser suites cover enemy zaps and the other abilities.
