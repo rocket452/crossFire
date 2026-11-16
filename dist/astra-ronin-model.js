@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {RoninAnimation} from './astra-ronin-animation.js?v=302';
+import {RoninAnimation} from './astra-ronin-animation.js?v=303';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 // Original hard-surface design. Armor is batched per material per articulated joint.
 export class AstraRoninModel {
@@ -87,7 +87,7 @@ export class AstraRoninModel {
   const reshape=(node,factors,stop=new Set())=>{for(const child of node.children){if(stop.has(child))continue;child.position.multiply(factors);if(child.isMesh)child.scale.multiply(factors);else reshape(child,factors,stop);}};
   for(const [side,sign]of [['left',-1],['right',1]]){
    const arm=this.parts[side+'-upper-arm'],leg=this.parts[side+'-upper-leg'],shin=this.parts[side+'-lower-leg'],ankle=this.parts[side+'-ankle'];
-   arm.position.x=sign*1.42;this.parts[side+'-shoulder'].scale.set(.5,.6,.65);
+   arm.position.x=sign*1.65;this.parts[side+'-shoulder'].scale.set(.5,.6,.65);
    reshape(arm,V(.8,1,.8),new Set([shield,this.sword]));
    // Move the leg chains under the pelvis so its rotation actually drives the gait.
    root.updateWorldMatrix(true,true);hips.attach(leg);leg.position.set(sign*.78,0,0);

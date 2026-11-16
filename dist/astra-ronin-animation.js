@@ -1,12 +1,12 @@
 import * as THREE from './vendor/three.module.js';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z),clamp=THREE.MathUtils.clamp,smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
-const READY={torso:[.05,-.15,-.025],head:[-.03,.15,0],'right-upper-arm':[-.2,.15,-.13],'right-lower-arm':[-.28,0,0],sword:[.82,0,0],'left-upper-arm':[-.35,.12,.28],'left-lower-arm':[-1.05,.1,0]};
-const SWEEP_WIND={torso:[-.07,.7,-.12],head:[.03,-.65,.06],'right-upper-arm':[-.85,1.15,-.6],'right-lower-arm':[-.42,0,0],sword:[.8,.2,0],'left-upper-arm':[-.75,-.2,.4],'left-lower-arm':[-1.25,0,0]};
-const SWEEP_END={torso:[.25,-.7,.1],head:[-.12,.6,-.05],'right-upper-arm':[-.45,-1.1,-.2],'right-lower-arm':[-.08,0,0],sword:[.82,-.1,0],'left-upper-arm':[-.2,.2,.45],'left-lower-arm':[-1,0,0]};
-const OVER_WIND={torso:[-.17,.25,-.04],head:[.05,-.2,0],'right-upper-arm':[-2.55,.1,-.2],'right-lower-arm':[-.8,0,0],sword:[.3,0,0],'left-upper-arm':[-.65,-.15,.3],'left-lower-arm':[-1.1,0,0]};
-const OVER_END={torso:[.38,-.25,.06],head:[-.2,.2,0],'right-upper-arm':[-.4,-.16,-.1],'right-lower-arm':[.08,0,0],sword:[.85,0,0],'left-upper-arm':[-.2,.1,.4],'left-lower-arm':[-1,0,0]};
-const DASH_WIND={torso:[.08,.65,-.14],head:[-.08,-.6,.06],'right-upper-arm':[-.65,2.2,-.4],'right-lower-arm':[-.8,0,0],sword:[.55,-.2,0],'left-upper-arm':[-.9,-.2,.35],'left-lower-arm':[-1.1,0,0]};
-const FLIGHT_POSE={torso:[.32,0,-.025],head:[-.22,0,0],'right-upper-arm':[.1,1.5,-.25],'right-lower-arm':[-.38,0,0],sword:[.55,0,0],'left-upper-arm':[-.65,.05,.35],'left-lower-arm':[-.85,0,0]};
+const READY={torso:[.05,-.15,-.025],head:[-.03,.15,0],'right-upper-arm':[-.12,.08,.18],'right-lower-arm':[-.42,0,0],sword:[.82,0,0],'left-upper-arm':[-.18,.05,-.18],'left-lower-arm':[-.65,.05,0]};
+const SWEEP_WIND={torso:[-.07,.7,-.12],head:[.03,-.65,.06],'right-upper-arm':[-.85,1.15,-.6],'right-lower-arm':[-.42,0,0],sword:[.8,.2,0],'left-upper-arm':[-.55,-.15,-.16],'left-lower-arm':[-.85,0,0]};
+const SWEEP_END={torso:[.25,-.7,.1],head:[-.12,.6,-.05],'right-upper-arm':[-.45,-1.1,-.2],'right-lower-arm':[-.08,0,0],sword:[.82,-.1,0],'left-upper-arm':[-.2,.1,-.18],'left-lower-arm':[-.7,0,0]};
+const OVER_WIND={torso:[-.17,.25,-.04],head:[.05,-.2,0],'right-upper-arm':[-2.55,.1,-.2],'right-lower-arm':[-.8,0,0],sword:[.3,0,0],'left-upper-arm':[-.5,-.1,-.16],'left-lower-arm':[-.8,0,0]};
+const OVER_END={torso:[.38,-.25,.06],head:[-.2,.2,0],'right-upper-arm':[-.4,-.16,-.1],'right-lower-arm':[.08,0,0],sword:[.85,0,0],'left-upper-arm':[-.2,.1,-.18],'left-lower-arm':[-.7,0,0]};
+const DASH_WIND={torso:[.08,.65,-.14],head:[-.08,-.6,.06],'right-upper-arm':[-.65,2.2,-.4],'right-lower-arm':[-.8,0,0],sword:[.55,-.2,0],'left-upper-arm':[-.65,-.1,-.16],'left-lower-arm':[-.85,0,0]};
+const FLIGHT_POSE={torso:[.32,0,-.025],head:[-.22,0,0],'right-upper-arm':[.1,1.5,-.25],'right-lower-arm':[-.38,0,0],sword:[.55,0,0],'left-upper-arm':[-.4,.05,-.22],'left-lower-arm':[-.65,0,0]};
 const GUARD_POSE={torso:[.04,0,0],head:[-.02,0,0],'right-upper-arm':[.15,.1,-.18],'right-lower-arm':[-.25,0,0],sword:[.95,0,0],'left-upper-arm':[-.9,0,.8],'left-lower-arm':[-.5,0,.9]};
 export class RoninAnimation{
  constructor(model){this.m=model;this.feet=[];this.history=[];const geometry=new THREE.BufferGeometry();this.vertices=new Float32Array(12*6*3);geometry.setAttribute('position',new THREE.BufferAttribute(this.vertices,3).setUsage(THREE.DynamicDrawUsage));this.ribbon=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:'#76edff',transparent:true,opacity:.24,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));this.ribbon.name='Ronin sword motion ribbon';this.ribbon.frustumCulled=false;model.root.add(this.ribbon);

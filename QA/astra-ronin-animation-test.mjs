@@ -12,6 +12,7 @@ for(const side of ['left','right']){
 }
 const shoulderSpan=model.parts['left-upper-arm'].position.distanceTo(model.parts['right-upper-arm'].position),legLength=model.parts['left-lower-leg'].position.length()+model.parts['left-ankle'].position.length();
 assert(shoulderSpan/legLength<.7,'athletic shoulder-to-leg proportions');
+for(const [side,sign]of [['left',-1],['right',1]]){const elbow=model.parts.torso.worldToLocal(model.parts[side+'-lower-arm'].getWorldPosition(new THREE.Vector3()));assert(elbow.x*sign>1.7,'relaxed elbow clears torso on '+side);}
 let maxSlip=0,maxError=0,steps=0,minHip=Infinity,maxHip=-Infinity,minArm=Infinity,maxArm=-Infinity;
 
 for(let i=0;i<240;i++){const previous=model.animation.feet.map(f=>({p:f.anchor.clone(),swing:f.swing}));root.position.z+=8/60;e.moving=true;model.animate(1/60,i/60,e);minHip=Math.min(minHip,model.parts.hips.rotation.y);maxHip=Math.max(maxHip,model.parts.hips.rotation.y);minArm=Math.min(minArm,model.parts['right-upper-arm'].rotation.x);maxArm=Math.max(maxArm,model.parts['right-upper-arm'].rotation.x);for(let j=0;j<2;j++){const f=model.animation.feet[j],foot=model.parts[(j?'right':'left')+'-foot'].getWorldPosition(new THREE.Vector3());assert(foot.distanceTo(f.point)<.1,'ankle reaches rolled-foot target');maxError=Math.max(maxError,f.solvedContact.distanceTo(f.contact));if(!f.swing&&!previous[j].swing){steps++;maxSlip=Math.max(maxSlip,f.anchor.distanceTo(previous[j].p));}}}

@@ -66,3 +66,9 @@ Rebalanced Ronin toward Volt Rush's humanoid proportions. The pelvis rises from 
 Leg chains now attach to the actual pelvis. Distance-driven walking uses a 7.4m cycle, with alternating pelvis rotation, counter-rotation of the chest/head, stronger arm swing/elbow flex, lateral weight transfer and a small vertical bounce. Swing feet lift with a smooth arc, then land heel first and roll toward the toes. First steps begin from the current planted pose. Two-bone IK is solved in world space using the revised actual link lengths, so pelvis rotation and body sway do not drag the feet. Heel/toe roll compensates the ankle position around its contact point. Static ready, sword, dash, shield, flight and defeat poses use the same revised rig.
 
 Animation QA now measures planted contact stability (rather than demanding a motionless ankle while the foot rolls), validates link reach, and checks shoulder-to-leg proportions and measurable pelvis/arm motion. Desktop/touch pose, shield-block and flight browser suites cover the changed model. Actual phone FPS remains unmeasured.
+
+## Natural arm spacing revision 303
+
+Shoulder hinges move outward from ±1.42 to ±1.65 model units while the lean chest, small shoulder plates and long legs remain. Ready/walking arms now angle outward at the elbows with a softer sword-arm bend and a lower, less tightly folded shield arm. Supporting-arm poses during sword attacks and flight also open away from the ribs. The active shield guard retains its deliberate across-body placement and physical blocking. No attack range, damage, movement speed or mesh budget changed.
+
+Animation QA checks that both resting elbows clear the torso, alongside the existing proportions, planted-foot and attack-arc checks. Desktop/touch pose and flight browser checks cover the revised silhouette; guard, dash, flight and melee simulations continue to pass.
