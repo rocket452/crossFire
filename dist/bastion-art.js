@@ -55,7 +55,9 @@ export class BastionArt {
  disc(parent,p,radius,length,material,axis='y'){const m=new THREE.Mesh(this.cylinder,this.materials[material]);m.position.fromArray(p);m.scale.set(radius,length,radius);if(axis==='x')m.rotation.z=Math.PI/2;if(axis==='z')m.rotation.x=Math.PI/2;m.castShadow=true;m.userData.bastionArmour=true;parent.add(m);return m;}
  dressModules(){const m=this.model,g=this.config.gatling;for(let i=0;i<m.launchers.length;i++){const node=m.launchers[i];if(i===this.config.rain.module){this.buildArtillery(node);continue;}if(i===this.config.beamWalls.module){this.buildWallEmitter(node);continue;}if(i===g.gunModule||i===g.secondGunModule){const section=m.parts.find(p=>p.node===node).section;section.mesh.scale.set(3.8,4.6,2);section.mesh.position.z=-1.9;this.buildGun(node,i);continue;}this.box(node,[0,0,0],[2.6,3,2.7],'light');const sign=this.config.launchers.positions[i][2]>0?1:-1;this.trim(node,[0,0,sign*1.39],[2.1,2.45,.08],'dark');for(let j=0;j<4;j++){const x=(j%2-.5)*.95,y=(Math.floor(j/2)-.5)*1.1;this.disc(node,[x,y,sign*1.49],.34,.15,'gold','z');this.disc(node,[x,y,sign*1.59],.23,.08,'energy','z');}this.box(node,[0,1.55,0],[1.6,.25,2.5],'gold');}}
  buildArtillery(node){
-  node.name='Bastion shoulder siege mortar';
+  node.name='Bastion independent shoulder siege mortar';
+  // Inboard pylon bolts to the fixed shoulder bridge, with clearance above the arm.
+  this.box(node,[-2.7,-3.2,-.5],[1.8,4.8,3.6],'dark');this.box(node,[-1.15,-1.6,-.5],[4.6,.7,3.8],'light');
   // Fixed shoulder saddle and trunnions, with a separate recoiling barrel cradle.
   this.box(node,[0,-1.2,-.8],[5.8,1.5,5.4],'dark');this.box(node,[0,-.25,-.6],[5,1,4.6],'armour');
   for(const side of[-1,1]){this.box(node,[side*2.2,.8,-.3],[.8,3.5,3.9],'light');this.disc(node,[side*2.7,1,-.2],1.2,.45,'dark','x');this.disc(node,[side*2.96,1,-.2],.65,.16,'gold','x');}
@@ -65,8 +67,8 @@ export class BastionArt {
   for(const z of[2.3,5.4,7.4]){this.disc(this.artilleryPivot,[0,0,z],1.65,.55,'light','z');this.disc(this.artilleryPivot,[0,0,z+.31],1.38,.12,'gold','z');}
   for(const side of[-1,1]){this.box(this.artilleryPivot,[side*1.42,0,3.7],[.65,2.6,5.3],'armour');this.disc(this.artilleryPivot,[side*1.9,-.75,2.1],.21,5.3,'light','z');this.disc(this.artilleryPivot,[side*1.9,-.75,.5],.36,2.7,'dark','z');for(let j=0;j<6;j++)this.trim(this.artilleryPivot,[side*1.8,.8,1.3+j*.6],[.22,1.2,.2],'gold');}
   this.disc(this.artilleryPivot,[0,0,7.8],1.48,.65,'armour','z');this.disc(this.artilleryPivot,[0,0,8.18],1.15,.12,'dark','z');
-  this.artilleryGlow=this.materials.cool.clone();const bore=this.disc(this.artilleryPivot,[0,0,8.27],.85,.08,'cool','z');bore.material=this.artilleryGlow;
-  this.artilleryTip=new THREE.Object3D();this.artilleryTip.position.z=8.5;this.artilleryPivot.add(this.artilleryTip);this.artilleryPivot.rotation.x=-Math.PI/2;this.artilleryRecoil=0;this.weaponVolumes??=[];this.weaponVolumes.push({module:this.config.rain.module,node:this.artilleryPivot,center:[0,0,3.4],size:[4.3,3.6,10.4]});
+  this.artilleryGlow=this.materials.cool.clone();const bore=this.disc(this.artilleryPivot,[0,0,8.27],.85,.08,'cool','z');bore.material=this.artilleryGlow;const target=this.trim(node,[0,-.25,2.76],[1.4,.8,.14],'cool');target.material=this.artilleryGlow;
+  this.artilleryTip=new THREE.Object3D();this.artilleryTip.position.z=8.5;this.artilleryPivot.add(this.artilleryTip);this.artilleryPivot.rotation.x=-Math.PI/2;this.artilleryRecoil=0;this.weaponVolumes??=[];this.weaponVolumes.push({module:this.config.rain.module,node:this.artilleryPivot,center:[0,0,3.4],size:[4.3,3.6,10.4]},{module:this.config.rain.module,node,center:[-2.7,-3.2,-.5],size:[1.8,4.8,3.6]});
  }
  buildWallEmitter(node){
   node.name='Bastion dorsal laser wall array';

@@ -335,3 +335,11 @@ Both weapons accept ordinary hit-shape damage in every phase. Artillery uses `ra
 The updated model measures 16,524 triangles and 202 render meshes (previously 14,740 and 179). Shared materials and geometry remain batched. The model regression ceiling is now 18,000 triangles / 220 meshes to accommodate the added weapons; physical phone performance remains unmeasured.
 
 Checks: `QA/bastion-weapon-mounts-test.mjs` validates actual traces, independent destruction, attack cancellation, arm independence and rebuild. `QA/bastion-weapon-mounts-browser.cjs` tests actual electric attacks, mount visuals, sky-beam origin, destruction and reset on desktop and touch. Existing state/Gatling, rain, artillery prediction, beam-wall gap and proximity-warning tests cover combat regression.
+
+## Artillery independent from arm (revision 293)
+
+The artillery module (`rain.module=1`) is now attached to `shoulder-bridge`, on the fixed upper frame, rather than `right-arm`. Its root-space mount is `[10,36,-1]`, above and behind the arm shoulder, with a distinct inboard support pylon/cantilever and a forward-facing glowing target plate. Base hitbox size is `[6,4.5,5.4]`; the barrel and support have their own articulated hit volumes routed to the same artillery module. The barrel clears the arm shoulder, and moving or destroying the right arm cannot move, hide or disable it.
+
+Artillery keeps its independent 700 HP, damage scaling, vertical muzzle/recoil, barrage size and timings. Destroying the cannon itself removes only that weapon/hitboxes and cancels pending artillery launches. The arm Gatling, chest reactor and dorsal laser remain independent. Rebuild restores cannon, arms and their separate health pools.
+
+The weapon-mount unit/browser checks now cover fixed-frame parenting, visible clearance, arm-animation independence, continued targetability and shell firing after arm loss, cannon-only destruction and rebuild. Permanent arm-core and state regressions expect the shoulder cannon to survive both arm losses. Desktop/touch mount views were inspected; the existing artillery tests pass.
