@@ -1,7 +1,7 @@
 import {RoninFlight} from './astra-ronin-flight.js?v=299';
 import * as THREE from './vendor/three.module.js';
 import {Mireguard} from './mireguard.js?v=bruiser-range-281';
-import {AstraRoninModel} from './astra-ronin-model.js?v=299';
+import {AstraRoninModel} from './astra-ronin-model.js?v=300';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-pairs-260';
 export const RONIN={height:15,health:2400,headHealth:999999,segmentHealth:999999,walkSpeed:8,preferredRange:9,range:220,turnRate:1.8,initialDelay:2,swordWindup:.95,swordSwing:.32,swordRecovery:1.1,swordCooldown:1.4,swordRange:12,swordDamage:35,overheadDamage:55,bodyRadius:3.5,collapseDuration:1.05,
  dashMinRange:14,dashRange:70,dashDistance:70,dashSpeed:100,dashStandOff:4,dashWindup:1.1,dashRecovery:1.2,dashCooldown:3.2,dashDamage:55,dashWarningWidth:3,

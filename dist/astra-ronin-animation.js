@@ -44,6 +44,7 @@ export class RoninAnimation{
    const recover=stage==='recovery'?smooth(clock/e.config.dashRecovery):0;this.feet=[];
    for(const [i,side]of ['left','right'].entries()){const sign=i?1:-1;this.solveLeg(side,V(sign*1.05,.42,(i?-1.05:1.1)*(1-recover)));}
   }else this.updateFeet(dt,moving,attack);root.updateWorldMatrix(true,true);
+  this.articulateSegments(e);root.updateWorldMatrix(true,true);
   m.energy.emissiveIntensity=dash&&stage==='windup'?2+Math.pow(clock/e.config.dashWindup,2)*(2+Math.sin(time*35)):attack&&age<wind?1.8+Math.pow(age/wind,2)*(1.5+Math.sin(time*30)*.8):1.7;
   for(const jet of m.jets){jet.visible=!!flight||this.moveBlend>.1||dash&&stage==='dash'||attack&&age>=wind&&age<wind+swing;jet.scale.y=flight?(flight.phase==='cruise'?2.5:1.65):dash&&stage==='dash'?2.8:.4+this.moveBlend*.65+Math.sin(time*36)*.08;}
   this.warning.visible=dash&&stage==='windup'&&!e.stunRemaining;this.warning.scale.set(e.config.dashWarningWidth/root.scale.x,Math.max(1,(e.dashLength||1)/root.scale.z),1);this.warning.position.z=(e.dashLength||1)/root.scale.z*.5;this.warning.material.opacity=.14+.1*(.5+.5*Math.sin(time*18));
@@ -51,8 +52,22 @@ export class RoninAnimation{
   const active=attack&&(dash?stage==='slash':age>=wind&&age<wind+swing+.08)&&!e.stunRemaining;
   if(active){this.history.unshift({base:root.worldToLocal(m.bladeBase.getWorldPosition(V())),tip:root.worldToLocal(m.tip.getWorldPosition(V())),age:0});}for(const h of this.history)h.age+=dt;this.history=this.history.filter(h=>h.age<.13).slice(0,13);let index=0;for(let i=1;i<this.history.length;i++){const a=this.history[i-1],b=this.history[i];for(const v of[a.base,a.tip,b.tip,a.base,b.tip,b.base]){this.vertices[index++]=v.x;this.vertices[index++]=v.y;this.vertices[index++]=v.z;}}this.ribbon.geometry.setDrawRange(0,index/3);this.ribbon.geometry.attributes.position.needsUpdate=true;this.ribbon.visible=index>0&&!e.dead;this.attackWasActive=attack;
  }
+ articulateSegments(e={}){const p=this.m.parts;
+  for(const [side,sign]of[['left',-1],['right',1]]){
+   const arm=p[side+'-upper-arm'],fore=p[side+'-lower-arm'],shin=p[side+'-lower-leg'],bend=Math.abs(shin.rotation.x),slashTime=e.dashAttack?(e.dashStage==='slash'?e.dashClock:-1):(e.swordAge||0)-(e.config?.swordWindup||0),strike=e.swordState&&slashTime>=0&&slashTime<e.config.swordSwing?Math.sin(slashTime/e.config.swordSwing*Math.PI):0;
+   p[side+'-bicep'].rotation.y=arm.rotation.y*.2;
+   p[side+'-forearm-shell'].rotation.y=arm.rotation.y*.12;
+   p[side+'-elbow-guard'].rotation.x=-fore.rotation.x*.4;
+   p[side+'-wrist'].rotation.set(side==='right'?strike*.09:0,side==='right'?arm.rotation.y*.06:0,sign*strike*.035);
+   p[side+'-thigh-armor'].rotation.y=-p[side+'-upper-leg'].rotation.y*.2;
+   p[side+'-knee-guard'].rotation.x=-shin.rotation.x*.45;
+   p[side+'-knee-guard'].position.z=this.m.bind.get(p[side+'-knee-guard']).p.z+Math.sin(bend)*.09;
+   p[side+'-shin-cuff'].position.y=this.m.bind.get(p[side+'-shin-cuff']).p.y+Math.min(.1,bend*.06);
+   p[side+'-toe'].rotation.x=e.moving?-Math.max(0,p[side+'-upper-leg'].rotation.x)*.3:0;
+  }
+ }
  beginDefeat(){this.cancelDash();this.deathPose=new Map();for(const node of Object.values(this.m.parts))this.deathPose.set(node,{p:node.position.clone(),q:node.quaternion.clone()});this.history.length=0;this.ribbon.visible=false;}
- defeat(t){t=clamp(t,0,1);const m=this.m,p=m.parts,crouch=smooth(t/.65),fall=smooth((t-.35)/.65);for(const [node,pose]of this.deathPose){node.position.copy(pose.p);node.quaternion.copy(pose.q);}m.frame.position.y-=1.6*crouch;m.frame.position.z+=.6*fall;p.torso.rotation.x+=.7*fall;p.torso.rotation.z-=.14*fall;p.head.rotation.x+=.35*crouch;p['right-upper-arm'].rotation.x+=.5*fall;p['left-upper-arm'].rotation.x-=.6*fall;p['left-lower-arm'].rotation.x=-.4;m.root.updateWorldMatrix(true,true);this.updateFeet(0,false,true);m.root.updateWorldMatrix(true,true);m.energy.emissiveIntensity=1.7*(1-t);for(const jet of m.jets)jet.visible=false;}
+ defeat(t){t=clamp(t,0,1);const m=this.m,p=m.parts,crouch=smooth(t/.65),fall=smooth((t-.35)/.65);for(const [node,pose]of this.deathPose){node.position.copy(pose.p);node.quaternion.copy(pose.q);}m.frame.position.y-=1.6*crouch;m.frame.position.z+=.6*fall;p.torso.rotation.x+=.7*fall;p.torso.rotation.z-=.14*fall;p.head.rotation.x+=.35*crouch;p['right-upper-arm'].rotation.x+=.5*fall;p['left-upper-arm'].rotation.x-=.6*fall;p['left-lower-arm'].rotation.x=-.4;m.root.updateWorldMatrix(true,true);this.updateFeet(0,false,true);this.articulateSegments();m.root.updateWorldMatrix(true,true);m.energy.emissiveIntensity=1.7*(1-t);for(const jet of m.jets)jet.visible=false;}
  updateFeet(dt,moving,attack){const m=this.m,root=m.root;for(const [i,side]of['left','right'].entries()){
    const sign=i?1:-1,phase=(this.phase+i*.5)%1,ideal=root.localToWorld(V(sign*.9,.37,side==='left'?.42:-.3));let f=this.feet[i];if(!f){f=this.feet[i]={point:ideal.clone(),from:ideal.clone(),to:ideal.clone(),swing:false,settle:0};}
    const swingPhase=moving&&phase>=.58;
@@ -63,5 +78,5 @@ export class RoninAnimation{
    if(!moving&&!attack){const far=f.point.distanceTo(ideal)>.45*root.scale.x;if(f.settle>0||far){if(f.settle===0){f.from.copy(f.point);f.to.copy(ideal);}f.settle+=dt;const t=Math.min(1,f.settle/.28);f.point.lerpVectors(f.from,f.to,smooth(t));f.point.y+=Math.sin(t*Math.PI)*.22*root.scale.y;if(t===1)f.settle=0;}}
    f.swing=swingPhase;this.solveLeg(side,root.worldToLocal(f.point.clone()));
   }}
- solveLeg(side,target){const p=this.m.parts,hip=p[side+'-upper-leg'],shin=p[side+'-lower-leg'],foot=p[side+'-foot'];this.m.root.updateWorldMatrix(true,true);const parent=hip.parent,world=this.m.root.localToWorld(target.clone()),goal=parent.worldToLocal(world).sub(hip.position),L1=2.05,L2=2.1,d=clamp(goal.length(),.2,L1+L2-.005),direction=goal.clone().normalize();const kneeAxis=V(0,0,1).addScaledVector(direction,-direction.z).normalize(),along=(L1*L1-L2*L2+d*d)/(2*d),height=Math.sqrt(Math.max(0,L1*L1-along*along)),knee=direction.clone().multiplyScalar(along).addScaledVector(kneeAxis,height);hip.quaternion.setFromUnitVectors(V(0,-1,0),knee.clone().normalize());const lower=goal.clone().sub(knee).normalize(),q=new THREE.Quaternion().setFromUnitVectors(V(0,-1,0),lower);shin.quaternion.copy(hip.quaternion.clone().invert().multiply(q));foot.quaternion.copy(q.invert());}
+ solveLeg(side,target){const p=this.m.parts,hip=p[side+'-upper-leg'],shin=p[side+'-lower-leg'],foot=p[side+'-foot'];this.m.root.updateWorldMatrix(true,true);const parent=hip.parent,world=this.m.root.localToWorld(target.clone()),goal=parent.worldToLocal(world).sub(hip.position),L1=2.05,L2=2.1,d=clamp(goal.length(),.2,L1+L2-.005),direction=goal.clone().normalize();const kneeAxis=V(0,0,1).addScaledVector(direction,-direction.z).normalize(),along=(L1*L1-L2*L2+d*d)/(2*d),height=Math.sqrt(Math.max(0,L1*L1-along*along)),knee=direction.clone().multiplyScalar(along).addScaledVector(kneeAxis,height);hip.quaternion.setFromUnitVectors(V(0,-1,0),knee.clone().normalize());const lower=goal.clone().sub(knee).normalize(),q=new THREE.Quaternion().setFromUnitVectors(V(0,-1,0),lower);shin.quaternion.copy(hip.quaternion.clone().invert().multiply(q));p[side+'-ankle'].quaternion.copy(q.invert());foot.quaternion.identity();}
 }

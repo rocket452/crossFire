@@ -39,3 +39,11 @@ Ronin uses `astra-ronin-flight.js` to close distant gaps. Beyond 85m horizontall
 Animation adds a forward flight stance, tucked legs, a trailing sword, flared backpack jets and bounded speed streaks. World hit shapes move with the flying rig. Stuns hover-pause movement and resume safely; death cancels flight before the buckle/wreck sequence, and reset restores the grounded spawn and clears flight state. No shared hero movement or other enemy behavior changed.
 
 `QA/astra-ronin-flight-test.mjs` covers 30/60/120Hz takeoff/pursuit/landing, player priority, obstacle altitude, moved targets, stun/resume, reset/death and the return to a sword dash. `QA/astra-ronin-flight-browser.cjs` uses the actual player-controlled Volt Rush and arena buildings on desktop and touch, including flight/landing screenshots and city rebuild.
+
+## Segmented limbs revision 300
+
+Arms now use a shoulder axle, split bicep armor, exposed elbow pin, floating elbow guard, rotating forearm shell with two armor sections, wrist joint and separate hand. Legs use an exposed hip axle, upper/lower thigh armor separated by a metal band, knee hinge and floating knee guard, split shin armor on a visible frame, a sliding lower shin cuff, independent ankle and articulated toe. Clear dark gaps and metal linkages make bends readable at gameplay distance. The smaller shoulders and enlarged shield retain revision 296 proportions.
+
+Bicep/forearm plates share the arm's twist, elbow and knee guards counter-rotate during flexion, wrists follow sword strokes, and shin cuffs slide as the knees bend. Foot IK now counter-rotates the ankle, keeping planted feet stable. The weapon remains attached to the right hand through the wrist joint; hit regions and attack tuning are unchanged. The same hierarchy drives walking, sword wind-up/swing, dash, flight and defeat.
+
+Budget: 5,966 triangles and 120 meshes including effects (up from 4,726/94). Static pieces remain batched by material within each joint. The animation QA budget is now <8,000 triangles and <130 meshes to account for the additional moving sections. Actual phone FPS remains unmeasured. Existing animation, melee, dash and flight tests verify hierarchy, finite transforms, foot planting, damage, stun, defeat and reset; desktop/touch browser checks cover rendered combat poses and flight.

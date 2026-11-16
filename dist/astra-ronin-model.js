@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {RoninAnimation} from './astra-ronin-animation.js?v=299';
+import {RoninAnimation} from './astra-ronin-animation.js?v=300';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 // Original hard-surface design. Armor is batched per material per articulated joint.
 export class AstraRoninModel {
@@ -50,17 +50,30 @@ export class AstraRoninModel {
    const jet=new THREE.Mesh(new THREE.ConeGeometry(.2,1.1,6),new THREE.MeshBasicMaterial({color:'#62eaff',transparent:true,opacity:.5,depthWrite:false}));jet.rotation.x=-Math.PI/2;jet.position.set(0,-.7,-1.1);pod.add(jet);this.jets.push(jet);
   }
   for(const [side,s] of[['left',-1],['right',1]]){
-   const arm=n(side+'-upper-arm',torso,[s*1.93,.55,0]);this.block(arm,[0,0,0],[.85,.8,.85],this.metal,this.axle);b(arm,[0,-.68,0],[.6,1.3,.6],this.dark);plate(arm,[0,-.65,.18],[.85,1.3,.65],tapered,this.edge);
+   const arm=n(side+'-upper-arm',torso,[s*1.93,.55,0]);this.block(arm,[0,0,0],[.85,.8,.85],this.metal,this.axle);
+   // Exposed armature with independently twisting upper-arm plates and a clear elbow gap.
+   b(arm,[0,-.73,0],[.36,1.15,.4],this.dark);b(arm,[s*.23,-.72,-.18],[.09,1.05,.12],this.metal);
+   const bicep=n(side+'-bicep',arm,[0,-.45,0]);plate(bicep,[0,0,.08],[.85,.63,.7],tapered,this.edge);plate(bicep,[0,-.65,.08],[.7,.48,.6],tapered);b(bicep,[0,-.32,.39],[.42,.09,.1],this.metal);
    const shoulder=n(side+'-shoulder',arm,[s*.04,.2,0]);shoulder.scale.set(.72,.8,.8);const cap=plate(shoulder,[s*.25,.2,0],[1.85,.95,1.65],wing.map(([x,y])=>[x*s,y]));cap.rotation.z=s*.12;plate(shoulder,[s*.52,-.27,.05],[1.5,.55,1.5],wing.map(([x,y])=>[x*s,y]),this.edge);const fin=plate(shoulder,[s*.85,.65,-.25],[.5,1.05,.5],tapered);fin.rotation.z=-s*.9;b(shoulder,[0,.32,.87],[.63,.13,.08],this.energy);
-   const fore=n(side+'-lower-arm',arm,[0,-1.45,0]);this.block(fore,[0,0,0],[.65,.6,.65],this.metal,this.axle);plate(fore,[0,-.73,.1],[1.03,1.4,1.05],tapered);plate(fore,[0,-.7,.65],[.65,.9,.16],tapered,this.edge);b(fore,[0,-1.32,0],[.7,.18,.7],this.dark);
-   const hand=n(side+'-hand',fore,[0,-1.55,0]);b(hand,[0,-.05,0],[.65,.55,.65],this.dark);for(let k=0;k<4;k++)b(hand,[(k-1.5)*.15,-.1,.35],[.12,.33,.17],this.metal);b(hand,[-s*.36,-.02,.13],[.2,.37,.27],this.edge);
-   const leg=n(side+'-upper-leg',this.frame,[s*.82,-.05,0]);this.block(leg,[0,0,0],[.8,.75,.8],this.metal,this.axle);plate(leg,[0,-.95,.06],[1.05,1.8,1.15],tapered);b(leg,[0,-.9,.66],[.48,.9,.12],this.edge);b(leg,[s*.48,-.9,-.08],[.12,1.25,.3],this.metal);
-   const shin=n(side+'-lower-leg',leg,[0,-2.05,0]);this.block(shin,[0,0,0],[.8,.65,.8],this.metal,this.axle);plate(shin,[0,-.05,.6],[1.15,.9,.65],tapered,this.edge);plate(shin,[0,-1,.15],[1.05,1.75,1.15],tapered);plate(shin,[0,-1,.76],[.45,1.1,.13],tapered,this.edge);b(shin,[0,-.9,-.65],[.6,1.4,.55],this.dark);for(const x of[-.45,.45])b(shin,[x,-1,-.15],[.12,1.4,.14],this.metal);b(shin,[0,-1.55,.75],[.32,.1,.06],this.energy);
-   const foot=n(side+'-foot',shin,[0,-2.1,0]);plate(foot,[0,-.03,.35],[1.05,.65,1.8],tapered,this.edge);b(foot,[0,.14,.75],[.85,.34,1]);b(foot,[0,-.28,.35],[1.1,.16,1.9],this.dark);const toe=n(side+'-toe',foot,[0,-.02,1.08]);b(toe,[0,0,.2],[.95,.35,.55]);
+   const fore=n(side+'-lower-arm',arm,[0,-1.45,0]);this.block(fore,[0,0,0],[.75,.48,.48],this.dark,this.axle);this.block(fore,[s*.39,0,0],[.12,.4,.4],this.metal,this.axle);
+   const elbow=n(side+'-elbow-guard',fore,[0,0,.1]);plate(elbow,[0,.02,.25],[.64,.48,.28],tapered,this.edge);
+   b(fore,[0,-.77,0],[.38,1.15,.42],this.dark);
+   const shell=n(side+'-forearm-shell',fore,[0,-.45,0]);plate(shell,[0,0,.12],[1.04,.62,1.02],tapered);plate(shell,[0,-.66,.1],[.84,.48,.85],tapered);plate(shell,[0,-.12,.65],[.5,.42,.11],tapered,this.edge);b(shell,[0,-.38,.55],[.56,.09,.08],this.metal);
+   const wrist=n(side+'-wrist',fore,[0,-1.55,0]);b(wrist,[0,.07,0],[.47,.27,.47],this.metal);b(wrist,[0,-.1,0],[.53,.12,.53],this.edge);
+   const hand=n(side+'-hand',wrist,[0,0,0]);b(hand,[0,-.22,0],[.6,.38,.6],this.dark);for(let k=0;k<4;k++)b(hand,[(k-1.5)*.14,-.25,.32],[.11,.28,.15],this.metal);b(hand,[-s*.33,-.15,.12],[.17,.31,.23],this.edge);
+   const leg=n(side+'-upper-leg',this.frame,[s*.82,-.05,0]);this.block(leg,[0,0,0],[.8,.65,.65],this.metal,this.axle);b(leg,[0,-1,0],[.5,1.65,.55],this.dark);b(leg,[s*.32,-1,-.2],[.1,1.5,.13],this.metal);
+   const thigh=n(side+'-thigh-armor',leg,[0,0,0]);plate(thigh,[0,-.55,.13],[1.05,.82,1.03],tapered);plate(thigh,[0,-1.42,.14],[.88,.6,.9],tapered,this.edge);b(thigh,[0,-.65,.69],[.48,.12,.08],this.edge);b(thigh,[0,-1.03,.43],[.54,.12,.14],this.metal);
+   const shin=n(side+'-lower-leg',leg,[0,-2.05,0]);this.block(shin,[0,0,0],[.85,.55,.55],this.dark,this.axle);this.block(shin,[s*.44,0,0],[.12,.42,.42],this.metal,this.axle);
+   const knee=n(side+'-knee-guard',shin,[0,0,.35]);plate(knee,[0,-.02,.3],[1,.7,.4],tapered,this.edge);b(knee,[0,.08,.53],[.37,.12,.07],this.energy);
+   b(shin,[0,-1.02,0],[.5,1.55,.6],this.dark);for(const x of[-.34,.34])b(shin,[x,-1.03,-.22],[.1,1.45,.13],this.metal);
+   plate(shin,[0,-.68,.25],[1.02,.72,.92],tapered);plate(shin,[0,-.68,.76],[.4,.45,.12],tapered,this.edge);b(shin,[0,-1.12,.4],[.62,.1,.2],this.metal);
+   const cuff=n(side+'-shin-cuff',shin,[0,-1.55,.12]);plate(cuff,[0,0,.13],[.9,.6,.88],tapered);b(cuff,[0,0,.63],[.32,.1,.06],this.energy);
+   const ankle=n(side+'-ankle',shin,[0,-2.1,0]);this.block(ankle,[0,0,0],[.66,.44,.44],this.metal,this.axle);b(ankle,[0,-.02,-.22],[.6,.32,.2],this.dark);
+   const foot=n(side+'-foot',ankle,[0,0,0]);plate(foot,[0,-.16,.35],[1.05,.43,1.8],tapered,this.edge);b(foot,[0,-.03,.65],[.85,.24,.8]);b(foot,[0,-.28,.35],[1.1,.16,1.9],this.dark);const toe=n(side+'-toe',foot,[0,-.02,1.08]);b(toe,[0,0,.2],[.95,.35,.55]);
    hit(side+'-upper-arm',arm,[s*.12,-.4,0],[1.4,2,1.45]);hit(side+'-lower-arm',fore,[0,-.7,.1],[1.1,1.9,1.3]);hit(side+'-upper-leg',leg,[0,-1,0],[1.2,2.2,1.4]);hit(side+'-lower-leg',shin,[0,-1,.3],[1.3,2.9,2.3]);
   }
   const shield=n('shield',this.parts['left-lower-arm'],[-.9,-.65,.25]);shield.scale.set(1.5,1.35,1);shield.rotation.y=-1.15;plate(shield,[0,0,0],[1.75,3,.4],shieldOutline,this.edge);plate(shield,[0,.05,.24],[1.4,2.6,.16],shieldOutline);plate(shield,[0,.1,.35],[.38,2.1,.1],shieldOutline,this.edge);b(shield,[0,.35,.43],[.12,.7,.06],this.energy);b(shield,[0,.8,.42],[.75,.1,.07],this.gold);
-  this.sword=n('sword',this.parts['right-hand'],[0,-.05,.05]);b(this.sword,[0,0,.18],[.25,.25,1.05],this.dark);for(let i=0;i<4;i++)b(this.sword,[0,0,-.15+i*.18],[.29,.29,.06],this.gold);plate(this.sword,[0,0,.75],[1.25,.32,.3],wing,this.edge);
+  this.sword=n('sword',this.parts['right-hand'],[0,-.22,.05]);b(this.sword,[0,0,.18],[.25,.25,1.05],this.dark);for(let i=0;i<4;i++)b(this.sword,[0,0,-.15+i*.18],[.29,.29,.06],this.gold);plate(this.sword,[0,0,.75],[1.25,.32,.3],wing,this.edge);
   // Broad faceted blade, angled tip, bright continuous cutting edge.
   const blade=this.plate(this.sword,[0,0,3.45],[.75,5.4,.16],[[-.45,-.5],[.4,-.5],[.45,.28],[0,.5],[-.4,.32]],this.metal);blade.rotation.x=Math.PI/2;
   const edge=this.plate(this.sword,[.26,0,3.45],[.12,5.25,.19],[[-.5,-.5],[.5,-.5],[.5,.32],[-.5,.5]],this.energy);edge.rotation.x=Math.PI/2;
