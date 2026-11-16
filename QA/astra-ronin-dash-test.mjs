@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import * as THREE from '../dist/vendor/three.module.js';
+import {UnitDamage} from '../dist/combat-collision.js';
+import {AstraRonin} from '../dist/astra-ronin.js';
+const make=(z=60)=>{let visible=true,hits=0;const hero={alive:true,kind:'hero',shapes:[{center:new THREE.Vector3(0,1.5,z)}]},r=new AstraRonin(new THREE.Scene(),new UnitDamage(),{id:'evac-raider-ronin',getTargets:()=>[hero],visible:()=>visible,isPathClear:()=>false,onHeroHit:()=>hits++});r.spawnPosition={x:0,y:.1,z:0};r.reset();r.spawn();r.cooldown=0;return{r,hero,setCover:()=>visible=false,get hits(){return hits;}};};
+const tick=(r,n=1,dt=1/60)=>{for(let i=0;i<n;i++)r.update(dt,r.age+dt);};
+for(const dt of[1/30,1/60,1/120]){const s=make(),r=s.r;tick(r,1,dt);assert.equal(r.dashStage,'windup');s.setCover();tick(r,Math.floor(.8/dt),dt);assert(r.root.position.length()<.11,'windup is stationary');assert.equal(s.hits,0);assert(r.model.animation.warning.visible);while(r.dashStage!=='dash')tick(r,1,dt);const start=r.root.position.clone();let dashTime=0;while(r.dashStage==='dash'){tick(r,1,dt);dashTime+=dt;}assert(r.root.position.distanceTo(start)>50,'long dash ignores blocked paths');assert(dashTime<.7,'rapid movement');tick(r,Math.ceil(.4/dt),dt);assert.equal(s.hits,1,'slash hits once through cover');assert(!r.model.animation.warning.visible);tick(r,Math.ceil(1.3/dt),dt);assert(!r.dashAttack&&r.cooldown>0);tick(r,Math.ceil(.1/dt),dt);assert(!r.model.animation.ribbon.visible);}
+// Straight launch commitment rewards a late sidestep and does not home after launch.
+const dodge=make();tick(dodge.r);while(dodge.r.dashStage!=='dash')tick(dodge.r);const end=dodge.r.dashEnd.clone();dodge.hero.shapes[0].center.x=30;tick(dodge.r,70);assert(dodge.r.dashEnd.equals(end));assert.equal(dodge.hits,0);
+for(const stage of['windup','dash','slash']){const s=make(),r=s.r;tick(r);while(r.dashStage!==stage)tick(r);r.stun(1);const point=r.root.position.clone();tick(r,50);assert(r.root.position.equals(point));assert.equal(s.hits,0);assert(!r.dashAttack&&!r.model.animation.warning.visible);assert(r.model.animation.streaks.every(s=>!s.visible));r.reset();r.spawn();assert.equal(r.dashes,0);assert(!r.dashAttack);}
+const edge=make(135);edge.r.root.position.z=100;edge.r.cooldown=0;tick(edge.r);while(edge.r.dashStage!=='slash')tick(edge.r);assert(edge.r.root.position.z<=115,'arena boundary still applies');
+const far=make(100);tick(far.r,30);assert(!far.r.dashAttack,'out of range does not launch');
+console.log('PASS 30/60/120Hz telegraph, 56m building-phasing dash, one hit through cover, cooldown, late dodge, stun/reset and arena bounds');

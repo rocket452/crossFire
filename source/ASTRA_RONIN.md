@@ -19,3 +19,13 @@ Defeat disables targeting immediately, plays a 1.05s buckle (`RONIN.collapseDura
 ## Proportions revision 296
 
 Shoulder armor scales to 72% width and 80% height/depth, with its pivot drawn slightly inward. Upper-arm damage volumes shrink to match the slimmer armor. The forearm shield is 50% wider and 35% taller, mounted farther out and angled slightly forward so its face reads better. Rig animation, attack timings, damage and mesh budget are unchanged. Existing desktop/touch pose checks cover sword clearance, defeat and rebuild.
+
+## Long sword dash revision 297
+
+At 14–70m, Ronin enters a 1.1s crouched sword-back wind-up. An amber ground strip and rising energy pulse telegraph the attack. He follows the target during wind-up, then locks a straight ground trajectory at launch: 100m/s, up to 70m, stopping 4m short of the locked target position. Thrusters flare and three bounded speed streaks accompany a low gliding pose. At the destination he sweeps the sword over .32s, recovers for 1.2s, and begins a 3.2s cooldown. A late lateral dodge can make him miss.
+
+Tuning lives in `RONIN`: `dashMinRange:14`, `dashRange:70`, `dashDistance:70`, `dashSpeed:100`, `dashStandOff:4`, `dashWindup:1.1`, `dashRecovery:1.2`, `dashCooldown:3.2`, `dashDamage:55`, `dashWarningWidth:3`. The finishing slash uses the existing 12m reach and wide forward arc. Each hero can be hit only once per attack. Close targets retain the existing sweep/overhead rotation.
+
+Dash movement and all sword strikes pass through building geometry; they do not damage or destroy buildings. Initial target acquisition still requires sight, but entering cover after wind-up begins does not cancel the attack. The trajectory remains clamped to the arena boundary. Stuns, defeat, target deactivation and city resets cancel the attack safely; temporary player dash invulnerability avoids its hit. Ordinary approach movement still uses existing navigation. Ground dash does not pursue high airborne heroes vertically.
+
+`QA/astra-ronin-dash-test.mjs` covers stationary wind-up, long dash through blocked paths, through-cover once-per-target damage, cooldown, launch commitment/late dodge, stun/reset and arena bounds at 30/60/120Hz. `QA/astra-ronin-dash-browser.cjs` moves the actual Volt Rush target behind an actual Combat Testing building during wind-up, then verifies crossing, hit feedback, effects, recovery and reset on desktop and touch.
