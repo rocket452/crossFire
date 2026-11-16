@@ -6,6 +6,7 @@ const SWEEP_END={torso:[.25,-.7,.1],head:[-.12,.6,-.05],'right-upper-arm':[-.45,
 const OVER_WIND={torso:[-.17,.25,-.04],head:[.05,-.2,0],'right-upper-arm':[-2.55,.1,-.2],'right-lower-arm':[-.8,0,0],sword:[.3,0,0],'left-upper-arm':[-.65,-.15,.3],'left-lower-arm':[-1.1,0,0]};
 const OVER_END={torso:[.38,-.25,.06],head:[-.2,.2,0],'right-upper-arm':[-.4,-.16,-.1],'right-lower-arm':[.08,0,0],sword:[.85,0,0],'left-upper-arm':[-.2,.1,.4],'left-lower-arm':[-1,0,0]};
 const DASH_WIND={torso:[.08,.65,-.14],head:[-.08,-.6,.06],'right-upper-arm':[-.65,2.2,-.4],'right-lower-arm':[-.8,0,0],sword:[.55,-.2,0],'left-upper-arm':[-.9,-.2,.35],'left-lower-arm':[-1.1,0,0]};
+const FLIGHT_POSE={torso:[.32,0,-.025],head:[-.22,0,0],'right-upper-arm':[.1,1.5,-.25],'right-lower-arm':[-.38,0,0],sword:[.55,0,0],'left-upper-arm':[-.65,.05,.35],'left-lower-arm':[-.85,0,0]};
 export class RoninAnimation{
  constructor(model){this.m=model;this.feet=[];this.history=[];const geometry=new THREE.BufferGeometry();this.vertices=new Float32Array(12*6*3);geometry.setAttribute('position',new THREE.BufferAttribute(this.vertices,3).setUsage(THREE.DynamicDrawUsage));this.ribbon=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:'#76edff',transparent:true,opacity:.24,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));this.ribbon.name='Ronin sword motion ribbon';this.ribbon.frustumCulled=false;model.root.add(this.ribbon);
   this.warning=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:'#ffb34d',transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false}));this.warning.name='Ronin dash path warning';this.warning.rotation.x=-Math.PI/2;this.warning.position.y=.08;model.root.add(this.warning);
@@ -30,20 +31,23 @@ export class RoninAnimation{
    else if(stage==='slash'){const t=smooth(clock/e.config.swordSwing);this.pose(DASH_WIND,SWEEP_END,t);m.frame.position.y-=.55;m.frame.position.z+=.4*t;}
    else{const t=smooth(clock/e.config.dashRecovery);this.pose(SWEEP_END,READY,t);m.frame.position.y-=.55*(1-t);m.frame.position.z+=.4*(1-t);}
   }
+  const flight=e.flight;
+  if(flight){const lift=flight.phase==='takeoff'?smooth(flight.age/e.config.flightTakeoffTime):1;this.pose(READY,FLIGHT_POSE,lift);m.frame.position.y-=.18*lift;m.frame.rotation.x=flight.phase==='cruise'?.06:0;p.torso.position.y+=Math.sin(time*4)*.025;}
   if(e.flinch>0){const recoil=Math.sin(clamp(e.flinch/.12,0,1)*Math.PI/2);p.torso.rotation.x-=recoil*.18;p.torso.rotation.z+=recoil*.07;p.head.rotation.x-=recoil*.12;}
   if(e.stunRemaining>0){m.frame.position.y-=.48;p.torso.rotation.x=.25;p.head.rotation.x=.2;p['right-upper-arm'].rotation.x=.15;p['left-upper-arm'].rotation.x=.1;}
   // Upper armor counter-rotates so shoulder fins clear the helmet at full lift.
   for(const side of['left','right']){p[side+'-shoulder'].rotation.x=-p[side+'-upper-arm'].rotation.x*.32;p[side+'-skirt'].rotation.x=-.12-Math.max(0,(side==='left'?stride:-stride))*.25;}
   root.updateWorldMatrix(true,true);
-  if(dash&&stage!=='windup'){
+  if(flight){this.feet=[];for(const [i,side]of ['left','right'].entries())this.solveLeg(side,V(i?.95:-.95,.9,-.65+(i?.2:-.2)));}
+  else if(dash&&stage!=='windup'){
    // Fast ground glide: feet travel with the rig instead of stretching back to old plants.
    const recover=stage==='recovery'?smooth(clock/e.config.dashRecovery):0;this.feet=[];
    for(const [i,side]of ['left','right'].entries()){const sign=i?1:-1;this.solveLeg(side,V(sign*1.05,.42,(i?-1.05:1.1)*(1-recover)));}
   }else this.updateFeet(dt,moving,attack);root.updateWorldMatrix(true,true);
   m.energy.emissiveIntensity=dash&&stage==='windup'?2+Math.pow(clock/e.config.dashWindup,2)*(2+Math.sin(time*35)):attack&&age<wind?1.8+Math.pow(age/wind,2)*(1.5+Math.sin(time*30)*.8):1.7;
-  for(const jet of m.jets){jet.visible=this.moveBlend>.1||dash&&stage==='dash'||attack&&age>=wind&&age<wind+swing;jet.scale.y=dash&&stage==='dash'?2.8:.4+this.moveBlend*.65+Math.sin(time*36)*.08;}
+  for(const jet of m.jets){jet.visible=!!flight||this.moveBlend>.1||dash&&stage==='dash'||attack&&age>=wind&&age<wind+swing;jet.scale.y=flight?(flight.phase==='cruise'?2.5:1.65):dash&&stage==='dash'?2.8:.4+this.moveBlend*.65+Math.sin(time*36)*.08;}
   this.warning.visible=dash&&stage==='windup'&&!e.stunRemaining;this.warning.scale.set(e.config.dashWarningWidth/root.scale.x,Math.max(1,(e.dashLength||1)/root.scale.z),1);this.warning.position.z=(e.dashLength||1)/root.scale.z*.5;this.warning.material.opacity=.14+.1*(.5+.5*Math.sin(time*18));
-  for(const [i,streak]of this.streaks.entries()){streak.visible=dash&&stage==='dash'&&!e.stunRemaining;streak.scale.z=3+i;}
+  for(const [i,streak]of this.streaks.entries()){streak.visible=(dash&&stage==='dash'||flight&&flight.phase==='cruise')&&!e.stunRemaining;streak.scale.z=3+i;}
   const active=attack&&(dash?stage==='slash':age>=wind&&age<wind+swing+.08)&&!e.stunRemaining;
   if(active){this.history.unshift({base:root.worldToLocal(m.bladeBase.getWorldPosition(V())),tip:root.worldToLocal(m.tip.getWorldPosition(V())),age:0});}for(const h of this.history)h.age+=dt;this.history=this.history.filter(h=>h.age<.13).slice(0,13);let index=0;for(let i=1;i<this.history.length;i++){const a=this.history[i-1],b=this.history[i];for(const v of[a.base,a.tip,b.tip,a.base,b.tip,b.base]){this.vertices[index++]=v.x;this.vertices[index++]=v.y;this.vertices[index++]=v.z;}}this.ribbon.geometry.setDrawRange(0,index/3);this.ribbon.geometry.attributes.position.needsUpdate=true;this.ribbon.visible=index>0&&!e.dead;this.attackWasActive=attack;
  }

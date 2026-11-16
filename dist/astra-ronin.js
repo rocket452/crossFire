@@ -1,13 +1,16 @@
+import {RoninFlight} from './astra-ronin-flight.js?v=299';
 import * as THREE from './vendor/three.module.js';
 import {Mireguard} from './mireguard.js?v=bruiser-range-281';
-import {AstraRoninModel} from './astra-ronin-model.js?v=297';
+import {AstraRoninModel} from './astra-ronin-model.js?v=299';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-pairs-260';
 export const RONIN={height:15,health:2400,headHealth:999999,segmentHealth:999999,walkSpeed:8,preferredRange:9,range:220,turnRate:1.8,initialDelay:2,swordWindup:.95,swordSwing:.32,swordRecovery:1.1,swordCooldown:1.4,swordRange:12,swordDamage:35,overheadDamage:55,bodyRadius:3.5,collapseDuration:1.05,
- dashMinRange:14,dashRange:70,dashDistance:70,dashSpeed:100,dashStandOff:4,dashWindup:1.1,dashRecovery:1.2,dashCooldown:3.2,dashDamage:55,dashWarningWidth:3};
+ dashMinRange:14,dashRange:70,dashDistance:70,dashSpeed:100,dashStandOff:4,dashWindup:1.1,dashRecovery:1.2,dashCooldown:3.2,dashDamage:55,dashWarningWidth:3,
+ flightStartRange:85,flightStopRange:50,flightLandingRadius:45,flightSpeed:38,flightAcceleration:60,flightHeight:18,flightClearance:6,flightBuildingMargin:16,flightRiseSpeed:30,flightDescendSpeed:24,flightTurnRate:2.4,flightTakeoffTime:.6,flightLandingRecovery:.4};
 const V=()=>new THREE.Vector3();
 export class AstraRonin extends Mireguard{
- constructor(scene,damage,options){super(scene,damage,{...options,config:{...RONIN,...options.config}});this.root.clear();this.model=new AstraRoninModel(this.root,this.config);this.parts=this.model.parts;this.type='ronin';this.root.name='Astra Ronin · sword duelist';this.reset();}
- reset(){super.reset();this.swordState=false;this.swordAge=0;this.swings=0;this.swordHit=false;this.dying=false;this.deathAge=0;this.dashAttack=false;this.dashStage=null;this.dashClock=0;this.dashElapsed=0;this.dashLength=0;this.dashes=0;this.struck=new Set();this.dashStart=this.dashEnd=this.dashDirection=null;}
+ constructor(scene,damage,options){super(scene,damage,{...options,config:{...RONIN,...options.config}});this.root.clear();this.model=new AstraRoninModel(this.root,this.config);this.parts=this.model.parts;this.flightController=new RoninFlight(this);this.type='ronin';this.root.name='Astra Ronin · sword duelist';this.reset();}
+ get flight(){return this.flightController?.state||null;}
+ reset(){super.reset();this.flightController?.reset();this.swordState=false;this.swordAge=0;this.swings=0;this.swordHit=false;this.dying=false;this.deathAge=0;this.dashAttack=false;this.dashStage=null;this.dashClock=0;this.dashElapsed=0;this.dashLength=0;this.dashes=0;this.struck=new Set();this.dashStart=this.dashEnd=this.dashDirection=null;}
  cancelBurst(){const active=this.swordState||this.dashAttack;super.cancelBurst();this.swordState=false;this.swordAge=0;this.dashAttack=false;this.dashStage=null;this.dashClock=0;if(active)this.model?.animation?.cancelDash();}
  modifyDamage(power,point,part){if(this.dead)return 0;this.flinch=Math.max(this.flinch,.12);return power*(part==='head'?1.5:1);}
  chooseTarget(dt){
@@ -31,7 +34,7 @@ export class AstraRonin extends Mireguard{
   this.swordAge+=dt;this.mode=this.swordAge<c.swordWindup?'sword-windup':'sword-strike';if(!this.swordHit&&this.swordAge>=c.swordWindup+c.swordSwing*.5){this.swordHit=true;this.strike({ignoreBuildings:true,damage:this.overhead?c.overheadDamage:c.swordDamage});}if(this.swordAge>=c.swordWindup+c.swordSwing+c.swordRecovery)this.finishAttack();
  }
  moveToward(goal,speed,dt){if(this.swordState)return false;return super.moveToward(goal,speed,dt);}
- destroy(){if(this.dead)return;this.dead=true;this.dying=true;this.deathAge=0;this.cancelBurst();this.target=null;if(this.combatUnit){this.combatUnit.alive=false;this.combatUnit.shapes=[];}this.model.animation.beginDefeat();}
- update(dt,time){if(this.dying){this.deathAge+=dt;this.model.animation.defeat(this.deathAge/this.config.collapseDuration);if(this.deathAge>=this.config.collapseDuration){this.dying=false;this.dead=false;super.destroy();}return;}super.update(dt,time);}
- diagnostics(){return{...super.diagnostics(),name:'Astra Ronin',swings:this.swings,swordState:this.swordState,swordAge:this.swordAge,dashAttack:this.dashAttack,dashStage:this.dashStage,dashClock:this.dashClock,dashes:this.dashes,dashLength:this.dashLength,dashEnd:this.dashEnd?.toArray()||null};}
+ destroy(){if(this.dead)return;this.flightController.reset();this.dead=true;this.dying=true;this.deathAge=0;this.cancelBurst();this.target=null;if(this.combatUnit){this.combatUnit.alive=false;this.combatUnit.shapes=[];}this.model.animation.beginDefeat();}
+ update(dt,time){if(this.dying){this.deathAge+=dt;this.model.animation.defeat(this.deathAge/this.config.collapseDuration);if(this.deathAge>=this.config.collapseDuration){this.dying=false;this.dead=false;super.destroy();}return;}if(this.flightController.update(dt))return;super.update(dt,time);}
+ diagnostics(){return{...super.diagnostics(),name:'Astra Ronin',flight:this.flightController.diagnostics(),swings:this.swings,swordState:this.swordState,swordAge:this.swordAge,dashAttack:this.dashAttack,dashStage:this.dashStage,dashClock:this.dashClock,dashes:this.dashes,dashLength:this.dashLength,dashEnd:this.dashEnd?.toArray()||null};}
 }
