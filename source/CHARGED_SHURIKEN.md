@@ -131,3 +131,7 @@ For level aim, the added launch angle is halved from about 21.45° to 10.72° by
 ## Shorter post-dash float (revision 285)
 
 `NINJA.slowFallSeconds` is now 1 second, reduced from 2. Airborne dash endings and ledge departures use the same shorter window. Float gravity/fall-speed limit, dash range/speed/cooldown, kill resets and ground dash behavior are unchanged. Motion, ground-dash and real hero dash-sweep checks pass at 30/60/120Hz and long frames; the motion test also verifies normal falling resumes after the shortened window.
+
+## Faster kunai storing (revision 286)
+
+`kunai.storeSeconds` is now .25s instead of .5s. The initial kunai is still immediate, so a full five-kunai stack takes 1s instead of 2s. The five-charge cap, hold/release behavior, damage, projectile speed, volley spacing and release cooldown are unchanged. Existing stack-timing tests now verify charges at .25s, .5s and 1s.

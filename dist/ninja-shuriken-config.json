@@ -98,7 +98,7 @@
   },
   "kunai": {
     "cooldown": 1,
-    "storeSeconds": 0.5,
+    "storeSeconds": 0.25,
     "maxStored": 5,
     "burstInterval": 0.075,
     "speed": 110,
