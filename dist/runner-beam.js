@@ -1,5 +1,5 @@
 import {RUNNER_ENERGY} from './runner-energy.js?v=weapon-drain-77';
-export const RUNNER_BEAM=Object.freeze({drainPerSecond:RUNNER_ENERGY.beamDrainPerSecond,tapSeconds:.08});
+export const RUNNER_BEAM=Object.freeze({range:55,drainPerSecond:RUNNER_ENERGY.beamDrainPerSecond,tapSeconds:.08});
 // Manual trigger: no wind-up, minimum reserve or recovery between activations.
 export class RunnerBeam {
  constructor(){this.reset();}

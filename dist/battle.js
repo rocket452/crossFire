@@ -1,3 +1,4 @@
+import {RUNNER_BEAM} from './runner-beam.js?v=lightning-range-298';
 import {WELDING_BEAM,weldStun} from './runner-welder.js?v=weld-stun-art-266';
 import {VOLT_STORM} from './runner-storm.js?v=sky-strike-power-289';
 import {BASIC_ATTACKS,recognizedElectricWeakPoint} from './runner-basic-attacks.js?v=spider-bruiser-272';
@@ -52,7 +53,7 @@ import {SiegeWalker} from './siege-walker.js?v=city-walker-health-255';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=hero-hurt-118';
 import {VioletHero} from './violet-hero.js?v=overall-performance-238';
-import {Speedster} from './speedster.js?v=sky-strike-power-289';
+import {Speedster} from './speedster.js?v=lightning-range-298';
 import {RobotMissiles} from './robot-missiles.js?v=charged-shuriken-130';
 import {MissileExplosions} from './missile-explosions.js?v=robot-death-80';
 import {PortalHero} from './portal-hero.js?v=overall-performance-238';
@@ -224,7 +225,8 @@ function experimentalBasicHit(hit,power,meta){
 }
 
 function electricAttack(from,target,damageSeconds,{cpu=false}={}){
- const hit=traceWorld(from,target,{radius:.10,allied:cpu,includeVoltOrb:!cpu}),end=hit?.point||target,enemyHits=[];let damage=0;
+ const limit=from.clone().add(target.clone().sub(from).clampLength(0,RUNNER_BEAM.range));
+ const hit=traceWorld(from,limit,{radius:.10,allied:cpu,includeVoltOrb:!cpu}),end=hit?.point||limit,enemyHits=[];let damage=0;
  if(hit&&damageSeconds>0){
   if(hit.voltOrb){runner.storm.recharge(150*damageSeconds);return{end,kind:'volt-orb',damage:0,enemyHits};}
   weaponImpacts.electric++;if(hit.orb||(bastionTest()&&hit.unit?.entity===bastionTest().boss)){damage=bastionTest().boss.applyHit(hit,150*damageSeconds,cpu?'cpu-beam-'+runner.charge.bursts:'beam-'+runner.playerBeam.activations);if(damage>0)enemyHits.push({unit:hit.unit,damage,point:end});return{end,kind:hit.unit?.kind||hit.kind,damage,enemyHits};}

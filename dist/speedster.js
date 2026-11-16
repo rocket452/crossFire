@@ -17,11 +17,11 @@ import {RunnerAnimator} from './runner-animation.js?v=runner-ai-7';
 import {RunnerLookPose} from './runner-look-pose.js?v=torso-look-75';
 import {RunnerAI} from './runner-ai.js?v=robot-experiments-108';
 import {RunnerElectric} from './runner-electric.js?v=lightning-impact-174';
-import {RunnerBeam,RUNNER_BEAM} from './runner-beam.js?v=weapon-drain-77';
+import {RunnerBeam,RUNNER_BEAM} from './runner-beam.js?v=lightning-range-298';
 import {RunnerCharge} from './runner-charge.js?v=instant-lightning-63';
 import {RunnerDash,DASH} from './runner-dash.js?v=overall-performance-238';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
-import {selectRunnerAim} from './runner-aim.js?v=half-lightning-aim-240';
+import {selectRunnerAim} from './runner-aim.js?v=lightning-range-298';
 import {RunnerFeedback} from './runner-feedback.js?v=wave-dash-62';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 export class Speedster {
@@ -126,7 +126,7 @@ export class Speedster {
   if(!this.active){
    const robot=this.getRobot(),target=robot?.aimPoint(new THREE.Vector3(this.motion.position.x,this.motion.position.y+1.6,this.motion.position.z));
    const n=this.motion.normal,p=this.motion.position,from=new THREE.Vector3(p.x+n.x*1.65,p.y+n.y*1.65,p.z+n.z*1.65),missile=this.getMissileTarget(from);
-   const canShootFrom=position=>{if(!target)return false;const hit=this.traceAim(new THREE.Vector3(position.x,position.y+1.65,position.z),target,{allied:true});return hit?.unit?.kind==='robot'&&hit.unit.alive;};
+   const canShootFrom=position=>{if(!target)return false;const from=new THREE.Vector3(position.x,position.y+1.65,position.z),end=from.clone().add(target.clone().sub(from).clampLength(0,RUNNER_BEAM.range)),hit=this.traceAim(from,end,{allied:true});return hit?.unit?.kind==='robot'&&hit.unit.alive;};
    cpu=this.ai.update(dt,{motion:this.motion,robotAlive:!!robot?.combatUnit?.alive,target,buildings:this.getBuildings(),sections:this.getSections(),canShootFrom,urgent:!!missile,canAttack:this.energy.ready||this.charging||this.firing,canShoot:()=>canShootFrom(p)});
    if(missile&&(this.energy.ready||this.charging||this.firing)){const clear=this.traceAim(from,missile.position,{allied:true})?.missile===missile;this.ai.mode='missile-defense';cpu={input:this.motion.mode==='wall'?{forward:1}:this.motion.mode==='air'||clear?{}:{forward:1,boost:true},fire:clear,yaw:this.motion.mode==='wall'?this.motion.yaw:Math.atan2(missile.position.x-p.x,missile.position.z-p.z),target:missile.position};}
    const rescue=!missile?this.dash.rescueApproach(this.motion):null;if(rescue){cpu=rescue;this.ai.mode=rescue.rescueWaiting?'rescue-standby':'rescue-approach';this.ai.rooftops.cancel(2);}
@@ -146,7 +146,7 @@ export class Speedster {
   this.pose(dt);this.root.visible=this.enabled!==false&&!this.dash.active;if(this.active)this.yaw=this.heading.follow(this.yaw,dt,{input,mode:this.motion.mode,velocity:this.motion.velocity,heading:Math.atan2(this.bodyForward.x,this.bodyForward.z),aiming:requested||this.charging||this.firing||this.mouseLocked,blocked:dialog||dashing});if(dashing){this.nodes.chest.rotation.x+=.2;this.nodes.upperarm_l.rotation.x=.5;this.nodes.upperarm_r.rotation.x=.5;}let beam=null;
   if(this.firing){
    let target;
-   if(this.active){this.updateCamera(dt);const direction=this.camera.getWorldDirection(new THREE.Vector3()),far=this.camera.position.clone().addScaledVector(direction,110),aim=this.traceAim(this.camera.position,far);target=aim?new THREE.Vector3(aim.point.x,aim.point.y,aim.point.z):far;const directEnemy=aim?.voltOrb||aim?.weakPoint||aim?.missile||aim?.unit?.kind==='robot',assisted=directEnemy?null:selectRunnerAim(this.camera.position,direction,this.getAimTargets(),{enabled:this.preferences.aimAssist,trace:(a,b)=>this.traceAim(a,b),previous:this.aimTargetId});this.assistedAim=assisted;this.aimTargetId=assisted?.id||null;if(assisted)target.copy(assisted.point);}
+   if(this.active){this.updateCamera(dt);const direction=this.camera.getWorldDirection(new THREE.Vector3()),far=this.camera.position.clone().addScaledVector(direction,RUNNER_BEAM.range+this.camera.position.distanceTo(this.root.position)),aim=this.traceAim(this.camera.position,far);target=aim?new THREE.Vector3(aim.point.x,aim.point.y,aim.point.z):far;const directEnemy=aim?.voltOrb||aim?.weakPoint||aim?.missile||aim?.unit?.kind==='robot',assisted=directEnemy?null:selectRunnerAim(this.camera.position,direction,this.getAimTargets(),{enabled:this.preferences.aimAssist,trace:(a,b)=>this.traceAim(a,b),previous:this.aimTargetId});this.assistedAim=assisted;this.aimTargetId=assisted?.id||null;if(assisted)target.copy(assisted.point);}
    else target=new THREE.Vector3(cpu.target.x,cpu.target.y,cpu.target.z);
    this.root.updateMatrixWorld(true);const local=this.nodes.chest.worldToLocal(target.clone()).sub(this.nodes.upperarm_r.position).normalize();this.nodes.upperarm_r.quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),local);this.nodes.forearm_r.rotation.set(0,0,0);
    this.root.updateMatrixWorld(true);this.character?.syncArms(this.nodes);const from=this.character?this.character.hand('R'):this.nodes.forearm_r.localToWorld(new THREE.Vector3(0,-.47,.05));
