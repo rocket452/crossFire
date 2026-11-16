@@ -29,7 +29,7 @@ import {ActorSilhouettes} from './actor-silhouettes.js?v=wreck-occlusion-273';
 import {RAIDER_COMBAT} from './evac-raider.js?v=bruiser-range-281';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=raider-burst-92';
 import {NinjaHero} from './ninja-hero.js?v=kage-cone-slash-287';
-import {RobotDeathEffects} from './robot-death-effects.js?v=robot-death-80';
+import {RobotDeathEffects} from './robot-death-effects.js?v=enemy-low-health-smoke-291';
 import {shieldBeamIntersection} from './hero-defense.js?v=hero-5';
 import {EnemyDamageFlash} from './enemy-damage-flash.js?v=bastion-warning-276b';
 import {HeroMinimap} from './hero-minimap.js?v=dropship-marker-248';
@@ -286,7 +286,7 @@ function updateCombat(dt){
 }
 function updateEffects(dt){
  buildingSmoke.update(dt);
- enemyDamageFlash.update(dt);robotDeathEffects.update(dt);
+ enemyDamageFlash.update(dt);const bastion=bastionTest()?.boss;robotDeathEffects.update(dt,(unitDamage?.units||[]).filter(u=>u.entity!==robot&&u.entity!==argus&&u.entity!==bastion));
  missileExplosions.update(dt);
  const counts={smoke:0,buildingSmoke:0,flash:0,spark:0},pools={smoke:smokePool,buildingSmoke:buildingSmokePool,flash:flashPool,spark:sparkPool};for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;if(p.life<=0){particles.splice(i,1);continue;}p.p.addScaledVector(p.v,dt);if(p.kind==='spark')p.v.y-=9*dt;const index=counts[p.kind]++;if(index>=pools[p.kind].instanceMatrix.count)continue;const size=(p.kind==='smoke'||p.buildingSmoke)?p.size*p.scale*(1+(1-p.life/p.max)*1.5)*(p.buildingSmoke?Math.min(1,p.life/.6):1):p.size*p.scale*Math.min(1,p.life*8);dummy.position.copy(p.p);dummy.rotation.set(0,0,0);dummy.scale.setScalar(size);dummy.updateMatrix();pools[p.kind].setMatrixAt(index,dummy.matrix);}
  for(const k of Object.keys(pools)){pools[k].count=Math.min(counts[k],pools[k].instanceMatrix.count);pools[k].instanceMatrix.needsUpdate=true;}
