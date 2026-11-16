@@ -2,7 +2,7 @@
 Original low-poly sword mini-boss, selected in Combat Testing → Astra Ronin.
 Ivory bevelled armor, navy frame, cyan visor/blade, shield, independently articulated shoulders/elbows/hips/knees/feet and waist. Procedural travel gait, idle, sword anticipation, sweep/overhead follow-through and recoil use rigid joint pivots. Existing wreck system handles defeat.
 
-Tuning is exported as RONIN in dist/astra-ronin.js: height 15m, HP 2400, movement 8m/s, turn 1.8rad/s, melee reach 12m, sweep 35 damage, overhead 55 damage, wind-up .95s, swing .32s, recovery 1.1s, cooldown 1.4s. Head hits multiply damage by 1.5. Existing hero feedback, stuns, navigation, enemy separation and damage/wreck handling are reused. Shield is visual armor, not a separate blocking mechanic. No ranged attack or limb severing. Future polish: terrain foot IK, audio, bespoke animated collapse; currently uses existing physical wreck defeat. Phone performance not measured.
+Tuning is exported as RONIN in dist/astra-ronin.js: height 15m, HP 2400, movement 8m/s, turn 1.8rad/s, melee reach 12m, sweep 35 damage, overhead 55 damage, wind-up .95s, swing .32s, recovery 1.1s, cooldown 1.4s. Head hits multiply damage by 1.5. Existing hero feedback, stuns, navigation, enemy separation and damage/wreck handling are reused. The shield blocks hits only while Ronin raises it into his periodic guard (revision 301). No ranged attack or limb severing. Future polish: terrain foot IK, audio, bespoke animated collapse; currently uses existing physical wreck defeat. Phone performance not measured.
 
 QA/astra-ronin-test.mjs checks melee, interruption, collision shapes and reset. QA/astra-ronin-browser.cjs checks desktop/touch arena selection and rendering.
 
@@ -47,3 +47,14 @@ Arms now use a shoulder axle, split bicep armor, exposed elbow pin, floating elb
 Bicep/forearm plates share the arm's twist, elbow and knee guards counter-rotate during flexion, wrists follow sword strokes, and shin cuffs slide as the knees bend. Foot IK now counter-rotates the ankle, keeping planted feet stable. The weapon remains attached to the right hand through the wrist joint; hit regions and attack tuning are unchanged. The same hierarchy drives walking, sword wind-up/swing, dash, flight and defeat.
 
 Budget: 5,966 triangles and 120 meshes including effects (up from 4,726/94). Static pieces remain batched by material within each joint. The animation QA budget is now <8,000 triangles and <130 meshes to account for the additional moving sections. Actual phone FPS remains unmeasured. Existing animation, melee, dash and flight tests verify hierarchy, finite transforms, foot planting, damage, stun, defeat and reset; desktop/touch browser checks cover rendered combat poses and flight.
+
+
+## Periodic shield guard revision 301
+
+Between sword attacks Ronin occasionally raises the forearm shield across his torso, holds guard for 2.2s, then lowers it. Raise takes .45s and lower .35s; the shield blocks only during the fully raised hold. He stays planted and turns toward his target while guarding. Guard becomes available after an initial 3.5s delay; subsequent intervals vary between 6–8s, and attacks take priority until their existing recovery completes. A .4s opening follows lowering before the next sword attack.
+
+A `ronin-shield` oriented hit shape follows the actual raised shield. `modifyDamage` returns zero only for hits on that shape during the hold. This blocks projectile/stream hits intercepted by the shield, with a .18s blue flash on independent shield materials and no health-loss red flash. Shots reaching exposed legs or the back still damage Ronin. Area attacks whose contact does not hit the shield remain effective. Guard never gives whole-body invulnerability. The shield has no separate HP in this version.
+
+Guard cancels immediately on stun, defeat, flight takeoff, target loss or reset. Sword attacks cannot begin during guard; flight can interrupt it to pursue a distant player. No hero controls or shared damage framework changed. Existing segmented limbs remain active in the new guard pose.
+
+Config in `RONIN`: `guardInitialDelay:3.5`, `guardRaise:.45`, `guardHold:2.2`, `guardLower:.35`, `guardCooldown:7` (cycle variation ±1s), `guardFlashDuration:.18`. `QA/astra-ronin-guard-test.mjs` tests real collision traces, block/blue feedback, exposed-body damage, repeated cycles and interruption at 30/60/120Hz. `QA/astra-ronin-guard-browser.cjs` checks the actual Volt Rush stream against the guard, rear damage, pose rendering and city reset on desktop and touch.

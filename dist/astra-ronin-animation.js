@@ -7,6 +7,7 @@ const OVER_WIND={torso:[-.17,.25,-.04],head:[.05,-.2,0],'right-upper-arm':[-2.55
 const OVER_END={torso:[.38,-.25,.06],head:[-.2,.2,0],'right-upper-arm':[-.4,-.16,-.1],'right-lower-arm':[.08,0,0],sword:[.85,0,0],'left-upper-arm':[-.2,.1,.4],'left-lower-arm':[-1,0,0]};
 const DASH_WIND={torso:[.08,.65,-.14],head:[-.08,-.6,.06],'right-upper-arm':[-.65,2.2,-.4],'right-lower-arm':[-.8,0,0],sword:[.55,-.2,0],'left-upper-arm':[-.9,-.2,.35],'left-lower-arm':[-1.1,0,0]};
 const FLIGHT_POSE={torso:[.32,0,-.025],head:[-.22,0,0],'right-upper-arm':[.1,1.5,-.25],'right-lower-arm':[-.38,0,0],sword:[.55,0,0],'left-upper-arm':[-.65,.05,.35],'left-lower-arm':[-.85,0,0]};
+const GUARD_POSE={torso:[.04,0,0],head:[-.02,0,0],'right-upper-arm':[.15,.1,-.18],'right-lower-arm':[-.25,0,0],sword:[.95,0,0],'left-upper-arm':[-.9,0,.8],'left-lower-arm':[-.5,0,.9]};
 export class RoninAnimation{
  constructor(model){this.m=model;this.feet=[];this.history=[];const geometry=new THREE.BufferGeometry();this.vertices=new Float32Array(12*6*3);geometry.setAttribute('position',new THREE.BufferAttribute(this.vertices,3).setUsage(THREE.DynamicDrawUsage));this.ribbon=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:'#76edff',transparent:true,opacity:.24,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));this.ribbon.name='Ronin sword motion ribbon';this.ribbon.frustumCulled=false;model.root.add(this.ribbon);
   this.warning=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:'#ffb34d',transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false}));this.warning.name='Ronin dash path warning';this.warning.rotation.x=-Math.PI/2;this.warning.position.y=.08;model.root.add(this.warning);
@@ -33,6 +34,7 @@ export class RoninAnimation{
   }
   const flight=e.flight;
   if(flight){const lift=flight.phase==='takeoff'?smooth(flight.age/e.config.flightTakeoffTime):1;this.pose(READY,FLIGHT_POSE,lift);m.frame.position.y-=.18*lift;m.frame.rotation.x=flight.phase==='cruise'?.06:0;p.torso.position.y+=Math.sin(time*4)*.025;}
+  const guarding=e.guardWeight||0;if(guarding>0){this.pose(READY,GUARD_POSE,smooth(guarding));m.frame.position.y-=.12*guarding;}
   if(e.flinch>0){const recoil=Math.sin(clamp(e.flinch/.12,0,1)*Math.PI/2);p.torso.rotation.x-=recoil*.18;p.torso.rotation.z+=recoil*.07;p.head.rotation.x-=recoil*.12;}
   if(e.stunRemaining>0){m.frame.position.y-=.48;p.torso.rotation.x=.25;p.head.rotation.x=.2;p['right-upper-arm'].rotation.x=.15;p['left-upper-arm'].rotation.x=.1;}
   // Upper armor counter-rotates so shoulder fins clear the helmet at full lift.
@@ -45,6 +47,7 @@ export class RoninAnimation{
    for(const [i,side]of ['left','right'].entries()){const sign=i?1:-1;this.solveLeg(side,V(sign*1.05,.42,(i?-1.05:1.1)*(1-recover)));}
   }else this.updateFeet(dt,moving,attack);root.updateWorldMatrix(true,true);
   this.articulateSegments(e);root.updateWorldMatrix(true,true);
+  if(guarding>0){const shield=p.shield,world=root.getWorldQuaternion(new THREE.Quaternion()),facing=shield.parent.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(world);shield.quaternion.copy(m.bind.get(shield).q).slerp(facing,smooth(guarding));root.updateWorldMatrix(true,true);}m.updateShieldVisual(e);
   m.energy.emissiveIntensity=dash&&stage==='windup'?2+Math.pow(clock/e.config.dashWindup,2)*(2+Math.sin(time*35)):attack&&age<wind?1.8+Math.pow(age/wind,2)*(1.5+Math.sin(time*30)*.8):1.7;
   for(const jet of m.jets){jet.visible=!!flight||this.moveBlend>.1||dash&&stage==='dash'||attack&&age>=wind&&age<wind+swing;jet.scale.y=flight?(flight.phase==='cruise'?2.5:1.65):dash&&stage==='dash'?2.8:.4+this.moveBlend*.65+Math.sin(time*36)*.08;}
   this.warning.visible=dash&&stage==='windup'&&!e.stunRemaining;this.warning.scale.set(e.config.dashWarningWidth/root.scale.x,Math.max(1,(e.dashLength||1)/root.scale.z),1);this.warning.position.z=(e.dashLength||1)/root.scale.z*.5;this.warning.material.opacity=.14+.1*(.5+.5*Math.sin(time*18));
