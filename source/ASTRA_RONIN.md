@@ -15,3 +15,7 @@ Rebuilt the original model with tapered beveled armor, swept layered shoulder pl
 Defeat disables targeting immediately, plays a 1.05s buckle (`RONIN.collapseDuration`), then uses the existing physics wreck/explosion path. HP, damage, movement speed, range and cooldowns are unchanged. The prior note about a missing collapse is superseded; new custom audio remains future work.
 
 `QA/astra-ronin-animation-test.mjs` verifies planted feet at 8m/s, reachable IK, distinct broad sword arcs, finite transforms, trail expiry and reset. Browser QA covers ready/walk/sweep/overhead/defeat poses and rebuild on desktop and touch. Actual phone FPS remains unmeasured.
+
+## Proportions revision 296
+
+Shoulder armor scales to 72% width and 80% height/depth, with its pivot drawn slightly inward. Upper-arm damage volumes shrink to match the slimmer armor. The forearm shield is 50% wider and 35% taller, mounted farther out and angled slightly forward so its face reads better. Rig animation, attack timings, damage and mesh budget are unchanged. Existing desktop/touch pose checks cover sword clearance, defeat and rebuild.

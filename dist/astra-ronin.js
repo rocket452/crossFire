@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {Mireguard} from './mireguard.js?v=bruiser-range-281';
-import {AstraRoninModel} from './astra-ronin-model.js?v=295';
+import {AstraRoninModel} from './astra-ronin-model.js?v=296';
 export const RONIN={height:15,health:2400,headHealth:999999,segmentHealth:999999,walkSpeed:8,preferredRange:9,range:220,turnRate:1.8,initialDelay:2,swordWindup:.95,swordSwing:.32,swordRecovery:1.1,swordCooldown:1.4,swordRange:12,swordDamage:35,overheadDamage:55,bodyRadius:3.5,collapseDuration:1.05};
 export class AstraRonin extends Mireguard{
  constructor(scene,damage,options){super(scene,damage,{...options,config:RONIN});this.root.clear();this.model=new AstraRoninModel(this.root,this.config);this.parts=this.model.parts;this.type='ronin';this.root.name='Astra Ronin · sword duelist';this.reset();}
