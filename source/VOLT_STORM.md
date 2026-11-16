@@ -4,7 +4,7 @@ While controlling Volt Rush, **Z** calls Sky Strike at the aimed ground point an
 
 ## Sky Strike
 
-Aim at open ground and tap Z. A pulsing blue-white circle locks the impact point, and the HUD counts down **3 seconds**. A large descending lightning bolt and expanding impact arrive at that fixed point. The cast does not follow moving enemies. It damages robots in a **7 m** sphere with **320 base damage**, falling to 35% toward the edge. Cover, shields, body armor and existing boss-part rules remain authoritative; each robot gets at most one part hit. It does not hurt allies/civilians or damage buildings.
+Aim at open ground and tap Z. A pulsing blue-white circle locks the impact point, and the HUD counts down **3 seconds**. A large descending lightning bolt and expanding impact arrive at that fixed point. The cast does not follow moving enemies. It damages robots in a **10 m** sphere with **960 base damage**, falling to 35% toward the edge. Cover, shields, body armor and existing boss-part rules remain authoritative; each robot gets at most one part hit. It does not hurt allies/civilians or damage buildings.
 
 The ground query combines the existing flat city plane and terrain-height query. When aiming above the horizon it falls back to open ground 25 m ahead. Invalid/covered/off-map ground is rejected without consuming the cooldown. Initial cooldown is **8 seconds**, measured from marking the target. There is no additional run-energy cost.
 
@@ -25,7 +25,7 @@ Only one orb exists at a time. After the **16 s ultimate cooldown**, V may repla
 | Setting | Default |
 |---|---:|
 | strikeDelay / strikeCooldown | 3 / 8 seconds |
-| strikeDamage / strikeRadius / strikeEdge | 320 / 7 m / 0.35 |
+| strikeDamage / strikeRadius / strikeEdge | 960 / 10 m / 0.35 |
 | strikeRange | 100 m aim ray |
 | ultimateCost / ultimateCooldown | RUNNER_ENERGY.capacity × 2/3 / 16 seconds |
 | orbRadius / orbSpeed / orbEnergy | 2.5 m / 8 m/s / 100 |
@@ -56,7 +56,7 @@ Files: added `dist/runner-storm.js`, `dist/runner-storm-fx.js`, three storm QA s
 
 Sky Strike now has a fixed outer radius marker, contracting inner warning rings, a bright gathering charge and orbiting electrical filaments. In the last 0.39 seconds, a thin descending leader warns of the incoming bolt. Impact creates a thick white core with blue glow and four branching bolts, a shallow expanding flash, three ground shock rings, radial electrical crawling and ballistic sparks. A synthesized filtered thunder crack replaces the original short strike beep and respects Volt's sound preference. The afterglow fades over 1.5 seconds, independently of the damage event's original 0.65-second lifetime.
 
-`dist/sky-strike-fx.js` owns the rendering and sound. `SKY_STRIKE_ART` exposes the 1.5s visual lifetime, 65m bolt height, 320 pooled line segments and 64 pooled sparks. No new lights, textures, dependencies, post-processing or damage events are added. Ball Lightning rendering and energy behavior remain unchanged. Reset clears the local visual tails, and simulation pause freezes their age. The fixed outer warning ring now accurately marks the existing seven-metre radius instead of changing size during its pulse.
+`dist/sky-strike-fx.js` owns the rendering and sound. `SKY_STRIKE_ART` exposes the 1.5s visual lifetime, 65m bolt height, 320 pooled line segments and 64 pooled sparks. No new lights, textures, dependencies, post-processing or damage events are added. Ball Lightning rendering and energy behavior remain unchanged. Reset clears the local visual tails, and simulation pause freezes their age. The fixed outer warning ring now accurately marks the configured blast radius instead of changing size during its pulse.
 
 Validation: existing storm unit tests retain the exact three-second strike and all damage/energy behavior; desktop and emulated-touch gameplay checks pass. The desktop check also captures impact and afterglow frames, checks pool limits, verifies the tail survives expiry of the original strike event, and confirms it clears completely. Physical phone performance is unmeasured.
 
@@ -85,3 +85,7 @@ The orb now wears through panels touched by its actual 2.5m sphere. It sweeps to
 Short surface arcs/impact flashes reuse the bounded storm FX pools. The orb's existing visible bar, player-attack recharging, cast/ultimate cooldown, edge despawn, pause timing and reset remain intact. Diagnostics expose building damage, contact charge spent, successful contact ticks and whether the orb currently touches geometry.
 
 `QA/runner-orb-building-test.mjs` checks real structural damage/reduction, contact-only reach, fixed slow drain, recharge/reset, gradual destruction and resumed travel, rotated-box sweep contacts and released geometry at 30/60/120Hz. `QA/runner-orb-building-browser.cjs` tests the actual arena building callback, contact effects and bar, gradual charge consumption, untouched distant panels, no building zaps, recharge and reset on desktop/touch. Existing storm unit and browser suites cover enemy zaps and the other abilities.
+
+## Stronger Sky Strike (revision 289)
+
+Sky Strike base damage is now 960 (3x 320), and the radius is 10m (was 7m). The 3s telegraph, 8s cooldown, 35% edge falloff, obstruction and boss-part rules remain. Warning/impact FX use the same radius constant. Ball Lightning contact damage and energy costs are unchanged.
