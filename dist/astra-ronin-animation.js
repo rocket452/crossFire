@@ -16,7 +16,7 @@ export class RoninAnimation{
   this.areaImpact=new THREE.Mesh(new THREE.RingGeometry(.94,1,64),new THREE.MeshBasicMaterial({color:'#9cfaff',transparent:true,opacity:.9,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));
   for(const mesh of[this.areaFill,this.areaRim,this.areaImpact]){mesh.rotation.x=-Math.PI/2;mesh.name='Ronin predicted sword strike area';mesh.frustumCulled=false;model.root.add(mesh);}
   this.streaks=Array.from({length:3},(_,i)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(.045,.045,1),new THREE.MeshBasicMaterial({color:'#83efff',transparent:true,opacity:.45,depthWrite:false}));mesh.position.set((i-1)*.9,2+i*.65,-2.5);model.root.add(mesh);return mesh;});this.reset();}
- reset(){this.feet=[];this.phase=.25;this.lastPosition=null;this.moveBlend=0;this.history.length=0;this.ribbon.visible=false;this.attackWasActive=false;this.cancelDash();}
+ reset(){this.m.propulsion?.clear();this.feet=[];this.phase=.25;this.lastPosition=null;this.moveBlend=0;this.history.length=0;this.ribbon.visible=false;this.attackWasActive=false;this.cancelDash();}
  cancelDash(){this.comboPose=null;this.comboFrame=null;this.warning.visible=false;this.areaFill.visible=this.areaRim.visible=this.areaImpact.visible=false;for(const s of this.streaks)s.visible=false;this.feet=[];this.history.length=0;this.ribbon.visible=false;}
  beginComboWindup(){const m=this.m;this.cancelDash();this.comboPose=new Map(Object.keys(READY).map(id=>[id,m.parts[id].quaternion.clone()]));this.comboFrame=m.frame.position.clone();this.feet=['left','right'].map(side=>{const point=m.parts[side+'-foot'].getWorldPosition(V());return{anchor:point.clone(),point:point.clone(),from:point.clone(),to:point.clone(),swing:false,settle:0,pitch:0,contact:point.clone(),solvedContact:point.clone()};});}
  pose(a,b,t){for(const id of Object.keys(READY)){const x=a[id]||READY[id],y=b[id]||READY[id];this.m.parts[id].rotation.set(...x.map((v,i)=>THREE.MathUtils.lerp(v,y[i],t)));}}
@@ -64,7 +64,7 @@ export class RoninAnimation{
   this.articulateSegments(e);root.updateWorldMatrix(true,true);
   if(guarding>0){const shield=p.shield,world=root.getWorldQuaternion(new THREE.Quaternion()),facing=shield.parent.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(world);shield.quaternion.copy(m.bind.get(shield).q).slerp(facing,smooth(guarding));root.updateWorldMatrix(true,true);}m.updateShieldVisual(e);
   m.energy.emissiveIntensity=dash&&stage==='windup'?2+Math.pow(clock/(e.dashWindupDuration||e.config.dashWindup),2)*(2+Math.sin(time*35)):attack&&age<wind?1.8+Math.pow(age/wind,2)*(1.5+Math.sin(time*30)*.8):1.7;
-  for(const jet of m.jets){jet.visible=!!flight||this.moveBlend>.1||dash&&stage==='dash'||attack&&age>=wind&&age<wind+swing;jet.scale.y=flight?(flight.phase==='cruise'?2.5:1.65):dash&&stage==='dash'?2.8:.4+this.moveBlend*.65+Math.sin(time*36)*.08;}
+  m.propulsion.update(dt,time,e);
   this.warning.visible=dash&&stage==='windup'&&!e.stunRemaining;
   const area=e.dashArea;
   if(area){const end=root.worldToLocal((e.dashEnd||area.center).clone()),yaw=Math.atan2(end.x,end.z);this.warning.quaternion.setFromAxisAngle(V(0,1,0),yaw).multiply(new THREE.Quaternion().setFromAxisAngle(V(1,0,0),-Math.PI/2));this.warning.position.set(end.x*.5,.08,end.z*.5);this.warning.scale.set(e.config.dashWarningWidth/root.scale.x,Math.max(1,Math.hypot(end.x,end.z)),1);this.warning.material.color.set(area.locked?'#ff3949':'#ffb34d');}
@@ -95,8 +95,8 @@ export class RoninAnimation{
    p[side+'-toe'].rotation.x=e.moving?-Math.max(0,p[side+'-upper-leg'].rotation.x)*.3:0;
   }
  }
- beginDefeat(){this.cancelDash();this.deathPose=new Map();for(const node of Object.values(this.m.parts))this.deathPose.set(node,{p:node.position.clone(),q:node.quaternion.clone()});this.history.length=0;this.ribbon.visible=false;}
- defeat(t){t=clamp(t,0,1);const m=this.m,p=m.parts,crouch=smooth(t/.65),fall=smooth((t-.35)/.65);for(const [node,pose]of this.deathPose){node.position.copy(pose.p);node.quaternion.copy(pose.q);}m.frame.position.y-=1.6*crouch;m.frame.position.z+=.6*fall;p.torso.rotation.x+=.7*fall;p.torso.rotation.z-=.14*fall;p.head.rotation.x+=.35*crouch;p['right-upper-arm'].rotation.x+=.5*fall;p['left-upper-arm'].rotation.x-=.6*fall;p['left-lower-arm'].rotation.x=-.4;m.root.updateWorldMatrix(true,true);this.updateFeet(0,false,true);this.articulateSegments();m.root.updateWorldMatrix(true,true);m.energy.emissiveIntensity=1.7*(1-t);for(const jet of m.jets)jet.visible=false;}
+ beginDefeat(){this.m.propulsion.clear();this.cancelDash();this.deathPose=new Map();for(const node of Object.values(this.m.parts))this.deathPose.set(node,{p:node.position.clone(),q:node.quaternion.clone()});this.history.length=0;this.ribbon.visible=false;}
+ defeat(t){t=clamp(t,0,1);const m=this.m,p=m.parts,crouch=smooth(t/.65),fall=smooth((t-.35)/.65);for(const [node,pose]of this.deathPose){node.position.copy(pose.p);node.quaternion.copy(pose.q);}m.frame.position.y-=1.6*crouch;m.frame.position.z+=.6*fall;p.torso.rotation.x+=.7*fall;p.torso.rotation.z-=.14*fall;p.head.rotation.x+=.35*crouch;p['right-upper-arm'].rotation.x+=.5*fall;p['left-upper-arm'].rotation.x-=.6*fall;p['left-lower-arm'].rotation.x=-.4;m.root.updateWorldMatrix(true,true);this.updateFeet(0,false,true);this.articulateSegments();m.root.updateWorldMatrix(true,true);m.energy.emissiveIntensity=1.7*(1-t);m.propulsion.clear();}
  updateFeet(dt,moving,attack){const m=this.m,root=m.root,stance=.6,strideLength=7.4;
   for(const [i,side]of ['left','right'].entries()){
    const sign=i?1:-1,phase=(this.phase+i*.5)%1,ideal=root.localToWorld(V(sign*.78,.37,side==='left'?.35:-.25));let f=this.feet[i];

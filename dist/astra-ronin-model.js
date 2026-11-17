@@ -1,6 +1,7 @@
+import {RoninPropulsion} from './astra-ronin-propulsion.js?v=306';
 import * as THREE from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {RoninAnimation} from './astra-ronin-animation.js?v=305';
+import {RoninAnimation} from './astra-ronin-animation.js?v=306';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 // Original hard-surface design. Armor is batched per material per articulated joint.
 export class AstraRoninModel {
@@ -47,7 +48,7 @@ export class AstraRoninModel {
   for(const s of[-1,1]){
    const pod=n((s<0?'left':'right')+'-thruster',pack,[s*.9,-.1,-.35]);b(pod,[0,0,0],[.65,1.8,.9],this.dark);plate(pod,[0,.35,-.35],[.7,1.35,.45],tapered);b(pod,[0,-.7,-.5],[.55,.55,.2],this.metal);b(pod,[0,-.7,-.64],[.34,.34,.08],this.energy);
    const fin=plate(pack,[s*1.2,.85,-.25],[.7,2.6,.18],tapered,this.edge);fin.rotation.z=-s*.38;fin.rotation.x=-.25;
-   const jet=new THREE.Mesh(new THREE.ConeGeometry(.2,1.1,6),new THREE.MeshBasicMaterial({color:'#62eaff',transparent:true,opacity:.5,depthWrite:false}));jet.rotation.x=-Math.PI/2;jet.position.set(0,-.7,-1.1);pod.add(jet);this.jets.push(jet);
+
   }
   for(const [side,s] of[['left',-1],['right',1]]){
    const arm=n(side+'-upper-arm',torso,[s*1.93,.55,0]);this.block(arm,[0,0,0],[.85,.8,.85],this.metal,this.axle);
@@ -69,7 +70,7 @@ export class AstraRoninModel {
    plate(shin,[0,-.68,.25],[1.02,.72,.92],tapered);plate(shin,[0,-.68,.76],[.4,.45,.12],tapered,this.edge);b(shin,[0,-1.12,.4],[.62,.1,.2],this.metal);
    const cuff=n(side+'-shin-cuff',shin,[0,-1.55,.12]);plate(cuff,[0,0,.13],[.9,.6,.88],tapered);b(cuff,[0,0,.63],[.32,.1,.06],this.energy);
    const ankle=n(side+'-ankle',shin,[0,-2.1,0]);this.block(ankle,[0,0,0],[.66,.44,.44],this.metal,this.axle);b(ankle,[0,-.02,-.22],[.6,.32,.2],this.dark);
-   const foot=n(side+'-foot',ankle,[0,0,0]);plate(foot,[0,-.16,.35],[1.05,.43,1.8],tapered,this.edge);b(foot,[0,-.03,.65],[.85,.24,.8]);b(foot,[0,-.28,.35],[1.1,.16,1.9],this.dark);const toe=n(side+'-toe',foot,[0,-.02,1.08]);b(toe,[0,0,.2],[.95,.35,.55]);
+   const foot=n(side+'-foot',ankle,[0,0,0]);plate(foot,[0,-.16,.35],[1.05,.43,1.8],tapered,this.edge);b(foot,[0,-.03,.65],[.85,.24,.8]);b(foot,[0,-.28,.35],[1.1,.16,1.9],this.dark);this.block(foot,[0,-.31,.22],[.27,.08,.27],this.metal,new THREE.CylinderGeometry(1,1,1,10));this.block(foot,[0,-.355,.22],[.19,.012,.19],this.dark,new THREE.CylinderGeometry(1,1,1,10));const toe=n(side+'-toe',foot,[0,-.02,1.08]);b(toe,[0,0,.2],[.95,.35,.55]);
    hit(side+'-upper-arm',arm,[s*.12,-.4,0],[1.4,2,1.45]);hit(side+'-lower-arm',fore,[0,-.7,.1],[1.1,1.9,1.3]);hit(side+'-upper-leg',leg,[0,-1,0],[1.2,2.2,1.4]);hit(side+'-lower-leg',shin,[0,-1,.3],[1.3,2.9,2.3]);
   }
   const shield=n('shield',this.parts['left-lower-arm'],[-.9,-.65,.25]);shield.scale.set(1.5,1.35,1);shield.rotation.y=-1.15;plate(shield,[0,0,0],[1.75,3,.4],shieldOutline,this.edge);plate(shield,[0,.05,.24],[1.4,2.6,.16],shieldOutline);plate(shield,[0,.1,.35],[.38,2.1,.1],shieldOutline,this.edge);b(shield,[0,.35,.43],[.12,.7,.06],this.energy);b(shield,[0,.8,.42],[.75,.1,.07],this.gold);
@@ -98,7 +99,7 @@ export class AstraRoninModel {
   }
   const hull=this.hitParts.find(h=>h.id==='torso');hull.center=hull.center.map((v,i)=>v*[.8,.83,.82][i]);hull.size=hull.size.map((v,i)=>v*[.8,.83,.82][i]);
   this.batch();const shieldClones=new Map();this.shieldMaterials=[];shield.traverse(o=>{if(!o.isMesh)return;const source=o.material;if(!shieldClones.has(source)){const material=source.clone();shieldClones.set(source,material);this.shieldMaterials.push({material,emissive:material.emissive.clone(),intensity:material.emissiveIntensity});}o.material=shieldClones.get(source);});this.bind=new Map();for(const p of Object.values(this.parts))this.bind.set(p,{p:p.position.clone(),q:p.quaternion.clone()});root.scale.setScalar(config.height/9.6);
-  this.animation=new RoninAnimation(this);this.reset();
+  this.propulsion=new RoninPropulsion(this);this.jets=this.propulsion.layers;this.animation=new RoninAnimation(this);this.reset();
  }
  updateShieldVisual(actor){const flash=Math.max(0,actor.guardFlash||0)/(this.config.guardFlashDuration||.18);for(const s of this.shieldMaterials||[]){s.material.emissive.copy(s.emissive);s.material.emissiveIntensity=s.intensity;if(flash>0){s.material.emissive.set('#238cff');s.material.emissiveIntensity=3.5*flash;}}}
  node(id,parent,position){const g=new THREE.Group();g.name=id;g.position.set(...position);parent.add(g);this.parts[id]=g;return g;}
@@ -110,5 +111,5 @@ export class AstraRoninModel {
  shapes(limbs){this.root.updateWorldMatrix(true,true);return this.hitParts.filter(p=>this.visible(p.node)&&(!limbs[p.id]||limbs[p.id].health>0)).map(p=>({part:p.id,center:p.node.localToWorld(V(...p.center)),half:{x:p.size[0]*this.root.scale.x/2,y:p.size[1]*this.root.scale.x/2,z:p.size[2]*this.root.scale.x/2},rotation:p.node.getWorldQuaternion(new THREE.Quaternion())}));}
  point(id='torso'){return this.parts[id].getWorldPosition(V());}
  animate(dt,time,actor){this.animation.update(dt,time,actor);}
- stats(){let triangles=0,meshes=0;this.root.traverse(o=>{if(o.isMesh&&!o.userData.actorSilhouette){meshes++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});return{triangles,meshes,height:this.config.height};}
+ stats(){let triangles=0,meshes=0;this.root.traverse(o=>{if(o.isMesh&&!o.userData.actorSilhouette){meshes++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3*(o.isInstancedMesh?o.count:1);}});return{triangles,meshes,height:this.config.height};}
 }
