@@ -1,3 +1,4 @@
+import {RoninShogun} from './ronin-shogun.js?v=310';
 import {RoninPropulsion} from './astra-ronin-propulsion.js?v=306';
 import * as THREE from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
@@ -5,7 +6,7 @@ import {RoninAnimation} from './astra-ronin-animation.js?v=306';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 // Original hard-surface design. Armor is batched per material per articulated joint.
 export class AstraRoninModel {
- constructor(root,config){
+ constructor(root,config,shogunAsset=null){
   Object.assign(this,{root,config,parts:{},hitParts:[],repairs:[]});
   this.armor=new THREE.MeshStandardMaterial({color:'#dce9ef',metalness:.48,roughness:.38});
   this.edge=new THREE.MeshStandardMaterial({color:'#284e79',metalness:.65,roughness:.4});
@@ -99,14 +100,14 @@ export class AstraRoninModel {
   }
   const hull=this.hitParts.find(h=>h.id==='torso');hull.center=hull.center.map((v,i)=>v*[.8,.83,.82][i]);hull.size=hull.size.map((v,i)=>v*[.8,.83,.82][i]);
   this.batch();const shieldClones=new Map();this.shieldMaterials=[];shield.traverse(o=>{if(!o.isMesh)return;const source=o.material;if(!shieldClones.has(source)){const material=source.clone();shieldClones.set(source,material);this.shieldMaterials.push({material,emissive:material.emissive.clone(),intensity:material.emissiveIntensity});}o.material=shieldClones.get(source);});this.bind=new Map();for(const p of Object.values(this.parts))this.bind.set(p,{p:p.position.clone(),q:p.quaternion.clone()});root.scale.setScalar(config.height/9.6);
-  this.propulsion=new RoninPropulsion(this);this.jets=this.propulsion.layers;this.animation=new RoninAnimation(this);this.reset();
+  this.propulsion=new RoninPropulsion(this);this.jets=this.propulsion.layers;this.animation=new RoninAnimation(this);if(shogunAsset)this.shogun=new RoninShogun(this,shogunAsset);this.reset();
  }
  updateShieldVisual(actor){const flash=Math.max(0,actor.guardFlash||0)/(this.config.guardFlashDuration||.18);for(const s of this.shieldMaterials||[]){s.material.emissive.copy(s.emissive);s.material.emissiveIntensity=s.intensity;if(flash>0){s.material.emissive.set('#238cff');s.material.emissiveIntensity=3.5*flash;}}}
  node(id,parent,position){const g=new THREE.Group();g.name=id;g.position.set(...position);parent.add(g);this.parts[id]=g;return g;}
  block(parent,position,size,material=this.armor,geometry=this.box){const m=new THREE.Mesh(geometry,material);m.position.set(...position);m.scale.set(...size);m.castShadow=m.receiveShadow=true;parent.add(m);return m;}
  plate(parent,position,size,outline,material=this.armor){const shape=new THREE.Shape();outline.forEach(([x,y],i)=>i?shape.lineTo(x,y):shape.moveTo(x,y));shape.closePath();const g=new THREE.ExtrudeGeometry(shape,{depth:.86,bevelEnabled:true,bevelThickness:.04,bevelSize:.035,bevelSegments:1,steps:1});g.translate(0,0,-.43);return this.block(parent,position,size,material,g);}
  batch(){const dynamic=new Set([...this.jets,this.flash]);for(const node of Object.values(this.parts)){const groups=new Map();for(const m of node.children){if(!m.isMesh||dynamic.has(m))continue;if(!groups.has(m.material))groups.set(m.material,[]);groups.get(m.material).push(m);}for(const [material,meshes]of groups){if(meshes.length<2)continue;const inputs=meshes.map(m=>{m.updateMatrix();return(m.geometry.index?m.geometry.toNonIndexed():m.geometry.clone()).applyMatrix4(m.matrix);});const geometry=mergeGeometries(inputs);inputs.forEach(g=>g.dispose());meshes.forEach(m=>node.remove(m));const mesh=new THREE.Mesh(geometry,material);mesh.castShadow=mesh.receiveShadow=true;node.add(mesh);}}}
- reset(){for(const [p,b]of this.bind){p.position.copy(b.p);p.quaternion.copy(b.q);p.visible=true;}this.flash.visible=false;this.updateShieldVisual({});this.animation?.reset();}
+ reset(){for(const [p,b]of this.bind){p.position.copy(b.p);p.quaternion.copy(b.q);p.visible=true;}this.flash.visible=false;this.updateShieldVisual({});this.animation?.reset();this.shogun?.sync();}
  visible(node){while(node&&node!==this.root){if(!node.visible)return false;node=node.parent;}return true;}
  shapes(limbs){this.root.updateWorldMatrix(true,true);return this.hitParts.filter(p=>this.visible(p.node)&&(!limbs[p.id]||limbs[p.id].health>0)).map(p=>({part:p.id,center:p.node.localToWorld(V(...p.center)),half:{x:p.size[0]*this.root.scale.x/2,y:p.size[1]*this.root.scale.x/2,z:p.size[2]*this.root.scale.x/2},rotation:p.node.getWorldQuaternion(new THREE.Quaternion())}));}
  point(id='torso'){return this.parts[id].getWorldPosition(V());}

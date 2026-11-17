@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {registerHooks} from 'node:module';
+registerHooks({resolve(s,c,next){return s==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(s,c);}});
+const T=await import('../dist/vendor/three.module.js'),{GLTFLoader}=await import('../dist/vendor/GLTFLoader.js'),{AstraRonin}=await import('../dist/astra-ronin.js'),{UnitDamage}=await import('../dist/combat-collision.js');
+const bytes=fs.readFileSync(new URL('../dist/city-assets/licensed-robots/ronin-shogun.glb',import.meta.url)),asset=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+const make=()=>{const hero={alive:true,shapes:[{center:new T.Vector3(0,1.5,50)}]},r=new AstraRonin(new T.Scene(),new UnitDamage(),{id:'ronin',shogunModel:asset,getTargets:()=>[hero],visible:()=>true,isPathClear:()=>true,onHeroHit:()=>{},onDebris:s=>({position:s.position,quaternion:s.quaternion,velocity:new T.Vector3(),angularVelocity:new T.Vector3()}),onRemoveDebris:()=>{}});r.spawnPosition={x:0,y:.1,z:0};r.reset();r.spawn();r.setModelVariant('shogun');return r;};
+const {ActorSilhouettes}=await import('../dist/actor-silhouettes.js');
+const {readRoninModel,saveRoninModel,setupRoninModelChoice}=await import('../dist/ronin-model-choice.js');
+const saved=new Map(),storage={getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)};
+assert.equal(readRoninModel(storage),'shogun');saveRoninModel('original',storage);assert.equal(readRoninModel(storage),'original');saveRoninModel('shogun',storage);assert.equal(readRoninModel(storage),'shogun');
+const broken={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}};assert.equal(readRoninModel(broken),'shogun');saveRoninModel('original',broken);
+const choice=make(),handlers={},select={value:'',addEventListener:(k,fn)=>handlers[k]=fn};setupRoninModelChoice(select,()=>choice);select.value='original';handlers.change();assert(!choice.model.shogun.enabled);select.value='shogun';handlers.change();assert(choice.model.shogun.enabled);
+const silhouettes=new ActorSilhouettes();silhouettes.update([choice],null,new Set(),0);const overlays=silhouettes.enemies.filter(e=>e.source.isSkinnedMesh);assert.equal(overlays.length,choice.model.shogun.meshes.length);for(const e of overlays){assert(e.overlay.isSkinnedMesh);assert.equal(e.overlay.skeleton,e.source.skeleton);assert(e.overlay.bindMatrix.equals(e.source.bindMatrix));}
+function bounds(r){r.root.updateWorldMatrix(true,true);const box=new T.Box3(),v=new T.Vector3();for(const m of r.model.shogun.meshes){m.skeleton.update();for(let i=0;i<m.geometry.attributes.position.count;i++){m.getVertexPosition(i,v).applyMatrix4(m.matrixWorld);assert(v.toArray().every(Number.isFinite));box.expandByPoint(v);}}return box;}
+for(const hz of[30,60,120]){
+ const r=make(),s=r.model.shogun;assert(s.meshes.length>0);const count=s.diagnostics().triangles;assert(count>2000&&count<6000);assert(s.original.every(o=>!o.mesh.visible));assert(s.meshes.every(o=>o.visible));
+ const bind=bounds(r),size=bind.getSize(new T.Vector3());console.log('bind',hz,size.toArray(),bind.min.toArray());assert(size.y>12&&size.y<22);assert(size.x<18);
+ r.cooldown=0;let moved=false,originalPoint=null;
+ for(let i=0;i<hz*9;i++){r.update(1/hz,i/hz);if(i%Math.floor(hz/10)===0){const b=bounds(r);assert(b.getSize(new T.Vector3()).length()<45);const p=s.meshes[0].getVertexPosition(0,new T.Vector3());if(originalPoint&&p.distanceTo(originalPoint)>.01)moved=true;originalPoint=p;}}
+ assert(moved);assert(r.dashes>=3);const state={hp:r.combatUnit.health,pos:r.root.position.clone(),swings:r.swings};for(let i=0;i<20;i++){r.setModelVariant('original');assert(s.original.filter(o=>o.visible).every(o=>o.mesh.visible));assert(s.meshes.every(m=>!m.visible));r.setModelVariant('shogun');assert(s.original.every(o=>!o.mesh.visible));}
+ assert.equal(r.combatUnit.health,state.hp);assert(r.root.position.equals(state.pos));assert.equal(r.swings,state.swings);
+ r.stun(1);r.update(.1,10);bounds(r);r.destroy();for(let i=0;i<hz*1.2;i++)r.update(1/hz,11+i/hz);assert.equal(r.wrecks.length,6);assert(r.wrecks.every(w=>w.size.every(Number.isFinite)));r.reset();r.spawn();assert(s.enabled);assert(s.original.every(o=>!o.mesh.visible));assert(r.root.visible);bounds(r);
+ console.log('PASS',hz,'Hz weighted Shogun combat, finite skin deformation, three-dash chain, instant reversible appearance switch without health/position changes, defeat wrecks and reset',s.diagnostics());
+}
+// Pose snapshots use actual animated, weighted vertices for offline visual review.
+if(process.env.SHOGUN_POSES){const r=make(),out=[];for(const pose of['ready','slash','guard','flight']){r.reset();r.spawn();r.setModelVariant('shogun');if(pose==='slash'){r.swordState=true;r.swordAge=r.config.swordWindup+.15;}if(pose==='guard'){r.guard={phase:'hold',age:0};r.guardWeight=1;}if(pose==='flight')r.flightController.state={phase:'cruise',age:1,speed:38};r.model.animate(.016,1,r);bounds(r);const meshes=[];
+ r.root.traverse(m=>{if(!m.isMesh||m.isInstancedMesh||m.userData.actorSilhouette)return;let p=m;while(p){if(!p.visible)return;p=p.parent;}const g=m.geometry;const vertices=[];for(let i=0;i<g.attributes.position.count;i++){const v=m.getVertexPosition(i,new T.Vector3()).applyMatrix4(m.matrixWorld);vertices.push(v.toArray());}const mat=[].concat(m.material);meshes.push({vertices,indices:g.index?Array.from(g.index.array):Array.from({length:vertices.length},(_,i)=>i),groups:g.groups,materials:mat.map(x=>({color:x.color.toArray(),emissive:x.emissive?.toArray()||[0,0,0],intensity:x.emissiveIntensity||0}))});});out.push({pose,meshes});}fs.writeFileSync(process.env.SHOGUN_POSES,JSON.stringify(out));}
