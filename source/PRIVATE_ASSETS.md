@@ -68,3 +68,9 @@ Raw `Shuriken.blend` and `Shuriken.fbx` live in `/workspace/private-assets/kage-
 ## Uploaded Kage kunai (revision 284)
 
 `kunai.zip` and its nested FBX/textures stay under `/workspace/private-assets/kage-kunai/`. `source/convert_kage_kunai.py` exports only `kage-kunai.glb` (with embedded textures) and `kage-kunai.json`; those two files belong in ignored `dist/city-assets/licensed-weapons/` locally and are force-added only to `site-licensed-assets`. The private runtime difference now has **ten** files: four character, two robot, and four weapon runtime files. Never push the archive, FBX, textures or GLB to public GitHub. See `source/KAGE_KUNAI_MODEL.md` for conversion and QA details.
+
+## Uploaded axolotl A8-Lo-T (revision 309)
+
+The supplied archive and source GLB/Blend stay in private storage at `/workspace/private-assets/axolotl/`. `source/convert_axolotl.py` imports the supplied GLB in Blender with auto-execution disabled, preserves all 3,480 triangles and original materials, separates mirrored parts, and builds rigid pivots for four legs, six gills, three tail links, head and jaw. No source animation clips or skin rig were present. The runtime animates these actual uploaded parts; the legacy procedural body is removed when the asset loads. Glass uses an inexpensive transparent standard material at runtime.
+
+Copy only `/workspace/private-assets/axolotl/runtime/axolotl.glb` into `dist/city-assets/licensed-characters/axolotl.glb` in the private build. This increases the private/public runtime difference to eleven files. The archive, Blend, source GLB and derived GLB must not enter public GitHub. `QA/axolotl-model-test.mjs` needs this private runtime file and verifies geometry, scale, articulated mesh movement, mouth alignment and ice-slide movement at 30/60/120Hz. Existing breath/chill/cover/reset tests remain in `QA/axolotl-test.mjs`. Browser visual QA and physical phone performance were not measured for this change.
