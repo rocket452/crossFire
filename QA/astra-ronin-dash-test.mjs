@@ -11,3 +11,11 @@ for(const stage of['windup','dash','slash']){const s=make(),r=s.r;tick(r);while(
 const edge=make(135);edge.r.root.position.z=100;edge.r.cooldown=0;tick(edge.r);while(edge.r.dashStage!=='slash')tick(edge.r);assert(edge.r.root.position.z<=115,'arena boundary still applies');
 const far=make(100);tick(far.r,30);assert(!far.r.dashAttack,'out of range does not launch');
 console.log('PASS 30/60/120Hz telegraph, 56m building-phasing dash, one hit through cover, cooldown, late dodge, stun/reset and arena bounds');
+// A straight-moving target is intercepted; the visible zone freezes before launch.
+for(const dt of[1/30,1/60,1/120]){
+ const s=make(40),r=s.r;let locked=null,hitAt=null;
+ for(let i=0;i<3/dt;i++){s.hero.shapes[0].center.x+=40*dt;tick(r,1,dt);if(r.dashArea?.locked&&!locked)locked=r.dashArea.center.clone();if(locked&&r.dashArea)assert(r.dashArea.center.equals(locked),'locked warning cannot chase the player');if(s.hits&&!hitAt){hitAt=s.hero.shapes[0].center.clone();break;}}
+ assert(locked&&locked.x>30,'predict target motion ahead');assert(hitAt,'accurate straight running is led');assert(Math.hypot(hitAt.x-locked.x,hitAt.z-locked.z)<=r.config.dashAreaRadius);assert(Math.abs(hitAt.x)>r.config.dashAreaRadius,'unled strike would miss');
+}
+const area=make(),r=area.r;tick(r);while(!r.dashArea.locked)tick(r);const center=r.dashArea.center.clone(),extra=[[-15,0,0],[15,0,0],[0,0,-15],[19,0,0],[0,10,0]].map(([x,y,z],i)=>({id:'extra-'+i,alive:true,kind:'hero',shapes:[{center:center.clone().add(new THREE.Vector3(x,y+1.4,z))}]})),hits=[];r.getTargets=()=>[area.hero,...extra];r.onHeroHit=u=>hits.push(u);while(r.dashStage!=='recovery')tick(r);assert.equal(hits.length,4,'large circular cleave hits all four in-range grounded targets');assert.equal(new Set(hits).size,hits.length,'one hit each');assert(!hits.includes(extra[3])&&!hits.includes(extra[4]),'outside and elevated targets safe');r.stun(1);assert(!r.dashArea&&!r.model.animation.areaFill.visible&&!r.model.animation.areaRim.visible&&!r.model.animation.areaImpact.visible);
+console.log('PASS predictive leading, pre-launch area lock, moving-target interception, wide multi-target damage, radius/height limits, one-hit guard and marker cleanup');

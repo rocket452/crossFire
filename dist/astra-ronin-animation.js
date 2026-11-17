@@ -11,9 +11,13 @@ const GUARD_POSE={torso:[.04,0,0],head:[-.02,0,0],'right-upper-arm':[.15,.1,-.18
 export class RoninAnimation{
  constructor(model){this.m=model;this.feet=[];this.history=[];const geometry=new THREE.BufferGeometry();this.vertices=new Float32Array(12*6*3);geometry.setAttribute('position',new THREE.BufferAttribute(this.vertices,3).setUsage(THREE.DynamicDrawUsage));this.ribbon=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color:'#76edff',transparent:true,opacity:.24,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));this.ribbon.name='Ronin sword motion ribbon';this.ribbon.frustumCulled=false;model.root.add(this.ribbon);
   this.warning=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:'#ffb34d',transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false}));this.warning.name='Ronin dash path warning';this.warning.rotation.x=-Math.PI/2;this.warning.position.y=.08;model.root.add(this.warning);
+  this.areaFill=new THREE.Mesh(new THREE.CircleGeometry(1,64),new THREE.MeshBasicMaterial({color:'#ffb34d',transparent:true,opacity:.14,side:THREE.DoubleSide,depthWrite:false}));
+  this.areaRim=new THREE.Mesh(new THREE.RingGeometry(.97,1,64),new THREE.MeshBasicMaterial({color:'#ffb34d',transparent:true,opacity:.85,side:THREE.DoubleSide,depthWrite:false}));
+  this.areaImpact=new THREE.Mesh(new THREE.RingGeometry(.94,1,64),new THREE.MeshBasicMaterial({color:'#9cfaff',transparent:true,opacity:.9,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));
+  for(const mesh of[this.areaFill,this.areaRim,this.areaImpact]){mesh.rotation.x=-Math.PI/2;mesh.name='Ronin predicted sword strike area';mesh.frustumCulled=false;model.root.add(mesh);}
   this.streaks=Array.from({length:3},(_,i)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(.045,.045,1),new THREE.MeshBasicMaterial({color:'#83efff',transparent:true,opacity:.45,depthWrite:false}));mesh.position.set((i-1)*.9,2+i*.65,-2.5);model.root.add(mesh);return mesh;});this.reset();}
  reset(){this.feet=[];this.phase=.25;this.lastPosition=null;this.moveBlend=0;this.history.length=0;this.ribbon.visible=false;this.attackWasActive=false;this.cancelDash();}
- cancelDash(){this.warning.visible=false;for(const s of this.streaks)s.visible=false;this.feet=[];this.history.length=0;this.ribbon.visible=false;}
+ cancelDash(){this.warning.visible=false;this.areaFill.visible=this.areaRim.visible=this.areaImpact.visible=false;for(const s of this.streaks)s.visible=false;this.feet=[];this.history.length=0;this.ribbon.visible=false;}
  pose(a,b,t){for(const id of Object.keys(READY)){const x=a[id]||READY[id],y=b[id]||READY[id];this.m.parts[id].rotation.set(...x.map((v,i)=>THREE.MathUtils.lerp(v,y[i],t)));}}
  update(dt,time,e){const m=this.m,p=m.parts,root=m.root;dt=Math.min(dt,.1);for(const [node,bind]of m.bind){node.position.copy(bind.p);node.quaternion.copy(bind.q);}const attack=!!e.swordState,wind=e.config.swordWindup,swing=e.config.swordSwing,age=e.swordAge||0;
   const traveled=this.lastPosition?root.position.distanceTo(this.lastPosition):0;this.lastPosition=root.position.clone();const moving=e.moving&&!attack&&!e.stunRemaining;this.moveBlend=THREE.MathUtils.damp(this.moveBlend,moving?1:0,8,dt);if(moving)this.phase+=Math.min(traveled,.9)/7.4;
@@ -60,10 +64,21 @@ export class RoninAnimation{
   if(guarding>0){const shield=p.shield,world=root.getWorldQuaternion(new THREE.Quaternion()),facing=shield.parent.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(world);shield.quaternion.copy(m.bind.get(shield).q).slerp(facing,smooth(guarding));root.updateWorldMatrix(true,true);}m.updateShieldVisual(e);
   m.energy.emissiveIntensity=dash&&stage==='windup'?2+Math.pow(clock/e.config.dashWindup,2)*(2+Math.sin(time*35)):attack&&age<wind?1.8+Math.pow(age/wind,2)*(1.5+Math.sin(time*30)*.8):1.7;
   for(const jet of m.jets){jet.visible=!!flight||this.moveBlend>.1||dash&&stage==='dash'||attack&&age>=wind&&age<wind+swing;jet.scale.y=flight?(flight.phase==='cruise'?2.5:1.65):dash&&stage==='dash'?2.8:.4+this.moveBlend*.65+Math.sin(time*36)*.08;}
-  this.warning.visible=dash&&stage==='windup'&&!e.stunRemaining;this.warning.scale.set(e.config.dashWarningWidth/root.scale.x,Math.max(1,(e.dashLength||1)/root.scale.z),1);this.warning.position.z=(e.dashLength||1)/root.scale.z*.5;this.warning.material.opacity=.14+.1*(.5+.5*Math.sin(time*18));
+  this.warning.visible=dash&&stage==='windup'&&!e.stunRemaining;
+  const area=e.dashArea;
+  if(area){const end=root.worldToLocal((e.dashEnd||area.center).clone()),yaw=Math.atan2(end.x,end.z);this.warning.quaternion.setFromAxisAngle(V(0,1,0),yaw).multiply(new THREE.Quaternion().setFromAxisAngle(V(1,0,0),-Math.PI/2));this.warning.position.set(end.x*.5,.08,end.z*.5);this.warning.scale.set(e.config.dashWarningWidth/root.scale.x,Math.max(1,Math.hypot(end.x,end.z)),1);this.warning.material.color.set(area.locked?'#ff3949':'#ffb34d');}
+  else{this.warning.scale.set(e.config.dashWarningWidth/root.scale.x,Math.max(1,(e.dashLength||1)/root.scale.z),1);this.warning.position.z=(e.dashLength||1)/root.scale.z*.5;}
+  this.warning.material.opacity=.14+.1*(.5+.5*Math.sin(time*18));
+  this.updateDashArea(e,time);
   for(const [i,streak]of this.streaks.entries()){streak.visible=(dash&&stage==='dash'||flight&&flight.phase==='cruise')&&!e.stunRemaining;streak.scale.z=3+i;}
   const active=attack&&(dash?stage==='slash':age>=wind&&age<wind+swing+.08)&&!e.stunRemaining;
   if(active){this.history.unshift({base:root.worldToLocal(m.bladeBase.getWorldPosition(V())),tip:root.worldToLocal(m.tip.getWorldPosition(V())),age:0});}for(const h of this.history)h.age+=dt;this.history=this.history.filter(h=>h.age<.13).slice(0,13);let index=0;for(let i=1;i<this.history.length;i++){const a=this.history[i-1],b=this.history[i];for(const v of[a.base,a.tip,b.tip,a.base,b.tip,b.base]){this.vertices[index++]=v.x;this.vertices[index++]=v.y;this.vertices[index++]=v.z;}}this.ribbon.geometry.setDrawRange(0,index/3);this.ribbon.geometry.attributes.position.needsUpdate=true;this.ribbon.visible=index>0&&!e.dead;this.attackWasActive=attack;
+ }
+ updateDashArea(e,time){const root=this.m.root,area=e.dashArea,active=!!area&&e.dashAttack&&!e.stunRemaining&&!e.dead,show=active&&['windup','dash','slash'].includes(e.dashStage);this.areaFill.visible=this.areaRim.visible=show;
+  const impactTime=e.dashStage==='slash'?e.dashClock-e.config.swordSwing*.25:e.dashStage==='recovery'?e.config.swordSwing*.75+e.dashClock:-1;this.areaImpact.visible=active&&impactTime>=0&&impactTime<.35;if(!show&&!this.areaImpact.visible)return;
+  const center=root.worldToLocal(area.center.clone()),radius=area.radius/root.scale.x;for(const mesh of[this.areaFill,this.areaRim,this.areaImpact])mesh.position.copy(center);
+  this.areaFill.scale.setScalar(radius);this.areaRim.scale.setScalar(radius);const color=area.locked?'#ff3949':'#ffb34d';this.areaFill.material.color.set(color);this.areaRim.material.color.set(color);this.areaFill.material.opacity=.13+Math.sin(time*12)*.025;this.areaRim.material.opacity=area.locked?.95:.65;
+  this.areaImpact.scale.setScalar(radius*(.15+.85*smooth(impactTime/.22)));this.areaImpact.material.opacity=.95*(1-Math.max(0,impactTime)/.35);
  }
  articulateSegments(e={}){const p=this.m.parts;
   for(const [side,sign]of[['left',-1],['right',1]]){

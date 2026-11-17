@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {RoninAnimation} from './astra-ronin-animation.js?v=303';
+import {RoninAnimation} from './astra-ronin-animation.js?v=304';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 // Original hard-surface design. Armor is batched per material per articulated joint.
 export class AstraRoninModel {
