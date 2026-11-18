@@ -8,6 +8,7 @@ export class AssetCity {
  constructor(asset,manifest){
   this.textures = new Map();
   this.signMaterials = [];
+  this.signLights = [];
   this.manifest=manifest;this.templates=new Map();this.attachments=new Map();
   asset.scene.updateMatrixWorld(true);
   asset.scene.traverse(o=>{if(o.isMesh){
@@ -44,7 +45,7 @@ export class AssetCity {
    }
    batch.seal();
   }
-  const sidewalk=new THREE.InstancedMesh(new THREE.BoxGeometry(12,.14,12),new THREE.MeshStandardMaterial({color:'#9aaeb1',roughness:1}),buildings.length);
+  const sidewalk=new THREE.InstancedMesh(new THREE.BoxGeometry(12,.14,12),new THREE.MeshStandardMaterial({color:'#5d6180',roughness:.82}),buildings.length);
   sidewalk.name='Asset district sidewalks';sidewalk.receiveShadow=true;
   buildings.forEach((b,i)=>{dummy.position.set(b.x,.05,b.z);dummy.rotation.set(0,0,0);dummy.updateMatrix();sidewalk.setMatrixAt(i,dummy.matrix);});
   sidewalk.computeBoundingSphere();scene.add(sidewalk);
@@ -62,6 +63,8 @@ export class AssetCity {
     const local=new THREE.Vector3(0,b.asset==='tower'?13:1.8,spec.footprint[1]/2+.16).applyAxisAngle(new THREE.Vector3(0,1,0),b.yaw);
     const position=new THREE.Vector3(b.x+local.x,local.y+.08,b.z+local.z);
     const section=this.physics.buildings.get(b.id).chunks.filter(c=>c.type==='column').sort((a,b)=>position.distanceToSquared(a.body.position)-position.distanceToSquared(b.body.position))[0];
+    const spillPoint=new THREE.Vector3(0,1,2.3).applyAxisAngle(new THREE.Vector3(0,1,0),b.yaw).add(position);
+    this.signLights.push({section,point:spillPoint,color:['#25eeb8','#ffe26c','#ef55e3'][variant]});
     dummy.position.copy(position);dummy.rotation.set(0,b.yaw,0);dummy.scale.setScalar(b.asset==='tower'?3.3:2.6);dummy.updateMatrix();
     const parent=new THREE.Matrix4().compose(new THREE.Vector3(section.x,section.y,section.z),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),b.yaw),new THREE.Vector3(1,1,1));
     const offset=parent.invert().multiply(dummy.matrix);
@@ -85,7 +88,7 @@ export class AssetCity {
    } else {
     material.emissiveMap = texture;
     material.emissive.set(slot==='buildingGlow'?'#ffe8c5':'#ffffff');
-    material.emissiveIntensity = 2.0;
+    material.emissiveIntensity = slot === 'buildingGlow' ? 2.5 : 4.0;
    }
    material.needsUpdate = true;
   }

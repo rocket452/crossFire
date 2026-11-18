@@ -12,11 +12,16 @@ import {DestructionWorld} from '../dist/destruction.js';
 import {RobotDeathEffects} from '../dist/robot-death-effects.js';
 import {RobotEyeBeams} from '../dist/robot-eye-beams.js';
 import {PlasmaArtillery} from '../dist/plasma-artillery.js';
-const {GLTFLoader}=await import('../dist/vendor/GLTFLoader.js'),bytes=fs.readFileSync('dist/city-assets/siege-walker.glb'),spec=JSON.parse(fs.readFileSync('dist/city-assets/siege-walker.json')),gltf=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+const modelStem=process.argv.includes('--cyber')?'siege-walker-cyber':'siege-walker';
+const {GLTFLoader}=await import('../dist/vendor/GLTFLoader.js'),bytes=fs.readFileSync('dist/city-assets/'+modelStem+'.glb'),spec=JSON.parse(fs.readFileSync('dist/city-assets/'+modelStem+'.json')),gltf=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
 let completed=0;const modules=new WalkerWeapons({onDestroyed:()=>completed++});assert.equal(modules.hurt('chest',50),0);for(const n of[0,-1,NaN,Infinity])assert.equal(modules.hurt('forearm_r',n),0);modules.hurt('forearm_r',1800);modules.hurt('forearm_r',5000);assert.equal(completed,1);modules.reset();assert(modules.working('beam'));
 for(const dt of[1/30,1/60,1/120]){
  const scene=new THREE.Scene(),physics=new DestructionWorld(),fx=new RobotDeathEffects(scene),arsenal=new RobotArsenal({plasma:true}),pod={pending:0,missiles:[]},artillery={shells:[],muzzleGlow:{visible:false},cancelled:0,get busy(){return this.shells.length>0;},removeShell:()=>{}},broken=[];
  const robot=new SiegeWalker(scene,gltf,spec,{onBeam:()=>{},onEffect:()=>{},onDebris:s=>physics.addWreck(s),onRemoveDebris:b=>{fx.removePart(b);physics.removeWreck(b);},onDeath:(p,o)=>fx.explode(p,o),onWreck:w=>fx.part(w),onWeaponDestroyed:m=>{broken.push(m.id);arsenal.weaponDestroyed(m.id,robot,pod,artillery);}});
+ if(spec.appearance){
+  assert.equal(robot.root.name,'Cyberpunk Siege Walker');
+  for(const {part} of WALKER_WEAPONS)assert.equal(robot.signalMeshes.get(part).parent,robot.meshes[part]);
+ }
  const damage=new UnitDamage(u=>u.entity.destroy()),boss=damage.add('boss','robot',robot,robot.weapons.maxHealth);boss.shapes=robot.shapes();
  // The eye strip is visual only; direct visor damage cannot contribute to defeat.
  const visor=robot.meshes.visor.localToWorld(robot.boxes.visor.center.clone()),eyeFrom=visor.clone().add(new THREE.Vector3(0,0,25));eyeFrom.y=1.65;
@@ -37,9 +42,9 @@ for(const dt of[1/30,1/60,1/120]){
  }
  assert.equal(boss.health,0,'all weapon durability consumed once; hull damage contributes nothing');
  for(let i=0;i<Math.ceil(6/dt);i++){arsenal.beforeBeam(robot,pod,artillery);robot.update(dt,i*dt,[]);arsenal.update(dt,robot,pod,artillery);physics.step(dt);robot.syncWrecks();fx.update(dt);}
- assert.equal(arsenal.phase,'off');assert(!boss.alive);assert.equal(physics.wrecks.length,18);assert(fx.smoke.count>0);for(const m of WALKER_WEAPONS)assert.equal(robot.meshes[m.part].material.emissiveIntensity,0);
+ assert.equal(arsenal.phase,'off');assert(!boss.alive);assert.equal(physics.wrecks.length,18);assert(fx.smoke.count>0);assert([...robot.signalMeshes.values()].every(signal=>!signal.visible));for(const m of WALKER_WEAPONS)assert.equal(robot.meshes[m.part].material.emissiveIntensity,0);
 damage.hurt(boss,14400);for(let i=0;i<Math.ceil(2/dt);i++)robot.update(dt,i*dt,[]);assert(robot.broken);assert.equal(robot.wrecks.length,18);assert.equal(physics.wrecks.length,18,'detached weapons never duplicate on boss death');robot.breakApart();assert.equal(physics.wrecks.length,18);
- fx.reset();robot.reset();damage.reset();assert.equal(physics.wrecks.length,0);for(const m of WALKER_WEAPONS){assert(robot.isWeaponWorking(m.id));assert.equal(robot.meshes[m.part].parent,robot.nodes[m.part]);assert.equal(robot.weapons.forPart(m.part).health,m.health);}assert.equal(robot.shapes().length,16);
+ fx.reset();robot.reset();damage.reset();assert.equal(physics.wrecks.length,0);for(const m of WALKER_WEAPONS){assert(robot.isWeaponWorking(m.id));assert.equal(robot.meshes[m.part].parent,robot.nodes[m.part]);assert.equal(robot.weapons.forPart(m.part).health,m.health);}assert.equal(robot.shapes().length,16);assert([...robot.signalMeshes.values()].every(signal=>signal.visible));
  console.log('PASS',dt,'real-model part collision, direct/blast durability, armored hull, automatic defeat on final weapon, airborne ordnance, 18 total death parts and full rebuild');
 }
 // Every remaining-weapon combination must keep cycling, including a completely disarmed boss.

@@ -1,10 +1,17 @@
-# Asset City Test — revision 313
+# Asset City Test — revision 314
 
 Select **Asset City Test** in the scene menu, or use `?scene=city-test`.
 It starts empty with Kage selected. Choose a hero/enemy preset, then use
 **Spawn / Reset enemies** and **Play / Watch selected hero**. Volt and Kage
 support direct control; the other heroes retain their existing CPU behavior.
 The four existing scenes retain their layouts, combat rules and defaults.
+
+Choose **Cyberpunk Siege Walker** and **Spawn / Reset enemies**, or open
+`?scene=city-test&enemy=walker` to start with the boss in view. Its 4,896-triangle
+model shares the original Walker's animated joints, weapon hit shapes and wreck
+behavior. The visor, shin strips and weapon lights follow their respective parts.
+Rebuild the model with `blender --factory-startup --disable-autoexec -b -P source/build_cyber_walker.py`.
+Run `node QA/walker-weapons-test.mjs --cyber` to check the variant.
 
 ## Imported assets and layout
 
@@ -25,8 +32,11 @@ The private build loads the original Buildings_002 and Props color and emissive
 atlases from Max Parata’s *Voxel Cyberpunk City — monogon* free sample at startup.
 The five FBXs in the sample match the installed source models byte for byte.
 The color images and sign glow are 2048×2048 WebP. The building glow is 1024×1024.
-The four downloads total 804,230 bytes. The district uses blue dusk lighting and
-fog, with an initial view into the street so the facades are visible.
+The four downloads total 804,230 bytes. Warm dusk light and a cool cross-street
+fill bring out the stepped facade silhouettes. The sky fades into blue haze at
+the horizon. Nearby signs cast colored light until their building section falls.
+On devices with floating-point render targets, three reduced-resolution passes
+add halos to bright windows, signs and the Walker's lights.
 
 **Load city textures** in Test setup still accepts a local ZIP or individually
 named images. Saved device overrides take priority over the packaged textures.

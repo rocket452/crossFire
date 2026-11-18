@@ -9,9 +9,12 @@ import {WalkerGait,solveLegKnee,angleDelta,WALKER_TURN_SPEED} from './walker-gai
 export class SiegeWalker {
  constructor(scene,gltf,spec,{onFire,onDebris,onEffect,onFootfall=()=>{},onBeam=()=>{},onDeath=null,onWeaponDestroyed=()=>{},onWreck=()=>{},onRemoveDebris=()=>{},weaponHealthMultiplier=1}){
   Object.assign(this,{scene,spec,onFire,onDebris,onEffect,onFootfall,onBeam,onWreck,onRemoveDebris,onWeaponDestroyed});this.onDeath=onDeath||((p)=>this.onEffect(p,false));
-  this.root=new THREE.Group();this.root.name='Siege Walker';scene.add(this.root);
+  this.root=new THREE.Group();this.root.name=spec.appearance?.name || 'Siege Walker';scene.add(this.root);
   this.nodes={};this.meshes={};this.boxes={};this.restPositions={};this.wrecks=[];this.gait=new WalkerGait();this.cannonTracking=new CannonTracking();this.weapon=new BeamCycle();
   this.ik={hip:new THREE.Vector3(),upper:new THREE.Vector3(),lower:new THREE.Vector3(),down:new THREE.Vector3(0,-1,0),axis:new THREE.Vector3(0,1,0),parent:new THREE.Quaternion(),yaw:new THREE.Quaternion(),rotation:new THREE.Quaternion()};
+  this.idleGlow=spec.appearance?.idleGlow || '#ff6b17';
+  this.chargeGlow=spec.appearance?.chargeGlow || '#2eabff';
+  this.signalMeshes=new Map();
   gltf.scene.updateMatrixWorld(true);
   for(const p of spec.parts){
    const source=gltf.scene.getObjectByName(p.name);
@@ -19,8 +22,20 @@ export class SiegeWalker {
    const pivot=new THREE.Vector3(...p.pivot),geometry=source.geometry.clone().applyMatrix4(source.matrixWorld);
    geometry.translate(-pivot.x,-pivot.y,-pivot.z);geometry.computeBoundingBox();
    const material=source.material.clone();
-   if(p.name==='reactor'||p.name==='visor'){material.emissive=new THREE.Color('#ff6b17');material.emissiveIntensity=2;}
+   if(p.name==='reactor'||p.name==='visor'){material.emissive=new THREE.Color(this.idleGlow);material.emissiveIntensity=2;}
    const mesh=new THREE.Mesh(geometry,material);mesh.castShadow=mesh.receiveShadow=true;
+   if(spec.appearance){
+    const sourceSignal=gltf.scene.getObjectByName(p.name+'_signal');
+    if(sourceSignal){
+     const geometry=sourceSignal.geometry.clone().applyMatrix4(sourceSignal.matrixWorld);
+     geometry.translate(-pivot.x,-pivot.y,-pivot.z);
+     const signal=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({vertexColors:true}));
+     signal.material.color.setScalar(2.2);
+     signal.name=p.name+' running lights';
+     mesh.add(signal);
+     this.signalMeshes.set(p.name,signal);
+    }
+   }
    const node=new THREE.Group();node.name=p.name;node.add(mesh);
    const parent=p.parent?this.nodes[p.parent]:this.root;
    const parentPivot=p.parent?new THREE.Vector3(...spec.parts.find(q=>q.name===p.parent).pivot):new THREE.Vector3();
@@ -32,6 +47,7 @@ export class SiegeWalker {
  }
  reset(){
   for(const w of this.wrecks){this.onRemoveDebris(w.body);w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
+  for(const signal of this.signalMeshes.values())signal.visible=true;
   this.wrecks=[];this.detachedParts.clear();this.weapons.reset();this.staggerPose=null;this.stunRemaining=0;this.stunKind=null;this.stuns=0;this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;this.plasmaRecoil=0;this.plasmaCharging=false;this.plasmaAim=null;this.beamAllowed=true;this.podWarning={active:false,progress:0,pulse:false};
   this.cannonTracking.reset();this.weapon.reset();this.eyeTarget=null;this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
   for(const [name,n]of Object.entries(this.nodes)){n.rotation.set(0,0,0);n.position.copy(this.restPositions[name]);}
@@ -145,7 +161,7 @@ export class SiegeWalker {
   for(const [name,m]of Object.entries(this.meshes)){
    if(!this.isPartAvailable(name))continue;
    m.material.color.set('#ffffff');const module=this.weapons.forPart(name);if(module)m.material.color.multiplyScalar(.45+.55*module.health/module.maxHealth);
-   if(name==='reactor'||name==='visor'){m.material.emissive.set(state.phase==='charging'||state.phase==='firing'?'#2eabff':'#ff6b17');m.material.emissiveIntensity=(1.5+Math.sin(time*4)*.4)*(hp<.3?1.8:1)+state.charge*3;}
+   if(name==='reactor'||name==='visor'){m.material.emissive.set(state.phase==='charging'||state.phase==='firing'?this.chargeGlow:this.idleGlow);m.material.emissiveIntensity=(1.5+Math.sin(time*4)*.4)*(hp<.3?1.8:1)+state.charge*3;}
   }
   if(this.plasmaAim)this.aimPlasma(this.plasmaAim);
   if(hp<.4&&Math.floor(time*3)!==this.lastSmoke){this.lastSmoke=Math.floor(time*3);this.onEffect(this.root.localToWorld(new THREE.Vector3(1,15,1)),true);}
@@ -214,6 +230,7 @@ export class SiegeWalker {
  }
  detachPart(name){
   if(this.detachedParts.has(name))return null;
+  const signal=this.signalMeshes.get(name);if(signal)signal.visible=false;
   this.root.updateMatrixWorld(true);const mesh=this.meshes[name],box=this.boxes[name],center=mesh.localToWorld(box.center.clone()),rotation=mesh.getWorldQuaternion(new THREE.Quaternion());
   const group=new THREE.Group();group.position.copy(center);group.quaternion.copy(rotation);this.scene.add(group);
   mesh.removeFromParent();mesh.position.copy(box.center).negate();group.add(mesh);this.detachedParts.add(name);
