@@ -8,3 +8,6 @@ dist/city-assets/licensed-robots/
 
 # Uploaded weapon meshes stay in the private Sites build.
 dist/city-assets/licensed-weapons/
+
+# Uploaded city mesh/texture runtime stays in the owner-private Sites build.
+dist/city-assets/licensed-city/

@@ -80,3 +80,14 @@ Copy only `/workspace/private-assets/axolotl/runtime/axolotl.glb` into `dist/cit
 `SHOGUN_asset.zip` and the source Blend/FBX remain in `/workspace/private-assets/shogun/`. The private runtime asset is `dist/city-assets/licensed-robots/ronin-shogun.glb`; public code contains the adapter, converter and tests only. Private/public runtime difference is now twelve files. Never push the source or generated model to public GitHub.
 
 Regenerate by running `node source/export_ronin_bind.mjs /private/ronin-bind.json`, then `blender --factory-startup --disable-autoexec -b /private/SHOGUN_Lowpoly.blend --python source/convert_shogun.py -- /private/ronin-bind.json /private/runtime/shogun.glb`. Only the GLB is copied into the private deployment; the converter's intermediate Blend stays in private storage. Copy the same GLB into the public checkout's ignored runtime directory for `node QA/ronin-shogun-test.mjs`. See `source/ASTRA_RONIN.md` for model switching and rig-fit limits.
+
+## Uploaded city test models (revision 311)
+
+The five uploaded building/advertising FBXs remain under
+`/workspace/private-assets/city-test/`. `source/convert_city_test.py` generates
+only `city-test.glb` and `city-test.json` for deployment. These belong in ignored
+`dist/city-assets/licensed-city/` locally and are force-added only to the private
+`site-licensed-assets` branch. The private/public runtime difference is now
+fourteen files. Never push the FBXs, generated meshes or any later supplied
+city texture atlases to public GitHub. See `ASSET_CITY_TEST.md` for source scale,
+temporary materials, destructible sections and testing.
