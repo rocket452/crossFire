@@ -35,10 +35,10 @@ for(let x=Math.ceil((minX+6)/24)*24;x<=maxX-6;x+=24){
  put(x,(start+end)/2,11,end-start);
 }
 export const EVAC_CITY_ROADS=Object.freeze(roads);
-export function addEvacuationDistrictRoads(scene){
+export function addEvacuationDistrictRoads(scene,material=new THREE.MeshStandardMaterial({color:'#49565a',roughness:1})){
  const root=new THREE.Group();root.name='Evacuation district streets';scene.add(root);
  const geometry=new THREE.BoxGeometry(1,1,1),matrix=new THREE.Object3D();
- const road=new THREE.InstancedMesh(geometry,new THREE.MeshStandardMaterial({color:'#49565a',roughness:1}),roads.length);
+ const road=new THREE.InstancedMesh(geometry,material,roads.length);
  road.name='District asphalt';road.receiveShadow=true;
  roads.forEach((r,i)=>{matrix.position.set(r.x,.02,r.z);matrix.scale.set(r.width,.035,r.depth);matrix.updateMatrix();road.setMatrixAt(i,matrix.matrix);});root.add(road);
  return root;

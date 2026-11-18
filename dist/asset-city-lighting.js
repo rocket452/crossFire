@@ -99,10 +99,10 @@ class NeonBloom {
 }
 
 export class AssetCityLighting {
- constructor(scene,renderer,skyLight,sun) {
+ constructor(scene,renderer,skyLight,sun,{fogDensity=.0076}={}) {
   const horizon = new THREE.Color('#738dbb');
   scene.background = horizon;
-  scene.fog = new THREE.FogExp2(horizon,.0076);
+  scene.fog = new THREE.FogExp2(horizon,fogDensity);
   skyLight.color.set('#cddfff');
   skyLight.groundColor.set('#a994bc');
   skyLight.intensity = 2.65;

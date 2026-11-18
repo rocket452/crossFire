@@ -8,7 +8,7 @@ const {AssetCity}=await import('../dist/asset-city.js');
 const {ASSET_CITY}=await import('../dist/asset-city-config.js');
 const {COMBAT_ARENA}=await import('../dist/combat-arena-config.js');
 const {DestructionWorld}=await import('../dist/destruction.js');
-const {traceImpact}=await import('../dist/combat-collision.js');
+const {traceImpact,UnitDamage}=await import('../dist/combat-collision.js');
 const {RunnerMotion}=await import('../dist/runner-motion.js');
 const bytes=fs.readFileSync(new URL('../dist/city-assets/licensed-city/city-test.glb',import.meta.url));
 const asset=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
@@ -99,3 +99,45 @@ for(const b of Object.values(batches)){b.prepare(camera);assert(b.main.count>0);
 const triangles=Object.values(batches).reduce((n,b)=>n+(b.geometry.index?.count??b.geometry.attributes.position.count)/3*b.count,0);
 console.log(JSON.stringify({pass:true,buildings:layout.buildings.length,sections:world.chunks.length,geometryTemplates:city.templates.size,buildingTriangles:triangles,buildingDraws:Object.keys(batches).length,glbBytes:bytes.length,tests:['all five models/UVs','clear streets/spawns','solid building collision','30/60/120Hz facade climb and roof transition','damage armor/scorch','structural collapse','sign attachments','nonblocking settled rubble','neighbor isolation','reset','batch culling']},null,2));
 if(process.argv.includes('--export-layout'))fs.writeFileSync('/tmp/asset-city-layout.json',JSON.stringify(layout));
+
+// The mission fit must keep the crossing and flight lane clear, even with
+// rotated shop meshes and vertically stretched tower chunks.
+const {evacuationCityBuildings}=await import('../dist/evac-city-map.js');
+const {EVACUATION_ENTRANCES,EVACUATION_LANDING,EVACUATION_FLIGHT}=await import('../dist/evacuation-config.js');
+const data=JSON.parse(fs.readFileSync(new URL('../dist/city-assets/city-layout.json',import.meta.url)));
+const lots=evacuationCityBuildings(data.buildings);
+const evacCity=new AssetCity(asset,manifest),evacScene=new T.Scene(),evacWorld=new DestructionWorld(),evacBatches={};
+const fitted=evacCity.fitEvacuationBuildings(lots);
+evacCity.install(evacScene,evacWorld,fitted,evacBatches,new Map());
+assert.equal(fitted.length,28);
+assert.equal(evacCity.attachments.size,fitted.length);
+for(const b of fitted){
+ const parts=evacWorld.buildings.get(b.id).chunks;
+ const roofY=Math.max(...parts.map(c=>c.bounds.max.y));
+ assert(Math.abs(roofY-b.floors*3)<.25,b.id+' retains its skyline height');
+ for(const c of parts){
+  assert(c.bounds.min.x>=b.x-5.001&&c.bounds.max.x<=b.x+5.001);
+  assert(c.bounds.min.z>=b.z-5.001&&c.bounds.max.z<=b.z+5.001);
+  const matrix=new T.Matrix4();evacBatches[c.visualKey].getMatrixAt(c.index,matrix);
+  const rendered=evacBatches[c.visualKey].geometry.boundingBox.clone().applyMatrix4(matrix);
+  assert(rendered.min.distanceTo(c.bounds.min)<.002&&rendered.max.distanceTo(c.bounds.max)<.002);
+ }
+}
+const entrance=EVACUATION_ENTRANCES[0],landing=EVACUATION_LANDING;
+const clear=(a,b,radius)=>!traceImpact(a,b,{sections:evacWorld.chunks,ground:false,radius});
+assert(clear({...entrance,y:1},{...landing,y:1},1.8),'civilian crossing stays open');
+for(let x=landing.x;x<=entrance.x;x+=4){
+ assert(clear({x:0,y:18,z:0},{x,y:1,z:entrance.z},0),'Walker can see the crossing');
+}
+assert(clear({...landing,y:26},{x:landing.x,y:26,z:EVACUATION_FLIGHT.escapeZ},5),'Chinook approach stays open');
+const {EvacuationScene}=await import('../dist/evacuation.js');
+globalThis.document={createElement:()=>({getContext:()=>({fillRect(){},fillText(){}})})};
+const evacuation=new EvacuationScene(evacScene,new UnitDamage(),{
+ visible:(a,b)=>clear(a,b,0),
+ isPathClear:(a,b)=>clear({x:a.x,y:1,z:a.z},{x:b.x,y:1,z:b.z},1.8)
+});
+for(let i=0;i<134*60;i++)evacuation.update(1/60);
+assert.equal(evacuation.groups,2);
+assert.equal(evacuation.saved,24);
+assert.equal(evacuation.lost,0);
+console.log('PASS evacuation fit, aligned render/collision bounds, clear sight lines and two complete rescues',evacWorld.chunks.length);

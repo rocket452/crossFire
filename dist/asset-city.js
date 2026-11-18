@@ -21,16 +21,26 @@ export class AssetCity {
   }
  }
  layout(base){return{...base,buildings:ASSET_CITY.buildings.map(b=>({...b,floors:(this.manifest.assets[b.asset].height+.08)/3}))};}
+ fitEvacuationBuildings(buildings){
+  return buildings.map((b,i)=>{
+   const asset=b.floors>=6?'tower':'shop';
+   const {footprint,height}=this.manifest.assets[asset];
+   return {...b,asset,yaw:(i%4)*Math.PI/2,
+    assetScale:[10/footprint[0],(b.floors*3-.08)/height,10/footprint[1]]};
+  });
+ }
  install(scene,physics,buildings,batches,records){
   this.buildings=buildings;this.physics=physics;this.batches=batches;
   const lists=new Map(),dummy=new THREE.Object3D();
   for(const b of buildings){
    records.set(b.id,b);
+   const scale=b.assetScale??[1,1,1];
+   const sectionScale=new THREE.Vector3(...scale);
    for(const p of this.manifest.assets[b.asset].pieces){
-    const local=new THREE.Vector3(...p.center).applyAxisAngle(new THREE.Vector3(0,1,0),b.yaw);
+    const local=new THREE.Vector3(...p.center).multiply(sectionScale).applyAxisAngle(new THREE.Vector3(0,1,0),b.yaw);
     const key='city-'+p.node;
     if(!lists.has(key))lists.set(key,[]);
-    lists.get(key).push({type:p.type,visualKey:key,building:b.id,floor:p.floor,x:b.x+local.x,y:local.y+.08,z:b.z+local.z,yaw:b.yaw,size:[...p.size],scale:[1,1,1],tint:b.tint});
+    lists.get(key).push({type:p.type,visualKey:key,building:b.id,floor:p.floor,x:b.x+local.x,y:local.y+.08,z:b.z+local.z,yaw:b.yaw,size:p.size.map((n,i)=>n*scale[i]),scale,tint:b.tint});
    }
   }
   for(const [key,list]of lists){
@@ -39,9 +49,13 @@ export class AssetCity {
    batches[key]=batch;
    for(const [index,spec]of list.entries()){
     const c=physics.addChunk({...spec,index});
-    dummy.position.set(c.x,c.y,c.z);dummy.rotation.set(0,c.yaw,0);dummy.scale.set(1,1,1);dummy.updateMatrix();
+    dummy.position.set(c.x,c.y,c.z);dummy.rotation.set(0,c.yaw,0);dummy.scale.set(...c.scale);dummy.updateMatrix();
     batch.setMatrixAt(index,dummy.matrix);batch.setColorAt(index,new THREE.Color(c.tint));
-    c.bounds=new THREE.Box3(new THREE.Vector3(...c.size).multiplyScalar(-.5),new THREE.Vector3(...c.size).multiplyScalar(.5)).applyMatrix4(dummy.matrix);
+    // Collision dimensions already include the model scale.
+    c.bounds=new THREE.Box3().setFromCenterAndSize(dummy.position,new THREE.Vector3(
+     Math.abs(Math.cos(c.yaw))*c.size[0]+Math.abs(Math.sin(c.yaw))*c.size[2],
+     c.size[1],
+     Math.abs(Math.sin(c.yaw))*c.size[0]+Math.abs(Math.cos(c.yaw))*c.size[2]));
    }
    batch.seal();
   }
@@ -60,7 +74,8 @@ export class AssetCity {
    batch.name=name+' mounted signs';batch.castShadow=true;batch.receiveShadow=true;batch.frustumCulled=false;
    buildings.forEach((b,index)=>{
     const spec=this.manifest.assets[b.asset];
-    const local=new THREE.Vector3(0,b.asset==='tower'?13:1.8,spec.footprint[1]/2+.16).applyAxisAngle(new THREE.Vector3(0,1,0),b.yaw);
+    const [,sy,sz]=b.assetScale??[1,1,1];
+    const local=new THREE.Vector3(0,(b.asset==='tower'?13:1.8)*sy,spec.footprint[1]/2*sz+.16).applyAxisAngle(new THREE.Vector3(0,1,0),b.yaw);
     const position=new THREE.Vector3(b.x+local.x,local.y+.08,b.z+local.z);
     const section=this.physics.buildings.get(b.id).chunks.filter(c=>c.type==='column').sort((a,b)=>position.distanceToSquared(a.body.position)-position.distanceToSquared(b.body.position))[0];
     const spillPoint=new THREE.Vector3(0,1,2.3).applyAxisAngle(new THREE.Vector3(0,1,0),b.yaw).add(position);

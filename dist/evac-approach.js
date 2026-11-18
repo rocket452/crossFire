@@ -2,9 +2,9 @@ import * as THREE from './vendor/three.module.js';
 export const ESCORT_APPROACH=Object.freeze({minX:-165.6,maxX:69.6,minZ:-69.6,maxZ:165.6,spawnZ:159.6,stopZ:36,speed:3.2,squadSize:3,rowSpacing:6,lanes:Object.freeze([-4,0,4])});
 export const escortMovementBounds=(inset=4)=>({minX:ESCORT_APPROACH.minX+inset,maxX:ESCORT_APPROACH.maxX-inset,minZ:ESCORT_APPROACH.minZ+inset,maxZ:ESCORT_APPROACH.maxZ-inset});
 // Open boulevard beyond the original city: no new buildings on the squad's approach.
-export function addEscortApproach(scene,{x=0}={}){
+export function addEscortApproach(scene,{x=0,surfaces={}}={}){
  const root=new THREE.Group();root.name='Evacuation outer boulevard';scene.add(root);
- const box=new THREE.BoxGeometry(1,1,1),materials={road:new THREE.MeshStandardMaterial({color:'#49565a',roughness:1}),pavement:new THREE.MeshStandardMaterial({color:'#a3aaa0',roughness:1}),paint:new THREE.MeshStandardMaterial({color:'#c0bba2',roughness:1}),warning:new THREE.MeshStandardMaterial({color:'#d4854e',roughness:1})};
+ const box=new THREE.BoxGeometry(1,1,1),materials={road:surfaces.road??new THREE.MeshStandardMaterial({color:'#49565a',roughness:1}),pavement:surfaces.pavement??new THREE.MeshStandardMaterial({color:'#a3aaa0',roughness:1}),paint:surfaces.paint??new THREE.MeshStandardMaterial({color:'#c0bba2',roughness:1}),warning:new THREE.MeshStandardMaterial({color:'#d4854e',roughness:1})};
  const start=54,end=ESCORT_APPROACH.maxZ,length=end-start,middle=(start+end)/2;
  const batches={road:[],pavement:[],paint:[],warning:[]},put=(kind,p,s)=>{if(p[0]+x-s[0]/2<ESCORT_APPROACH.minX||p[0]+x+s[0]/2>ESCORT_APPROACH.maxX)return;batches[kind].push({p,s});};
  put('road',[0,.02,middle],[18,.035,length]);
