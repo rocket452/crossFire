@@ -31,8 +31,12 @@ The FBXs reference four **missing** original images:
 The earlier inline atlas previews were not available as original local files.
 This prototype therefore uses temporary blue-gray vertex colors, dark recesses
 and teal/amber sign panels. It does not reproduce the original atlas artwork.
-The converter currently generates the fallback palette; supplying the PNGs
-will need a texture hookup pass, not a new map or new geometry.
+In Test setup, **Load city textures** accepts a pack ZIP or individual PNG,
+JPEG and WebP files with the original asset names. The game matches the
+Buildings_002 and Props diffuse/emissive images and applies them to the original
+UVs. Only matching ZIP entries are read and decoded. Texture uploads to the GPU
+are limited to 2048 pixels per side. The browser remembers the selected images
+on this device when local storage is available.
 
 ## Integration
 

@@ -33,6 +33,20 @@ for(const c of world.chunks){
  const m=new T.Matrix4();batches[c.visualKey].getMatrixAt(c.index,m);
  assert(new T.Vector3().setFromMatrixPosition(m).distanceTo(new T.Vector3(c.x,c.y,c.z))<.0001);
 }
+// The rendered signs clone the template material. Exercise the actual draws.
+const buildingMap=new T.Texture(),glowMap=new T.Texture(),signMap=new T.Texture();
+city.applyTexture('buildingColor',buildingMap);
+city.applyTexture('signGlow',glowMap);
+for(const b of Object.values(batches)){
+ assert.equal(b.main.material.map,buildingMap);assert.equal(b.main.material.vertexColors,false);
+ assert.equal(b.main.material.emissiveMap,null);
+}
+const signs=scene.children.filter(o=>o.name.endsWith('mounted signs'));
+assert.equal(signs.length,3);
+for(const sign of signs){assert.equal(sign.material.emissiveMap,glowMap);assert.equal(sign.material.map,null);}
+city.applyTexture('signColor',signMap);
+for(const sign of signs){assert.equal(sign.material.map,signMap);assert.equal(sign.material.emissiveMap,glowMap);}
+assert.equal(city.diagnostics().temporaryMaterials,false);
 // Fixed street grid and existing spawn positions remain unobstructed at foot height.
 for(const lane of COMBAT_ARENA.roadLanes){
  assert(!traceImpact({x:lane,y:1,z:-110},{x:lane,y:1,z:110},{sections:world.chunks,ground:false,radius:.6}));

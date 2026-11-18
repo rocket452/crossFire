@@ -6,6 +6,8 @@ import {ASSET_CITY} from './asset-city-config.js?v=311';
 // or duplicate invisible tower is placed underneath it.
 export class AssetCity {
  constructor(asset,manifest){
+  this.textures = new Map();
+  this.signMaterials = [];
   this.manifest=manifest;this.templates=new Map();this.attachments=new Map();
   asset.scene.updateMatrixWorld(true);
   asset.scene.traverse(o=>{if(o.isMesh){
@@ -51,6 +53,7 @@ export class AssetCity {
  addSigns(scene,dummy){
   for(const [variant,name]of ['Advertising_5','Advertising_6','Advertising_7'].entries()){
    const buildings=this.buildings.filter((b,i)=>i%3===variant),template=this.templates.get(name),material=template.material.clone();
+   this.signMaterials.push(material);
    material.emissive.set(variant===1?'#6d240a':'#083f3f');material.emissiveIntensity=.35;
    const batch=new THREE.InstancedMesh(template.geometry,material,buildings.length);
    batch.name=name+' mounted signs';batch.castShadow=true;batch.receiveShadow=true;batch.frustumCulled=false;
@@ -69,6 +72,26 @@ export class AssetCity {
    scene.add(batch);
   }
  }
+ applyTexture(slot, texture) {
+  const previous = this.textures.get(slot);
+  const materials = slot.startsWith('building')
+   ? Object.values(this.batches).map(batch => batch.material)
+   : this.signMaterials;
+  for (const material of materials) {
+   if (slot.endsWith('Color')) {
+    material.map = texture;
+    material.vertexColors = false;
+    material.color.set(0xffffff);
+   } else {
+    material.emissiveMap = texture;
+    material.emissive.set(0xffffff);
+    material.emissiveIntensity = 2.0;
+   }
+   material.needsUpdate = true;
+  }
+  this.textures.set(slot, texture);
+  if (previous && previous !== texture) previous.dispose();
+ }
  syncAttachments(c){
   const entries=this.attachments.get(c);if(!entries)return;
   const matrix=new THREE.Matrix4().compose(new THREE.Vector3().copy(c.body.position),new THREE.Quaternion().copy(c.body.quaternion),new THREE.Vector3(1,1,1));
@@ -77,5 +100,5 @@ export class AssetCity {
    batch.setColorAt(index,new THREE.Color(c.tint).multiplyScalar(Math.min(c.hasDetached ? .78 : 1,1-c.scorch)));batch.instanceColor.needsUpdate=true;
   }
  }
- diagnostics(){return{buildings:this.buildings.length,sections:this.physics.chunks.length,importedModels:5,missingTextures:this.manifest.missingTextures,temporaryMaterials:true};}
+ diagnostics(){return{buildings:this.buildings.length,sections:this.physics.chunks.length,importedModels:5,missingTextures:this.manifest.missingTextures,temporaryMaterials:!(this.textures.has('buildingColor')&&this.textures.has('signColor')),loadedTextures:[...this.textures.keys()]};}
 }
