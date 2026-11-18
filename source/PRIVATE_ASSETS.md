@@ -91,3 +91,8 @@ only `city-test.glb` and `city-test.json` for deployment. These belong in ignore
 fourteen files. Never push the FBXs, generated meshes or any later supplied
 city texture atlases to public GitHub. See `ASSET_CITY_TEST.md` for source scale,
 temporary materials, destructible sections and testing.
+
+Revision 313 adds the Buildings_002 and Props textures from Max Parata’s
+FreeSample.zip. The four optimized WebP files belong alongside the city GLB
+on the private build branch. Regenerate them using the instructions in
+ASSET_CITY_TEST.md. Keep the source ZIP and original PNGs in private storage.

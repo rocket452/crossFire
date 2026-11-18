@@ -47,6 +47,25 @@ for(const sign of signs){assert.equal(sign.material.emissiveMap,glowMap);assert.
 city.applyTexture('signColor',signMap);
 for(const sign of signs){assert.equal(sign.material.map,signMap);assert.equal(sign.material.emissiveMap,glowMap);}
 assert.equal(city.diagnostics().temporaryMaterials,false);
+// Exercise the first visit before any device cache or file picker is used.
+const {loadPackagedCityTextures}=await import('../dist/asset-city-textures.js');
+await loadPackagedCityTextures(city, async url => {
+ const webp = fs.readFileSync(new URL(url));
+ assert.equal(webp.toString('ascii', 8, 12), 'WEBP');
+ const texture = new T.Texture();
+ texture.name = new URL(url).pathname.split('/').pop();
+ return texture;
+});
+assert.deepEqual(city.diagnostics().missingTextures, []);
+for(const [material,family] of [
+ ...Object.values(batches).map(b=>[b.main.material,'building']),
+ ...signs.map(sign=>[sign.material,'sign'])
+]){
+ assert.equal(material.map.name, family+'-color.webp');
+ assert.equal(material.emissiveMap.name, family+'-glow.webp');
+ assert.equal(material.map.colorSpace, T.SRGBColorSpace);
+ assert.equal(material.emissiveMap.flipY, false);
+}
 // Fixed street grid and existing spawn positions remain unobstructed at foot height.
 for(const lane of COMBAT_ARENA.roadLanes){
  assert(!traceImpact({x:lane,y:1,z:-110},{x:lane,y:1,z:110},{sections:world.chunks,ground:false,radius:.6}));

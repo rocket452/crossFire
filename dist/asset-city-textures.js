@@ -7,6 +7,28 @@ const slots = {
 const cacheName = 'crossfire-asset-city-textures-v1';
 const maxImageBytes = 64 * 1024 * 1024;
 
+const packagedFiles = {
+  buildingColor: 'building-color.webp',
+  buildingGlow: 'building-glow.webp',
+  signColor: 'sign-color.webp',
+  signGlow: 'sign-glow.webp'
+};
+
+export async function loadPackagedCityTextures(city, load = url => new THREE.TextureLoader().loadAsync(url)) {
+  // Each slot can fall back independently if a device loses its connection.
+  await Promise.all(Object.entries(packagedFiles).map(async ([slot, filename]) => {
+    try {
+      const url = new URL('./city-assets/licensed-city/' + filename + '?v=313', import.meta.url);
+      const texture = await load(url.href);
+      texture.flipY = false;
+      texture.colorSpace = THREE.SRGBColorSpace;
+      city.applyTexture(slot, texture);
+    } catch (error) {
+      console.warn('Could not load Asset City texture', filename, error);
+    }
+  }));
+}
+
 export function textureSlot(path) {
   const name = path.split(/[\\/]/).pop();
   if (!/\.(png|jpe?g|webp)$/i.test(name) || name.startsWith('._')) return;
@@ -115,7 +137,6 @@ export async function setupCityTexturePicker(city, parent) {
   const status = document.createElement('small');
   status.setAttribute('role', 'status');
   parent.append(button, input, status);
-  const describe = () => Object.keys(slots).filter(key => city.textures.has(key)).map(key => slots[key]).join(', ');
   const cacheKey = slot => new URL('local-city-textures/' + slot, location.href).href;
   button.disabled = true;
   let cache;
@@ -125,7 +146,7 @@ export async function setupCityTexturePicker(city, parent) {
       const response = await cache.match(cacheKey(slot));
       if (response) city.applyTexture(slot, await makeTexture(await response.blob()));
     }
-    if (describe()) status.textContent = 'Loaded ' + describe() + '.';
+    if (city.textures.size < Object.keys(slots).length) status.textContent = 'Some city textures are unavailable. You can load a local pack.';
   } catch { /* A device without persistent storage can still apply a local selection. */ }
   button.disabled = false;
   button.onclick = () => input.click();
@@ -133,17 +154,18 @@ export async function setupCityTexturePicker(city, parent) {
     if (!input.files.length) return;
     button.disabled = true;
     status.textContent = 'Reading textures…';
-    let count = 0, saved = Boolean(cache);
+    const applied = new Set();
+    let saved = Boolean(cache);
     try {
       for await (const [slot, image] of textureImages(input.files)) {
         city.applyTexture(slot, await makeTexture(image));
-        count++;
+        applied.add(slots[slot]);
         if (cache) try { await cache.put(cacheKey(slot), new Response(image)); } catch { saved = false; }
       }
-      status.textContent = count ? 'Loaded ' + describe() + (saved ? '. Saved on this device.' : '. This session only.') :
+      status.textContent = applied.size ? 'Loaded ' + [...applied].join(', ') + (saved ? '. Saved on this device.' : '. This session only.') :
         'No matching textures found. Choose the original Buildings_002 and Props diffuse or emissive images.';
     } catch {
-      status.textContent = (count ? 'Applied ' + describe() + '. ' : '') + 'Could not read the selection. Try the extracted texture images.';
+      status.textContent = (applied.size ? 'Applied ' + [...applied].join(', ') + '. ' : '') + 'Could not read the selection. Try the extracted texture images.';
     } finally {
       input.value = '';
       button.disabled = false;

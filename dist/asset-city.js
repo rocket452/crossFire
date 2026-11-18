@@ -59,10 +59,10 @@ export class AssetCity {
    batch.name=name+' mounted signs';batch.castShadow=true;batch.receiveShadow=true;batch.frustumCulled=false;
    buildings.forEach((b,index)=>{
     const spec=this.manifest.assets[b.asset];
-    const local=new THREE.Vector3(0,b.asset==='tower'?19:2,spec.footprint[1]/2+.16).applyAxisAngle(new THREE.Vector3(0,1,0),b.yaw);
+    const local=new THREE.Vector3(0,b.asset==='tower'?13:1.8,spec.footprint[1]/2+.16).applyAxisAngle(new THREE.Vector3(0,1,0),b.yaw);
     const position=new THREE.Vector3(b.x+local.x,local.y+.08,b.z+local.z);
     const section=this.physics.buildings.get(b.id).chunks.filter(c=>c.type==='column').sort((a,b)=>position.distanceToSquared(a.body.position)-position.distanceToSquared(b.body.position))[0];
-    dummy.position.copy(position);dummy.rotation.set(0,b.yaw,0);dummy.scale.setScalar(2);dummy.updateMatrix();
+    dummy.position.copy(position);dummy.rotation.set(0,b.yaw,0);dummy.scale.setScalar(b.asset==='tower'?3.3:2.6);dummy.updateMatrix();
     const parent=new THREE.Matrix4().compose(new THREE.Vector3(section.x,section.y,section.z),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),b.yaw),new THREE.Vector3(1,1,1));
     const offset=parent.invert().multiply(dummy.matrix);
     if(!this.attachments.has(section))this.attachments.set(section,[]);
@@ -84,7 +84,7 @@ export class AssetCity {
     material.color.set(0xffffff);
    } else {
     material.emissiveMap = texture;
-    material.emissive.set(0xffffff);
+    material.emissive.set(slot==='buildingGlow'?'#ffe8c5':'#ffffff');
     material.emissiveIntensity = 2.0;
    }
    material.needsUpdate = true;
@@ -100,5 +100,5 @@ export class AssetCity {
    batch.setColorAt(index,new THREE.Color(c.tint).multiplyScalar(Math.min(c.hasDetached ? .78 : 1,1-c.scorch)));batch.instanceColor.needsUpdate=true;
   }
  }
- diagnostics(){return{buildings:this.buildings.length,sections:this.physics.chunks.length,importedModels:5,missingTextures:this.manifest.missingTextures,temporaryMaterials:!(this.textures.has('buildingColor')&&this.textures.has('signColor')),loadedTextures:[...this.textures.keys()]};}
+ diagnostics(){return{buildings:this.buildings.length,sections:this.physics.chunks.length,importedModels:5,missingTextures:['buildingColor','buildingGlow','signColor','signGlow'].filter(slot=>!this.textures.has(slot)),temporaryMaterials:!(this.textures.has('buildingColor')&&this.textures.has('signColor')),loadedTextures:[...this.textures.keys()]};}
 }

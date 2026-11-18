@@ -1,4 +1,4 @@
-# Asset City Test — revision 311
+# Asset City Test — revision 313
 
 Select **Asset City Test** in the scene menu, or use `?scene=city-test`.
 It starts empty with Kage selected. Choose a hero/enemy preset, then use
@@ -21,22 +21,15 @@ The geometry is clipped into four quadrants per vertical tier, with capped
 cuts and a separate roof. Source UVs are retained. Sidewalks, roads, parked
 cars and lighting reuse the existing game systems.
 
-The FBXs reference four **missing** original images:
+The private build loads the original Buildings_002 and Props color and emissive
+atlases from Max Parata’s *Voxel Cyberpunk City — monogon* free sample at startup.
+The five FBXs in the sample match the installed source models byte for byte.
+The color images and sign glow are 2048×2048 WebP. The building glow is 1024×1024.
+The four downloads total 804,230 bytes. The district uses blue dusk lighting and
+fog, with an initial view into the street so the facades are visible.
 
-- `T_Buildings_002Diffuse- 4K.png`
-- `BAKE_Buildings_002Emissive.png`
-- `T_PropsDiffuse- 4K.png`
-- `BAKE_PropsEmissive.png`
-
-The earlier inline atlas previews were not available as original local files.
-This prototype therefore uses temporary blue-gray vertex colors, dark recesses
-and teal/amber sign panels. It does not reproduce the original atlas artwork.
-In Test setup, **Load city textures** accepts a pack ZIP or individual PNG,
-JPEG and WebP files with the original asset names. The game matches the
-Buildings_002 and Props diffuse/emissive images and applies them to the original
-UVs. Only matching ZIP entries are read and decoded. Texture uploads to the GPU
-are limited to 2048 pixels per side. The browser remembers the selected images
-on this device when local storage is available.
+**Load city textures** in Test setup still accepts a local ZIP or individually
+named images. Saved device overrides take priority over the packaged textures.
 
 ## Integration
 
@@ -66,7 +59,8 @@ blender --factory-startup --disable-autoexec -b --python source/convert_city_tes
 node QA/asset-city-test.mjs
 ```
 
-Copy only `city-test.glb` and `city-test.json` into the ignored
+Generate the four WebP maps with `python source/prepare_asset_city_textures.py /private/FreeSample.zip /private/city-runtime`.
+Copy the four WebP maps, `city-test.glb` and `city-test.json` into the ignored
 `dist/city-assets/licensed-city/` directory locally, then into the private
 Sites build for publication. See `PRIVATE_ASSETS.md`.
 
