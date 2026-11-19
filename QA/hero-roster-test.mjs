@@ -1,3 +1,12 @@
 import assert from 'node:assert/strict';import {HeroRoster,DEFAULT_HEROES,validRoster} from '../dist/hero-roster.js';
 for(const ids of [[],['rift'],['prism'],['prism','volt','violet'],['ninja'],['ninja','volt','violet'],['volt','rift'],['volt','violet','rift']])assert(validRoster(ids));for(const ids of [null,['rift','rift'],['bad'],['volt','violet','rift','solara']])assert(!validRoster(ids));const saved=new Map(),storage={getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)};const r=new HeroRoster({storage});assert.deepEqual(r.active,['volt','violet','rift']);assert(r.apply(['ninja','volt']));assert.deepEqual(new HeroRoster({storage}).active,['ninja','volt']);assert(r.apply(['solara']));assert.deepEqual(new HeroRoster({storage}).active,['solara']);assert(r.apply([]));assert.deepEqual(new HeroRoster({storage}).active,[]);assert(!r.apply(['volt','violet','rift','solara']));console.log('PASS default Rift lineup, zero-to-three selection, duplicate/unknown/four rejection and persistence');
 const solo=new HeroRoster({storage:null,maxHeroes:1});assert.deepEqual(solo.active,['ninja']);assert(!solo.apply([]));assert(!solo.apply(['ninja','volt']));assert(solo.apply(['volt']));assert.equal(solo.diagnostics().maxHeroes,1);console.log('PASS isolated single-hero test roster and empty/multiple rejection');
+
+const {evacuationTeam}=await import('../dist/evacuation-briefing.js');
+assert(r.apply([...DEFAULT_HEROES]));
+assert(r.apply(evacuationTeam('ninja',r.active),{persist:false}));
+assert.deepEqual(r.active,['ninja','violet','rift']);
+assert.deepEqual(new HeroRoster({storage}).active,DEFAULT_HEROES);
+assert.deepEqual(evacuationTeam('volt',['volt','solara']),['volt','solara']);
+assert.deepEqual(evacuationTeam('ninja',[]),['ninja']);
+console.log('PASS evacuation lead selection preserves support heroes and the saved roster');

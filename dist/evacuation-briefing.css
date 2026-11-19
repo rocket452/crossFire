@@ -1,0 +1,59 @@
+.evac-briefing {
+  width: min(38rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid #416483;
+  border-radius: 14px;
+  color: #eaf7ff;
+  background: radial-gradient(ellipse at 87% 0%, #272446, transparent 55%), #101c2b;
+  box-shadow: 0 24px 100px #030b1bd9;
+  color-scheme: dark;
+}
+.evac-briefing::backdrop { background: #050e1bc4; }
+.evac-briefing-inner { padding: clamp(1rem, 4vw, 2rem); }
+.evac-briefing-stage {
+  margin: 0 0 .35rem;
+  color: #94e9fa;
+  font-size: .875rem;
+  font-weight: 700;
+}
+.evac-briefing h2 { margin: 0; font: 700 clamp(1.8rem, 5vw, 2.5rem)/1.1 'DM Sans', sans-serif; }
+.evac-briefing-lead { margin: 1rem 0; font-size: 1rem; line-height: 1.55; }
+.evac-objectives { margin: 0; padding-left: 1.2rem; color: #c0d4e9; line-height: 1.5; }
+.evac-objectives li + li { margin-top: .5rem; }
+.evac-briefing footer { display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: center; justify-content: space-between; margin-top: 1.25rem; }
+.evac-briefing footer a { color: #b9d8f1; font-size: .875rem; }
+.evac-briefing button {
+  min-height: 44px;
+  padding: .65rem 1rem;
+  border: 1px solid #8ceefa;
+  border-radius: .55rem;
+  background: #a4f2ff;
+  color: #071c29;
+  font: 700 .95rem 'DM Sans', sans-serif;
+  cursor: pointer;
+}
+.evac-briefing .secondary { border-color: #55748f; background: #172c40; color: #eaf7ff; }
+.evac-briefing :is(button, a):focus-visible { outline: 2px solid #fca0d3; outline-offset: 3px; }
+.evac-briefing-heroes { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .75rem; margin-top: 1rem; }
+.evac-briefing .evac-briefing-hero {
+  display: grid;
+  gap: .4rem;
+  align-content: start;
+  text-align: left;
+  border-color: #486886;
+  background: #17283b;
+  color: #eef8ff;
+}
+.evac-briefing .evac-briefing-hero:hover { border-color: var(--hero-accent); background: #243850; }
+.evac-briefing-hero strong { font-size: 1.13rem; }
+.evac-briefing-hero span { font-size: .92rem; font-weight: 400; line-height: 1.4; }
+.evac-briefing-hero .evac-hero-icon { color: var(--hero-accent); font-size: 2rem; line-height: 1; }
+.evac-briefing-controls { margin: 0; font-size: .875rem; }
+.evac-briefing-controls div { display: grid; grid-template-columns: 1fr 1.15fr; gap: .55rem; padding: .45rem 0; border-top: 1px solid #304b63; }
+.evac-briefing-controls dd { margin: 0; color: #a4eaf6; }
+.evac-briefing-tip { margin: .75rem 0 0; font-size: .875rem; line-height: 1.45; color: #c0d4e9; }
+@media (max-width: 375px) {
+  .evac-briefing-heroes { grid-template-columns: 1fr; }
+}
