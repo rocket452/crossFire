@@ -1,12 +1,22 @@
+import {buildCyberMissileModel} from './cyber-missile-model.js?v=neon-missiles-318';
 import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
 import * as THREE from './vendor/three.module.js';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 
 // Bounded, swept-collision missiles. An intercepted warhead has no damaging blast.
 export class RobotMissiles {
- constructor(scene,model,{redirect=()=>null,getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst=()=>{},onTrail=()=>{},onLaunch=()=>{},onSalvo=()=>{},autoFire=true,canLaunch=()=>true}){
+ constructor(scene,model,{redirect=()=>null,getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst=()=>{},onTrail=()=>{},onLaunch=()=>{},onSalvo=()=>{},autoFire=true,canLaunch=()=>true,cyberpunk=false}){
   Object.assign(this,{redirect,scene,getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst,onTrail,onLaunch,onSalvo,autoFire,canLaunch});
-  this.template=model.scene;this.forward=new THREE.Vector3(0,0,1);this.flameGeometry=new THREE.ConeGeometry(.24,1.3,6);this.flameGeometry.rotateX(-Math.PI/2);this.flameMaterial=new THREE.MeshBasicMaterial({color:'#ffaf39',toneMapped:false});this.reset();
+  this.template=cyberpunk?buildCyberMissileModel():model.scene;
+  this.forward=new THREE.Vector3(0,0,1);
+  this.flameGeometry=new THREE.ConeGeometry(.24,cyberpunk?2.6:1.3,6);
+  this.flameGeometry.rotateX(-Math.PI/2);
+  if(cyberpunk)this.flameGeometry.translate(0,0,-1.3);
+  const exhaust=new THREE.Color(cyberpunk?'#30dcff':'#ffaf39');
+  if(cyberpunk)exhaust.multiplyScalar(2.5);
+  this.flameMaterial=new THREE.MeshBasicMaterial({color:exhaust,toneMapped:false});
+  this.flameOffset=cyberpunk?-.84:-1.35;
+  this.reset();
  }
  reset(){for(const m of this.missiles||[])this.scene.remove(m.mesh);this.missiles=[];this.clock=0;this.cooldown=5.2;this.pending=0;this.launchClock=0;this.launched=0;this.salvos=0;this.intercepted=0;this.impacts=0;this.expired=0;this.byHero={violet:0,volt:0,solara:0,other:0};this.sequence=0;this.targetIndex=0;}
  beginSalvo(){if(!this.canLaunch()||!this.isRobotAlive()||this.pending||this.missiles.filter(m=>m.alive).length>6||!this.getTargets().length)return false;this.pending=6;this.launchClock=0;this.salvos++;this.onSalvo();return true;}
@@ -14,8 +24,9 @@ export class RobotMissiles {
   if(!this.canLaunch())return;
   const targets=this.getTargets().filter(u=>u.alive&&u.shapes?.length);if(!targets.length)return;
   const index=this.targetIndex++,target=targets[index%targets.length],rail=(6-this.pending)%6,muzzle=this.getMuzzles()[rail];if(!muzzle)return;
-  const mesh=this.template.clone(true);const parts=[];mesh.traverse(o=>{if(o.isMesh)parts.push(o);});for(const part of parts)projectileSilhouette(part,'#ffad54');mesh.position.copy(muzzle.position);const flame=new THREE.Mesh(this.flameGeometry,this.flameMaterial);flame.position.z=-1.35;mesh.add(flame);this.scene.add(mesh);
+  const mesh=this.template.clone(true);const parts=[];mesh.traverse(o=>{if(o.isMesh)parts.push(o);});for(const part of parts)projectileSilhouette(part,'#ffad54');mesh.position.copy(muzzle.position);const flame=new THREE.Mesh(this.flameGeometry,this.flameMaterial);flame.position.z=this.flameOffset;mesh.add(flame);this.scene.add(mesh);
   const m={id:'siege-missile-'+(++this.sequence),alive:true,health:18,age:0,life:22,speed:8.5,radius:.36,position:mesh.position,previous:mesh.position.clone(),direction:muzzle.direction.clone().normalize(),velocity:new THREE.Vector3(),origin:mesh.position.clone(),target,targetPoint:new THREE.Vector3().copy(target.shapes[0].center),mesh,flame,trail:0,claim:null,claimUntil:0};
+  mesh.quaternion.setFromUnitVectors(this.forward,m.direction);
   this.missiles.push(m);this.launched++;this.onLaunch(m.position);return m;
  }
  hurt(m,damage,hero='other'){
@@ -44,7 +55,7 @@ export class RobotMissiles {
    // Clear the shoulder and climb above most roofs before steering down at a target.
    const goal=m.age<2.25?m.origin.clone().lerp(m.targetPoint,.35).setY(Math.max(32,m.origin.y+12)):m.targetPoint;
    const desired=goal.clone().sub(m.position).normalize();m.direction.lerp(desired,1-Math.exp(-(m.age<.5?1.4:2.4)*dt)).normalize();m.velocity.copy(m.direction).multiplyScalar(m.speed);
-   const end=m.position.clone().addScaledVector(m.velocity,dt),transit=this.redirect(m,m.position,end);if(transit){m.position.copy(transit.position);m.previous.copy(m.position);m.direction.copy(transit.direction);m.velocity.copy(m.direction).multiplyScalar(m.speed);m.lockLost=true;m.age=Math.max(3,m.age);m.targetPoint.copy(m.position).addScaledVector(m.direction,150);continue;}const hit=this.traceWorld(m.position,end,m.radius);
+   const end=m.position.clone().addScaledVector(m.velocity,dt),transit=this.redirect(m,m.position,end);if(transit){m.position.copy(transit.position);m.previous.copy(m.position);m.direction.copy(transit.direction);m.velocity.copy(m.direction).multiplyScalar(m.speed);m.lockLost=true;m.age=Math.max(3,m.age);m.targetPoint.copy(m.position).addScaledVector(m.direction,150);m.mesh.quaternion.setFromUnitVectors(this.forward,m.direction);continue;}const hit=this.traceWorld(m.position,end,m.radius);
    if(hit){m.position.set(hit.point.x,hit.point.y,hit.point.z);m.alive=false;this.impacts++;this.scene.remove(m.mesh);this.onImpact(m.position,hit,m.id);continue;}
    m.position.copy(end);m.mesh.quaternion.setFromUnitVectors(this.forward,m.direction);m.flame.scale.setScalar(.8+Math.sin(time*27+m.age*3)*.2);
    m.trail-=dt;if(m.trail<=0){this.onTrail(m.position,m.direction);m.trail=.09;}

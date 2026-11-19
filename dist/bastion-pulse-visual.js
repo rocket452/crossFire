@@ -3,7 +3,7 @@ import * as THREE from './vendor/three.module.js';
 // Spherical shock front matches pulse shell damage; ground/body bands share its safe gap.
 export class BastionPulseVisual {
  constructor(boss,parent){
-  this.boss=boss;this.parent=parent;this.config=boss.config.pulse.visual;this.waves=new Map();
+  this.boss=boss;this.parent=parent;const visual=boss.config.pulse.visual;this.config=boss.config.appearance==='cyberpunk'?{...visual,color:'#8d1be8',edgeColor:'#ff76cf'}:visual;this.waves=new Map();
   const c=this.config,p=boss.config.pulse;this.sphere=new THREE.SphereGeometry(1,c.segments,c.rows);this.arcs=[];
   for(const latitude of[0,Math.PI/6,Math.PI/3]){const points=[];for(let i=0;i<=c.segments*2;i++){const angle=p.gapHalfAngle+i/(c.segments*2)*(Math.PI*2-p.gapHalfAngle*2);points.push(new THREE.Vector3(Math.sin(angle)*Math.cos(latitude),Math.sin(latitude),Math.cos(angle)*Math.cos(latitude)));}this.arcs.push(new THREE.BufferGeometry().setFromPoints(points));}
   this.edges=[-1,1].map(sign=>{const points=[];for(let i=0;i<=c.rows;i++){const latitude=i/c.rows*Math.PI/2;points.push(new THREE.Vector3(Math.sin(sign*p.gapHalfAngle)*Math.cos(latitude),Math.sin(latitude),Math.cos(sign*p.gapHalfAngle)*Math.cos(latitude)));}return new THREE.BufferGeometry().setFromPoints(points);});

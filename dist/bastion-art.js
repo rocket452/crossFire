@@ -133,7 +133,7 @@ export class BastionArt {
    for(const side of[-1,1])this.trim(this.gunPivot,[side*1.81,1.2,.7],[.1,.2,2.2],'cool');
    this.disc(this.rotor,[0,0,tip-.66],1.19,.08,'cool','z');
   }
-  this.flash=new THREE.Mesh(this.sphere,new THREE.MeshBasicMaterial({color:'#fff3b4',transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending}));this.flash.visible=false;this.flash.scale.set(.7,.7,1.8);this.gunPivot.add(this.flash);this.flashAge=1;this.gunPivot.scale.setScalar(g.visualScale);this.guns??=[];this.guns.push({module,pivot:this.gunPivot,rotor:this.rotor,muzzles:this.muzzles,flash:this.flash,recoil:0,flashAge:1});
+  this.flash=new THREE.Mesh(this.sphere,new THREE.MeshBasicMaterial({color:this.cyberpunk?new THREE.Color('#93efff').multiplyScalar(2):'#fff3b4',transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending}));this.flash.visible=false;this.flash.scale.set(.7,.7,1.8);this.gunPivot.add(this.flash);this.flashAge=1;this.gunPivot.scale.setScalar(g.visualScale);this.guns??=[];this.guns.push({module,pivot:this.gunPivot,rotor:this.rotor,muzzles:this.muzzles,flash:this.flash,recoil:0,flashAge:1});
  }
  gun(module=this.config.gatling.gunModule){return this.guns.find(g=>g.module===module);}
  muzzle(index=0,module=this.config.gatling.gunModule){this.model.root.updateMatrixWorld(true);const g=this.gun(module);return g.muzzles[index%g.muzzles.length].getWorldPosition(new THREE.Vector3());}

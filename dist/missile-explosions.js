@@ -1,13 +1,36 @@
 import * as THREE from './vendor/three.module.js';
 export const MISSILE_EXPLOSIONS=Object.freeze({limit:12,lifetime:2.4,firePerBurst:25,smokePerBurst:10});
+const cyberpunkFire=`
+ float radius=length(p);
+ float fade=1.-vAge;
+ vec3 color=mix(vec3(.34,.9,2.6),vec3(.5,.018,.24),vAge);
+ float alpha=pow(max(0.,1.-radius*radius),1.5)*fade*.48;
+ if(vKind<.5){
+  float core=pow(max(0.,1.-radius),2.5)*(1.-smoothstep(0.,.37,vAge));
+  color=mix(color,vec3(1.8,2.9,3.4),core);
+ }else if(vKind<1.5){
+  color=mix(vec3(.1,2.,3.4),vec3(2.4,.06,.7),step(.5,fract(vAge*3.)));
+  alpha=pow(max(0.,1.-abs(p.x)-abs(p.y)),1.2)*fade;
+ }else{
+  float angle=atan(p.y,p.x);
+  float arcs=smoothstep(-.55,-.15,cos(angle*6.+vAge*3.));
+  float edge=(radius-.82)*24.;
+  float band=(radius-.62)*30.;
+  float rim=exp(-edge*edge);
+  float inner=exp(-band*band);
+  color=mix(vec3(2.66,.12,.85),vec3(.12,2.4,3.1),rim/(rim+inner+.001));
+  alpha=(rim*arcs+inner*.44)*fade*.74;
+ }
+ gl_FragColor=vec4(color,alpha);
+`;
 // Visuals only: warhead damage remains in the existing swept impact callbacks.
 export class MissileExplosions{
- constructor(scene){
+ constructor(scene,{cyberpunk=false}={}){
   this.root=new THREE.Group();this.root.name='Missile detonations';scene.add(this.root);this.dummy=new THREE.Object3D();
   const vertex=`attribute float blastAge;attribute float blastKind;varying vec2 vUv;varying float vAge;varying float vKind;void main(){vUv=uv;vAge=blastAge;vKind=blastKind;vec4 center=modelViewMatrix*instanceMatrix*vec4(0.,0.,0.,1.);center.xy+=position.xy*vec2(length(instanceMatrix[0].xyz),length(instanceMatrix[1].xyz));gl_Position=projectionMatrix*center;}`;
   const make=(count,smoke)=>{
    const geo=new THREE.PlaneGeometry(1,1);for(const name of['blastAge','blastKind'])geo.setAttribute(name,new THREE.InstancedBufferAttribute(new Float32Array(count),1));
-   const fragment=smoke?`float shape=pow(max(0.,1.-dot(p,p)),1.3);float fade=sin(3.14159*min(1.,vAge));vec3 color=mix(vec3(.12,.13,.14),vec3(.32,.33,.33),vAge);gl_FragColor=vec4(color,shape*fade*.48);`:`float r=length(p);float shape=pow(max(0.,1.-r*r),1.5);vec3 color=mix(vec3(1.,.68,.22),vec3(.8,.06,.005),vAge);float alpha=shape*(1.-vAge);if(vKind<.5){color=mix(vec3(1.,.12,.005),vec3(.7,.018,.001),vAge);float hot=pow(max(0.,1.-r),5.)*(1.-smoothstep(0.,.2,vAge));color=mix(color,vec3(1.,.9,.5),hot);alpha*=.3;}else if(vKind<1.5){color=vec3(1.,.45,.08);alpha=pow(max(0.,1.-abs(p.x)-abs(p.y)),1.2)*(1.-vAge);}else{color=vec3(1.,.65,.28);alpha=exp(-pow((r-.82)*18.,2.))*(1.-vAge)*.5;}gl_FragColor=vec4(color,alpha);`;
+   const fragment=smoke?`float shape=pow(max(0.,1.-dot(p,p)),1.3);float fade=sin(3.14159*min(1.,vAge));vec3 color=mix(vec3(.12,.13,.14),vec3(.32,.33,.33),vAge);gl_FragColor=vec4(color,shape*fade*.48);`:cyberpunk?cyberpunkFire:`float r=length(p);float shape=pow(max(0.,1.-r*r),1.5);vec3 color=mix(vec3(1.,.68,.22),vec3(.8,.06,.005),vAge);float alpha=shape*(1.-vAge);if(vKind<.5){color=mix(vec3(1.,.12,.005),vec3(.7,.018,.001),vAge);float hot=pow(max(0.,1.-r),5.)*(1.-smoothstep(0.,.2,vAge));color=mix(color,vec3(1.,.9,.5),hot);alpha*=.3;}else if(vKind<1.5){color=vec3(1.,.45,.08);alpha=pow(max(0.,1.-abs(p.x)-abs(p.y)),1.2)*(1.-vAge);}else{color=vec3(1.,.65,.28);alpha=exp(-pow((r-.82)*18.,2.))*(1.-vAge)*.5;}gl_FragColor=vec4(color,alpha);`;
    const material=new THREE.ShaderMaterial({transparent:true,depthWrite:false,toneMapped:false,blending:smoke?THREE.NormalBlending:THREE.AdditiveBlending,vertexShader:vertex,fragmentShader:`varying vec2 vUv;varying float vAge;varying float vKind;void main(){vec2 p=vUv*2.-1.;${fragment}\n#include <colorspace_fragment>\n}`});
    const mesh=new THREE.InstancedMesh(geo,material,count);mesh.frustumCulled=false;mesh.count=0;mesh.renderOrder=smoke?1:2;this.root.add(mesh);return mesh;
   };
