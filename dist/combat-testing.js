@@ -1,7 +1,7 @@
 import {AstraRonin} from './astra-ronin.js?v=310';
 import {Mireguard} from './mireguard.js?v=bruiser-range-281';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-pairs-260';
-import {BastionTesting} from './bastion-testing.js?v=bastion-independent-artillery-293';
+import {BastionTesting} from './bastion-testing.js?v=cyber-bastion-316';
 import {ExperimentalRobot} from './experimental-robots.js?v=bruiser-range-281';
 import * as THREE from './vendor/three.module.js';
 import {SpiderBruiser} from './spider-bruiser.js?v=bruiser-range-281';

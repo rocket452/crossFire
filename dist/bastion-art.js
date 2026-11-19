@@ -8,7 +8,19 @@ export class BastionArt {
   this.armourGeometry=new THREE.ExtrudeGeometry(shape,{depth:.82,bevelEnabled:true,bevelSize:.07,bevelThickness:.09,bevelSegments:1,steps:1,curveSegments:1});this.armourGeometry.translate(0,0,-.41);this.armourGeometry.scale(.5/.57,.5/.57,1);
   this.cylinder=new THREE.CylinderGeometry(1,1,1,10,1);this.ring=new THREE.TorusGeometry(1,.11,4,16);this.sphere=new THREE.IcosahedronGeometry(1,1);
   this.materials={armour:new THREE.MeshStandardMaterial({color:'#526e60',metalness:.28,roughness:.68}),light:new THREE.MeshStandardMaterial({color:'#9ba6a2',metalness:.32,roughness:.5}),dark:new THREE.MeshStandardMaterial({color:'#26303a',metalness:.22,roughness:.67}),gold:new THREE.MeshStandardMaterial({color:'#6f8674',metalness:.3,roughness:.45}),energy:new THREE.MeshStandardMaterial({color:'#adffbd',emissive:'#42d477',emissiveIntensity:2.5}),cool:new THREE.MeshStandardMaterial({color:'#8cf3b7',emissive:'#24bd79',emissiveIntensity:1.2})};
+  this.cyberpunk=model.config.appearance==='cyberpunk';
+  if(this.cyberpunk){
+   const palette={armour:'#283b57',light:'#aebcd1',dark:'#101828',gold:'#566888',energy:'#ff3e9d',cool:'#65ecff'};
+   for(const [id,color]of Object.entries(palette))this.materials[id].color.set(color);
+   this.materials.energy.emissive.set('#ff2188');
+   this.materials.cool.emissive.set('#2bdfff');
+  }
   for(const part of model.parts){part.section.mesh.geometry=this.armourGeometry;part.material.color.set(part.id==='head'||part.id.includes('leg')||part.id.includes('upper-arm')||part.id.includes('forearm-body')||part.id.includes('shoulder')?'#77847f':part.id==='hip'?'#38483f':'#303945');part.material.metalness=.25;}
+  if(this.cyberpunk){
+   for(const part of model.parts){
+    part.material.color.copy(this.materials[part.id.includes('shoulder')?'armour':'dark'].color);
+   }
+  }
   const torso=model.torso,head=model.head;
   for(const side of[-1,1]){
    this.box(torso,[side*3.2,4.1,3.96],[5.7,3.7,.65],'armour').rotation.z=side*-.06;
@@ -26,6 +38,29 @@ export class BastionArt {
   }
   this.box(torso,[0,-5.8,4.08],[2.3,1.3,.2],'gold');for(let i=0;i<5;i++)this.box(torso,[0,(i-2)*1.6,-4.08],[1.5,.6,.2],'light');
   this.helmet();this.heavyArmour();this.tracks=new DroneTracks(model.root,{armor:this.materials.armour,dark:this.materials.dark});this.tracks.root.name='Bastion twin tread base';this.tracks.root.scale.set(7,12,7);this.tracks.root.position.y=-.96;for(const leg of model.legs)leg.traverse(n=>{if(n.isMesh)n.visible=false;});for(const p of model.parts)if(p.node===model.chassis||model.feet.includes(p.node))p.section.mesh.visible=false;
+  if(this.cyberpunk)this.dressCyberpunkFrame();
+ }
+ dressCyberpunkFrame(){
+  const {head,torso,arms,forearms}=this.model;
+  for(const [i,side]of [-1,1].entries()){
+   // Split visor and beveled cheek plates follow the tracking head.
+   this.box(head,[side*1.78,-.24,4],[3.4,1.1,.28],'dark').rotation.z=side*.13;
+   this.trim(head,[side*1.77,-.21,4.18],[2.85,.33,.09],'energy').rotation.z=side*.13;
+   this.box(head,[side*3.16,.83,3.25],[1.75,.7,1.8],'light').rotation.z=side*.2;
+   this.trim(torso,[side*5.75,2.5,4.42],[.23,4.1,.1],'cool').rotation.z=side*.12;
+   this.trim(torso,[side*3.7,-3.5,4.34],[2.8,.19,.1],'cool').rotation.z=side*.35;
+   this.box(arms[i],[side*.52,1.9,4.58],[5.9,.65,.24],'light').rotation.z=side*.12;
+   for(let j=0;j<3;j++){
+    this.trim(arms[i],[side*(1.37+j*.48),.12,4.73],[.22,1.04,.1],'cool').rotation.z=-.38;
+    this.trim(forearms[i],[side*1.45,-2.12-j*.87,4.68],[.24,.49,.12],'cool');
+   }
+   // Mount the lights to the planted tread housing as the upper body turns.
+   const tread=this.tracks.root;
+   this.box(tread,[side*1.38,1.14,0],[.16,.24,1.9],'armour');
+   for(const z of[-.6,0,.6])this.trim(tread,[side*1.47,1.15,z],[.035,.055,.37],'cool');
+   this.box(tread,[side*.56,.97,1.22],[.36,.15,.12],'dark');
+   this.trim(tread,[side*.56,.97,1.29],[.29,.042,.025],'energy');
+  }
  }
  helmet(){const h=this.model.head;
   this.box(h,[0,.7,0],[8,1.2,7.4],'armour');
@@ -68,6 +103,10 @@ export class BastionArt {
   for(const side of[-1,1]){this.box(this.artilleryPivot,[side*1.42,0,3.7],[.65,2.6,5.3],'armour');this.disc(this.artilleryPivot,[side*1.9,-.75,2.1],.21,5.3,'light','z');this.disc(this.artilleryPivot,[side*1.9,-.75,.5],.36,2.7,'dark','z');for(let j=0;j<6;j++)this.trim(this.artilleryPivot,[side*1.8,.8,1.3+j*.6],[.22,1.2,.2],'gold');}
   this.disc(this.artilleryPivot,[0,0,7.8],1.48,.65,'armour','z');this.disc(this.artilleryPivot,[0,0,8.18],1.15,.12,'dark','z');
   this.artilleryGlow=this.materials.cool.clone();const bore=this.disc(this.artilleryPivot,[0,0,8.27],.85,.08,'cool','z');bore.material=this.artilleryGlow;const target=this.trim(node,[0,-.25,2.76],[1.4,.8,.14],'cool');target.material=this.artilleryGlow;
+  if(this.cyberpunk)for(const side of[-1,1]){
+   const strip=this.trim(this.artilleryPivot,[side*1.79,0,4.1],[.09,.23,3.6],'cool');
+   strip.material=this.artilleryGlow;
+  }
   this.artilleryTip=new THREE.Object3D();this.artilleryTip.position.z=8.5;this.artilleryPivot.add(this.artilleryTip);this.artilleryPivot.rotation.x=-Math.PI/2;this.artilleryRecoil=0;this.weaponVolumes??=[];this.weaponVolumes.push({module:this.config.rain.module,node:this.artilleryPivot,center:[0,0,3.4],size:[4.3,3.6,10.4]},{module:this.config.rain.module,node,center:[-2.7,-3.2,-.5],size:[1.8,4.8,3.6]});
  }
  buildWallEmitter(node){
@@ -77,6 +116,9 @@ export class BastionArt {
   for(const side of[-1,1]){const rail=new THREE.Group();rail.name='Laser rail '+side;rail.position.set(side*2.7,0,-.7);node.add(rail);this.wallRails.push(rail);this.weaponVolumes.push({module:this.config.beamWalls.module,node:rail,center:[0,1.2,0],size:[2.6,14,3.6]});this.box(rail,[0,1,0],[2.2,12.5,3.2],'armour');this.box(rail,[0,6.7,0],[2.6,1.3,3.6],'light');for(let j=0;j<7;j++){this.trim(rail,[0,-3+j*1.4,-1.68],[1.7,.55,.22],'gold');const strip=this.trim(rail,[0,-3+j*1.4,-1.85],[1.35,.22,.12],'energy');strip.material=this.wallGlow;}this.disc(rail,[0,7.45,0],.8,.22,'dark');const lens=this.disc(rail,[0,7.6,0],.6,.12,'energy');lens.material=this.wallGlow;}
   this.disc(node,[0,.5,-2.5],2.2,.6,'gold','z');this.disc(node,[0,.5,-2.87],1.85,.2,'dark','z');const reactor=this.disc(node,[0,.5,-3.02],1.4,.12,'energy','z');reactor.material=this.wallGlow;
   for(const x of[-.9,0,.9])this.trim(node,[x,-2.6,-2.55],[.3,2,.2],'light');
+  if(this.cyberpunk)for(const side of[-1,1]){
+   this.trim(node,[side*3.9,0,-2.31],[.18,7.8,.14],'cool');
+  }
   this.wallTip=new THREE.Object3D();this.wallTip.position.set(0,8.3,0);node.add(this.wallTip);
  }
  wallMuzzle(){this.model.root.updateMatrixWorld(true);return this.wallTip.getWorldPosition(new THREE.Vector3());}
@@ -87,6 +129,10 @@ export class BastionArt {
   this.rotor=new THREE.Group();this.gunPivot.add(this.rotor);this.muzzles=[];const tip=3.45+g.barrelLength/2;
   for(let i=0;i<g.barrels;i++){const a=i/g.barrels*Math.PI*2,x=Math.cos(a)*g.barrelRadius,y=Math.sin(a)*g.barrelRadius;this.disc(this.rotor,[x,y,3.45],.34,g.barrelLength,'light','z');this.disc(this.rotor,[x,y,tip],.4,.26,'dark','z');this.disc(this.rotor,[x,y,tip+.16],.24,.08,'energy','z');const muzzle=new THREE.Object3D();muzzle.position.set(x,y,tip+.28);this.rotor.add(muzzle);this.muzzles.push(muzzle);}
   this.disc(this.rotor,[0,0,tip-.9],1.65,.38,'armour','z');this.disc(this.rotor,[0,0,2.2],1.65,.38,'gold','z');this.disc(this.rotor,[0,0,3.8],.35,4.4,'dark','z');
+  if(this.cyberpunk){
+   for(const side of[-1,1])this.trim(this.gunPivot,[side*1.81,1.2,.7],[.1,.2,2.2],'cool');
+   this.disc(this.rotor,[0,0,tip-.66],1.19,.08,'cool','z');
+  }
   this.flash=new THREE.Mesh(this.sphere,new THREE.MeshBasicMaterial({color:'#fff3b4',transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending}));this.flash.visible=false;this.flash.scale.set(.7,.7,1.8);this.gunPivot.add(this.flash);this.flashAge=1;this.gunPivot.scale.setScalar(g.visualScale);this.guns??=[];this.guns.push({module,pivot:this.gunPivot,rotor:this.rotor,muzzles:this.muzzles,flash:this.flash,recoil:0,flashAge:1});
  }
  gun(module=this.config.gatling.gunModule){return this.guns.find(g=>g.module===module);}
@@ -96,7 +142,7 @@ export class BastionArt {
  update(dt,time,player,state,stunned=false){const c=this.config,a=c.animation,g=c.gatling,dead=state?.phase==='defeated',rainPose=state?.patterns.includes('skyfall')&&['windup','pulse','barrage'].includes(state.phase),firing=state?.phase==='barrage'&&!rainPose&&!stunned&&this.guns.some(gun=>!state.launchers[gun.module].destroyed),spinup=!rainPose&&!stunned&&['pulse','windup'].includes(state?.phase)&&state.elapsed>state.duration-g.spinupSeconds&&this.guns.some(gun=>!state.launchers[gun.module].destroyed),brace=firing||spinup?1:0,blend=1-Math.exp(-a.poseResponse*dt),m=this.model;
   this.spinSpeed=THREE.MathUtils.lerp(this.spinSpeed,brace?a.barrelSpin:0,1-Math.exp(-a.spinResponse*dt));this.gunSpin+=this.spinSpeed*dt;this.rotor.rotation.z=this.gunSpin;this.recoil*=Math.exp(-a.recoilRecovery*dt);this.rotor.position.z=-this.recoil;this.flashAge+=dt;this.flash.visible=firing&&this.flashAge<a.flashSeconds;this.flash.scale.setScalar(.8+Math.sin(time*70)**2*.4);
   m.arms[1].rotation.x=THREE.MathUtils.lerp(m.arms[1].rotation.x,0,blend);this.gunPivot.position.z=-1;for(let i=0;i<2;i++){const side=i===0?-1:1;m.arms[i].rotation.z=THREE.MathUtils.lerp(m.arms[i].rotation.z,side*(.025+brace*a.armBrace+(dead?.14:0)),blend);m.elbows[i].rotation.x=THREE.MathUtils.lerp(m.elbows[i].rotation.x,dead?.14:rainPose?-.08:brace*a.elbowBrace,blend);this.forearms[i].rotation.x=THREE.MathUtils.lerp(this.forearms[i].rotation.x,(dead?.18:brace*a.forearmBend),blend);}
-  const load=dead?.8:stunned?.28:brace*a.braceDrop;m.torso.position.y=THREE.MathUtils.lerp(m.torso.position.y,6.88-load+Math.sin(time*.65)*a.idleBob,blend);m.torso.rotation.x=THREE.MathUtils.lerp(m.torso.rotation.x,dead?.035:stunned?.018:brace*.009,blend);for(const rod of this.pistons){rod.scale.y=3.4-load*.8;rod.position.y=-5.7-load*.25;}for(const door of this.ventDoors)door.rotation.x=THREE.MathUtils.lerp(door.rotation.x,brace?-.22:0,blend);this.materials.energy.emissiveIntensity=dead?.05:state?.phase==='windup'?2+Math.sin(time*7)**2:brace?3:1.5;this.materials.cool.emissiveIntensity=dead?.05:.9;this.tracks.root.rotation.y=-m.root.rotation.y;this.tracks.update(0,0);
+  const load=dead?.8:stunned?.28:brace*a.braceDrop;m.torso.position.y=THREE.MathUtils.lerp(m.torso.position.y,6.88-load+Math.sin(time*.65)*a.idleBob,blend);m.torso.rotation.x=THREE.MathUtils.lerp(m.torso.rotation.x,dead?.035:stunned?.018:brace*.009,blend);for(const rod of this.pistons){rod.scale.y=3.4-load*.8;rod.position.y=-5.7-load*.25;}for(const door of this.ventDoors)door.rotation.x=THREE.MathUtils.lerp(door.rotation.x,brace?-.22:0,blend);this.materials.energy.emissiveIntensity=dead?.05:state?.phase==='windup'?2+Math.sin(time*7)**2:brace?3:1.5;this.materials.cool.emissiveIntensity=dead?.05:this.cyberpunk?1.45:.9;this.tracks.root.rotation.y=-m.root.rotation.y;this.tracks.update(0,0);
   const headLocal=m.root.worldToLocal(new THREE.Vector3().copy(player)),headYaw=dead?0:THREE.MathUtils.clamp(Math.atan2(headLocal.x,headLocal.z),-a.headTurn,a.headTurn);m.head.rotation.y=THREE.MathUtils.lerp(m.head.rotation.y,headYaw,1-Math.exp(-a.headResponse*dt));const headPitch=THREE.MathUtils.clamp(-Math.atan2(headLocal.y-m.root.worldToLocal(m.head.getWorldPosition(new THREE.Vector3())).y,Math.hypot(headLocal.x,headLocal.z)),-.18,.28);m.head.rotation.x=THREE.MathUtils.lerp(m.head.rotation.x,dead?.28:stunned?.13:headPitch,1-Math.exp(-a.headResponse*dt));
   m.root.updateMatrixWorld(true);if(this.aimPoint){const target=this.gunPivot.parent.worldToLocal(this.aimPoint.clone()).sub(this.gunPivot.position),yaw=THREE.MathUtils.clamp(Math.atan2(target.x,target.z),-g.yawLimit,g.yawLimit),pitch=THREE.MathUtils.clamp(-Math.atan2(target.y,Math.hypot(target.x,target.z)),-g.pitchLimit,g.pitchLimit),aimBlend=1-Math.exp(-g.aimResponse*dt);this.gunPivot.rotation.y=THREE.MathUtils.lerp(this.gunPivot.rotation.y,yaw,aimBlend);this.gunPivot.rotation.x=THREE.MathUtils.lerp(this.gunPivot.rotation.x,pitch,aimBlend);}
   for(const gun of this.guns){if(gun.module===g.gunModule){gun.flash.visible=this.flash.visible&&!state.launchers[gun.module].destroyed;continue;}

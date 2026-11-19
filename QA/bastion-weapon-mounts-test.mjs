@@ -1,5 +1,11 @@
 import assert from 'node:assert/strict';import fs from 'node:fs';import * as THREE from '../dist/vendor/three.module.js';import {Bastion} from '../dist/bastion.js';import {UnitDamage} from '../dist/combat-collision.js';
-const c=JSON.parse(fs.readFileSync('dist/bastion-config.json')),b=new Bastion(new THREE.Scene(),new UnitDamage(),c),wall=c.beamWalls.module,rain=c.rain.module;
+const c=JSON.parse(fs.readFileSync('dist/bastion-config.json'));
+if(process.argv.includes('--cyberpunk'))c.appearance='cyberpunk';
+const b=new Bastion(new THREE.Scene(),new UnitDamage(),c),wall=c.beamWalls.module,rain=c.rain.module;
+if(c.appearance==='cyberpunk'){
+ assert.equal(b.model.art.materials.energy.emissive.getHexString(),'ff2188');
+ assert.equal(b.model.art.materials.cool.emissive.getHexString(),'2bdfff');
+}
 b.player={position:new THREE.Vector3(75,.08,80),motion:{mode:'ground',normal:{x:0,y:1,z:0}}};
 const shoot=(index,power)=>{const p=index===wall?b.model.launchers[index].getWorldPosition(new THREE.Vector3()):b.model.art.artilleryPivot.localToWorld(new THREE.Vector3(0,0,4)),from=p.clone().add(new THREE.Vector3(0,0,index===wall?-20:20)),hit=b.trace(from,p);assert.equal(hit?.part,'launcher-'+index);return b.applyHit(hit,power,'weapon-test');};
 assert(b.model.art.wallMuzzle().z<0);assert(b.model.art.artilleryMuzzle().y>b.model.launchers[rain].getWorldPosition(new THREE.Vector3()).y+5);

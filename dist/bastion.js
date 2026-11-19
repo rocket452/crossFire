@@ -1,7 +1,7 @@
 import {BastionBeamWalls} from './bastion-beam-walls.js?v=bastion-weapons-278';
 import {BastionRain} from './bastion-rain.js?v=opposite-edge-walls-171';
 import * as THREE from './vendor/three.module.js';
-import {BastionModel} from './bastion-model.js?v=bastion-independent-artillery-293';
+import {BastionModel} from './bastion-model.js?v=cyber-bastion-316';
 import {BastionState} from './bastion-state.js?v=bastion-weapons-278';
 import {BastionProjectiles} from './bastion-projectiles.js?v=permanent-weakpoints-172';
 import {BastionEffects} from './bastion-effects.js?v=pulse-knockback-173';
