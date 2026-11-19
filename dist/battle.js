@@ -14,7 +14,7 @@ import {MIREGUARD} from './mireguard-config.js?v=mireguard-direct-275';
 import {viewportPixelRatio} from './render-budget.js?v=overall-performance-238';
 import {SpatialChunkBatch} from './spatial-chunk-batch.js?v=overall-performance-238';
 import {EvacuationBastionCinematic} from './evacuation-bastion-cinematic.js?v=cinematic-facing-249';
-import {EvacuationBastionReinforcement} from './evacuation-bastion-reinforcement.js?v=evac-shutdown-231';
+import {EvacuationBastionReinforcement} from './evacuation-bastion-reinforcement.js?v=neon-evac-317';
 import {BastionTesting} from './bastion-testing.js?v=cyber-bastion-316';
 import {EvacuationHelicopterStrike} from './evacuation-helicopter-strike.js?v=heli-missiles-222';
 import {evacuationCityBuildings,EVAC_CITY_ROADS,addEvacuationDistrictRoads} from './evac-city-map.js?v=315';
@@ -45,7 +45,7 @@ import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-app
 import {MochiHero,MOCHI} from './mochi-hero.js?v=overall-performance-238';
 import {VOLT_STUN} from './hero-powers.js?v=combat-hud-102';
 import {RobotStunEffect} from './hero-power-effects.js?v=mochi-56';
-import {EvacuationScene} from './evacuation.js?v=compact-evac-237';
+import {EvacuationScene} from './evacuation.js?v=neon-evac-317';
 import * as THREE from 'three';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {OrbitControls} from './vendor/OrbitControls.js';

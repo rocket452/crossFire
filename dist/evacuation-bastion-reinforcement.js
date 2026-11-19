@@ -12,7 +12,53 @@ export class EvacuationBastionReinforcement {
   for(const side of[-1,1]){part([9,13,66],[side*23,-3,2],'hull');part([10,2,48],[side*23,4,1],'plate');part([21,3,27],[side*35,-1,5],'plate');part([6,8,19],[side*42,-3,13],'dark');part([5,1,19],[side*43,-7,13],'light');part([6,9,9],[side*23,-4,36],'dark');part([5,6,1],[side*23,-4,41],'light');part([2,11,12],[side*23,9,25],'plate');}
   this.clamps=[];this.engines=[];
   for(const side of[-1,1])for(const z of[-15,18]){this.clamps.push(part([3,14,4],[side*16,-11,z],'dark'));part([7,3,9],[side*33,-4,z],'dark');const flame=new THREE.Mesh(new THREE.ConeGeometry(3,17,8),materials.engine);flame.position.set(side*33,-14,z);flame.rotation.z=Math.PI;this.root.add(flame);this.engines.push(flame);}
+  this.addNeonLights(box);
   this.marker=new THREE.Mesh(new THREE.RingGeometry(17,18,64),new THREE.MeshBasicMaterial({color:'#ffbf66',transparent:true,opacity:.5,depthWrite:false,side:THREE.DoubleSide}));this.marker.rotation.x=-Math.PI/2;scene.add(this.marker);this.reset();
+ }
+ addNeonLights(box){
+  const cyan=[],magenta=[],warning=[];
+  for(const side of [-1,1]){
+   // Segmented rails on the outer booms, visible above and below the ship.
+   for(const z of [-22,-11,0,11,22]){
+    cyan.push([[side*27.56,.6,z],[.14,.55,8.5]]);
+    cyan.push([[side*24.6,-9.56,z],[.55,.15,7.5]]);
+    cyan.push([[side*13.1,3.57,z],[.3,.16,8.5]]);
+   }
+   for(const z of [-15,18]){
+    for(const x of [30.7,35.3]){
+     cyan.push([[side*x,-5.59,z],[.28,.18,6.5]]);
+    }
+   }
+   // Nose perimeter and wing-end lights frame the existing carrier outline.
+   cyan.push([[side*23,-.85,-31.08],[5.7,.42,.2]]);
+   cyan.push([[side*14.8,-1.9,-29.07],[.45,2.5,.17]]);
+   for(const z of [7,13,19]){
+    magenta.push([[side*45.06,-3,z],[.16,2.2,1.1]]);
+   }
+   magenta.push([[side*21.6,14.56,25],[1,.16,6.7]]);
+   magenta.push([[side*10.7,3.59,-26],[2.9,.19,.36]]);
+   warning.push([[side*19.5,-9.65,-28],[.8,.20,2]]);
+   warning.push([[side*19.5,-9.65,31],[.8,.20,2]]);
+  }
+  const dummy=new THREE.Object3D();
+  const add=(name,fixtures,color,intensity)=>{
+   const material=new THREE.MeshBasicMaterial({color:new THREE.Color(color).multiplyScalar(intensity)});
+   const mesh=new THREE.InstancedMesh(box,material,fixtures.length);
+   mesh.name=name;
+   fixtures.forEach(([position,size],i)=>{
+    dummy.position.fromArray(position);
+    dummy.scale.fromArray(size);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i,dummy.matrix);
+   });
+   mesh.instanceMatrix.needsUpdate=true;
+   this.root.add(mesh);
+   return material;
+  };
+  add('Cyan carrier and thruster rails',cyan,'#42d9ff',2.8);
+  add('Magenta wing beacons',magenta,'#ff3b9d',2.3);
+  this.dropBeacon=add('Cargo release beacons',warning,'#ff6b85',1.1);
+  this.beaconColor=new THREE.Color('#ff6b85');
  }
  reset(){this.combatPaused=false;this.phase='waiting';this.elapsed=0;this.clock=0;this.adapter.reset(false);this.root.visible=false;this.marker.visible=false;this.destination=new THREE.Vector3();}
  transition(phase){this.phase=phase;this.elapsed=0;}
@@ -33,6 +79,11 @@ export class EvacuationBastionReinforcement {
   }
   if(this.phase==='departure'){const a=Math.min(1,this.elapsed/c.departureSeconds);this.root.position.set(d.x,d.y+c.cruiseHeight+(c.departureHeight-c.cruiseHeight)*a,d.z-c.approachDistance*a*a);if(a===1){this.root.visible=false;this.transition('deployed');}}
   for(const e of this.engines)e.scale.setScalar(1+Math.sin(this.clock*24)*.08);
+  if(this.root.visible){
+   const releasing=this.phase==='hover'||this.phase==='drop';
+   const intensity=releasing?1.1+1.9*(.5+.5*Math.sin(this.clock*12))**2:1.1;
+   this.dropBeacon.color.copy(this.beaconColor).multiplyScalar(intensity);
+  }
   if(!this.combatPaused)this.adapter.update(dt);
  }
  afterHeroes(dt){if(!this.combatPaused)this.adapter.afterHeroes(dt);}
