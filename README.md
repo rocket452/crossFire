@@ -1,9 +1,18 @@
-# Crossfire — City in Conflict
+# Zero Hour Heroes
 
 An autonomous low-poly city battle with observer cameras, optional first-person helicopter control, and live rigid-body destruction. Assets are built directly in Blender with Python; browser rendering uses Three.js and rigid-body simulation uses Cannon-es.
 
 ## Run
 `python -m http.server 8765 --directory dist`
+
+In **Combat Testing**, select **1 combat drone** or **2 combat drones** and click
+**Spawn / Reset enemies**. Click **Play / Watch selected hero** to take control
+as Volt Rush or Kage. Aim for a turbine housing to disable lift, and move
+sideways when the underside gun spins up.
+
+Drone tuning is in `dist/combat-drone-config.js`. Run
+`node QA/combat-drone-test.mjs` for flight, component failure, crash, and minigun
+simulations.
 
 Open http://localhost:8765. HTTP is required for ES modules and the GLB asset library.
 
