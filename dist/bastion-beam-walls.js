@@ -13,9 +13,11 @@ export class BastionBeamWalls {
  reset(){this.left=this.min=this.config.min;this.right=this.max=this.config.max;this.running=false;this.elapsed=0;this.completed=0;this.sky.visible=this.skyGlow.visible=false;for(const w of this.waves){w.root.visible=w.marker.visible=w.active=false;w.hit=false;w.z=w.previousZ=this.config.min;}}
  begin(){
   this.reset();if(this.boss.state.launchers[this.config.module].destroyed)return;
-  const c=this.config,b=this.arenaBounds,target=this.boss.player.position,cx=(b.minX+b.maxX)/2,cz=(b.minZ+b.maxZ)/2,dx=target.x-cx,dz=target.z-cz;
-  // Lock to this map's center and far edge, independently of the boss's pose.
-  this.yaw=Math.abs(dx)>Math.abs(dz)?(dx>=0?Math.PI/2:-Math.PI/2):(dz>=0?0:Math.PI);
+  const c=this.config,b=this.arenaBounds,target=this.boss.player.position,cx=(b.minX+b.maxX)/2,cz=(b.minZ+b.maxZ)/2;
+  // Snap the Bastion's facing to a map axis so every gap crosses the whole map.
+  // All three waves lock to that heading when the sky beam starts.
+  const quarterTurn=Math.PI/2;
+  this.yaw=Math.round(this.boss.root.rotation.y/quarterTurn)*quarterTurn;
   this.field.position.set(cx,0,cz);this.field.rotation.y=this.yaw;this.field.updateMatrixWorld(true);this.inverse.copy(this.field.matrixWorld).invert();
   const corners=[];for(const x of[b.minX,b.maxX])for(const z of[b.minZ,b.maxZ])corners.push(new THREE.Vector3(x,0,z).applyMatrix4(this.inverse));
   const minX=Math.min(...corners.map(p=>p.x)),maxX=Math.max(...corners.map(p=>p.x));

@@ -1,4 +1,4 @@
-import {BastionBeamWalls} from './bastion-beam-walls.js?v=neon-missiles-318';
+import {BastionBeamWalls} from './bastion-beam-walls.js?v=wall-facing-322';
 import {BastionRain} from './bastion-rain.js?v=neon-missiles-318';
 import * as THREE from './vendor/three.module.js';
 import {BastionModel} from './bastion-model.js?v=neon-missiles-318';
