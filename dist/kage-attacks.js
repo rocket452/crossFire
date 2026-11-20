@@ -54,3 +54,43 @@ export class KageAttacks {
  }
  diagnostics(){return{kunaiModel:this.kunaiSource,kunaiTriangles:this.kunaiTriangles,shadowCount:(this.shadowKunai||[]).filter(m=>m.visible).length,stored:this.stored,loading:this.loading,cooldown:this.cooldown,active:this.bolts.length,queued:this.queue.length,throws:this.throws,volleys:this.volleys,lastVolley:this.lastVolley,slashCooldown:this.slashCooldown,slashes:this.slashes,lastSlashHits:this.lastSlashHits,slashHits:this.slashHits,slashHitbox:'cone',slashConeDegrees:this.config.slash.coneDegrees,slashDirection:this.slashDirection.toArray()};}
 }
+
+// Check what a single dash contact can finish without mutating health or armour.
+export function kageDashCanFinish(unit,power){
+ if(!unit.alive||unit.kind!=='robot'||unit.dashPhased||unit.hidden||unit.health<=0)return false;
+ const enemy=unit.entity;
+ const damage=kageHitPower({unit},power,'ninja-dash');
+ return unit.shapes.some(({part})=>{
+  if(enemy.weapons){
+   const weapon=enemy.weapons.forPart(part);
+   return !!weapon&&!weapon.destroyed&&enemy.weapons.remaining===1&&weapon.health<=damage;
+  }
+  if(enemy.joints&&enemy.config.armor){
+   if(part==='argus-core-open')return enemy.coreOpen&&damage*enemy.config.attacks.lance.coreMultiplier>=unit.health;
+   if(part==='argus-core-closed'){
+    const scale=enemy.coreOpen?enemy.config.attacks.lance.coreMultiplier:enemy.config.armor.coreDamageScale;
+    return damage*scale>=unit.health;
+   }
+   const joint=enemy.joints.get(part);
+   return (joint?Math.min(joint.health,damage)*enemy.config.joints.hullDamageScale:damage*enemy.config.armor.bodyDamageScale)>=unit.health;
+  }
+  if(enemy.armsHealth&&enemy.config.weakPoints){
+   if(part==='chest')return damage*enemy.config.weakPoints.chestDamageMultiplier>=unit.health;
+   if(part==='arm-left'||part==='arm-right'){
+    const arm=enemy.armsHealth[part==='arm-left'?0:1];
+    return Math.min(damage,arm)*enemy.config.weakPoints.armBossDamageScale>=unit.health;
+   }
+   const launcher=enemy.state.launchers.find(module=>module.id===part&&!module.destroyed);
+   const weapon=[enemy.config.rain,enemy.config.beamWalls].find(config=>'launcher-'+config.module===part);
+   return !!launcher&&!!weapon&&Math.min(damage,launcher.health)*weapon.weaponBossDamageScale>=unit.health;
+  }
+  if(enemy.engines&&part!=='hull')return false;
+  if(part==='ronin-shield'&&enemy.guardBlocking)return false;
+  if(enemy.type==='aegis'&&(part==='shield'||!part))return damage*(1-enemy.config.shieldReduction)>=unit.health;
+  if(enemy.type==='mireguard'&&part==='head'){
+   const head=enemy.limbs.head;
+   return head?.health>0&&damage*enemy.config.headMultiplier>=head.health||damage>=unit.health;
+  }
+  return damage>=unit.health;
+ });
+}
