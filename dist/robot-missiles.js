@@ -4,7 +4,8 @@ import * as THREE from './vendor/three.module.js';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 
 export const WALKER_SALVO_SIZE=12;
-const MISSILE_SPEED=17;
+const MISSILE_SPEED=34;
+const GUIDANCE_REFERENCE_SPEED=17;
 const MAX_ACTIVE_MISSILES=2*WALKER_SALVO_SIZE;
 
 // Bounded, swept-collision missiles. An intercepted warhead has no damaging blast.
@@ -57,8 +58,10 @@ export class RobotMissiles {
    if(!m.alive)continue;m.previous.copy(m.position);m.age+=dt;m.life-=dt;
    if(!m.lockLost&&m.target.alive&&m.target.shapes[0])m.targetPoint.copy(m.target.shapes[0].center);
    // Clear the shoulder and climb above most roofs before steering down at a target.
-   const goal=m.age<2.25?m.origin.clone().lerp(m.targetPoint,.35).setY(Math.max(32,m.origin.y+12)):m.targetPoint;
-   const desired=goal.clone().sub(m.position).normalize();m.direction.lerp(desired,1-Math.exp(-(m.age<.5?1.4:2.4)*dt)).normalize();m.velocity.copy(m.direction).multiplyScalar(m.speed);
+   // Keep the climb length and turn radius stable as projectile speed changes.
+   const guidanceScale=m.speed/GUIDANCE_REFERENCE_SPEED,travelAge=m.age*guidanceScale;
+   const goal=travelAge<2.25?m.origin.clone().lerp(m.targetPoint,.35).setY(Math.max(32,m.origin.y+12)):m.targetPoint;
+   const desired=goal.clone().sub(m.position).normalize();m.direction.lerp(desired,1-Math.exp(-(travelAge<.5?1.4:2.4)*dt*guidanceScale)).normalize();m.velocity.copy(m.direction).multiplyScalar(m.speed);
    const end=m.position.clone().addScaledVector(m.velocity,dt),transit=this.redirect(m,m.position,end);if(transit){m.position.copy(transit.position);m.previous.copy(m.position);m.direction.copy(transit.direction);m.velocity.copy(m.direction).multiplyScalar(m.speed);m.lockLost=true;m.age=Math.max(3,m.age);m.targetPoint.copy(m.position).addScaledVector(m.direction,150);m.mesh.quaternion.setFromUnitVectors(this.forward,m.direction);continue;}const hit=this.traceWorld(m.position,end,m.radius);
    if(hit){m.position.set(hit.point.x,hit.point.y,hit.point.z);m.alive=false;this.impacts++;this.scene.remove(m.mesh);this.onImpact(m.position,hit,m.id);continue;}
    m.position.copy(end);m.mesh.quaternion.setFromUnitVectors(this.forward,m.direction);m.flame.scale.setScalar(.8+Math.sin(time*27+m.age*3)*.2);
