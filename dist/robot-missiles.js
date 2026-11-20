@@ -4,6 +4,7 @@ import * as THREE from './vendor/three.module.js';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 
 export const WALKER_SALVO_SIZE=12;
+const MISSILE_SPEED=17;
 const MAX_ACTIVE_MISSILES=2*WALKER_SALVO_SIZE;
 
 // Bounded, swept-collision missiles. An intercepted warhead has no damaging blast.
@@ -28,7 +29,7 @@ export class RobotMissiles {
   const targets=this.getTargets().filter(u=>u.alive&&u.shapes?.length);if(!targets.length)return;
   const index=this.targetIndex++,target=targets[index%targets.length],muzzles=this.getMuzzles(),rail=(WALKER_SALVO_SIZE-this.pending)%muzzles.length,muzzle=muzzles[rail];if(!muzzle)return;
   const mesh=this.template.clone(true);const parts=[];mesh.traverse(o=>{if(o.isMesh)parts.push(o);});for(const part of parts)projectileSilhouette(part,'#ffad54');mesh.position.copy(muzzle.position);const flame=new THREE.Mesh(this.flameGeometry,this.flameMaterial);flame.position.z=this.flameOffset;mesh.add(flame);this.scene.add(mesh);
-  const m={id:'siege-missile-'+(++this.sequence),alive:true,health:18,age:0,life:22,speed:8.5,radius:.36,position:mesh.position,previous:mesh.position.clone(),direction:muzzle.direction.clone().normalize(),velocity:new THREE.Vector3(),origin:mesh.position.clone(),target,targetPoint:new THREE.Vector3().copy(target.shapes[0].center),mesh,flame,trail:0,claim:null,claimUntil:0};
+  const m={id:'siege-missile-'+(++this.sequence),alive:true,health:18,age:0,life:22,speed:MISSILE_SPEED,radius:.36,position:mesh.position,previous:mesh.position.clone(),direction:muzzle.direction.clone().normalize(),velocity:new THREE.Vector3(),origin:mesh.position.clone(),target,targetPoint:new THREE.Vector3().copy(target.shapes[0].center),mesh,flame,trail:0,claim:null,claimUntil:0};
   mesh.quaternion.setFromUnitVectors(this.forward,m.direction);
   this.missiles.push(m);this.launched++;this.onLaunch(m.position);return m;
  }
