@@ -3,9 +3,13 @@ import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shurike
 import * as THREE from './vendor/three.module.js';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 
+import {terrainHeight} from './runner-motion.js?v=overall-performance-238';
+
 export const WALKER_SALVO_SIZE=12;
 const MISSILE_SPEED=34;
 const GUIDANCE_REFERENCE_SPEED=17;
+const FINAL_APPROACH_HEIGHT=3;
+const MIN_DIVE_SLOPE=Math.tan(THREE.MathUtils.degToRad(10));
 const MAX_ACTIVE_MISSILES=2*WALKER_SALVO_SIZE;
 
 // Bounded, swept-collision missiles. An intercepted warhead has no damaging blast.
@@ -61,8 +65,21 @@ export class RobotMissiles {
    // Keep the climb length and turn radius stable as projectile speed changes.
    const guidanceScale=m.speed/GUIDANCE_REFERENCE_SPEED,travelAge=m.age*guidanceScale;
    const goal=travelAge<2.25?m.origin.clone().lerp(m.targetPoint,.35).setY(Math.max(32,m.origin.y+12)):m.targetPoint;
-   const desired=goal.clone().sub(m.position).normalize();m.direction.lerp(desired,1-Math.exp(-(travelAge<.5?1.4:2.4)*dt*guidanceScale)).normalize();m.velocity.copy(m.direction).multiplyScalar(m.speed);
-   const end=m.position.clone().addScaledVector(m.velocity,dt),transit=this.redirect(m,m.position,end);if(transit){m.position.copy(transit.position);m.previous.copy(m.position);m.direction.copy(transit.direction);m.velocity.copy(m.direction).multiplyScalar(m.speed);m.lockLost=true;m.age=Math.max(3,m.age);m.targetPoint.copy(m.position).addScaledVector(m.direction,150);m.mesh.quaternion.setFromUnitVectors(this.forward,m.direction);continue;}const hit=this.traceWorld(m.position,end,m.radius);
+   // Commit the final metres of a low attack to its dive. Homing on a
+   // moving target's centre can otherwise flatten the path above the street.
+   if(!m.finalDive&&!m.lockLost&&travelAge>=2.25&&m.direction.y<0
+      &&m.position.y-terrainHeight(m.position.x,m.position.z)<=FINAL_APPROACH_HEIGHT
+      &&m.targetPoint.y-terrainHeight(m.targetPoint.x,m.targetPoint.z)<=FINAL_APPROACH_HEIGHT){
+    m.finalDive=true;
+    m.direction.y=Math.min(m.direction.y,-MIN_DIVE_SLOPE*Math.hypot(m.direction.x,m.direction.z));
+    m.direction.normalize();
+   }
+   if(!m.finalDive){
+    const desired=goal.clone().sub(m.position).normalize();
+    m.direction.lerp(desired,1-Math.exp(-(travelAge<.5?1.4:2.4)*dt*guidanceScale)).normalize();
+   }
+   m.velocity.copy(m.direction).multiplyScalar(m.speed);
+   const end=m.position.clone().addScaledVector(m.velocity,dt),transit=this.redirect(m,m.position,end);if(transit){m.position.copy(transit.position);m.previous.copy(m.position);m.direction.copy(transit.direction);m.velocity.copy(m.direction).multiplyScalar(m.speed);m.lockLost=true;m.finalDive=false;m.age=Math.max(3,m.age);m.targetPoint.copy(m.position).addScaledVector(m.direction,150);m.mesh.quaternion.setFromUnitVectors(this.forward,m.direction);continue;}const hit=this.traceWorld(m.position,end,m.radius);
    if(hit){m.position.set(hit.point.x,hit.point.y,hit.point.z);m.alive=false;this.impacts++;this.scene.remove(m.mesh);this.onImpact(m.position,hit,m.id);continue;}
    m.position.copy(end);m.mesh.quaternion.setFromUnitVectors(this.forward,m.direction);m.flame.scale.setScalar(.8+Math.sin(time*27+m.age*3)*.2);
    m.trail-=dt;if(m.trail<=0){this.onTrail(m.position,m.direction);m.trail=.09;}

@@ -37,3 +37,19 @@ system.pending=1;system.launch();system.pending=0;system.cooldown=100;for(let i=
 const safe=fixture(()=>{throw Error('intercepted missiles must never run collision or blast');});safe.system.pending=1;const missile=safe.system.launch();safe.system.pending=0;safe.system.cooldown=100;safe.system.hurt(missile,100,'violet');safe.system.update(.1,0);assert.equal(safe.system.impacts,0);assert.equal(safe.bursts(),1);
 const stopped=fixture();stopped.system.beginSalvo();stopped.state.alive=false;stopped.system.update(.1,0);assert.equal(stopped.system.pending,0);assert.equal(stopped.system.launched,0);
 console.log('PASS twelve staggered 34 m/s guided missiles at 30/60/120Hz, threat reservations/LOS, swept shootdown, exact kill credit, safe interceptions, real building/unit impact damage, reset and robot-defeat launch cancellation');
+
+const {terrainHeight,traceTerrain}=await import('../dist/runner-motion.js');
+for(const dt of [1/30,1/60,1/120,.075])for(const [x,z] of [[0,0],[50,39]]){
+ const impacts=[];
+ const {system,target}=fixture((a,b,r)=>traceTerrain(a,b,r)||traceImpact(a,b,{radius:r}),(p,hit)=>impacts.push(hit));
+ system.autoFire=false;
+ const m=system.launch();
+ m.age=3;m.position.set(x,terrainHeight(x,z)+2,z);m.direction.set(0,-.03,1).normalize();
+ for(let t=0;t<2&&m.alive;t+=dt){
+  target.shapes[0].center={x,y:2,z:z+35+34*t};
+  system.update(dt,t);
+ }
+ assert.equal(impacts.length,1,JSON.stringify({dt,x,z,position:m.position.toArray(),dive:m.finalDive,alive:m.alive}));
+ assert.equal(impacts[0].kind,'ground');assert.equal(system.expired,0);
+}
+console.log('PASS descending misses strike flat and sloped ground at 30/60/120 Hz and 75 ms frames');
