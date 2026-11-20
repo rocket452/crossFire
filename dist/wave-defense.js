@@ -12,6 +12,12 @@ const mapZ=z=>center.z+(z-center.z)*mapScale;
 export const WAVE_DEFENSE_HERO_START=Object.freeze({
  x:mapX(MISSION1_HERO_START.x),y:MISSION1_HERO_START.y,z:mapZ(MISSION1_HERO_START.z)
 });
+export const RELAY_INTRO=Object.freeze({
+ yaw:Math.atan2(RELAY.x-WAVE_DEFENSE_HERO_START.x,RELAY.z-WAVE_DEFENSE_HERO_START.z),
+ pitch:.31,
+ markerHeight:RELAY.floors*3+10,
+ duration:3.5
+});
 export const WAVE_DEFENSE_BOUNDS=Object.freeze({
  minX:mapX(ESCORT_APPROACH.minX),maxX:mapX(ESCORT_APPROACH.maxX),
  minZ:mapZ(ESCORT_APPROACH.minZ),maxZ:mapZ(ESCORT_APPROACH.maxZ)

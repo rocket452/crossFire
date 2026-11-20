@@ -145,3 +145,21 @@ html[data-input-mode=desktop] .viewer.is-ninja #shuriken-meter{display:block;fle
  .hero-hotkeys{flex:1 1 20rem}
 }
 @media(max-width:700px){.kage-model-picker{font-size:9px;gap:4px}}
+
+#relay-intro {
+ position:absolute;
+ z-index:6;
+ transform:translate(-50%,-100%);
+ color:#cceaff;
+ text-shadow:0 2px 4px #091624,0 0 12px #4c9bfd;
+ font:bold clamp(16px,2.5vw,28px)/1.1 system-ui,sans-serif;
+ letter-spacing:.12em;
+ text-align:center;
+ pointer-events:none;
+ animation:relay-intro-flash .66s ease-in-out infinite alternate;
+}
+#defense-hud {left:50%;transform:translateX(-50%)}
+#relay-intro:not([hidden]) + #defense-hud {left:12px;transform:none}
+#relay-intro span {display:block;letter-spacing:0}
+@keyframes relay-intro-flash {from{opacity:1}to{opacity:.38}}
+@media(prefers-reduced-motion:reduce){#relay-intro{animation:none}}

@@ -6,7 +6,7 @@ import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
 import {DestructionWorld} from '../dist/destruction.js';
 import {mission1CityBuildings,MISSION1_CITY_ROADS} from '../dist/evac-city-map.js';
 import {ESCORT_APPROACH} from '../dist/evac-approach.js';
-import {WaveDefense,RELAY,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,waveDefenseBuildings,waveDefenseRoads} from '../dist/wave-defense.js';
+import {WaveDefense,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,waveDefenseBuildings,waveDefenseRoads} from '../dist/wave-defense.js';
 
 registerHooks({resolve(name,context,next){
  return name==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(name,context);
@@ -24,6 +24,20 @@ const buildings=waveDefenseBuildings(mission1CityBuildings(layout.buildings));
 assert.equal(RELAY.floors*3,72);
 assert.equal(RELAY.footprint,20);
 const spawn=WAVE_DEFENSE_HERO_START;
+const forward=new THREE.Vector3(Math.sin(RELAY_INTRO.yaw),0,Math.cos(RELAY_INTRO.yaw));
+const towardRelay=new THREE.Vector3(RELAY.x-spawn.x,0,RELAY.z-spawn.z).normalize();
+assert(forward.distanceTo(towardRelay)<1e-9);
+for(const [back,height] of [[5.8,2.7*1.44],[6.5,2.94*1.44]]){
+ const camera=new THREE.PerspectiveCamera(65,1,.08,700);
+ camera.position.copy(spawn).addScaledVector(forward,-back);
+ camera.position.y+=height;
+ camera.lookAt(camera.position.clone().addScaledVector(forward,Math.cos(RELAY_INTRO.pitch))
+  .add(new THREE.Vector3(0,Math.sin(RELAY_INTRO.pitch),0)));
+ camera.updateMatrixWorld();
+ const marker=new THREE.Vector3(RELAY.x,RELAY_INTRO.markerHeight,RELAY.z).project(camera);
+ assert(Math.abs(marker.x)<.01&&marker.y>0&&marker.y<.75&&Math.abs(marker.z)<1,
+  'relay marker is centered in the upper part of the starting view');
+}
 assert(waveDefenseRoads(MISSION1_CITY_ROADS).some(road=>
  Math.abs(spawn.x-road.x)<road.width/2-2&&Math.abs(spawn.z-road.z)<road.depth/2-2
 ),'hero spawn is in an open street');
