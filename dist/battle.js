@@ -532,7 +532,7 @@ function readKageModel(){
  return 'frog';
 }
 function loadKageArmor(variant){
- const asset=variant==='frog'?'kage-frog.glb?v=359':'kage-armored.glb?v=323';
+ const asset=variant==='frog'?'kage-frog.glb?v=360':'kage-armored.glb?v=323';
  return new GLTFLoader().loadAsync('city-assets/licensed-characters/'+asset);
 }
 function setupKageModelPicker(classic,initial){
