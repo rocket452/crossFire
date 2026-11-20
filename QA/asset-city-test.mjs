@@ -102,7 +102,7 @@ if(process.argv.includes('--export-layout'))fs.writeFileSync('/tmp/asset-city-la
 
 // The mission fit must keep the crossing and flight lane clear, even with
 // rotated shop meshes and vertically stretched tower chunks.
-const {evacuationCityBuildings}=await import('../dist/evac-city-map.js');
+const {evacuationCityBuildings,mission1CityBuildings}=await import('../dist/evac-city-map.js');
 const {EVACUATION_ENTRANCES,EVACUATION_LANDING,EVACUATION_FLIGHT}=await import('../dist/evacuation-config.js');
 const data=JSON.parse(fs.readFileSync(new URL('../dist/city-assets/city-layout.json',import.meta.url)));
 const lots=evacuationCityBuildings(data.buildings);
@@ -141,3 +141,23 @@ assert.equal(evacuation.groups,2);
 assert.equal(evacuation.saved,24);
 assert.equal(evacuation.lost,0);
 console.log('PASS evacuation fit, aligned render/collision bounds, clear sight lines and two complete rescues',evacWorld.chunks.length);
+
+
+const missionCity=new AssetCity(asset,manifest),missionWorld=new DestructionWorld();
+const missionLots=missionCity.fitEvacuationBuildings(mission1CityBuildings(data.buildings));
+missionCity.install(new T.Scene(),missionWorld,missionLots,{},new Map());
+const extraTowers=missionLots.filter(b=>b.id.startsWith('MISSION-1-TOWER-'));
+assert.equal(extraTowers.length,12);
+for(const lot of extraTowers){
+ const parts=missionWorld.buildings.get(lot.id).chunks;
+ assert(parts.length>1&&parts.every(c=>c.state==='intact'));
+ assert(Math.abs(Math.max(...parts.map(c=>c.bounds.max.y))-lot.floors*3)<.25);
+}
+const missionClear=(a,b,radius)=>!traceImpact(a,b,{sections:missionWorld.chunks,ground:false,radius});
+assert(missionClear({x:-3,y:1,z:12},{x:0,y:1,z:27},1),'hero spawn area stays open');
+assert(missionClear({x:1,y:18,z:0},{x:2,y:1,z:35},2),'Bastion cinematic arena stays open');
+const lot=extraTowers[0],towerChunk=missionWorld.buildings.get(lot.id).chunks[0];
+const hp=towerChunk.hp;
+missionWorld.damageChunk(towerChunk,25,{source:'siege-walker'});
+assert(towerChunk.hp<hp);
+console.log('PASS Mission 1 fits twelve destructible high-rises and keeps the hero staging area clear');

@@ -36,9 +36,10 @@ export function evacuationTeam(lead,current){
 }
 
 export class EvacuationBriefing {
- constructor({inputMode,onStart}){
+ constructor({inputMode,onStart,combatOnly=false}){
   this.inputMode=inputMode;
   this.onStart=onStart;
+  this.combatOnly=combatOnly;
   this.pending=true;
   this.dialog=document.createElement('dialog');
   this.dialog.className='evac-briefing';
@@ -61,7 +62,7 @@ export class EvacuationBriefing {
  show(step){
   this.step=step;
   const title={
-   objective:'Civilian Evacuation',
+   objective:this.combatOnly?'Mission 1':'Civilian Evacuation',
    choose:'Choose your hero',
    tutorial:HEROES.find(hero=>hero.id===this.hero)?.name
   }[step];
@@ -90,6 +91,10 @@ export class EvacuationBriefing {
   this.dialog.querySelector('h2').focus();
  }
  objective(){
+  if(this.combatOnly)return `<p class="evac-briefing-lead">Take down the Siege Walker in the cyberpunk district.</p>
+   <ul class="evac-objectives"><li>Destroy its three weapons to defeat it.</li>
+   <li>Watch the radar for incoming Bruiser squads, and be ready for reinforcements.</li></ul>
+   <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
   return `<p class="evac-briefing-lead">Get civilians from the subway entrance to the evacuation Chinook.</p>
    <ul class="evac-objectives"><li>Protect each group as it crosses the exposed street and boards.</li>
    <li>Intercept missiles and hold off the robots while the Chinook takes off.</li>
@@ -101,14 +106,15 @@ export class EvacuationBriefing {
    const hero=HEROES.find(entry=>entry.id===id);
    return `<button type="button" class="evac-briefing-hero" data-hero="${id}" style="--hero-accent:${hero.color}">
     <span class="evac-hero-icon" aria-hidden="true">${hero.icon}</span><strong>${hero.name}</strong>
-    <span>${id==='volt'?'Carry civilians out of danger with a lightning dash.':'Shield civilians from damage with protective smoke.'}</span>
+    <span>${this.combatOnly?(id==='volt'?'Build charge at high speed and strike with lightning.':'Throw kunai and teleport to a charged shuriken.'):id==='volt'?'Carry civilians out of danger with a lightning dash.':'Shield civilians from damage with protective smoke.'}</span>
    </button>`;
   }).join('')}</div>
   <footer><button type="button" class="secondary" data-back>Back</button></footer>`;
  }
  tutorial(){
   const lesson=training[this.hero];
-  return `<p class="evac-briefing-lead">${lesson.tip}</p>
+  const tip=this.combatOnly?(this.hero==='volt'?'Run to build charge, then stop briefly to fire. Use buildings as cover when the Walker winds up.':'Use shuriken teleports and wall jumps to attack from rooftops. Smoke protects allies inside its dome.'):lesson.tip;
+  return `<p class="evac-briefing-lead">${tip}</p>
    <dl class="evac-briefing-controls">${this.controlRows()}</dl>
    <p class="evac-briefing-tip">${lesson.bonus}</p>
    <footer><button type="button" class="secondary" data-back>Change hero</button>

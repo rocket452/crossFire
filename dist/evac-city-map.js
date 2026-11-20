@@ -21,6 +21,17 @@ export function evacuationCityBuildings(original){
  return buildings.filter(b=>b.x-6>=ESCORT_APPROACH.minX&&b.x+6<=ESCORT_APPROACH.maxX&&b.z-6>=ESCORT_APPROACH.minZ&&b.z+6<=ESCORT_APPROACH.maxZ);
 }
 
+export function mission1CityBuildings(original){
+ const towers=[
+  [-108,-36,16],[-108,12,12],[-108,84,19],[-108,108,14],
+  [-60,12,17],[-60,60,15],[-60,108,20],[-36,12,13],
+  [-132,60,15],[-108,60,18],[36,36,14],[-156,84,16]
+ ];
+ return evacuationCityBuildings(original).concat(towers.map(([x,z,floors],i)=>({
+  id:'MISSION-1-TOWER-'+(i+1),x,z,floors,tint:['#9ba7b4','#898ea5','#b6a093'][i%3],name:'Mission 1 high-rise'
+ })));
+}
+
 // Only new road segments; the original city grid and approach remain in place.
 const roads=[],put=(x,z,width,depth)=>roads.push(Object.freeze({x,z,width,depth}));
 const {minX,maxX,minZ,maxZ}=ESCORT_APPROACH;
@@ -35,11 +46,12 @@ for(let x=Math.ceil((minX+6)/24)*24;x<=maxX-6;x+=24){
  put(x,(start+end)/2,11,end-start);
 }
 export const EVAC_CITY_ROADS=Object.freeze(roads);
-export function addEvacuationDistrictRoads(scene,material=new THREE.MeshStandardMaterial({color:'#49565a',roughness:1})){
+export const MISSION1_CITY_ROADS=Object.freeze([...EVAC_CITY_ROADS,...[-48,48].map(z=>Object.freeze({x:0,z,width:106,depth:9}))]);
+export function addEvacuationDistrictRoads(scene,material=new THREE.MeshStandardMaterial({color:'#49565a',roughness:1}),districtRoads=EVAC_CITY_ROADS){
  const root=new THREE.Group();root.name='Evacuation district streets';scene.add(root);
  const geometry=new THREE.BoxGeometry(1,1,1),matrix=new THREE.Object3D();
- const road=new THREE.InstancedMesh(geometry,material,roads.length);
+ const road=new THREE.InstancedMesh(geometry,material,districtRoads.length);
  road.name='District asphalt';road.receiveShadow=true;
- roads.forEach((r,i)=>{matrix.position.set(r.x,.02,r.z);matrix.scale.set(r.width,.035,r.depth);matrix.updateMatrix();road.setMatrixAt(i,matrix.matrix);});root.add(road);
+ districtRoads.forEach((r,i)=>{matrix.position.set(r.x,.02,r.z);matrix.scale.set(r.width,.035,r.depth);matrix.updateMatrix();road.setMatrixAt(i,matrix.matrix);});root.add(road);
  return root;
 }
