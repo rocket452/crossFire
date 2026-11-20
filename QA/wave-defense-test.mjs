@@ -4,9 +4,9 @@ import {registerHooks} from 'node:module';
 import * as THREE from '../dist/vendor/three.module.js';
 import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
 import {DestructionWorld} from '../dist/destruction.js';
-import {mission1CityBuildings} from '../dist/evac-city-map.js';
+import {mission1CityBuildings,MISSION1_CITY_ROADS} from '../dist/evac-city-map.js';
 import {ESCORT_APPROACH} from '../dist/evac-approach.js';
-import {WaveDefense,RELAY,WAVE_DEFENSE_BOUNDS,waveDefenseBuildings} from '../dist/wave-defense.js';
+import {WaveDefense,RELAY,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,waveDefenseBuildings,waveDefenseRoads} from '../dist/wave-defense.js';
 
 registerHooks({resolve(name,context,next){
  return name==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(name,context);
@@ -22,6 +22,14 @@ for(const axis of ['X','Z']){
 const layout=JSON.parse(fs.readFileSync(new URL('../dist/city-assets/city-layout.json',import.meta.url)));
 const buildings=waveDefenseBuildings(mission1CityBuildings(layout.buildings));
 assert.equal(RELAY.floors*3,36);
+const spawn=WAVE_DEFENSE_HERO_START;
+assert(waveDefenseRoads(MISSION1_CITY_ROADS).some(road=>
+ Math.abs(spawn.x-road.x)<road.width/2-2&&Math.abs(spawn.z-road.z)<road.depth/2-2
+),'hero spawn is in an open street');
+for(const building of buildings){
+ assert(Math.abs(building.x-spawn.x)>8||Math.abs(building.z-spawn.z)>8,
+  'hero spawn has clearance from '+building.id);
+}
 for(const b of buildings){
  if(b.id===RELAY.id)continue;
  assert(Math.hypot(Math.max(0,Math.abs(b.x-RELAY.x)-5),Math.max(0,Math.abs(b.z-RELAY.z)-5))>=38);

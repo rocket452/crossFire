@@ -1,12 +1,17 @@
 import * as THREE from './vendor/three.module.js';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=drone-bullets-337';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
+import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
 
 export const RELAY={id:'central-relay',name:'Central relay',...center,floors:12,tint:'#99fff5'};
 const mapScale=1.3;
 const mapX=x=>center.x+(x-center.x)*mapScale;
 const mapZ=z=>center.z+(z-center.z)*mapScale;
+// Keep the player at the same street intersection in the enlarged district.
+export const WAVE_DEFENSE_HERO_START=Object.freeze({
+ x:mapX(MISSION1_HERO_START.x),y:MISSION1_HERO_START.y,z:mapZ(MISSION1_HERO_START.z)
+});
 export const WAVE_DEFENSE_BOUNDS=Object.freeze({
  minX:mapX(ESCORT_APPROACH.minX),maxX:mapX(ESCORT_APPROACH.maxX),
  minZ:mapZ(ESCORT_APPROACH.minZ),maxZ:mapZ(ESCORT_APPROACH.maxZ)
