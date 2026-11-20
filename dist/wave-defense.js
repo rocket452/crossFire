@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=drone-bullets-337';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=346';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
@@ -37,23 +37,29 @@ export function waveDefenseBuildings(buildings){
   .concat(RELAY);
 }
 const relayFlashSeconds=.24;
-const waves=[[4,0],[0,4],[2,2],[0,0]];
+const formations=[[4,0],[0,4],[2,2]];
+const countdownSeconds=30;
+export const DEFENSE_UPGRADES=[
+ {id:'chain',title:'Chain lightning',detail:'Primary attacks arc to one additional nearby enemy.'},
+ {id:'dash',title:'Charged dash',detail:'Dashing generates charge 30% faster than normal movement.'},
+ {id:'repair',title:'Repair relay',detail:'Restore 30% of the central relay’s maximum HP.'}
+];
 
 export class WaveDefense extends MissionEnemyWaves {
  constructor(scene,damage,options){
-  super(scene,damage,options);
+  super(scene,damage,{...options,formationSize:8});
   this.options=options;
   this.walker=options.walker;
   for(const {actor,start} of this.drones){
    start.z=WAVE_DEFENSE_BOUNDS.minZ+(start.z-ESCORT_APPROACH.minZ);
    actor.options.bounds=WAVE_DEFENSE_BOUNDS;
-   actor.options.ingress.z=center.z-22;
+   actor.options.ingress.z=center.z-22-(start.z-WAVE_DEFENSE_BOUNDS.minZ-8)*.35;
   }
-  for(const unit of this.members){
+  for(const [index,unit] of this.members.entries()){
    unit.spawnPosition.z=WAVE_DEFENSE_BOUNDS.maxZ-(ESCORT_APPROACH.maxZ-unit.spawnPosition.z);
    unit.getTargets=origin=>this.targets(origin);
    const lane=unit.spawnPosition.x;
-   unit.objective=()=>new THREE.Vector3(lane,.1,center.z+18);
+   unit.objective=()=>new THREE.Vector3(lane,.1,center.z+18+Math.floor(index/2)*6);
   }
   const root=new THREE.Group();
   root.position.set(center.x,0,center.z);
@@ -81,7 +87,8 @@ export class WaveDefense extends MissionEnemyWaves {
   this.relayFlashRemaining=0;
   this.relayFlash=0;
   this.relayGlow.color.copy(this.relayGlowColor);
-  this.wave=0;this.remaining=0;this.phase='waiting';
+  this.wave=1;this.group=0;this.remaining=0;this.phase='waiting';
+  this.upgradePending=false;this.upgrades=new Set();
   this.relay.entity.root.visible=true;
   this.relay.health=this.relay.maxHealth;this.relay.alive=true;
   this.walker.dead=true;this.walker.root.visible=false;this.walker.combatUnit.alive=false;
@@ -103,8 +110,9 @@ export class WaveDefense extends MissionEnemyWaves {
   return heroes.length?heroes:[this.relay];
  }
  launch(){
-  const [ground,air]=waves[this.wave++];
   this.phase='active';
+  this.upgradePending=false;
+  const [ground,air]=this.wave===3?[0,0]:formations[this.group].map(count=>count*this.wave);
   if(ground){
    const units=this.members.slice(0,ground);
    for(const unit of units){unit.reset();unit.spawn();}
@@ -114,7 +122,7 @@ export class WaveDefense extends MissionEnemyWaves {
    for(const {actor,start} of this.drones.slice(0,air))actor.spawn(start);
    this.alert('north',this.flightDrones.slice(0,air));
   }
-  if(this.wave===4){
+  if(this.wave===3){
    const boss=this.walker;
    boss.spawnOrigin={x:center.x,z:WAVE_DEFENSE_BOUNDS.minZ+12};
    boss.reset();boss.root.visible=true;boss.combatUnit.alive=true;
@@ -123,10 +131,22 @@ export class WaveDefense extends MissionEnemyWaves {
    this.options.startArsenal();
    this.alert('north',[boss]);
   }
-  this.onEvent('Wave '+this.wave+' of 4 · '+['Four Bruisers','Four combat drones','Bruisers and drones','Siege Walker'][this.wave-1]);
+  const battle=this.wave===3?'Siege Walker':[
+   ground+' Bruisers',air+' combat drones',ground+' Bruisers and '+air+' drones'
+  ][this.group];
+  this.onEvent('Wave '+this.wave+' of 3 · '+battle);
+ }
+ chooseUpgrade(id,isVolt){
+  if(!this.upgradePending||!DEFENSE_UPGRADES.some(option=>option.id===id))return false;
+  if(id!=='repair'&&(!isVolt||this.upgrades.has(id)))return false;
+  if(id==='repair')this.relay.health=Math.min(this.relay.maxHealth,this.relay.health+this.relay.maxHealth*.3);
+  else this.upgrades.add(id);
+  this.upgradePending=false;
+  return true;
  }
  finish(won){
   if(this.ended)return;
+  this.upgradePending=false;
   this.phase=won?'won':'lost';
   if(!won){
    this.relay.entity.root.visible=false;
@@ -148,11 +168,14 @@ export class WaveDefense extends MissionEnemyWaves {
   for(const drone of this.flightDrones)if(drone.spawned)drone.update(dt,this.targets(drone.root.position));
   if(this.ended)return;
   if(this.phase==='active'){
-   if(this.wave===4){
+   if(this.wave===3){
     if(this.walker.dead)this.finish(true);
     else this.walker.spawnOrigin.z=Math.min(center.z-35,this.walker.spawnOrigin.z+dt*2);
    }else if(!this.getTarget()){
-    this.phase='waiting';this.remaining=30;
+    this.phase='waiting';this.remaining=countdownSeconds;
+    if(++this.group===formations.length){
+     this.wave++;this.group=0;this.upgradePending=true;
+    }
    }
   }
   this.options.status(this);

@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import {registerHooks} from 'node:module';
 import * as THREE from '../dist/vendor/three.module.js';
 import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
+import {RunnerEnergy,RUNNER_ENERGY} from '../dist/runner-energy.js';
 import {DestructionWorld} from '../dist/destruction.js';
 import {mission1CityBuildings,MISSION1_CITY_ROADS,MISSION1_HERO_START} from '../dist/evac-city-map.js';
 import {ESCORT_APPROACH} from '../dist/evac-approach.js';
@@ -70,7 +71,7 @@ waves=new WaveDefense(scene,damage,{
 function step(seconds){for(let i=0;i<Math.round(seconds*30);i++){waves.update(1/30,t+=1/30);physics.step(1/30);waves.syncWrecks();}}
 function counts(){return [waves.members,waves.flightDrones].map(group=>group.filter(e=>e.combatUnit?.alive).length);}
 function clear(){for(const actor of [...waves.members,...waves.flightDrones])if(actor.combatUnit?.alive)damage.hurt(actor.combatUnit,1e6,actor.root.position,'hull');step(.1);}
-step(.1);assert.deepEqual(counts(),[4,0]);assert(waves.members.every(r=>r.root.position.z>WAVE_DEFENSE_BOUNDS.maxZ-13));assert.equal(walker.root.visible,false);
+step(.1);assert.deepEqual(counts(),[4,0]);assert(waves.members.every(r=>r.root.position.z>WAVE_DEFENSE_BOUNDS.maxZ-25));assert.equal(walker.root.visible,false);
 const origin=waves.members[0].root.position;
 hero=[{alive:true,shapes:[{center:origin.clone()}]}];
 assert.equal(waves.targets(origin)[0],hero[0]);
@@ -83,11 +84,35 @@ waves.updateRelayFlash(.24);
 waves.updateRelayFlash(0);
 assert.equal(waves.relayFlash,0);
 assert(waves.relayGlow.color.equals(waves.relayGlowColor));
-clear();step(29);assert.equal(waves.wave,1);step(1.2);assert.deepEqual(counts(),[0,4]);assert(waves.flightDrones.every(d=>d.root.position.z<WAVE_DEFENSE_BOUNDS.minZ+28));
-waves.relay.health=waves.relay.maxHealth;const hp=waves.relay.health;for(let i=0;i<2400&&waves.relay.health===hp;i++)step(1/30);assert(waves.relay.health<hp,'drone rounds hit relay');assert.equal(result,null);
+clear();step(29);assert.equal(waves.wave,1);assert.equal(waves.group,1);
+assert.equal(waves.upgradePending,false);
+step(1.2);assert.deepEqual(counts(),[0,4]);
+assert(waves.flightDrones.filter(d=>d.combatUnit?.alive).every(d=>d.root.position.z<WAVE_DEFENSE_BOUNDS.minZ+28));
+waves.relay.health=waves.relay.maxHealth;
+const hp=waves.relay.health;
+for(let i=0;i<2400&&waves.relay.health===hp;i++)step(1/30);
+assert(waves.relay.health<hp,'drone rounds hit relay');assert.equal(result,null);
 clear();step(30);assert.deepEqual(counts(),[2,2]);
-clear();step(30);assert.equal(waves.wave,4);assert.equal(walker.root.visible,true);
+clear();assert.equal(waves.wave,2);assert(waves.upgradePending);
+assert.equal(waves.chooseUpgrade('chain',false),false);
+assert(waves.chooseUpgrade('chain',true));assert(waves.upgrades.has('chain'));
+assert.equal(waves.chooseUpgrade('repair',true),false,'one choice per intermission');
+step(29);assert.deepEqual(counts(),[0,0]);step(1);assert.deepEqual(counts(),[8,0]);
+clear();step(30);assert.deepEqual(counts(),[0,8]);
+clear();step(30);assert.deepEqual(counts(),[4,4]);
+clear();assert.equal(waves.wave,3);assert(waves.upgradePending);
+assert.equal(waves.chooseUpgrade('chain',true),false,'persistent upgrades are not purchased twice');
+waves.relay.health=waves.relay.maxHealth*.5;
+assert(waves.chooseUpgrade('repair',true));
+assert.equal(waves.relay.health,waves.relay.maxHealth*.8);
+assert.equal(walker.root.visible,false);
+step(30);assert.equal(walker.root.visible,true);assert.deepEqual(counts(),[0,0]);
 walker.dead=true;step(.1);assert.equal(result,true);
 waves.reset();assert.equal(waves.phase,'waiting');assert.deepEqual(counts(),[0,0]);
-damage.hurt(waves.relay,1e6,RELAY);step(100);assert.equal(result,false);assert.equal(waves.wave,0);
-console.log('PASS Wave Defense sequence, intermissions, enemy hits, hero priority, final Walker, reset and relay loss');
+assert.equal(waves.upgrades.size,0);
+damage.hurt(waves.relay,1e6,RELAY);step(100);assert.equal(result,false);assert.equal(waves.wave,1);
+
+const energy=new RunnerEnergy();
+assert.equal(energy.earn(2,1/60,{dashing:true}),0);
+assert.equal(energy.earn(2,1/60,{dashing:true,moving:false,dashMultiplier:1.3}),2*RUNNER_ENERGY.perMetre*1.3);
+console.log('PASS all Wave Defense formations, countdowns, upgrade eligibility, repair, dash charge, victory and loss');

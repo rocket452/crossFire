@@ -91,8 +91,8 @@ export class EvacuationBriefing {
   this.dialog.querySelector('h2').focus();
  }
  objective(){
-  if(this.defenseMode)return `<p class="evac-briefing-lead">Defend the dark blue central relay through four waves.</p>
-   <ul class="evac-objectives"><li>Intercept Bruisers and drones, then defeat the Siege Walker.</li><li>Enemies engage nearby heroes. Clear each wave to earn 30 seconds to reposition.</li><li>If the relay falls, the mission ends.</li></ul>
+  if(this.defenseMode)return `<p class="evac-briefing-lead">Defend the dark blue central relay through three waves.</p>
+   <ul class="evac-objectives"><li>Clear three groups in each of the first two waves, then defeat the Siege Walker.</li><li>Enemies engage nearby heroes. Choose an upgrade between waves.</li><li>If the relay falls, the mission ends.</li></ul>
    <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
 
   if(this.combatOnly)return `<p class="evac-briefing-lead">Take down the Siege Walker in the cyberpunk district.</p>

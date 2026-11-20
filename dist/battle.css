@@ -163,3 +163,21 @@ html[data-input-mode=desktop] .viewer.is-ninja #shuriken-meter{display:block;fle
 #relay-intro span {display:block;letter-spacing:0}
 @keyframes relay-intro-flash {from{opacity:1}to{opacity:.38}}
 @media(prefers-reduced-motion:reduce){#relay-intro{animation:none}}
+#defense-countdown {
+ position:absolute;
+ z-index:6;
+ top:12px;
+ left:12px;
+ padding:.45rem .7rem;
+ border:1px solid #527292;
+ border-radius:.4rem;
+ background:#102530ed;
+ color:#d2e9ff;
+ font:bold 14px system-ui,sans-serif;
+ font-variant-numeric:tabular-nums;
+ pointer-events:none;
+}
+.defense-upgrade-options {display:grid;gap:.65rem}
+.defense-upgrade-options button {display:grid;gap:.3rem;text-align:left;padding:.75rem}
+.defense-upgrade-options button strong {font-size:1rem}
+.defense-upgrade-options button span {font-size:.9rem;font-weight:400}

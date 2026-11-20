@@ -8,15 +8,15 @@ export const MISSION_ENEMY_TIMES=Object.freeze({bruisers:30,drones:60});
 const alertSeconds=8;
 
 export class MissionEnemyWaves {
- constructor(scene,damage,{bruiser,drone,getTargets,onEvent}){
+ constructor(scene,damage,{bruiser,drone,getTargets,onEvent,formationSize=4}){
   this.getTargets=getTargets;
   this.onEvent=onEvent;
   this.bruisers=new EvacRaiderSquad(scene,damage,{
-   ...bruiser,landing:center,count:4,lanes:[-4,4],stopZ:center.z,
+   ...bruiser,landing:center,count:formationSize,lanes:[-4,4],stopZ:center.z,
    label:'the south boulevard',getHelicopter:()=>null,getTargets
   });
   this.members=this.bruisers.members;
-  this.drones=[0,1,2,3].map(i=>{
+  this.drones=Array.from({length:formationSize},(_,i)=>{
    const x=center.x+(i%2===0?-3:3);
    const row=Math.floor(i/2);
    const y=COMBAT_DRONE.flight.altitude+2+(i%2)*6;
