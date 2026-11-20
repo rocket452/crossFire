@@ -13,7 +13,7 @@ export const COMBAT_DRONE = {
   {id:'rear-right',position:[2.38,.08,-1.62],spin:1}
  ],
  flight: {
-  altitude: 9.5, maxThrust: 3200, failedThrust: .92, reactionArm: .58,
+  altitude: 16, maxThrust: 3200, failedThrust: .92, reactionArm: .58,
   linearDamping: .18, angularDamping: .32, altitudeGain: 2.4, climbDamping: 2.6,
   approachGain: .9, speedDamping: 1.65, maxSpeed: 5, maxAcceleration: 3.8,
   attitudeGain: 13, angularGain: 5.6, yawGain: 3.5, yawDamping: 2.2,
@@ -26,9 +26,9 @@ export const COMBAT_DRONE = {
   contactCooldown: .17, fragmentCount: 3
  },
  gun: {
-  acquisition: .5, spinUp: 1, fire: 2.5, cooldown: 1.5,
+  acquisition: .5, spinUp: 1, fire: 4, cooldown: 1.5,
   acquisitionDegrees:120, firingDegrees:35, roundsPerSecond:12,
-  speed:65, spreadDegrees:3, range:30, yawLimit:105, minDown:8, maxDown:78,
+  speed:65, spreadDegrees:6, range:30, yawLimit:105, minDown:8, maxDown:78,
   damage:8, bulletRadius:.045, bulletLifetime:1.2, tracerEvery:3, projectileLimit:32
  }
 };

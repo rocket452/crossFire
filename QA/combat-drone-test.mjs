@@ -3,8 +3,9 @@ const root=new URL('../dist/',import.meta.url).href;
 const T=await import(root+'vendor/three.module.js');
 const {DestructionWorld}=await import(root+'destruction.js');
 const {UnitDamage,traceImpact}=await import(root+'combat-collision.js');
+const {COMBAT_DRONE}=await import(root+'combat-drone-config.js');
 const {CombatDrone}=await import(root+'combat-drone.js');
-function fixture(y=9.5,wall=false){
+function fixture(y=COMBAT_DRONE.flight.altitude,wall=false){
  const scene=new T.Scene(),physics=new DestructionWorld();let drone;
  const d=new UnitDamage(u=>{if(u.entity===drone)drone.destroy();});
  const events=[];
@@ -29,9 +30,12 @@ for(const rate of [30,60,120]){
  const f=fixture();
  f.step(8,[f.hero],1/rate);
  console.log('flight',rate,f.drone.root.position.toArray().map(x=>+x.toFixed(2)),f.drone.body.angularVelocity.length(),f.drone.gun.shots,f.drone.gun.hits);
- assert(Math.abs(f.drone.root.position.y-9.5)<.75);
+ assert(Math.abs(f.drone.root.position.y-COMBAT_DRONE.flight.altitude)<.75);
  assert(f.drone.gun.shots>=30&&f.drone.gun.hits>0);
 }
+const highPatrol=fixture(COMBAT_DRONE.flight.altitude+8);
+highPatrol.step(8,[highPatrol.hero]);
+assert(highPatrol.drone.gun.shots>=48,'high Mission 1 flight can still engage a ground target');
 for(const [motors,y,wall,velocity] of [
  [[0],9.5,false,0],[[1],9.5,false,0],[[2],9.5,false,0],[[3],9.5,false,0],
  [[0,1],9.5,false,0],[[0,3],9.5,false,0],[[0,1,2],9.5,false,0],[[0,1,2,3],9.5,false,0],
@@ -71,7 +75,7 @@ for(const [motors,y,wall,velocity] of [
  assert(Math.hypot(f.drone.model.turret.rotation.y-y,f.drone.model.pitch.rotation.x-x)<=T.MathUtils.degToRad(35)/60+1e-8);
  f.step(.28,[f.hero]);assert(!f.events.includes('unit'),'sideways evasion leaves the stream of fire');
  while(gun.phase==='fire')f.step(1/60,[f.hero]);
- assert.equal(gun.shots,30);assert.equal(gun.phase,'cooldown');
+ assert.equal(g.fire,4);assert.equal(g.spreadDegrees,6);assert.equal(gun.shots,48);assert.equal(gun.phase,'cooldown');
  const count=gun.shots;f.step(g.cooldown-.08,[]);assert.equal(gun.shots,count);
  f.step(.16,[]);assert.equal(gun.phase,'idle');
  const angle=gun.select([{...f.hero,shapes:[{center:new T.Vector3(0,30,4)}]}]);
@@ -80,7 +84,7 @@ for(const [motors,y,wall,velocity] of [
  f.drone.model.turret.rotation.y=0;
  f.drone.root.updateMatrixWorld(true);
  gun.fire();assert.equal(gun.shots,count,'fuselage blocks a mechanically invalid round');
- console.log('PASS acquisition, spin-up, 30-round burst, 35°/s tracking limit, sideways evasion, cooldown and self-occlusion');
+ console.log('PASS acquisition, spin-up, 48-round burst, 35°/s tracking limit, sideways evasion, cooldown and self-occlusion');
 }
 
 {
@@ -100,7 +104,7 @@ for(const [motors,y,wall,velocity] of [
  assert(f.drone.flight.forces.every(t=>t===0));
  assert(f.drone.engines.every(e=>e.health===f.drone.config.engineHealth));
  const other=new CombatDrone(f.scene,f.d,{...f.drone.options,id:'combat-drone-2'});
- other.spawn({x:-10,y:9.5,z:0});
+ other.spawn({x:-10,y:COMBAT_DRONE.flight.altitude,z:0});
  for(let i=0;i<480;i++){
   for(const drone of [f.drone,other])drone.update(1/60,[]);
   f.physics.step(1/60);
@@ -108,7 +112,7 @@ for(const [motors,y,wall,velocity] of [
  }
  assert.equal(f.drone.mode,'wreck');
  assert.equal(other.mode,'flying');
- assert(Math.abs(other.root.position.y-9.5)<.75);
+ assert(Math.abs(other.root.position.y-COMBAT_DRONE.flight.altitude)<.75);
  assert(f.physics.wrecks.length<=5);
  f.drone.reset();other.reset();
  assert.equal(f.physics.wrecks.length,0);
@@ -119,7 +123,7 @@ for(const [motors,y,wall,velocity] of [
  const f=fixture(), start=f.drone.root.position.clone();
  f.step(6,[]);
  assert(f.drone.root.position.distanceTo(start)>3,'four engines move the patrol using thrust');
- assert(Math.abs(f.drone.root.position.y-9.5)<.75);
+ assert(Math.abs(f.drone.root.position.y-COMBAT_DRONE.flight.altitude)<.75);
  assert(f.drone.flight.forces.every(t=>t>0));
 }
 

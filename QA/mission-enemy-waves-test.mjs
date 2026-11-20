@@ -48,6 +48,7 @@ assert.equal(damage.units.length,4);
 waves.update(dt,60);
 assert.equal(damage.units.length,8);
 assert(waves.flightDrones.every(r=>r.root.position.z< -45));
+assert.deepEqual(waves.flightDrones.map(r=>r.root.position.y),[18,24,18,24]);
 assert.deepEqual(waves.waveAlerts().map(a=>[a.edge,a.count]),[['north',4]]);
 assert.equal(new Set(damage.units.map(u=>u.id)).size,8);
 step(60,110);
@@ -56,6 +57,7 @@ for(const r of waves.members)assert(r.root.position.distanceTo(r.objective())<1.
 for(const drone of waves.flightDrones){
  assert.equal(drone.ingress,null,'drone finished its approach');
  assert(drone.root.position.z>18);
+ assert(drone.root.position.y>17);
  assert.equal(drone.mode,'flying');
  assert.equal(drone.contacts,0);
 }

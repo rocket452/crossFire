@@ -1,5 +1,6 @@
+import {COMBAT_DRONE} from './combat-drone-config.js?v=drone-hud-331';
 import {EvacRaiderSquad} from './evac-raider-squad.js?v=mission-waves-327';
-import {CombatDrone} from './combat-drone.js?v=mission-waves-327';
+import {CombatDrone} from './combat-drone.js?v=drone-hud-331';
 import {escortMovementBounds,ESCORT_APPROACH} from './evac-approach.js?v=315';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 
@@ -18,7 +19,7 @@ export class MissionEnemyWaves {
   this.drones=[0,1,2,3].map(i=>{
    const x=center.x+(i%2===0?-3:3);
    const row=Math.floor(i/2);
-   const y=12+(i%2)*6;
+   const y=COMBAT_DRONE.flight.altitude+2+(i%2)*6;
    const z=ESCORT_APPROACH.minZ+8+row*10;
    const actor=new CombatDrone(scene,damage,{
     ...drone,id:'combat-drone-mission-'+i,bounds:escortMovementBounds(),onEvent,
