@@ -93,7 +93,7 @@ export class EvacuationBriefing {
  objective(){
   if(this.combatOnly)return `<p class="evac-briefing-lead">Take down the Siege Walker in the cyberpunk district.</p>
    <ul class="evac-objectives"><li>Destroy its three weapons to defeat it.</li>
-   <li>Watch the radar for incoming Bruiser squads, and be ready for reinforcements.</li></ul>
+   <li>Watch the radar for Bruisers from the south and combat drones from the north.</li></ul>
    <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
   return `<p class="evac-briefing-lead">Get civilians from the subway entrance to the evacuation Chinook.</p>
    <ul class="evac-objectives"><li>Protect each group as it crosses the exposed street and boards.</li>

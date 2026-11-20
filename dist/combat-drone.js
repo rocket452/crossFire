@@ -71,6 +71,7 @@ export class CombatDrone {
   this.flight=new DroneFlight(body,this.engines,c.flight);
   this.anchor=new THREE.Vector3().copy(position);
   this.goal=this.anchor.clone();this.heading=0;
+  this.ingress=this.options.ingress?new THREE.Vector3().copy(this.options.ingress):null;
   this.stepPhysics=()=>this.flight.apply(this.goal,this.heading,this.powerCut?'wreck':this.mode,-this.physics.world.gravity.y);
   this.physics.world.addEventListener('preStep',this.stepPhysics);
   this.spawned=true;this.mode='flying';this.root.visible=true;
@@ -207,6 +208,16 @@ export class CombatDrone {
  }
  plan(targets){
   const c=this.config.flight;
+  if(this.ingress){
+   const offset=this.ingress.clone().sub(this.root.position);
+   if(offset.lengthSq()>25){
+    this.goal.copy(this.ingress);
+    this.heading=Math.atan2(offset.x,offset.z);
+    return;
+   }
+   this.anchor.copy(this.ingress);
+   this.ingress=null;
+  }
   const near=targets.reduce((best,u)=>{
    const center=u.shapes[0]?.center;
    if(!center)return best;
