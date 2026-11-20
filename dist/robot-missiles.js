@@ -3,6 +3,9 @@ import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shurike
 import * as THREE from './vendor/three.module.js';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 
+export const WALKER_SALVO_SIZE=12;
+const MAX_ACTIVE_MISSILES=2*WALKER_SALVO_SIZE;
+
 // Bounded, swept-collision missiles. An intercepted warhead has no damaging blast.
 export class RobotMissiles {
  constructor(scene,model,{redirect=()=>null,getMuzzles,getTargets,isRobotAlive,traceWorld,onImpact,onBurst=()=>{},onTrail=()=>{},onLaunch=()=>{},onSalvo=()=>{},autoFire=true,canLaunch=()=>true,cyberpunk=false}){
@@ -19,11 +22,11 @@ export class RobotMissiles {
   this.reset();
  }
  reset(){for(const m of this.missiles||[])this.scene.remove(m.mesh);this.missiles=[];this.clock=0;this.cooldown=5.2;this.pending=0;this.launchClock=0;this.launched=0;this.salvos=0;this.intercepted=0;this.impacts=0;this.expired=0;this.byHero={violet:0,volt:0,solara:0,other:0};this.sequence=0;this.targetIndex=0;}
- beginSalvo(){if(!this.canLaunch()||!this.isRobotAlive()||this.pending||this.missiles.filter(m=>m.alive).length>6||!this.getTargets().length)return false;this.pending=6;this.launchClock=0;this.salvos++;this.onSalvo();return true;}
+ beginSalvo(){if(!this.canLaunch()||!this.isRobotAlive()||this.pending||this.missiles.filter(m=>m.alive).length+WALKER_SALVO_SIZE>MAX_ACTIVE_MISSILES||!this.getTargets().length)return false;this.pending=WALKER_SALVO_SIZE;this.launchClock=0;this.salvos++;this.onSalvo();return true;}
  launch(){
   if(!this.canLaunch())return;
   const targets=this.getTargets().filter(u=>u.alive&&u.shapes?.length);if(!targets.length)return;
-  const index=this.targetIndex++,target=targets[index%targets.length],rail=(6-this.pending)%6,muzzle=this.getMuzzles()[rail];if(!muzzle)return;
+  const index=this.targetIndex++,target=targets[index%targets.length],muzzles=this.getMuzzles(),rail=(WALKER_SALVO_SIZE-this.pending)%muzzles.length,muzzle=muzzles[rail];if(!muzzle)return;
   const mesh=this.template.clone(true);const parts=[];mesh.traverse(o=>{if(o.isMesh)parts.push(o);});for(const part of parts)projectileSilhouette(part,'#ffad54');mesh.position.copy(muzzle.position);const flame=new THREE.Mesh(this.flameGeometry,this.flameMaterial);flame.position.z=this.flameOffset;mesh.add(flame);this.scene.add(mesh);
   const m={id:'siege-missile-'+(++this.sequence),alive:true,health:18,age:0,life:22,speed:8.5,radius:.36,position:mesh.position,previous:mesh.position.clone(),direction:muzzle.direction.clone().normalize(),velocity:new THREE.Vector3(),origin:mesh.position.clone(),target,targetPoint:new THREE.Vector3().copy(target.shapes[0].center),mesh,flame,trail:0,claim:null,claimUntil:0};
   mesh.quaternion.setFromUnitVectors(this.forward,m.direction);

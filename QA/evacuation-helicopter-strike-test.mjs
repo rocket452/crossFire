@@ -7,3 +7,23 @@ for(const reason of['beam','missile','plasma','stun','startup']){const f=fixture
 for(const reason of['eligibility','destroyed','death']){const f=fixture();f.strike.request(f.target);if(reason==='eligibility')f.invalidate();if(reason==='destroyed')f.working.missiles=false;if(reason==='death')f.robot.dead=true;f.strike.update();assert(!f.strike.busy);if(reason!=='death')assert.equal(f.arsenal.phase,'recovery');}
 {const f=fixture();f.strike.request(f.target);f.arsenal.phase='salvo';f.pod.pending=4;f.pod.missiles=[{alive:true}];f.invalidate();f.strike.update();assert.equal(f.pod.pending,0);assert.equal(f.arsenal.phase,'clear');assert(f.pod.missiles[0].alive);f.strike.reset();assert(!f.strike.busy);assert.equal(f.strike.overrides,0);}
 console.log('PASS out-of-rotation helicopter missile warning/salvo/resume, 2s warning, no beam/plasma/airborne overlap, startup/stun, charge cancellation, lost eligibility/destroyed pod/death, in-flight persistence and reset');
+
+const {Group,Scene,Vector3}=await import('../dist/vendor/three.module.js');
+const {RobotMissiles,WALKER_SALVO_SIZE}=await import('../dist/robot-missiles.js');
+{
+ const {robot,artillery,arsenal,strike,target}=fixture();
+ Object.assign(target,{alive:true,shapes:[{center:new Vector3(0,20,65)}]});
+ const pod=new RobotMissiles(new Scene(),{scene:new Group()},{
+  autoFire:false,getMuzzles:()=>[{position:new Vector3(0,20,0),direction:new Vector3(0,.5,1)}],
+  getTargets:()=>strike.missileTarget?[strike.missileTarget]:[],isRobotAlive:()=>true,
+  traceWorld:()=>null,onImpact:()=>assert.fail('empty flight test')
+ });
+ strike.pod=pod;
+ assert(strike.request(target));
+ arsenal.update(2,robot,pod,artillery);
+ assert.equal(pod.pending,WALKER_SALVO_SIZE);
+ for(let i=0;i<60*6;i++)pod.update(1/60,i/60);
+ assert.equal(pod.launched,12);
+ assert(pod.missiles.every(m=>m.target===target));
+ console.log('PASS Chinook override launches a full twelve-missile salvo at the helicopter');
+}
