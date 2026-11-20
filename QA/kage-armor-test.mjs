@@ -113,4 +113,30 @@ assert(actor.heldStar.visible);
 actor.shuriken.charging=false;actor.attacks.slashTime=.14;pose('Slash');
 assert(actor.blade.visible);
 if(process.env.KAGE_POSES)fs.writeFileSync(process.env.KAGE_POSES,JSON.stringify(views));
+const switching=Object.create(NinjaHero.prototype);
+Object.assign(switching,{
+ appearances:new Map(),visual:new T.Group(),starGeometry:new T.BoxGeometry(),
+ red:actor.red,dark:actor.dark,silver:actor.silver,
+ motion:{cooldown:4},shuriken:{anchor:{state:'stationary'}},
+ attacks:{heldKunai:new T.Mesh(new T.BoxGeometry(),actor.silver),stored:3},
+ pose(dt,target){assert.equal(dt,0);assert.equal(target,null);this.posed=(this.posed||0)+1;}
+});
+switching.useAppearance(armored);
+const armorCharacter=switching.character;
+const anchor=switching.shuriken.anchor;
+switching.useAppearance(classic);
+assert.equal(switching.character.triangles,1256);
+assert.equal(armorCharacter.root.parent,null);
+assert.equal(switching.attacks.heldKunai.parent,switching.character.nodes.B_R_Hand);
+assert.equal(switching.heldStar.parent,switching.character.nodes.B_R_Hand);
+switching.useAppearance(armored);
+assert.equal(switching.character,armorCharacter);
+assert.equal(switching.visual.children.length,1);
+assert.equal(switching.attacks.heldKunai.parent,armorCharacter.nodes.B_R_Hand);
+assert.equal(switching.blade.parent,armorCharacter.nodes.B_L_Hand);
+assert.equal(switching.motion.cooldown,4);
+assert.equal(switching.shuriken.anchor,anchor);
+assert.equal(switching.attacks.stored,3);
+assert.equal(switching.posed,3);
+console.log('PASS live classic/armored switching, retained gameplay state and migrated held kunai');
 console.log('PASS 17 identical source clips, 54 bones, 2,624 flat-shaded armor triangles, normalized weights, actual hand and weapon attachments, and Kage run/jump/dash/charge/slash layers');

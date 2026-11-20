@@ -62,10 +62,7 @@
 html[data-input-mode=desktop] .runner-bottom,html[data-input-mode=desktop] .pilot-bottom,html[data-input-mode=desktop] .touch-height{display:none!important}
 html[data-input-mode=desktop] .runner-mobile,html[data-input-mode=desktop] .mobile-flight-help{display:none!important}
 html[data-input-mode=desktop] .runner-desktop{display:inline!important}
-html[data-input-mode=desktop] .runner-help>.runner-desktop{display:flex!important;justify-content:center;flex-wrap:wrap;gap:9px 16px;max-width:850px;margin:0 auto;padding:11px 15px;border:1px solid #8ddde24d;border-radius:7px;background:#102e3de0;font-size:10px;letter-spacing:.25px;text-shadow:none}
-html[data-input-mode=desktop] .runner-help>.runner-desktop>span{white-space:nowrap}html[data-input-mode=desktop] .runner-help .runner-desktop kbd{display:inline-block;padding:4px 6px;margin-right:4px;border:1px solid #8ddde266;border-radius:3px;color:#f0ffff;font:600 10px monospace;background:#244854}
-html[data-input-mode=desktop] .runner-help .runner-desktop small{flex-basis:100%;font-size:10px;line-height:1.5;letter-spacing:0;color:#acd1d8}
-html[data-input-mode=desktop] .runner-help{bottom:15px;left:18px;right:18px}html[data-input-mode=desktop] .desktop-flight-help{display:inline!important}
+html[data-input-mode=desktop] .desktop-flight-help{display:inline!important}
 html[data-input-mode=touch] .runner-desktop,html[data-input-mode=touch] .desktop-flight-help{display:none!important}
 html[data-input-mode=touch] .runner-mobile,html[data-input-mode=touch] .mobile-flight-help{display:inline!important}
 
@@ -131,3 +128,21 @@ html[data-input-mode=desktop] .ninja-mobile{display:none!important}@media(max-wi
 
 /* Earned Kage dash resets: high-contrast feedback away from the aiming reticle. */
 #ninja-dash-reset{position:absolute;z-index:7;top:22%;left:50%;transform:translateX(-50%);width:max-content;max-width:85%;padding:14px 28px;text-align:center;color:#fff8d2;background:linear-gradient(110deg,#102831f2,#15505af2,#102831f2);border:2px solid #fff1a1;border-radius:8px;box-shadow:0 0 24px #60ffeaaa,inset 0 0 18px #6cffe92b;pointer-events:none;text-shadow:0 2px 8px #001b27}#ninja-dash-reset[hidden]{display:none}#ninja-dash-reset b{display:block;font-size:clamp(23px,4vw,40px);font-weight:900;letter-spacing:3px;line-height:1.1}#ninja-dash-reset span{display:block;font-size:clamp(8px,1.3vw,12px);font-weight:700;letter-spacing:1px;margin-top:7px;color:#bbfff2}#ninja-dash.dash-reset,#ninja-ability-meter.dash-reset{animation:kage-dash-reset-pulse .4s ease-in-out 4;border-color:#fff1a1;box-shadow:0 0 20px #85ffe9aa}@keyframes kage-dash-reset-pulse{50%{background-color:#366b70;box-shadow:0 0 30px #baffdfee}}@media(prefers-reduced-motion:reduce){#ninja-dash.dash-reset,#ninja-ability-meter.dash-reset{animation:none}}@media(max-height:500px){#ninja-dash-reset{top:18%;padding:8px 18px}#ninja-dash-reset b{font-size:24px}}
+
+.mission-bottom-bar{display:flex;flex-wrap:wrap;align-items:stretch;background:#163e35;color:#c8fff0}
+.mission-bottom-bar #evac-status{flex:1 1 auto;align-self:center}
+.mission-bindings,.hero-hotkeys,#shuriken-meter{display:none}
+html[data-input-mode=desktop] .viewer.is-running .mission-bindings{display:flex;flex:2 1 34rem;align-items:center;gap:.75rem;padding:.5rem .85rem;background:#102e3d;color:#d6f4ed}
+html[data-input-mode=desktop] .viewer.is-running:not(.is-ninja) .volt-hotkeys,
+html[data-input-mode=desktop] .viewer.is-ninja .ninja-hotkeys{display:flex}
+.hero-hotkeys{flex:1;flex-wrap:wrap;align-items:center;gap:.3rem .75rem;font-size:.68rem;line-height:1.2;letter-spacing:.02em}
+.hero-hotkeys>span{white-space:nowrap}
+.hero-hotkeys kbd{display:inline-block;padding:.16rem .28rem;margin-right:.16rem;border:1px solid #8ddde266;border-radius:3px;color:#f0ffff;font:600 .68rem monospace;background:#244854}
+.hero-hotkeys small{font-size:inherit;color:#acd1d8}
+html[data-input-mode=desktop] .viewer.is-ninja #shuriken-meter{display:block;flex:0 1 13rem;min-height:2.75rem}
+@media(max-width:860px){
+ .mission-bottom-bar #evac-status{flex-basis:100%}
+ html[data-input-mode=desktop] .viewer.is-running .mission-bindings{flex-basis:100%;flex-wrap:wrap;min-width:0}
+ .hero-hotkeys{flex:1 1 20rem}
+}
+@media(max-width:700px){.kage-model-picker{font-size:9px;gap:4px}}
