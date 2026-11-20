@@ -127,7 +127,8 @@ export class DroneGun {
    if(round.life<=0){this.rounds.splice(i,1);continue;}
    this.dummy.position.copy(from);
    this.dummy.quaternion.setFromUnitVectors(forward,round.direction);
-   this.dummy.scale.set(1,1,round.tracer?1.35:.17);
+   const size=c.bulletVisualScale;
+   this.dummy.scale.set(size,size,(round.tracer?1.35:.17)*size);
    this.dummy.updateMatrix();this.tracers.setMatrixAt(count++,this.dummy.matrix);
   }
   this.tracers.count=count;

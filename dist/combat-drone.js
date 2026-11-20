@@ -1,9 +1,9 @@
 import * as THREE from './vendor/three.module.js';
 import * as CANNON from './vendor/cannon-es.js';
 import {segmentBoxFraction} from './combat-collision.js';
-import {COMBAT_DRONE} from './combat-drone-config.js?v=gatling-333';
+import {COMBAT_DRONE} from './combat-drone-config.js?v=drone-bullets-337';
 import {DroneFlight} from './combat-drone-flight.js?v=320';
-import {DroneGun} from './combat-drone-gun.js?v=320';
+import {DroneGun} from './combat-drone-gun.js?v=drone-bullets-337';
 import {buildCombatDrone} from './combat-drone-model.js?v=320';
 
 const vector=values=>new CANNON.Vec3(...values);

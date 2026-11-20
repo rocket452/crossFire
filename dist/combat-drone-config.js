@@ -29,6 +29,6 @@ export const COMBAT_DRONE = {
   acquisition: .5, spinUp: 1, fire: 10, cooldown: 1.5,
   acquisitionDegrees:120, firingDegrees:35, roundsPerSecond:12,
   speed:65, spreadDegrees:6, range:30, yawLimit:105, minDown:8, maxDown:78,
-  damage:8, bulletRadius:.045, bulletLifetime:1.2, tracerEvery:3, projectileLimit:32
+  damage:8, bulletRadius:.09, bulletVisualScale:2, bulletLifetime:1.2, tracerEvery:3, projectileLimit:32
  }
 };

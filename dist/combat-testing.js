@@ -1,5 +1,5 @@
-import {CombatDrone} from './combat-drone.js?v=gatling-333';
-import {COMBAT_DRONE} from './combat-drone-config.js?v=gatling-333';
+import {CombatDrone} from './combat-drone.js?v=drone-bullets-337';
+import {COMBAT_DRONE} from './combat-drone-config.js?v=drone-bullets-337';
 import {AstraRonin} from './astra-ronin.js?v=310';
 import {Mireguard} from './mireguard.js?v=bruiser-range-281';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-pairs-260';

@@ -94,6 +94,11 @@ for(const [motors,y,wall,velocity] of [
  gun.options.redirect=()=>({position:new T.Vector3(9,2,1),direction:new T.Vector3(1,0,0)});
  gun.advance(1/60);
  assert.deepEqual(gun.rounds[0].position.toArray(),[9,2,1]);assert.equal(gun.redirects,1);
+ assert.equal(gun.config.bulletRadius,.09);
+ const matrix=new T.Matrix4();gun.tracers.getMatrixAt(0,matrix);
+ const scale=new T.Vector3().setFromMatrixScale(matrix);
+ assert(Math.abs(scale.x-2)<1e-6&&Math.abs(scale.y-2)<1e-6&&Math.abs(scale.z-2.7)<1e-6);
+
  gun.options.redirect=()=>null;
  const wall=f.physics.addChunk({type:'wall',building:'shot-wall',floor:0,x:10,y:2,z:1,size:[.3,3,3]});
  gun.advance(1/60);assert(f.events.includes('building'));
