@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=hero-balance-335';
+import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=hazard-red-355';
 import {SpiderRobotModel} from './spider-robot-model.js?v=wreck-occlusion-273';
 const angle=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 export const BRUISER_RANGE=Object.freeze({heroRange:RAIDER_COMBAT.heroRange*2,weaponRange:RAIDER_COMBAT.weaponRange*2});

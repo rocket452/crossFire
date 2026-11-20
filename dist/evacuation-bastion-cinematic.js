@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';
+import {RaiderEnergyEffects} from './raider-energy-effects.js?v=hazard-red-355';
 const UP=new THREE.Vector3(0,1,0),FORWARD=new THREE.Vector3(0,0,1);
 const smooth=(a,b,t)=>THREE.MathUtils.smoothstep(t,a,b);
 
@@ -9,7 +9,7 @@ export class EvacuationBastionCinematic {
   Object.assign(this,{scene,camera,controls,transport,violet,rift,getPlayer,clearInput,isSelected,onComplete});this.config=transport.config.cinematic;this.active=false;this.played=false;this.elapsed=0;this.guests=[];
   this.group=new THREE.Group();this.group.name='Bastion rescue cinematic';scene.add(this.group);
   this.shield=violet.shield.clone(true);this.shield.traverse(n=>{if(n.isMesh)n.material=n.material.clone();});this.shieldMaterial=this.shield.children[0].material;this.group.add(this.shield);
-  this.effects=new RaiderEnergyEffects(this.group);this.geometry=new THREE.IcosahedronGeometry(1,1);this.material=new THREE.MeshBasicMaterial({color:'#caffed',toneMapped:false});this.bolts=[];
+  this.effects=new RaiderEnergyEffects(this.group);this.geometry=new THREE.IcosahedronGeometry(1,1);this.material=new THREE.MeshBasicMaterial({color:'#ff414b',toneMapped:false});this.bolts=[];
   this.portal=new THREE.Group();this.group.add(this.portal);const portalMat=new THREE.MeshBasicMaterial({color:'#9dffbf',transparent:true,opacity:.9,depthWrite:false,toneMapped:false});
   for(const radius of[1.8,2.1])this.portal.add(new THREE.Mesh(new THREE.TorusGeometry(radius,.08,5,64),portalMat));
   this.portalDisc=new THREE.Mesh(new THREE.CircleGeometry(1.8,48),new THREE.MeshBasicMaterial({color:'#165b56',transparent:true,opacity:.8,side:THREE.DoubleSide,depthWrite:false}));this.portal.add(this.portalDisc);

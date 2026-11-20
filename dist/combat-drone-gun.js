@@ -11,7 +11,7 @@ export class DroneGun {
   Object.assign(this,{model,config,options});
   const geometry=new THREE.BoxGeometry(.065,.065,1);
   const material=markVisibleProjectile(new THREE.MeshBasicMaterial({
-   color:new THREE.Color('#ffce78').multiplyScalar(1.65)
+   color:new THREE.Color('#ff343e').multiplyScalar(1.65)
   }));
   this.tracers=new THREE.InstancedMesh(geometry,material,config.projectileLimit);
   this.tracers.name='Drone minigun ammunition';this.tracers.frustumCulled=false;

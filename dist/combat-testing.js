@@ -1,13 +1,13 @@
-import {CombatDrone} from './combat-drone.js?v=drone-bullets-337';
+import {CombatDrone} from './combat-drone.js?v=hazard-red-355';
 import {COMBAT_DRONE} from './combat-drone-config.js?v=drone-bullets-337';
-import {AstraRonin} from './astra-ronin.js?v=310';
-import {Mireguard} from './mireguard.js?v=bruiser-range-281';
+import {AstraRonin} from './astra-ronin.js?v=hazard-red-355';
+import {Mireguard} from './mireguard.js?v=hazard-red-355';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-pairs-260';
-import {BastionTesting} from './bastion-testing.js?v=gatling-333';
-import {ExperimentalRobot} from './experimental-robots.js?v=bruiser-range-281';
+import {BastionTesting} from './bastion-testing.js?v=hazard-red-355';
+import {ExperimentalRobot} from './experimental-robots.js?v=hazard-red-355';
 import * as THREE from './vendor/three.module.js';
-import {SpiderBruiser} from './spider-bruiser.js?v=hero-balance-335';
-import {RaiderEnergyEffects} from './raider-energy-effects.js?v=raider-energy-86';
+import {SpiderBruiser} from './spider-bruiser.js?v=hazard-red-355';
+import {RaiderEnergyEffects} from './raider-energy-effects.js?v=hazard-red-355';
 // Reuses the live drone, projectile, damage and wreck systems; no mission spawning.
 export class CombatTesting {
  constructor(scene,damage,{getHeroes,readConfig,bastionConfig,...options}){

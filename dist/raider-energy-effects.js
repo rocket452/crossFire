@@ -3,7 +3,7 @@ import * as THREE from './vendor/three.module.js';
 // One shared, bounded visual pool for the entire squad. No lights, textures or damage.
 export const RAIDER_ENERGY=Object.freeze({sparks:384,rings:96,halos:64,trailRate:30,trailLife:.34,impactLife:.48});
 export class RaiderEnergyEffects {
- constructor(scene,{sparks='#ffdba0',rings='#ff8e39',halos='#ff431b',intensity=1}={}){
+ constructor(scene,{sparks='#ff545e',rings='#ff303d',halos='#d90923',intensity=1}={}){
   this.scene=scene;this.particles=[];this.bursts=[];this.time=0;this.sequence=0;this.boltCount=0;this.dummy=new THREE.Object3D();this.forward=new THREE.Vector3(0,0,1);
   const material=(color,opacity)=>new THREE.MeshBasicMaterial({color:new THREE.Color(color).multiplyScalar(intensity),transparent:true,opacity,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
   this.sparks=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),material(sparks,.85),RAIDER_ENERGY.sparks);
