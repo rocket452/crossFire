@@ -4,7 +4,9 @@ import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-eva
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
 
-export const RELAY={id:'central-relay',name:'Central relay',...center,floors:24,footprint:20,tint:'#163963',solidPaint:true};
+import {RELAY_TIERS,makeRelayTrim} from './relay-design.js?v=347';
+
+export const RELAY={id:'central-relay',name:'Central relay',...center,floors:24,footprint:20,tint:'#c83d78',asset:'relay',solidPaint:true};
 const mapScale=1.3;
 const mapX=x=>center.x+(x-center.x)*mapScale;
 const mapZ=z=>center.z+(z-center.z)*mapScale;
@@ -64,22 +66,43 @@ export class WaveDefense extends MissionEnemyWaves {
   const root=new THREE.Group();
   root.position.set(center.x,0,center.z);
   scene.add(root);
-  const glow=this.relayGlow=new THREE.MeshBasicMaterial({color:'#549df5',toneMapped:false});
+  const glow=this.relayGlow=new THREE.MeshBasicMaterial({color:'#ff65ac',toneMapped:false,side:THREE.DoubleSide});
   this.relayGlowColor=glow.color.clone();
   this.relayFlashColor=new THREE.Color('#ff2424');
   const roof=RELAY.floors*3;
   const plaza=new THREE.Mesh(new THREE.RingGeometry(32,32.35,64),glow);
   plaza.rotation.x=-Math.PI/2;plaza.position.y=.105;root.add(plaza);
-  for(const y of [10,30,50,roof+.5,roof+3]){
-   const ring=new THREE.Mesh(new THREE.TorusGeometry(y>roof?3.4:RELAY.footprint*.6,.22,5,32),glow);
-   ring.rotation.x=Math.PI/2;ring.position.y=y;root.add(ring);
+  const trim=makeRelayTrim();
+  let tierTop=0;
+  for(const tier of RELAY_TIERS){
+   tierTop+=tier.height;
+   const band=new THREE.Mesh(trim,glow);
+   band.position.y=tierTop;
+   band.scale.set(tier.width*.509,1,tier.width*.509);
+   root.add(band);
   }
-  const beacon=new THREE.Mesh(new THREE.OctahedronGeometry(2.4),glow);
-  beacon.position.y=roof+6;root.add(beacon);
+  const antenna=new THREE.Mesh(new THREE.CylinderGeometry(.35,1.6,8,4),glow);
+  for(const x of [-6.5,6.5]){
+   const mast=antenna.clone();
+   mast.position.set(x,roof+3.5,0);
+   mast.rotation.y=Math.PI/4;
+   mast.rotation.z=-Math.sign(x)*.18;
+   root.add(mast);
+  }
+  const halo=new THREE.Mesh(new THREE.TorusGeometry(3.7,.22,6,32),glow);
+  halo.position.y=roof+4;
+  root.add(halo);
+  const core=new THREE.Mesh(new THREE.OctahedronGeometry(2.1),glow);
+  core.position.y=roof+4;
+  root.add(core);
   this.relay=damage.add(RELAY.id,'structure',{root,evac:true},3200);
-  const halfWidth=RELAY.footprint/2+.3;
-  this.relay.shapes=[{center:new THREE.Vector3(center.x,9.2,center.z),half:{x:halfWidth,y:9.2,z:halfWidth}},
-   {center:new THREE.Vector3(center.x,18.4+(roof-18.4)/2,center.z),half:{x:halfWidth,y:(roof-18.4)/2,z:halfWidth}}];
+  let tierBase=0;
+  this.relay.shapes=RELAY_TIERS.map(tier=>{
+   const half={x:tier.width/2+.3,y:tier.height/2,z:tier.width/2+.3};
+   const shape={center:new THREE.Vector3(center.x,tierBase+half.y,center.z),half};
+   tierBase+=tier.height;
+   return shape;
+  });
   this.reset();
  }
  reset(){

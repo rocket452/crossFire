@@ -1,5 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {SpatialChunkBatch} from './spatial-chunk-batch.js?v=overall-performance-238';
+import {makeRelayAsset} from './relay-design.js?v=347';
 import {ASSET_CITY} from './asset-city-config.js?v=311';
 
 // Imported geometry is the visible destructible geometry. No legacy tower shell
@@ -9,7 +10,7 @@ export class AssetCity {
   this.textures = new Map();
   this.signMaterials = [];
   this.signLights = [];
-  this.manifest=manifest;this.templates=new Map();this.attachments=new Map();
+  this.assets={...manifest.assets};this.templates=new Map();this.attachments=new Map();
   asset.scene.updateMatrixWorld(true);
   asset.scene.traverse(o=>{if(o.isMesh){
    const geometry=o.geometry.clone().applyMatrix4(o.matrixWorld);
@@ -20,11 +21,12 @@ export class AssetCity {
    if(!this.templates.has(node))throw Error('City asset missing mesh: '+node);
   }
  }
- layout(base){return{...base,buildings:ASSET_CITY.buildings.map(b=>({...b,floors:(this.manifest.assets[b.asset].height+.08)/3}))};}
+ layout(base){return{...base,buildings:ASSET_CITY.buildings.map(b=>({...b,floors:(this.assets[b.asset].height+.08)/3}))};}
  fitEvacuationBuildings(buildings){
   return buildings.map((b,i)=>{
-   const asset=b.floors>=6?'tower':'shop';
-   const {footprint,height}=this.manifest.assets[asset];
+   const asset=b.asset??(b.floors>=6?'tower':'shop');
+   if(asset==='relay')this.assets.relay??=makeRelayAsset(this.templates);
+   const {footprint,height}=this.assets[asset];
    const width=b.footprint??10;
    return {...b,asset,yaw:(i%4)*Math.PI/2,
     assetScale:[width/footprint[0],(b.floors*3-.08)/height,width/footprint[1]]};
@@ -37,18 +39,23 @@ export class AssetCity {
    records.set(b.id,b);
    const scale=b.assetScale??[1,1,1];
    const sectionScale=new THREE.Vector3(...scale);
-   for(const p of this.manifest.assets[b.asset].pieces){
+   for(const p of this.assets[b.asset].pieces){
     const local=new THREE.Vector3(...p.center).multiply(sectionScale).applyAxisAngle(new THREE.Vector3(0,1,0),b.yaw);
     const key=(b.solidPaint?'city-painted-':'city-')+p.node;
     if(!lists.has(key))lists.set(key,[]);
-    lists.get(key).push({type:p.type,visualKey:key,building:b.id,floor:p.floor,x:b.x+local.x,y:local.y+.08,z:b.z+local.z,yaw:b.yaw,size:p.size.map((n,i)=>n*scale[i]),scale,tint:b.tint});
+    lists.get(key).push({type:p.type,visualKey:key,building:b.id,floor:p.floor,x:b.x+local.x,y:local.y+.08,z:b.z+local.z,yaw:b.yaw,size:p.size.map((n,i)=>n*scale[i]),scale,tint:p.tint??b.tint});
    }
   }
   for(const [key,list]of lists){
    const painted=key.startsWith('city-painted-');
    const template=this.templates.get(key.slice(painted?'city-painted-'.length:5));
    const material=painted?template.material.clone():template.material;
-   if(painted){material.map=null;material.vertexColors=false;material.color.set(0xffffff);}
+   if(painted){
+    material.map=null;material.vertexColors=false;material.color.set(0xffffff);
+    if(key.startsWith('city-painted-relay-')){
+     material.emissive.set('#440927');material.emissiveIntensity=.55;
+    }
+   }
    const batch=new SpatialChunkBatch(scene,template.geometry,material,list,{buildingPosition:c=>records.get(c.building)});
    batches[key]=batch;
    for(const [index,spec]of list.entries()){
@@ -71,13 +78,13 @@ export class AssetCity {
  }
  addSigns(scene,dummy){
   for(const [variant,name]of ['Advertising_5','Advertising_6','Advertising_7'].entries()){
-   const buildings=this.buildings.filter((b,i)=>i%3===variant),template=this.templates.get(name),material=template.material.clone();
+   const buildings=this.buildings.filter((b,i)=>b.asset!=='relay'&&i%3===variant),template=this.templates.get(name),material=template.material.clone();
    this.signMaterials.push(material);
    material.emissive.set(variant===1?'#6d240a':'#083f3f');material.emissiveIntensity=.35;
    const batch=new THREE.InstancedMesh(template.geometry,material,buildings.length);
    batch.name=name+' mounted signs';batch.castShadow=true;batch.receiveShadow=true;batch.frustumCulled=false;
    buildings.forEach((b,index)=>{
-    const spec=this.manifest.assets[b.asset];
+    const spec=this.assets[b.asset];
     const [,sy,sz]=b.assetScale??[1,1,1];
     const local=new THREE.Vector3(0,(b.asset==='tower'?13:1.8)*sy,spec.footprint[1]/2*sz+.16).applyAxisAngle(new THREE.Vector3(0,1,0),b.yaw);
     const position=new THREE.Vector3(b.x+local.x,local.y+.08,b.z+local.z);
@@ -98,7 +105,8 @@ export class AssetCity {
   const previous = this.textures.get(slot);
   const materials = slot.startsWith('building')
    ? Object.entries(this.batches)
-     .filter(([key]) => slot!=='buildingColor'||!key.startsWith('city-painted-'))
+     .filter(([key]) => !key.startsWith('city-painted-relay-')&&
+      (slot!=='buildingColor'||!key.startsWith('city-painted-')))
      .map(([,batch]) => batch.material)
    : this.signMaterials;
   for (const material of materials) {

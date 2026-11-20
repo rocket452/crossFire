@@ -45,7 +45,7 @@ export class HeroMinimap {
   if(data.relay)entries.push({...data.relay,kind:'relay',label:'Central relay · defend this building'});
   const live=new Set(entries.map(e=>e.id));for(const[id,m]of this.nodes)if(!live.has(id)){m.node.remove();this.nodes.delete(id);}
   for(const entry of entries){let marker=this.nodes.get(entry.id);if(!marker){marker=this.makeMarker(entry);this.nodes.set(entry.id,marker);}marker.entry=entry;marker.title.textContent=entry.label;marker.node.classList.toggle('new-wave',entry.kind==='enemy'&&waveEnemies.has(entry.id));marker.node.classList.toggle('targeted',entry.kind==='civilian'&&!!entry.targeted);marker.node.setAttribute('data-targeted',String(!!entry.targeted));}
-  this.root.setAttribute('aria-label',`Rotating hero minimap. ${people.length} civilians on the ground; ${enemies.length} enemies. Small yellow circles show civilian groups; flashing red circles warn of targeted groups; red diamonds show enemies; red crosshairs show impending plasma impacts; green H marks evacuation. Up follows the camera. Distant groups stay at the rim; arrows mark other distant units.${data.relay?' The blue tower marks the central relay.':''}${latest?' Enemy wave incoming: '+latest.count+' Bruiser'+(latest.count===1?'':'s')+' from '+latest.edge+'.':''}`);
+  this.root.setAttribute('aria-label',`Rotating hero minimap. ${people.length} civilians on the ground; ${enemies.length} enemies. Small yellow circles show civilian groups; flashing red circles warn of targeted groups; red diamonds show enemies; red crosshairs show impending plasma impacts; green H marks evacuation. Up follows the camera. Distant groups stay at the rim; arrows mark other distant units.${data.relay?' The magenta tower marks the central relay.':''}${latest?' Enemy wave incoming: '+latest.count+' Bruiser'+(latest.count===1?'':'s')+' from '+latest.edge+'.':''}`);
  }
  makeMarker(entry){
   const node=svg('g',{'data-kind':entry.kind,'data-id':entry.id,class:'minimap-marker '+entry.kind},this.markers),title=svg('title',{},node);title.textContent=entry.label;
@@ -60,8 +60,8 @@ export class HeroMinimap {
   else if(entry.kind==='pickup'){svg('circle',{r:5,fill:'#24392e',stroke:'#e5c874'},node);const number=svg('text',{class:'minimap-pickup-number'},node);number.textContent=entry.number||'';}
   else if(entry.kind==='exit')svg('path',{d:'M-4 6V-7H6L2 -2H-4Z'},node);
   else if(entry.kind==='relay'){
-   svg('circle',{r:12,fill:'#102831',stroke:'#6eacff','stroke-width':2},node);
-   svg('path',{d:'M-6 6H6V3H3V-3L0-8L-3-3V3H-6Z',fill:'#9dc8ff'},node);
+   svg('circle',{r:12,fill:'#102831',stroke:'#ff73b6','stroke-width':2},node);
+   svg('path',{d:'M-7 7H7V4H4V-2H6V-8L3-6V-4H-3V-6L-6-8V-2H-4V4H-7Z',fill:'#ffc0df'},node);
   }
   else if(entry.kind==='ally')svg('circle',{r:2.6,class:'minimap-symbol'},node);
   else if(entry.kind==='dropship'){svg('circle',{r:14,fill:'none',stroke:'#ff9299','stroke-width':2},node);svg('circle',{r:11,fill:'#ff1836',stroke:'#650715','stroke-width':1.5},node);}
