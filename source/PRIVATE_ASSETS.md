@@ -115,3 +115,13 @@ The model contains 2,276 triangles, the original 53 joints, and the 17 licensed 
 Place the GLB in `dist/city-assets/licensed-characters/volt-armored.glb` for QA
 and force-add it only on `site-licensed-assets`. Run
 `node QA/volt-armor-test.mjs` to check the rig, clips, and lightning attachment points.
+
+## Frog Ninja Kage (revision 356)
+
+Generate from the private armored Kage asset with Python and NumPy using
+`python source/build_kage_frog.py /private/kage-armored.glb /private/kage-frog.glb`.
+Place the GLB alongside the armored model under `dist/city-assets/licensed-characters/`.
+Keep the generated mesh and its embedded animation data on the private build branch.
+Run `node QA/kage-armor-test.mjs --frog` to exercise the model with the Kage controller.
+The model picker supports Frog Ninja, Armored, and Classic, with `?kage=frog`
+as a direct override.

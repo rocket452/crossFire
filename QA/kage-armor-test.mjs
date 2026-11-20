@@ -13,12 +13,14 @@ async function load(name){
  const file=fs.readFileSync(new URL('../dist/city-assets/licensed-characters/'+name,import.meta.url));
  return new GLTFLoader().parseAsync(file.buffer.slice(file.byteOffset,file.byteOffset+file.byteLength),'');
 }
-const [classic,armored]=await Promise.all([load('humanoid.glb'),load('kage-armored.glb')]);
+const frog=process.argv.includes('--frog');
+const [classic,armored]=await Promise.all([load('humanoid.glb'),load(frog?'kage-frog.glb':'kage-armored.glb')]);
 assert.equal(armored.animations.length,17);
 for(const [index,clip]of armored.animations.entries()){
  const original=classic.animations[index];
  assert.equal(clip.name,original.name);
  assert.equal(clip.duration,original.duration);
+ assert.equal(clip.tracks.length,original.tracks.length);
  for(const [i,track]of clip.tracks.entries()){
   const old=original.tracks[i];
   assert.equal(track.name,old.name);
@@ -38,8 +40,12 @@ const ch=actor.character;
 assert.deepEqual(ch.root.scale.toArray(),[1.30,1,1.30]);
 assert.equal(ch.root.getWorldPosition(new T.Vector3()).y,0,'proportion changes keep the rig origin at the feet');
 assert.equal(ch.bones.length,54);
-assert.equal(ch.triangles,2624);
-assert(ch.meshes.some(m=>m.material.name==='Ice blue visor'&&m.material.emissiveIntensity>1));
+assert.equal(ch.triangles,frog?7820:2624);
+if(frog){
+ for(const name of ['Leaf green skin','Amber iris','Midnight face wrap','Cerulean crest'])
+  assert(ch.meshes.some(m=>m.material.name===name));
+}
+else assert(ch.meshes.some(m=>m.material.name==='Ice blue visor'&&m.material.emissiveIntensity>1));
 for(const mesh of ch.meshes){
  const weights=mesh.geometry.attributes.skinWeight,indices=mesh.geometry.attributes.skinIndex;
  for(let i=0;i<weights.count;i++){
@@ -137,5 +143,5 @@ assert.equal(switching.motion.cooldown,4);
 assert.equal(switching.shuriken.anchor,anchor);
 assert.equal(switching.attacks.stored,3);
 assert.equal(switching.posed,3);
-console.log('PASS live classic/armored switching, retained gameplay state and migrated held kunai');
-console.log('PASS 17 identical source clips, 54 bones, 2,624 flat-shaded armor triangles, normalized weights, actual hand and weapon attachments, and Kage run/jump/dash/charge/slash layers');
+console.log('PASS live Kage model switching, retained gameplay state and migrated held kunai');
+console.log('PASS 17 identical source clips, 54 bones, model geometry, normalized weights, actual hand and weapon attachments, and Kage run/jump/dash/charge/slash layers');
