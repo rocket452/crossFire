@@ -96,3 +96,13 @@ Revision 313 adds the Buildings_002 and Props textures from Max Parata’s
 FreeSample.zip. The four optimized WebP files belong alongside the city GLB
 on the private build branch. Regenerate them using the instructions in
 ASSET_CITY_TEST.md. Keep the source ZIP and original PNGs in private storage.
+
+## Armored Kage (revision 323)
+
+The reference FBX stays outside the public checkout. Run Blender with
+`--factory-startup --disable-autoexec -b --python source/rig_kage_armor.py -- /private/kage_reference.fbx /private/humanoid.glb /private/kage-armored.glb`.
+The output embeds the licensed humanoid animation data. Place it in
+`dist/city-assets/licensed-characters/kage-armored.glb` for local testing
+and force-add it only on `site-licensed-assets`. Run
+`node QA/kage-armor-test.mjs` with both runtime models available.
+Use `?kage=classic` to select the original model.

@@ -8,7 +8,7 @@ import {ShurikenEffects} from './shuriken-effects.js?v=uploaded-shuriken-283';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 import {HeroHurt} from './hero-hurt.js?v=hero-hurt-118';
 import * as THREE from './vendor/three.module.js';
-import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
+import {HumanoidCharacter} from './humanoid-character.js?v=kage-armor-323';
 import {NinjaMotion,NINJA} from './ninja-motion.js?v=kage-short-float-285';
 import {terrainHeight} from './runner-motion.js?v=overall-performance-238';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
@@ -30,9 +30,13 @@ export class NinjaHero {
  throwSmoke(atFeet=false){return this.smokeBombs.throw(atFeet?{aim:this.character.hand('R').addScaledVector(UP,-5)}:{});}
  art(parent,geometry,material,position){const m=new THREE.Mesh(geometry,material);m.position.set(...position);m.castShadow=true;parent.add(m);return m;}
  buildArt(){
-  const head=this.character.nodes.B_Head;this.art(head,new THREE.BoxGeometry(.40,.065,.38),this.red,[0,.18,0]);this.art(head,new THREE.BoxGeometry(.36,.17,.045),this.dark,[0,.035,.19]);
-  for(const x of[-.095,.095])this.art(head,new THREE.BoxGeometry(.075,.026,.035),this.silver,[x,.145,.205]);
-  this.scarf=new THREE.Group();this.scarf.position.set(-.13,.14,-.14);head.add(this.scarf);for(let i=0;i<2;i++)this.art(this.scarf,new THREE.BoxGeometry(.11,.035,.48-i*.12),this.red,[i*.13,-i*.08,-.25]);
+  const armoredScarf=this.character.nodes.B_KageScarf;
+  if(armoredScarf)this.scarf=armoredScarf;
+  else{
+   const head=this.character.nodes.B_Head;this.art(head,new THREE.BoxGeometry(.40,.065,.38),this.red,[0,.18,0]);this.art(head,new THREE.BoxGeometry(.36,.17,.045),this.dark,[0,.035,.19]);
+   for(const x of[-.095,.095])this.art(head,new THREE.BoxGeometry(.075,.026,.035),this.silver,[x,.145,.205]);
+   this.scarf=new THREE.Group();this.scarf.position.set(-.13,.14,-.14);head.add(this.scarf);for(let i=0;i<2;i++)this.art(this.scarf,new THREE.BoxGeometry(.11,.035,.48-i*.12),this.red,[i*.13,-i*.08,-.25]);
+  }
   this.heldStar=this.art(this.character.nodes.B_R_Hand,this.starGeometry,this.silver,[0,.035,.08]);this.heldStar.scale.setScalar(.7/NINJA.shurikenScale);
   this.blade=this.art(this.character.nodes.B_L_Hand,new THREE.BoxGeometry(.055,.9,.025),this.silver,[0,.4,.04]);this.blade.visible=false;
  }
@@ -91,7 +95,8 @@ export class NinjaHero {
   if(land>0){n.B_L_Thigh.rotateX(-.3*land);n.B_R_Thigh.rotateX(-.3*land);n.B_L_Calf.rotateX(.5*land);n.B_R_Calf.rotateX(.5*land);n.B_Spine1?.rotateX(-.1*land);}
   const pitch=this.motion.active?.35:this.wallPose>0?-.2*Math.sin(this.wallPose/.35*Math.PI):airborne?-.06*Math.min(1,speed/NINJA.airSpeed)-.1*tuck:0,blend=dt?1-Math.exp(-16*dt):1;
   this.visual.rotation.z+=(.05*tuck-this.visual.rotation.z)*blend;this.visual.rotation.x+=(pitch-this.visual.rotation.x)*blend;this.visual.position.y=-.13*land;
-  if(!airborne||this.motion.active)this.somersault=0;const flipProgress=1-this.somersault/.5;this.somersaultPivot.rotation.x=this.somersault>0?Math.PI*2*THREE.MathUtils.smoothstep(flipProgress,0,1):0;this.scarf.rotation.x=-.2-Math.min(1,speed/NINJA.runSpeed)*.65+Math.sin(this.time*17)*.1;this.scarf.rotation.y=Math.sin(this.time*10)*.18;
+  if(!airborne||this.motion.active)this.somersault=0;const flipProgress=1-this.somersault/.5;this.somersaultPivot.rotation.x=this.somersault>0?Math.PI*2*THREE.MathUtils.smoothstep(flipProgress,0,1):0;const scarfBend=.18+Math.min(1,speed/NINJA.runSpeed)*.65;
+  this.scarf.rotation.x=(this.scarf.isBone?scarfBend:-scarfBend)+Math.sin(this.time*17)*.1;this.scarf.rotation.y=Math.sin(this.time*10)*.18;
   this.root.updateMatrixWorld(true);if((this.throwPose>0||this.shuriken?.charging||this.attacks?.loading)&&target){const handTarget=this.root.position.clone().add(new THREE.Vector3(0,1.5,0)).lerp(target,.1);this.character.arm('R',handTarget);}if(this.motion.active){const point=this.root.localToWorld(new THREE.Vector3(-.5,1.7,1));this.character.arm('L',point);}this.heldStar.visible=this.throwPose<=0&&!!this.shuriken?.charging;if(this.attacks?.slashTime>0){const t=1-this.attacks.slashTime/this.shurikenConfig.slash.effectSeconds;n.B_Spine1?.rotateY(Math.sin(t*Math.PI)*.65);n.B_Spine1?.rotateX(-Math.asin(this.attacks.slashDirection.y)*.3);this.character.arm('L',this.attacks.slashPoint(new THREE.Vector3(Math.sin((t-.5)*Math.PI)*2,.4,1.3)));}this.blade.visible=this.motion.active||this.shurikenEffects?.strikeTime>0||this.attacks?.slashTime>0;this.root.updateMatrixWorld(true);
  }
  renderEffects(dt){
