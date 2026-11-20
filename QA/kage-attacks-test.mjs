@@ -24,3 +24,20 @@ t=setup();const edge=t.enemy(8,6);edge.shapes[0].half={x:3,y:1,z:3};assert(t.a.s
 t=setup();const far=t.enemy(0,9.5);far.shapes[0].half={x:.1,y:.1,z:.1};assert(t.a.slash());assert.equal(far.health,1000,'cone end cap remains at nine metres');
 t=setup();const multi=t.enemy(0,6);multi.shapes.push({...multi.shapes[0],part:'head',center:{x:0,y:2,z:6}});assert(t.a.slash());assert.equal(multi.health,840,'one hit per enemy even across multiple shapes');
 console.log('PASS 90-degree circular cone: eight radial directions, outside-angle rejection, large collider edge intersection, finite depth and no duplicate shape hits');
+
+const {NinjaMotion}=await import('../dist/ninja-motion.js');
+for(const target of [true,false]){
+ t=setup();const m=t.h.motion=new NinjaMotion();m.body.position={x:0,y:11,z:0};m.body.mode='air';m.jumps=1;
+ t.h.root.position.set(0,11,0);t.h.aim=()=>new THREE.Vector3(0,0,0);
+ if(target)t.enemy(0,0).shapes[0].center.y=6;
+ assert(t.a.slash()&&m.fallingCut);let impactY,peak;
+ for(let i=0;i<80;i++){
+  const cutting=!!m.fallingCut;m.step({},1/120,[]);
+  if(cutting&&!m.fallingCut){impactY=peak=m.position.y;if(!target)assert(Math.abs(impactY-3)<1e-5);}
+  if(impactY!==undefined)peak=Math.max(peak,m.position.y);
+ }
+ if(target){assert.equal(t.units[0].health,840);assert(Math.abs(peak-impactY-2)<.1);}
+ else assert.equal(m.mode,'ground');
+ assert.equal(m.resets,0);
+}
+console.log('PASS falling cut contacts once, rebounds two metres, misses end after eight metres and fall to ground.');

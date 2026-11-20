@@ -35,12 +35,29 @@ export class KageAttacks {
   for(const shape of unit.shapes){const along=THREE.MathUtils.clamp(new THREE.Vector3().copy(shape.center).sub(center).dot(this.slashDirection),0,c.range),axisPoint=center.clone().addScaledVector(this.slashDirection,along);for(const point of[axisPoint,end])accept(h.shurikenWorld.nearest({shapes:[shape]},point));}return best;
  }
  clearLine(center,point){const hit=this.hero.shurikenWorld.flightSolid(center,point,0,true);return !hit||hit.t>=.97;}
- slash(){if(this.slashCooldown>0)return false;const h=this.hero,c=this.config.slash,center=h.root.position.clone().add(new THREE.Vector3(0,c.height,0));this.slashCooldown=c.cooldown;this.slashTime=c.effectSeconds;this.slashes++;this.lastSlashHits=0;this.captureSlashAim(center);this.slashOrigin.copy(center);
+ slash(){if(this.slashCooldown>0)return false;const h=this.hero,c=this.config.slash,center=h.root.position.clone().add(new THREE.Vector3(0,c.height,0));this.slashCooldown=c.cooldown;this.slashTime=c.effectSeconds;this.slashes++;this.lastSlashHits=0;this.captureSlashAim(center);this.slashOrigin.copy(center);this.fallingSwing=false;
+  const cut=c.fallingCut;
+  if(h.motion?.mode==='air'&&!h.motion.active&&this.slashDirection.y<=-Math.sin(cut.minDownAngle*Math.PI/180)){
+   this.fallingSwing=true;h.motion.startFallingCut(this.slashDirection,cut,(from,to)=>this.fallingStrike(from,to));
+   h.shurikenEffects.tone(this.config.feedback.backstabHz);
+   return true;
+  }
   for(const unit of h.getDashEnemies()){if(!unit.alive||unit.dashPhased)continue;const nearest=this.coneHit(unit,center);if(!nearest)continue;h.hit({kind:'unit',unit,part:nearest.part,point:nearest.point},c.damage,'ninja-slash');this.lastSlashHits++;}
   for(const missile of h.getAttackThreats()){if(!missile.alive)continue;const point=new THREE.Vector3().copy(missile.position);if(this.inCone(point,center)&&this.clearLine(center,point)){h.hit({kind:'missile',missile,point},c.damage,'ninja-slash');this.lastSlashHits++;}}
   // Environment hits use the same direct-hit callback; no damage through a wall.
   const enemySections=new Set(h.getDashEnemies().flatMap(u=>u.entity?.sections||[]));for(const section of h.getSections()){if(section.hidden||section.collisionDisabled||enemySections.has(section))continue;const shape={center:section.body?.position||section,rotation:section.body?.quaternion,half:{x:section.size[0]/2,y:section.size[1]/2,z:section.size[2]/2}},near=this.coneHit({shapes:[shape]},center);if(near)h.hit({kind:'building',section,point:near.point},c.damage,'ninja-slash');}
   this.slashHits+=this.lastSlashHits;h.burst(center,12);h.shurikenEffects.tone(this.config.feedback.backstabHz);return true;
+ }
+ fallingStrike(from,to){
+  const h=this.hero,c=this.config.slash;
+  const start=new THREE.Vector3().copy(from),end=new THREE.Vector3().copy(to);
+  this.slashOrigin.copy(end);this.slashOrigin.y+=c.height;
+  start.y+=c.height;end.y+=c.height;end.addScaledVector(this.slashDirection,c.height);
+  const hit=h.shurikenWorld.enemies(start,end,c.fallingCut.bladeRadius)[0];
+  if(!hit||!this.clearLine(start,new THREE.Vector3().copy(hit.point)))return false;
+  h.hit(hit,c.damage,'ninja-slash');
+  this.slashHits++;this.lastSlashHits++;
+  return true;
  }
  update(dt,{held=false,slash=false,enabled=false}={}){const h=this.hero,c=this.config.kunai;this.cooldown=Math.max(0,this.cooldown-dt);this.slashCooldown=Math.max(0,this.slashCooldown-dt);this.slashTime=Math.max(0,this.slashTime-dt);if(enabled){this.input(held,dt);if(slash)this.slash();}else if(this.loading||this.held)this.cancelInput();
   this.volleyClock-=dt;while(this.queue.length&&this.volleyClock<=0){const p=this.queue.shift();if(this.bolts.length>=c.maxProjectiles)this.bolts.shift();this.bolts.push({position:p.origin.clone(),dir:p.dir.clone(),age:0,travelled:0,owner:'kage'});this.volleyClock+=c.burstInterval;this.throws++;h.shots++;h.throwPose=.18;h.burst(p.origin,2);}
@@ -48,7 +65,7 @@ export class KageAttacks {
   this.render(dt);
  }
  render(dt=0){const h=this.hero,c=this.config;let i=0;for(const b of this.bolts){this.dummy.position.copy(b.position);this.dummy.quaternion.setFromUnitVectors(forward,b.dir);this.dummy.scale.setScalar(c.kunai.visualScale);this.dummy.updateMatrix();this.kunai.setMatrixAt(i,this.dummy.matrix);this.dummy.scale.multiplyScalar(c.kunai.outlineScale);this.dummy.updateMatrix();this.outlines.setMatrixAt(i,this.dummy.matrix);this.dummy.position.addScaledVector(b.dir,-c.kunai.trailLength/2);this.dummy.scale.set(c.kunai.trailWidth,c.kunai.trailWidth,c.kunai.trailLength);this.dummy.updateMatrix();this.trails.setMatrixAt(i++,this.dummy.matrix);}this.kunai.count=this.outlines.count=this.trails.count=i;this.kunai.instanceMatrix.needsUpdate=this.outlines.instanceMatrix.needsUpdate=this.trails.instanceMatrix.needsUpdate=true;
-  this.arcRoot.visible=this.slashTime>0;if(this.arcRoot.visible){const t=1-this.slashTime/c.slash.effectSeconds;this.arcRoot.position.copy(this.slashOrigin);this.arcRoot.quaternion.copy(this.slashRotation);this.arcRoot.scale.setScalar(1);this.arc.material.opacity=(1-t)*.12;this.coneRim.material.opacity=(1-t)*.5;this.coneRays.material.opacity=(1-t)*.3;}
+  this.arcRoot.visible=this.slashTime>0;if(this.arcRoot.visible){const t=1-this.slashTime/c.slash.effectSeconds;this.arcRoot.position.copy(this.slashOrigin);this.arcRoot.quaternion.copy(this.slashRotation);if(this.fallingSwing)this.arcRoot.scale.set(.12,.12,.24);else this.arcRoot.scale.setScalar(1);this.arc.material.opacity=(1-t)*.12;this.coneRim.material.opacity=(1-t)*.5;this.coneRays.material.opacity=(1-t)*.3;}
   const count=h.active&&h.enabled&&this.loading?this.stored:0;this.shadowRoot.visible=count>0;if(count){const head=h.character.nodes.B_Head.getWorldPosition(new THREE.Vector3());this.shadowRoot.position.set(head.x,Math.max(head.y+c.kunai.shadowHeight,h.root.position.y+2.9),head.z);this.shadowRoot.quaternion.copy(h.camera.quaternion);}for(let j=0;j<this.shadowKunai.length;j++){const marker=this.shadowKunai[j],wasVisible=marker.visible;marker.visible=j<count;if(!marker.visible)continue;marker.userData.age=wasVisible?(marker.userData.age||0)+dt:0;const offset=j-(count-1)/2;marker.position.set(offset*c.kunai.shadowSpacing,-Math.abs(offset)*.1+Math.sin(h.time*3+j*.8)*.035,0);marker.rotation.z=-offset*.12;marker.scale.setScalar(c.kunai.shadowScale*(.75+.25*Math.min(1,marker.userData.age/.12)));}
   this.heldKunai.visible=!!h.enabled&&!h.shuriken.charging&&h.throwPose<=0;this.panel.hidden=!h.active;this.panel.querySelector('[data-kunai]').textContent=this.loading?'KUNAI '+this.stored+' / '+c.kunai.maxStored+' STORED':this.cooldown>0?'KUNAI · '+this.cooldown.toFixed(1)+'s':'KUNAI READY · LMB / F';this.panel.querySelector('[data-slash]').textContent=this.slashCooldown>0?'SLASH · '+this.slashCooldown.toFixed(1)+'s':'SLASH READY · R';const button=document.getElementById('ninja-slash');if(button)button.disabled=this.slashCooldown>0;
  }

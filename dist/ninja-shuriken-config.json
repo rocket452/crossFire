@@ -121,7 +121,8 @@
     "height": 1.2,
     "damage": 160,
     "effectSeconds": 0.24,
-    "coneDegrees": 90
+    "coneDegrees": 90,
+    "fallingCut": {"minDownAngle": 25, "range": 8, "speed": 40, "reboundHeight": 2, "bladeRadius": 0.8}
   },
   "bomb": {
     "cooldown": 1,

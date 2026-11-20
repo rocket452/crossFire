@@ -7,12 +7,12 @@ const normalize=v=>{const n=Math.hypot(v.x,v.y,v.z);return n>1e-6?{x:v.x/n,y:v.y
 export class NinjaMotion {
  constructor({sweep=()=>null,onHit=()=>({killed:false}),onDashEnd=()=>{}}={}){Object.assign(this,{sweep,onHit,onDashEnd});this.body=new RunnerMotion({runSpeed:NINJA.runSpeed,boostSpeed:NINJA.runSpeed,wallRun:false});this.reset();}
  get position(){return this.body.position;}get velocity(){return this.body.velocity;}get mode(){return this.body.mode;}get active(){return this.dash!==null;}
- reset(){this.body.reset({x:0,y:.08,z:27});this.jumps=0;this.jumpCount=0;this.doubleJumps=0;this.dash=null;this.cooldown=0;this.slowFall=0;this.dashes=0;this.resets=0;this.jumpRequested=false;this.jumpBuffer=0;this.coyote=0;this.airAge=0;this.lastResult=null;this.wallJumps=0;this.wallKick=0;this.wallJumpLock=0;this.wallNormal=null;}
+ reset(){this.body.reset({x:0,y:.08,z:27});this.jumps=0;this.jumpCount=0;this.doubleJumps=0;this.dash=null;this.fallingCut=null;this.cooldown=0;this.slowFall=0;this.dashes=0;this.resets=0;this.jumpRequested=false;this.jumpBuffer=0;this.coyote=0;this.airAge=0;this.lastResult=null;this.wallJumps=0;this.wallKick=0;this.wallJumpLock=0;this.wallNormal=null;}
  jump(){this.jumpRequested=true;}
  startDash(target){
   if(this.dash||this.cooldown>1e-8)return false;
   const p=this.position,grounded=this.mode==='ground',direction=normalize({x:target.x-p.x,y:grounded?0:target.y-(p.y+1.2),z:target.z-p.z})||(grounded?{x:Math.sin(this.body.yaw),y:0,z:Math.cos(this.body.yaw)}:null);if(!direction)return false;
-  this.dash={direction,grounded,remaining:NINJA.dashRange,origin:{...p},hitUnits:new Set()};this.cooldown=NINJA.dashCooldown;this.slowFall=0;this.jumpBuffer=this.coyote=0;this.dashes++;if(!grounded){this.body.support=null;this.body.mode='air';}return true;
+  this.fallingCut=null;this.dash={direction,grounded,remaining:NINJA.dashRange,origin:{...p},hitUnits:new Set()};this.cooldown=NINJA.dashCooldown;this.slowFall=0;this.jumpBuffer=this.coyote=0;this.dashes++;if(!grounded){this.body.support=null;this.body.mode='air';}return true;
  }
  wallJump(sections){
   if(this.mode!=='air'||this.wallJumpLock>0)return false;
@@ -40,8 +40,28 @@ export class NinjaMotion {
    else if(this.dash.remaining<=1e-6||moved<travel-1e-4)this.finishDash();
   }
  }
+ startFallingCut(direction,config,strike){
+  this.fallingCut={direction:{...direction},remaining:config.range,config,strike};
+  this.slowFall=this.wallKick=this.jumpBuffer=this.body.jumpBuffer=0;
+ }
+ stepFallingCut(dt,sections){
+  const cut=this.fallingCut,{direction,config}=cut;
+  const travel=Math.min(cut.remaining,dt*config.speed),from={...this.position};
+  this.body.velocity={x:direction.x*config.speed,y:direction.y*config.speed,z:direction.z*config.speed};
+  this.body.step({player:true,airDrag:0,gravityScale:0},travel/config.speed,sections);
+  cut.remaining-=travel;
+  const connected=cut.strike(from,this.position);
+  if(connected){
+   this.body.mode='air';this.body.support=null;
+   this.body.velocity={x:0,y:Math.sqrt(2*NINJA.gravity*config.reboundHeight),z:0};
+   this.airAge=0;this.fallingCut=null;
+  }else if(cut.remaining<1e-6||this.mode==='ground'||this.body.speed<config.speed*.95){
+   this.velocity.x=this.velocity.z=0;this.fallingCut=null;
+  }
+ }
  step(input,dt,sections=[]){
   if(!(dt>0))return;dt=Math.min(dt,.15);this.cooldown=Math.max(0,this.cooldown-dt);this.wallJumpLock=Math.max(0,this.wallJumpLock-dt);this.slowFall=Math.max(0,this.slowFall-dt);
+  if(this.fallingCut){this.jumpRequested=false;this.stepFallingCut(dt,sections);return;}
   if(this.active){
    if(this.dash.grounded){this.stepGroundDash(dt,sections);this.jumpRequested=false;return;}
    const dashSpeed=NINJA.dashSpeed,d=this.dash.direction,p=this.position,start={...p},length=Math.min(this.dash.remaining,dashSpeed*dt),to={x:p.x+d.x*length,y:p.y+d.y*length,z:p.z+d.z*length},sweep=this.sweep(p,to),hit=sweep?.blocking===false?null:sweep,t=hit?Math.max(0,hit.t-.025/Math.max(length,.001)):1;
