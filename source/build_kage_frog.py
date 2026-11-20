@@ -26,7 +26,7 @@ def material(name, rgb, rough=.55):
     return len(doc['materials'])-1
 
 leaf = material('Leaf green skin','99ce44')
-brow = material('Brow ridge','80b63e')
+brow = material('Brow ridge','91c140')
 mask = material('Midnight face wrap','25283c')
 iris = material('Amber iris','f5a02f',.27)
 pupil = material('Ink pupil','141527',.22)
@@ -74,60 +74,96 @@ def oval(mat,center,radii,bone='B_Head',segments=20,levels=12):
                       for a in np.arange(segments)*2*pi/segments])
     loft(mat,rings,bone)
 
-# Sculpt one continuous shell around the head. The amber aperture sits between
-# two projecting lids, with the pupil cut into its surface on both sides.
+# Front-view landmarks are in portrait pixels. Compensate for the game's
+# wider armored proportions before binding the vertices to the head bone.
 angles = np.arange(32) * 2*pi/32
-meridians = [0, 8, 17, 26, 36, 46, 56, 66, 76, 90, 112, 136, 160, 180]
-eye_opening = {17:0, 26:.011, 36:.017, 46:.019, 56:.017, 66:.009, 76:0}
-head_rings = []
-sectors = meridians + [360-a for a in reversed(meridians[1:-1])]
-for angle in sectors:
-    azimuth = min(angle, 360-angle)
-    a = angle*pi/180
-    cheek = max(0,cos(a))
-    eye_level = 1.746 + .050*sin(min(azimuth,90)*pi/180)**2
-    opening = eye_opening.get(azimuth,0)
-    # The center of the mask climbs onto the nose and its sides taper up
-    # toward the ears. A folded lower edge makes the jaw readable in profile.
-    mask_edge = 1.695 + .033*cheek**10 + .018*(1-cheek)
-    temple = max(0, 1-abs(azimuth-60)/40)
-    ridge = .035*temple
-    profile = [
-        (0,0,1.502), (.118,.118,1.529), (.203,.164,1.562+.017*sin(a)**2),
-        (.247,.178,mask_edge-.035), (.257,.190,mask_edge-.008),
-        (.255,.189,mask_edge), (.247,.176,mask_edge+.006),
-        (.245,.181,eye_level-opening-.010), (.237,.172,eye_level-opening),
-        (.236,.171,eye_level-opening*.30), (.236,.171,eye_level+opening*.16),
-        (.237,.172,eye_level+opening), (.255,.187,eye_level+opening+.008),
-        (.252+.009*temple,.176,eye_level+opening+.022), (.215+.026*temple,.156,1.837+ridge),
-        (.154,.127,1.867+.5*ridge), (.078,.080,1.886), (0,0,1.899)]
-    head_rings.append([(width*sin(a), height, depth*cos(a)+.012)
-                       for width,depth,height in profile])
+def portrait(x, y, depth):
+    return ((x-141)*.00286, 1.51+(149-y)*.00372, depth)
 
-for i, angle in enumerate(sectors):
-    j = (i+1) % len(sectors)
-    midpoint = (angle + (sectors[j] if j else 360))/2
-    azimuth = min(midpoint,360-midpoint)
-    for row in range(len(head_rings[i])-1):
-        if row < 6:
-            mat = helmet if row == 4 or (row == 2 and 76 < azimuth < 136) else mask
-        elif row in (8,9,10) and 17 < azimuth < 76:
-            mat = pupil if row == 9 and 26 < azimuth < 66 else iris
-        elif row in (7,8,9,10,11) and 8 < azimuth < 90:
-            mat = mask
-        elif row >= 12 and (azimuth < 17 or azimuth >= 76 or row >= 15):
-            mat = stripe if (azimuth < 8 or azimuth > 160) and row >= 13 else helmet
-        elif row >= 12 or azimuth > 105:
-            mat = brow
-        else:
-            mat = leaf
-        a,b = head_rings[i][row:row+2]
-        c,d = head_rings[j][row:row+2]
-        face(mat,'B_Head',a,c,b)
-        face(mat,'B_Head',c,d,b)
+def contour(mat, profile):
+    rings = []
+    for width, y, depth, edge in profile:
+        ring = []
+        for a in angles:
+            fraction = abs(cos(a))
+            front = max(0,sin(a))
+            offset = np.interp(fraction, [0,.35,.72,1],edge)*front
+            ring.append(portrait(141+width*cos(a), y+offset, .009+depth*sin(a)))
+        rings.append(ring)
+    loft(mat, rings)
 
+flat = [0,0,0,0]
+contour(leaf, [(0,136,0,flat),(59,121,.128,flat),(83,98,.164,flat),
+               (83,89,.168,flat),(69,65,.143,flat),(66,50,.118,flat),
+               (44,39,.081,flat),(0,35,0,flat)])
+# The mask climbs over the nose and dips beneath each eye before turning
+# back up into the cheek corners. Keep the rim a narrow bevel.
+edge = [-3,3,14,0]
+contour(mask, [(0,149,0,flat),(41,143,.103,[-1,0,2,1]),(68,130,.148,[-4,-2,1,1]),
+               (81,116,.170,flat),(89,97,.179,edge),(87,94,.182,edge),
+               (83,92,.170,edge)])
+
+ivory = material('Warm ivory eye','fff1cc',.30)
+glint = material('Eye catchlight','fffffa',.22)
 for side in (-1,1):
-    oval(pupil, (side*.045,1.736,.189),(.007,.003,.004),segments=10,levels=6)
+    def mirrored(x,y,z):
+        return portrait(141+side*x,y,z)
+
+    # Mold the socket into the cheek. Build one convex eye surface with
+    # continuous colored rings so the iris stays flush in side view.
+    oval(brow,mirrored(54,73,.075),(.073,.104,.088),segments=18,levels=10)
+    eye_rings = [(24,25,54,74,.125), (21,22,54,74,.150),
+                 (16.2,18,52,75,.169), (12.5,14.6,51,73,.180),
+                 (6,7,50,72,.186), (0,0,50,72,.188)]
+    eye_materials = [brow,ivory,iris,pupil,pupil]
+    rings=[]
+    for rx,ry,cx,cy,z in eye_rings:
+        ring=[mirrored(cx+rx*cos(a),cy+ry*sin(a),z-.020*cos(a)*rx/24) for a in angles]
+        rings.append(ring if side==1 else ring[::-1])
+    for i,mat in enumerate(eye_materials):
+        loft(mat,rings[i:i+2])
+    oval(glint,mirrored(47,69,.188),(.011,.016,.004),segments=12,levels=8)
+
+    # Closed, wedge-shaped brow. Its heavy inner end descends toward the
+    # nose and its outer tip folds back into the side of the skull.
+    brow_sections = [(25,75,72,.169,.136),(33,70,43,.181,.111),
+                    (49,51,34,.170,.094),(59,49,32,.148,.081),
+                    (69,52,39,.135,.066),(75,61,51,.114,.061),
+                    (77,66,64,.101,.080)]
+    brow_rings=[]
+    for x,lower,upper,front,back in brow_sections:
+        section=[mirrored(x,lower,front),mirrored(x,upper+4,front-.002),
+                 mirrored(x,upper,back+.010),mirrored(x,upper+4,back-.027),
+                 mirrored(x,lower+4,back-.017)]
+        brow_rings.append(section if side==1 else section[::-1])
+    loft(brow,brow_rings)
+    for ring in (brow_rings[0],brow_rings[-1][::-1]):
+        for i in range(1,len(ring)-1):
+            face(brow,'B_Head',ring[0],ring[i],ring[i+1])
+    oval(pupil,mirrored(12,82,.175),(.006,.007,.004),segments=10,levels=6)
+
+# Faceted indigo helmet with splayed side panels and a trapezoidal blue
+# center plate. Continue the crest over the crown for the third-person view.
+rows=[]
+for y,w,depth in [(73,25,.179),(63,29,.170),(40,42,.141),(31,38,.099),
+                  (24,23,.029),(24,19,-.035),(38,37,-.106),
+                  (58,59,-.144),(87,64,-.154),(99,53,-.147)]:
+    rows.append([portrait(141+w*t,y+abs(t)*2,depth-np.sign(depth)*.030*abs(t))
+                 for t in (-1,-.52,-.24,.24,.52,1)])
+# Turn the side edges of the guard into the skull, including its rear lip.
+for row in rows:
+    for edge_index in (0,-1):
+        x,y,z=row[edge_index]
+        inset=(x*.77,y-.032,z*.79)
+        if edge_index==0:
+            row.insert(0,inset)
+        else:
+            row.append(inset)
+for low,high in zip(rows,rows[1:]):
+    for i in range(len(low)-1):
+        mat=stripe if i==3 else helmet
+        face(mat,'B_Head',low[i],low[i+1],high[i])
+        face(mat,'B_Head',low[i+1],high[i+1],high[i])
 
 # A low instep emerges below the greave. Rigid toe pads and scalloped webs
 # roll with Toe0, with a Foot-weighted heel underneath the ankle.
