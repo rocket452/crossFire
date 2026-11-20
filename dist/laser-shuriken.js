@@ -22,11 +22,15 @@ function makeStar(){
 export class LaserShuriken {
  constructor(hero,config){
   this.hero=hero;this.c=config;this.mesh=makeStar();hero.scene.add(this.mesh);
+  const rangeGeometry=new THREE.RingGeometry(.94,1,64).rotateX(-Math.PI/2);
+  const rangeMaterial=new THREE.MeshBasicMaterial({color:0xb5a4ff,side:THREE.DoubleSide,
+   transparent:true,opacity:.9,depthWrite:false,toneMapped:false});
+  this.groundRange=new THREE.Mesh(rangeGeometry,rangeMaterial);hero.scene.add(this.groundRange);
   this.direction=new THREE.Vector3();this.seen=new Set();this.reset();
  }
  reset(){
   this.state='ready';this.held=false;this.charge=0;this.host=this.recent=null;
-  this.grounded=false;
+  this.groundRange.visible=false;
   this.mesh.visible=false;this.seen.clear();this.stopSound();
  }
  stopSound(){
@@ -46,12 +50,26 @@ export class LaserShuriken {
  get power(){return Math.min(1,this.charge/this.c.chargeSeconds);}
  get radius(){return THREE.MathUtils.lerp(this.c.minRadius,this.c.maxRadius,this.power);}
  holdPosition(){return this.hero.character.hand('R').clone().add(new THREE.Vector3(0,.22,0));}
+ showGroundRange(center){
+  const ring=this.groundRange,radius=this.radius;
+  ring.position.set(center.x,0,center.z);
+  ring.scale.set(radius,1,radius);
+  // Sample the perimeter once on impact so the outline follows raised terrain.
+  const vertices=ring.geometry.attributes.position;
+  for(let i=0;i<vertices.count;i++){
+   const x=center.x+vertices.getX(i)*radius,z=center.z+vertices.getZ(i)*radius;
+   vertices.setY(i,terrainHeight(x,z)+.055);
+  }
+  vertices.needsUpdate=true;
+  ring.geometry.computeBoundingSphere();
+  ring.visible=true;
+ }
  stop(impact){
   this.state='grinding';this.age=0;this.tick=0;
   if(impact?.kind==='ground'){
    const p=this.mesh.position;
-   this.grounded=true;
    p.y=terrainHeight(p.x,p.z)+RING_TUBE_RADIUS*this.radius+.02;
+   this.showGroundRange(p);
    return;
   }
   // A slow pass across a large hull can last longer than the timing grace.
@@ -67,7 +85,7 @@ export class LaserShuriken {
    this.mesh.position.copy(this.host.entity.root.localToWorld(this.local.clone()));
   }
  }
- recall(){this.state='returning';this.grounded=false;this.seen.clear();this.hero.shurikenEffects.tone(1080,true);}
+ recall(){this.state='returning';this.groundRange.visible=false;this.seen.clear();this.hero.shurikenEffects.tone(1080,true);}
  update(dt,held){
   const c=this.c,h=this.hero,p=this.mesh.position,world=h.shurikenWorld;
   const pressed=held&&!this.held,released=!held&&this.held;this.held=held;
@@ -120,7 +138,7 @@ export class LaserShuriken {
    }
    if(this.age>=c.grindSeconds)this.recall();
   }
-  this.mesh.rotation.x=this.grounded?-Math.PI/2:-.85;
+  this.mesh.rotation.x=-.85;
   this.mesh.rotation.z+=dt*(8+this.power*28);
   this.mesh.scale.setScalar(this.radius);this.mesh.material.color.setHex(this.state==='returning'?0xffeb98:this.state==='grinding'?0xa995ff:0x8cfaff);
   this.sound();
