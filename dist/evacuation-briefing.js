@@ -19,7 +19,7 @@ const training={
   controls:[
    ['Move and aim','WASD · Mouse','Left stick · Drag the scene'],
    ['Jump again in air or near a wall','Space','Jump'],
-   ['Store and throw kunai','Hold and release left click or F','Hold and release Kunai'],
+   ['Throw, stop and recall laser star','Hold LMB or F, release, then press twice','Hold Laser Star, release, then tap twice'],
    ['Charge and throw shuriken','Hold and release right click or G','Hold and release Shuriken'],
    ['Teleport to a fully charged star','Q','Teleport'],
    ['Dash / sword slash','Shift / R','Dash / Slash'],
@@ -110,7 +110,7 @@ export class EvacuationBriefing {
    const hero=HEROES.find(entry=>entry.id===id);
    return `<button type="button" class="evac-briefing-hero" data-hero="${id}" style="--hero-accent:${hero.color}">
     <span class="evac-hero-icon" aria-hidden="true">${hero.icon}</span><strong>${hero.name}</strong>
-    <span>${this.combatOnly?(id==='volt'?'Build charge at high speed and strike with lightning.':'Throw kunai and teleport to a charged shuriken.'):id==='volt'?'Carry civilians out of danger with a lightning dash.':'Shield civilians from damage with protective smoke.'}</span>
+    <span>${this.combatOnly?(id==='volt'?'Build charge at high speed and strike with lightning.':'Throw a laser star and teleport to a charged shuriken.'):id==='volt'?'Carry civilians out of danger with a lightning dash.':'Shield civilians from damage with protective smoke.'}</span>
    </button>`;
   }).join('')}</div>
   <footer><button type="button" class="secondary" data-back>Back</button></footer>`;

@@ -99,6 +99,7 @@
     "hazardHeight": 6.1,
     "dummyHealth": 600
   },
+  "laserStar": {"chargeSeconds": 0.8, "minRadius": 0.45, "maxRadius": 1.5, "speed": 45, "returnSpeed": 90, "range": 75, "stopGrace": 0.15, "grindSeconds": 2, "tickSeconds": 0.2, "minDps": 50, "maxDps": 110, "throwDamage": 55, "recallDamage": 100},
   "kunai": {
     "cooldown": 1,
     "storeSeconds": 0.25,

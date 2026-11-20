@@ -1,0 +1,118 @@
+import * as THREE from './vendor/three.module.js';
+
+function makeStar(){
+ const shape=new THREE.Shape();
+ for(let i=0;i<4;i++){
+  const a=i*Math.PI/2;
+  for(const [j,[x,y]] of [[.25,-.18],[1,.12],[.48,.29]].entries()){
+   const px=x*Math.cos(a)-y*Math.sin(a),py=x*Math.sin(a)+y*Math.cos(a);
+   if(i===0&&j===0)shape.moveTo(px,py);else shape.lineTo(px,py);
+  }
+ }
+ shape.closePath();
+ const blade=new THREE.Mesh(new THREE.ShapeGeometry(shape),new THREE.MeshBasicMaterial({color:0x8cfaff,side:THREE.DoubleSide,toneMapped:false}));
+ const edge=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(shape.getPoints()),new THREE.LineBasicMaterial({color:0xffffff,toneMapped:false}));
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.42,.045,6,32),new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false}));
+ blade.add(edge,ring);return blade;
+}
+
+export class LaserShuriken {
+ constructor(hero,config){
+  this.hero=hero;this.c=config;this.mesh=makeStar();hero.scene.add(this.mesh);
+  this.direction=new THREE.Vector3();this.seen=new Set();this.reset();
+ }
+ reset(){
+  this.state='ready';this.held=false;this.charge=0;this.host=this.recent=null;
+  this.mesh.visible=false;this.seen.clear();this.stopSound();
+ }
+ stopSound(){
+  if(!this.voice)return;
+  this.voice.stop();this.voice=null;
+ }
+ sound(){
+  const a=this.hero.shurikenEffects.audio;
+  if(!a||a.state!=='running'||!this.hero.shurikenConfig.feedback.sound)return;
+  if(!this.voice){
+   const osc=a.createOscillator(),gain=a.createGain();osc.type='triangle';gain.gain.value=.022;
+   osc.connect(gain);gain.connect(a.destination);osc.onended=()=>{osc.disconnect();gain.disconnect();};osc.start();this.voice=osc;
+  }
+  const hz=this.state==='charging'?170+570*this.power:this.state==='grinding'?135:this.state==='returning'?950:425;
+  this.voice.frequency.setTargetAtTime(hz,a.currentTime,.035);
+ }
+ get power(){return Math.min(1,this.charge/this.c.chargeSeconds);}
+ get radius(){return THREE.MathUtils.lerp(this.c.minRadius,this.c.maxRadius,this.power);}
+ holdPosition(){return this.hero.character.hand('R').clone().add(new THREE.Vector3(0,.22,0));}
+ stop(){
+  this.state='grinding';this.age=0;this.tick=0;
+  // A slow pass across a large hull can last longer than the timing grace.
+  for(const unit of this.hero.getDashEnemies()){
+   if(!unit.alive||unit.hidden||unit.dashPhased)continue;
+   const near=this.hero.shurikenWorld.nearest(unit,this.mesh.position);
+   if(near&&near.distance<=this.radius&&!this.hero.shurikenWorld.flightSolid(this.mesh.position,near.point,0,true)){
+    this.host=unit;this.local=unit.entity.root.worldToLocal(this.mesh.position.clone());return;
+   }
+  }
+  if(this.recent?.unit.alive&&this.grace>0){
+   this.host=this.recent.unit;
+   this.mesh.position.copy(this.host.entity.root.localToWorld(this.local.clone()));
+  }
+ }
+ recall(){this.state='returning';this.seen.clear();this.hero.shurikenEffects.tone(1080,true);}
+ update(dt,held){
+  const c=this.c,h=this.hero,p=this.mesh.position,world=h.shurikenWorld;
+  const pressed=held&&!this.held,released=!held&&this.held;this.held=held;
+  if(pressed){
+   if(this.state==='ready'){this.state='charging';this.charge=0;this.mesh.visible=true;}
+   else if(this.state==='flying')this.stop();
+   else if(this.state==='grinding')this.recall();
+  }
+  if(this.state==='ready')return;
+  if(this.state==='charging'){
+   p.copy(this.holdPosition());this.charge=Math.min(c.chargeSeconds,this.charge+dt);
+   if(released){
+    this.direction.copy(h.aim()).sub(p).normalize();this.state='flying';this.travel=0;
+    this.grace=0;this.seen.clear();this.host=this.recent=null;h.throwPose=.18;
+   }
+  }
+  if(this.state==='flying'||this.state==='returning'){
+   const returning=this.state==='returning',hand=returning?this.holdPosition():null;
+   if(returning)this.direction.copy(hand).sub(p).normalize();
+   const distance=returning?Math.min(c.returnSpeed*dt,p.distanceTo(hand)):Math.min(c.speed*dt,c.range-this.travel);
+   const end=p.clone().addScaledVector(this.direction,distance);
+   const wall=!returning&&world.flightSolid(p,end,.1,true);
+   if(wall)end.copy(wall.point);
+   this.grace-=dt;
+   const threat=world.traceThreat?.(p,end,this.radius);
+   for(const hit of [...world.enemies(p,end,this.radius),threat].filter(Boolean)){
+    const key=hit.unit||hit.missile||hit.orb;
+    if(this.seen.has(key))continue;
+    this.seen.add(key);h.hit(hit,returning?c.recallDamage:c.throwDamage,'laser-shuriken');
+    if(!returning&&hit.unit?.alive){
+     this.recent=hit;this.grace=c.stopGrace;
+     this.local=hit.unit.entity.root.worldToLocal(new THREE.Vector3().copy(hit.point));
+    }
+   }
+   this.travel+=p.distanceTo(end);p.copy(end);
+   if(returning&&p.distanceToSquared(hand)<.0001){this.reset();this.held=held;return;}
+   if(!returning&&(wall||this.travel>=c.range-.001))this.stop();
+  }
+  if(this.state==='grinding'){
+   if(this.host?.alive)this.host.entity.root.localToWorld(p.copy(this.local));
+   this.age+=dt;this.tick-=dt;
+   if(this.tick<=0&&this.age<=c.grindSeconds){
+    this.tick+=c.tickSeconds;
+    for(const unit of h.getDashEnemies()){
+     if(!unit.alive||unit.hidden||unit.dashPhased)continue;
+     const near=world.nearest(unit,p);
+     if(!near||near.distance>this.radius||world.flightSolid(p,near.point,0,true))continue;
+     h.hit({kind:'unit',unit,point:near.point,part:near.part},THREE.MathUtils.lerp(c.minDps,c.maxDps,this.power)*c.tickSeconds,'laser-grind');
+    }
+   }
+   if(this.age>=c.grindSeconds)this.recall();
+  }
+  this.mesh.rotation.x=-.85;this.mesh.rotation.z+=dt*(8+this.power*28);
+  this.mesh.scale.setScalar(this.radius);this.mesh.material.color.setHex(this.state==='returning'?0xffeb98:this.state==='grinding'?0xa995ff:0x8cfaff);
+  this.sound();
+ }
+ get label(){return ({ready:'LASER STAR',charging:'RELEASE · '+Math.round(this.power*100)+'%',flying:'STOP STAR',grinding:'RECALL STAR',returning:'RETURNING'})[this.state];}
+}
