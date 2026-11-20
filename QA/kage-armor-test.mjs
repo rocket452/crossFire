@@ -35,7 +35,7 @@ actor.root.add(actor.somersaultPivot);
 actor.somersaultPivot.add(actor.visual);
 actor.useAppearance(armored);
 const ch=actor.character;
-assert.deepEqual(ch.root.scale.toArray(),[1.17,.90,1.17]);
+assert.deepEqual(ch.root.scale.toArray(),[1.30,1,1.30]);
 assert.equal(ch.root.getWorldPosition(new T.Vector3()).y,0,'proportion changes keep the rig origin at the feet');
 assert.equal(ch.bones.length,54);
 assert.equal(ch.triangles,2624);

@@ -39,7 +39,7 @@ export class NinjaHero {
   if(!next){
    this.character=new HumanoidCharacter(model,{variant:'ninja',height:2.25});
    this.character.root.position.y=-1.1;
-   if(this.character.nodes.B_KageScarf)this.character.root.scale.set(1.17,.90,1.17);
+   if(this.character.nodes.B_KageScarf)this.character.root.scale.set(1.30,1,1.30);
    this.buildArt();
    this.hurt=new HeroHurt(this.character,this.character.root);
    next={character:this.character,hurt:this.hurt,scarf:this.scarf,heldStar:this.heldStar,blade:this.blade};
