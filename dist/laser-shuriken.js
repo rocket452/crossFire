@@ -1,4 +1,7 @@
 import * as THREE from './vendor/three.module.js';
+import {terrainHeight} from './runner-motion.js?v=overall-performance-238';
+
+const RING_TUBE_RADIUS=.045;
 
 function makeStar(){
  const shape=new THREE.Shape();
@@ -12,7 +15,7 @@ function makeStar(){
  shape.closePath();
  const blade=new THREE.Mesh(new THREE.ShapeGeometry(shape),new THREE.MeshBasicMaterial({color:0x8cfaff,side:THREE.DoubleSide,toneMapped:false}));
  const edge=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(shape.getPoints()),new THREE.LineBasicMaterial({color:0xffffff,toneMapped:false}));
- const ring=new THREE.Mesh(new THREE.TorusGeometry(.42,.045,6,32),new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false}));
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.42,RING_TUBE_RADIUS,6,32),new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false}));
  blade.add(edge,ring);return blade;
 }
 
@@ -23,6 +26,7 @@ export class LaserShuriken {
  }
  reset(){
   this.state='ready';this.held=false;this.charge=0;this.host=this.recent=null;
+  this.grounded=false;
   this.mesh.visible=false;this.seen.clear();this.stopSound();
  }
  stopSound(){
@@ -42,8 +46,14 @@ export class LaserShuriken {
  get power(){return Math.min(1,this.charge/this.c.chargeSeconds);}
  get radius(){return THREE.MathUtils.lerp(this.c.minRadius,this.c.maxRadius,this.power);}
  holdPosition(){return this.hero.character.hand('R').clone().add(new THREE.Vector3(0,.22,0));}
- stop(){
+ stop(impact){
   this.state='grinding';this.age=0;this.tick=0;
+  if(impact?.kind==='ground'){
+   const p=this.mesh.position;
+   this.grounded=true;
+   p.y=terrainHeight(p.x,p.z)+RING_TUBE_RADIUS*this.radius+.02;
+   return;
+  }
   // A slow pass across a large hull can last longer than the timing grace.
   for(const unit of this.hero.getDashEnemies()){
    if(!unit.alive||unit.hidden||unit.dashPhased)continue;
@@ -57,7 +67,7 @@ export class LaserShuriken {
    this.mesh.position.copy(this.host.entity.root.localToWorld(this.local.clone()));
   }
  }
- recall(){this.state='returning';this.seen.clear();this.hero.shurikenEffects.tone(1080,true);}
+ recall(){this.state='returning';this.grounded=false;this.seen.clear();this.hero.shurikenEffects.tone(1080,true);}
  update(dt,held){
   const c=this.c,h=this.hero,p=this.mesh.position,world=h.shurikenWorld;
   const pressed=held&&!this.held,released=!held&&this.held;this.held=held;
@@ -94,7 +104,7 @@ export class LaserShuriken {
    }
    this.travel+=p.distanceTo(end);p.copy(end);
    if(returning&&p.distanceToSquared(hand)<.0001){this.reset();this.held=held;return;}
-   if(!returning&&(wall||this.travel>=c.range-.001))this.stop();
+   if(!returning&&(wall||this.travel>=c.range-.001))this.stop(wall);
   }
   if(this.state==='grinding'){
    if(this.host?.alive)this.host.entity.root.localToWorld(p.copy(this.local));
@@ -110,7 +120,8 @@ export class LaserShuriken {
    }
    if(this.age>=c.grindSeconds)this.recall();
   }
-  this.mesh.rotation.x=-.85;this.mesh.rotation.z+=dt*(8+this.power*28);
+  this.mesh.rotation.x=this.grounded?-Math.PI/2:-.85;
+  this.mesh.rotation.z+=dt*(8+this.power*28);
   this.mesh.scale.setScalar(this.radius);this.mesh.material.color.setHex(this.state==='returning'?0xffeb98:this.state==='grinding'?0xa995ff:0x8cfaff);
   this.sound();
  }

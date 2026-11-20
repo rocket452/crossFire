@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import * as THREE from '../dist/vendor/three.module.js';
 import {LaserShuriken} from '../dist/laser-shuriken.js';
 import {ShurikenWorld} from '../dist/shuriken-world.js';
+import {terrainHeight} from '../dist/runner-motion.js';
 const config=JSON.parse(fs.readFileSync('dist/ninja-shuriken-config.json'));
 const units=[],events=[],hand=new THREE.Vector3(0,2,0);
 function robot(x,z){
@@ -24,3 +25,28 @@ assert.equal(star.state,'ready');assert.equal(events.filter(e=>e.unit===second&&
 step(1,true);assert(star.power<.1);step(5);step(1,true);assert.equal(star.state,'grinding');assert.equal(star.host,null);
 step(250);assert(['returning','ready'].includes(star.state));star.reset();assert(!star.mesh.visible);
 console.log('PASS full and tap charge, stop grace, grinding, moving host, hover timeout and one return hit along repositioned path');
+
+for(const [x,z] of [[0,0],[50,39]]){
+ const floor=terrainHeight(x,z);
+ hand.set(x,floor+3,z);
+ hero.aim=()=>new THREE.Vector3(x,floor-1,z);
+ const nearby=robot(x,z);
+ nearby.entity.root.position.y=floor+.5;
+ step(120,true);
+ for(let i=0;i<16&&star.state!=='grinding';i++)step(1);
+ assert.equal(star.state,'grinding');
+ assert.equal(star.host,null,'ground impact takes precedence over latching to the nearby robot');
+ const position=star.mesh.position.clone(),spin=star.mesh.rotation.z;
+ assert(position.y>floor&&position.y-floor<.1);
+ step(12);
+ assert(star.mesh.position.equals(position),'the grounded shuriken stays at its impact location');
+ assert(star.mesh.rotation.z>spin);
+ assert(new THREE.Vector3(0,0,1).applyQuaternion(star.mesh.quaternion)
+  .distanceTo(new THREE.Vector3(0,1,0))<1e-6,'the blade spins in the horizontal plane');
+ step(1,true);
+ assert.equal(star.state,'returning');
+ assert.equal(star.mesh.rotation.x,-.85);
+ step(120);
+ assert.equal(star.state,'ready');
+}
+console.log('PASS street and raised terrain impacts stay flat and fixed, spin in place, and recall normally');
