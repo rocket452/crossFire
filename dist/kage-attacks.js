@@ -73,10 +73,10 @@ export class KageAttacks {
 }
 
 // Check what a single dash contact can finish without mutating health or armour.
-export function kageDashCanFinish(unit,power){
+export function kageDashCanFinish(unit,power,crosscut=false){
  if(!unit.alive||unit.kind!=='robot'||unit.dashPhased||unit.hidden||unit.health<=0)return false;
  const enemy=unit.entity;
- const damage=kageHitPower({unit},power,'ninja-dash');
+ const damage=crosscut?power:kageHitPower({unit},power,'ninja-dash');
  return unit.shapes.some(({part})=>{
   if(enemy.weapons){
    const weapon=enemy.weapons.forPart(part);

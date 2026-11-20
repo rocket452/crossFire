@@ -14,6 +14,30 @@ export class ShurikenWorld {
  space(foot){const c=this.config.resolver,b=this.getBounds(),floor=terrainHeight(foot.x,foot.z);if(foot.x<b.minX+c.radius||foot.x>b.maxX-c.radius||foot.z<b.minZ+c.radius||foot.z>b.maxZ-c.radius)return{valid:false,reason:'outside arena'};if(foot.y<floor-c.skin)return{valid:false,reason:'below ground'};if(this.isHazard(foot))return{valid:false,reason:'hazard'};
   const a=v(foot).add(new THREE.Vector3(0,c.radius+c.skin*2,0)),z=v(foot).add(new THREE.Vector3(0,c.height-c.radius,0)),hit=traceImpact(a,z,{sections:this.near||this.getSections(),targets:this.getEnemies().filter(u=>u.alive&&!u.hidden&&!u.dashPhased),ground:false,radius:c.radius+c.skin});if(hit)return{valid:false,reason:hit.unit?'enemy overlap':'solid geometry',hit};return{valid:true,reason:'clear capsule'};
  }
+ rearLanding(unit,impact){
+  const root=unit.entity.root,center=root.getWorldPosition(new THREE.Vector3());
+  center.y=impact.y;
+  const rear=new THREE.Vector3(0,0,-1).applyQuaternion(root.getWorldQuaternion(new THREE.Quaternion()));
+  rear.y=0;rear.normalize();
+  const samples=[],up=new THREE.Vector3(0,1,0);
+  for(const angle of [0,15,-15,30,-30,45,-45,60,-60,75,-75,90,-90]){
+   const dir=rear.clone().applyAxisAngle(up,THREE.MathUtils.degToRad(angle));
+   let edge=0;
+   for(const shape of unit.shapes){
+    const local=dir.clone();
+    if(shape.rotation)local.applyQuaternion(new THREE.Quaternion().copy(shape.rotation).invert());
+    const extent=Math.abs(local.x)*shape.half.x+Math.abs(local.y)*shape.half.y+Math.abs(local.z)*shape.half.z;
+    edge=Math.max(edge,v(shape.center).sub(center).dot(dir)+extent);
+   }
+   const chest=center.clone().addScaledVector(dir,edge+this.config.full.rearClearance);
+   const point=chest.clone();point.y=Math.max(terrainHeight(point.x,point.z),point.y-this.config.arrival.anchorHeight);
+   this.prepare(point);
+   const clear=this.space(point),valid=clear.valid&&!this.flightSolid(center,chest,0,true);
+   samples.push({point,valid,type:'rear',reason:valid?'clear':clear.valid?'blocked approach':clear.reason});
+   if(valid)return {valid,point,samples,reason:'rear opening'};
+  }
+  return {valid:false,point:v(impact),samples,reason:'no clear rear landing'};
+ }
  resolve(star){const c=this.config.resolver,anchor=this.config.arrival.anchorHeight,base=v(star.position).add(new THREE.Vector3(0,-anchor,0)),floor=terrainHeight(base.x,base.z);base.y=Math.max(floor,base.y);this.prepare(star.position);const samples=[],test=(point,type)=>{const check=this.space(point);samples.push({point:point.clone(),valid:check.valid,reason:check.reason,type});return check.valid?{valid:true,point:point.clone(),samples,reason:check.reason}:null;};let result=test(base,'current');if(result)return result;const containing=new Set((this.near||[]).filter(s=>segmentBoxFraction(star.position,star.position,s.body?.position||s,{x:s.size[0]/2,y:s.size[1]/2,z:s.size[2]/2},s.body?.quaternion,0)!==null));if([...containing].some(s=>this.forbidden({section:s})))return{valid:false,point:base,samples,reason:'unteleportable surface'};
   // Never search through a wall to reach a point on its opposite side.
   for(const [sign,distance]of[[1,c.forward],[-1,Math.min(c.backward,star.travelled)]]){const end=v(star.position).addScaledVector(star.dir,distance*sign),block=this.solid(star.position,end,star.radius,containing),limit=block?distance*Math.max(0,block.t)-c.skin:distance;for(let d=c.step;d<=limit+1e-6;d+=c.step){const point=base.clone().addScaledVector(star.dir,d*sign);point.y=Math.max(terrainHeight(point.x,point.z),point.y);result=test(point,sign>0?'past enemy':'path backup');if(result)return result;}}
