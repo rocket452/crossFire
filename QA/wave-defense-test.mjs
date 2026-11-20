@@ -21,7 +21,8 @@ for(const axis of ['X','Z']){
 }
 const layout=JSON.parse(fs.readFileSync(new URL('../dist/city-assets/city-layout.json',import.meta.url)));
 const buildings=waveDefenseBuildings(mission1CityBuildings(layout.buildings));
-assert.equal(RELAY.floors*3,36);
+assert.equal(RELAY.floors*3,72);
+assert.equal(RELAY.footprint,20);
 const spawn=WAVE_DEFENSE_HERO_START;
 assert(waveDefenseRoads(MISSION1_CITY_ROADS).some(road=>
  Math.abs(spawn.x-road.x)<road.width/2-2&&Math.abs(spawn.z-road.z)<road.depth/2-2
@@ -32,7 +33,7 @@ for(const building of buildings){
 }
 for(const b of buildings){
  if(b.id===RELAY.id)continue;
- assert(Math.hypot(Math.max(0,Math.abs(b.x-RELAY.x)-5),Math.max(0,Math.abs(b.z-RELAY.z)-5))>=38);
+ assert(Math.hypot(Math.max(0,Math.abs(b.x-RELAY.x)-5),Math.max(0,Math.abs(b.z-RELAY.z)-5))>=43);
  physics.addChunk({type:'wall',building:b.id,floor:0,x:b.x,y:b.floors*1.5,z:b.z,size:[10,b.floors*3,10]});
 }
 const traceBuilding=(a,b,radius=0)=>traceImpact(a,b,{sections:physics.chunks,ground:false,radius});

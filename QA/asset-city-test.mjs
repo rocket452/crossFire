@@ -164,3 +164,22 @@ const hp=towerChunk.hp;
 missionWorld.damageChunk(towerChunk,25,{source:'siege-walker'});
 assert(towerChunk.hp<hp);
 console.log('PASS Mission 1 fits twelve destructible high-rises and keeps the hero staging area clear');
+
+const {RELAY}=await import('../dist/wave-defense.js');
+const relayCity=new AssetCity(asset,manifest),relayWorld=new DestructionWorld(),relayBatches={};
+const [relay]=relayCity.fitEvacuationBuildings([RELAY]);
+const towerAsset=manifest.assets.tower;
+assert.equal(relay.assetScale[0]*towerAsset.footprint[0],20);
+assert.equal(relay.assetScale[2]*towerAsset.footprint[1],20);
+assert(Math.abs(relay.assetScale[1]*towerAsset.height+.08-72)<1e-9);
+relayCity.install(new T.Scene(),relayWorld,[relay],relayBatches,new Map());
+relayCity.applyTexture('buildingColor',buildingMap);
+relayCity.applyTexture('buildingGlow',glowMap);
+for(const batch of Object.values(relayBatches)){
+ assert.equal(batch.material.map,null,'yellow paint stays visible after textures load');
+ assert.equal(batch.material.emissiveMap,glowMap);
+}
+const flank=traceImpact({x:relay.x+8,y:12,z:relay.z-15},{x:relay.x+8,y:12,z:relay.z+15},
+ {sections:relayWorld.chunks,ground:false});
+assert.equal(flank?.section.building,RELAY.id,'wide relay facade blocks impacts');
+console.log('PASS oversized relay facade, collision and paint with packaged city textures');

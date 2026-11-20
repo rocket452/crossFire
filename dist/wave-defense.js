@@ -4,7 +4,7 @@ import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-eva
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
 
-export const RELAY={id:'central-relay',name:'Central relay',...center,floors:12,tint:'#99fff5'};
+export const RELAY={id:'central-relay',name:'Central relay',...center,floors:24,footprint:20,tint:'#ffd21e',solidPaint:true};
 const mapScale=1.3;
 const mapX=x=>center.x+(x-center.x)*mapScale;
 const mapZ=z=>center.z+(z-center.z)*mapScale;
@@ -21,7 +21,7 @@ export const waveDefenseRoads=roads=>roads.map(r=>({
 }));
 export function waveDefenseBuildings(buildings){
  return buildings.map(b=>({...b,x:mapX(b.x),z:mapZ(b.z)}))
-  .filter(b=>Math.hypot(Math.max(0,Math.abs(b.x-center.x)-5),Math.max(0,Math.abs(b.z-center.z)-5))>=38)
+  .filter(b=>Math.hypot(Math.max(0,Math.abs(b.x-center.x)-5),Math.max(0,Math.abs(b.z-center.z)-5))>=43)
   .concat(RELAY);
 }
 const waves=[[4,0],[0,4],[2,2],[0,0]];
@@ -45,19 +45,20 @@ export class WaveDefense extends MissionEnemyWaves {
   const root=new THREE.Group();
   root.position.set(center.x,0,center.z);
   scene.add(root);
-  const glow=new THREE.MeshBasicMaterial({color:'#4dfff1',toneMapped:false});
+  const glow=new THREE.MeshBasicMaterial({color:'#ffdb37',toneMapped:false});
   const roof=RELAY.floors*3;
   const plaza=new THREE.Mesh(new THREE.RingGeometry(32,32.35,64),glow);
   plaza.rotation.x=-Math.PI/2;plaza.position.y=.105;root.add(plaza);
-  for(const y of [5,15,25,roof+.5,roof+3]){
-   const ring=new THREE.Mesh(new THREE.TorusGeometry(y>roof?3.4:6,.22,5,32),glow);
+  for(const y of [10,30,50,roof+.5,roof+3]){
+   const ring=new THREE.Mesh(new THREE.TorusGeometry(y>roof?3.4:RELAY.footprint*.6,.22,5,32),glow);
    ring.rotation.x=Math.PI/2;ring.position.y=y;root.add(ring);
   }
   const beacon=new THREE.Mesh(new THREE.OctahedronGeometry(2.4),glow);
   beacon.position.y=roof+6;root.add(beacon);
   this.relay=damage.add(RELAY.id,'structure',{root,evac:true},3200);
-  this.relay.shapes=[{center:new THREE.Vector3(center.x,9.2,center.z),half:{x:5.3,y:9.2,z:5.3}},
-   {center:new THREE.Vector3(center.x,18.4+(roof-18.4)/2,center.z),half:{x:5.3,y:(roof-18.4)/2,z:5.3}}];
+  const halfWidth=RELAY.footprint/2+.3;
+  this.relay.shapes=[{center:new THREE.Vector3(center.x,9.2,center.z),half:{x:halfWidth,y:9.2,z:halfWidth}},
+   {center:new THREE.Vector3(center.x,18.4+(roof-18.4)/2,center.z),half:{x:halfWidth,y:(roof-18.4)/2,z:halfWidth}}];
   this.reset();
  }
  reset(){

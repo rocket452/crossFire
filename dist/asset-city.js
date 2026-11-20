@@ -25,8 +25,9 @@ export class AssetCity {
   return buildings.map((b,i)=>{
    const asset=b.floors>=6?'tower':'shop';
    const {footprint,height}=this.manifest.assets[asset];
+   const width=b.footprint??10;
    return {...b,asset,yaw:(i%4)*Math.PI/2,
-    assetScale:[10/footprint[0],(b.floors*3-.08)/height,10/footprint[1]]};
+    assetScale:[width/footprint[0],(b.floors*3-.08)/height,width/footprint[1]]};
   });
  }
  install(scene,physics,buildings,batches,records){
@@ -38,14 +39,17 @@ export class AssetCity {
    const sectionScale=new THREE.Vector3(...scale);
    for(const p of this.manifest.assets[b.asset].pieces){
     const local=new THREE.Vector3(...p.center).multiply(sectionScale).applyAxisAngle(new THREE.Vector3(0,1,0),b.yaw);
-    const key='city-'+p.node;
+    const key=(b.solidPaint?'city-painted-':'city-')+p.node;
     if(!lists.has(key))lists.set(key,[]);
     lists.get(key).push({type:p.type,visualKey:key,building:b.id,floor:p.floor,x:b.x+local.x,y:local.y+.08,z:b.z+local.z,yaw:b.yaw,size:p.size.map((n,i)=>n*scale[i]),scale,tint:b.tint});
    }
   }
   for(const [key,list]of lists){
-   const template=this.templates.get(key.slice(5));
-   const batch=new SpatialChunkBatch(scene,template.geometry,template.material,list,{buildingPosition:c=>records.get(c.building)});
+   const painted=key.startsWith('city-painted-');
+   const template=this.templates.get(key.slice(painted?'city-painted-'.length:5));
+   const material=painted?template.material.clone():template.material;
+   if(painted){material.map=null;material.vertexColors=false;material.color.set(0xffffff);}
+   const batch=new SpatialChunkBatch(scene,template.geometry,material,list,{buildingPosition:c=>records.get(c.building)});
    batches[key]=batch;
    for(const [index,spec]of list.entries()){
     const c=physics.addChunk({...spec,index});
@@ -93,7 +97,9 @@ export class AssetCity {
  applyTexture(slot, texture) {
   const previous = this.textures.get(slot);
   const materials = slot.startsWith('building')
-   ? Object.values(this.batches).map(batch => batch.material)
+   ? Object.entries(this.batches)
+     .filter(([key]) => slot!=='buildingColor'||!key.startsWith('city-painted-'))
+     .map(([,batch]) => batch.material)
    : this.signMaterials;
   for (const material of materials) {
    if (slot.endsWith('Color')) {
