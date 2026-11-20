@@ -5,7 +5,8 @@ import * as THREE from '../dist/vendor/three.module.js';
 import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
 import {DestructionWorld} from '../dist/destruction.js';
 import {mission1CityBuildings} from '../dist/evac-city-map.js';
-import {WaveDefense,RELAY} from '../dist/wave-defense.js';
+import {ESCORT_APPROACH} from '../dist/evac-approach.js';
+import {WaveDefense,RELAY,WAVE_DEFENSE_BOUNDS,waveDefenseBuildings} from '../dist/wave-defense.js';
 
 registerHooks({resolve(name,context,next){
  return name==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(name,context);
@@ -14,26 +15,39 @@ const {GLTFLoader}=await import('../dist/vendor/GLTFLoader.js');
 const bytes=fs.readFileSync(new URL('../dist/city-assets/licensed-robots/breaker-spider.glb',import.meta.url));
 const spiderModel=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
 const scene=new THREE.Scene(),physics=new DestructionWorld();
+for(const axis of ['X','Z']){
+ const span=b=>b['max'+axis]-b['min'+axis];
+ assert(Math.abs(span(WAVE_DEFENSE_BOUNDS)-1.3*span(ESCORT_APPROACH))<1e-9);
+}
+const layout=JSON.parse(fs.readFileSync(new URL('../dist/city-assets/city-layout.json',import.meta.url)));
+const buildings=waveDefenseBuildings(mission1CityBuildings(layout.buildings));
+assert.equal(RELAY.floors*3,36);
+for(const b of buildings){
+ if(b.id===RELAY.id)continue;
+ assert(Math.hypot(Math.max(0,Math.abs(b.x-RELAY.x)-5),Math.max(0,Math.abs(b.z-RELAY.z)-5))>=38);
+ physics.addChunk({type:'wall',building:b.id,floor:0,x:b.x,y:b.floors*1.5,z:b.z,size:[10,b.floors*3,10]});
+}
+const traceBuilding=(a,b,radius=0)=>traceImpact(a,b,{sections:physics.chunks,ground:false,radius});
 const walker={root:new THREE.Group(),combatUnit:{},reset(){this.dead=false;},applyWalkPose(){},shapes(){return [];}};
 let waves,hero=[],result=null,t=0;
 const damage=new UnitDamage(unit=>waves.disable(unit));
 const trace=(a,b,owner,radius)=>traceImpact(a,b,{targets:[waves.relay],radius});
 waves=new WaveDefense(scene,damage,{
  walker,visible:()=>true,collapsed:()=>false,status(){},finish:won=>{result=won;},startArsenal(){},
- getTargets:()=>hero,onEvent(){},bruiser:{spiderModel,visible:()=>true,isPathClear:()=>true,trace},
- drone:{physics,visible:()=>true,trace,roof:()=>null,redirect:()=>null,audio:()=>null,particle(){},burst(){},onWreck(){},onRemoveSmoke(){},cameraImpact(){},onRoundHit:(hit,power)=>damage.hurt(hit.unit,power,hit.point)}
+ getTargets:()=>hero,onEvent(){},bruiser:{spiderModel,visible:()=>true,isPathClear:(a,b)=>!traceBuilding({...a,y:1.3},{...b,y:1.3},1.9),trace},
+ drone:{physics,visible:()=>true,trace,roof:(a,b)=>traceBuilding(a,b)?.point,redirect:()=>null,audio:()=>null,particle(){},burst(){},onWreck(){},onRemoveSmoke(){},cameraImpact(){},onRoundHit:(hit,power)=>damage.hurt(hit.unit,power,hit.point)}
 });
 function step(seconds){for(let i=0;i<Math.round(seconds*30);i++){waves.update(1/30,t+=1/30);physics.step(1/30);waves.syncWrecks();}}
 function counts(){return [waves.members,waves.flightDrones].map(group=>group.filter(e=>e.combatUnit?.alive).length);}
 function clear(){for(const actor of [...waves.members,...waves.flightDrones])if(actor.combatUnit?.alive)damage.hurt(actor.combatUnit,1e6,actor.root.position,'hull');step(.1);}
-step(.1);assert.deepEqual(counts(),[4,0]);assert.equal(walker.root.visible,false);
+step(.1);assert.deepEqual(counts(),[4,0]);assert(waves.members.every(r=>r.root.position.z>WAVE_DEFENSE_BOUNDS.maxZ-13));assert.equal(walker.root.visible,false);
 const origin=waves.members[0].root.position;
 hero=[{alive:true,shapes:[{center:origin.clone()}]}];
 assert.equal(waves.targets(origin)[0],hero[0]);
 hero=[];assert.equal(waves.targets(origin)[0],waves.relay);
 step(23);assert(waves.relay.health<waves.relay.maxHealth,'incoming Bruiser bolts damage the relay');
-clear();step(29);assert.equal(waves.wave,1);step(1.2);assert.deepEqual(counts(),[0,4]);
-waves.relay.health=waves.relay.maxHealth;const hp=waves.relay.health;for(let i=0;i<1800&&waves.relay.health===hp;i++)step(1/30);assert(waves.relay.health<hp,'drone rounds hit relay');assert.equal(result,null);
+clear();step(29);assert.equal(waves.wave,1);step(1.2);assert.deepEqual(counts(),[0,4]);assert(waves.flightDrones.every(d=>d.root.position.z<WAVE_DEFENSE_BOUNDS.minZ+28));
+waves.relay.health=waves.relay.maxHealth;const hp=waves.relay.health;for(let i=0;i<2400&&waves.relay.health===hp;i++)step(1/30);assert(waves.relay.health<hp,'drone rounds hit relay');assert.equal(result,null);
 clear();step(30);assert.deepEqual(counts(),[2,2]);
 clear();step(30);assert.equal(waves.wave,4);assert.equal(walker.root.visible,true);
 walker.dead=true;step(.1);assert.equal(result,true);
