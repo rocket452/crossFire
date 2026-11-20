@@ -106,3 +106,12 @@ The output embeds the licensed humanoid animation data. Place it in
 and force-add it only on `site-licensed-assets`. Run
 `node QA/kage-armor-test.mjs` with both runtime models available.
 Use `?kage=classic` to select the original model.
+
+## Armored Volt Rush (revision 330)
+
+Generate the model from the shared humanoid rig with
+`blender -b --python-exit-code 1 --python source/build_volt_armor.py -- /private/humanoid.glb /private/volt-armored.glb`.
+The model contains 2,276 triangles, the original 53 joints, and the 17 licensed animation clips.
+Place the GLB in `dist/city-assets/licensed-characters/volt-armored.glb` for QA
+and force-add it only on `site-licensed-assets`. Run
+`node QA/volt-armor-test.mjs` to check the rig, clips, and lightning attachment points.
