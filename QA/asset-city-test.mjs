@@ -102,7 +102,7 @@ if(process.argv.includes('--export-layout'))fs.writeFileSync('/tmp/asset-city-la
 
 // The mission fit must keep the crossing and flight lane clear, even with
 // rotated shop meshes and vertically stretched tower chunks.
-const {evacuationCityBuildings,mission1CityBuildings}=await import('../dist/evac-city-map.js');
+const {evacuationCityBuildings,mission1CityBuildings,MISSION1_HERO_START,MISSION1_CITY_ROADS}=await import('../dist/evac-city-map.js');
 const {EVACUATION_ENTRANCES,EVACUATION_LANDING,EVACUATION_FLIGHT}=await import('../dist/evacuation-config.js');
 const data=JSON.parse(fs.readFileSync(new URL('../dist/city-assets/city-layout.json',import.meta.url)));
 const lots=evacuationCityBuildings(data.buildings);
@@ -154,7 +154,10 @@ for(const lot of extraTowers){
  assert(Math.abs(Math.max(...parts.map(c=>c.bounds.max.y))-lot.floors*3)<.25);
 }
 const missionClear=(a,b,radius)=>!traceImpact(a,b,{sections:missionWorld.chunks,ground:false,radius});
-assert(missionClear({x:-3,y:1,z:12},{x:0,y:1,z:27},1),'hero spawn area stays open');
+const start={...MISSION1_HERO_START,y:1};
+assert(Math.hypot(start.x,start.z)>=90,'hero deploys well outside the original start area');
+assert(MISSION1_CITY_ROADS.some(r=>Math.abs(r.x-start.x)<=r.width/2&&Math.abs(r.z-start.z)<=r.depth/2),'hero starts on a street');
+assert(missionClear(start,{x:0,y:1,z:27},1),'direct approach from the new spawn stays open');
 assert(missionClear({x:1,y:18,z:0},{x:2,y:1,z:35},2),'Bastion cinematic arena stays open');
 const lot=extraTowers[0],towerChunk=missionWorld.buildings.get(lot.id).chunks[0];
 const hp=towerChunk.hp;

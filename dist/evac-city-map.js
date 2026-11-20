@@ -21,6 +21,8 @@ export function evacuationCityBuildings(original){
  return buildings.filter(b=>b.x-6>=ESCORT_APPROACH.minX&&b.x+6<=ESCORT_APPROACH.maxX&&b.z-6>=ESCORT_APPROACH.minZ&&b.z+6<=ESCORT_APPROACH.maxZ);
 }
 
+export const MISSION1_HERO_START=Object.freeze({x:0,y:.08,z:96});
+
 export function mission1CityBuildings(original){
  const towers=[
   [-108,-36,16],[-108,12,12],[-108,84,19],[-108,108,14],
