@@ -75,7 +75,7 @@ for(const [motors,y,wall,velocity] of [
  assert(Math.hypot(f.drone.model.turret.rotation.y-y,f.drone.model.pitch.rotation.x-x)<=T.MathUtils.degToRad(35)/60+1e-8);
  f.step(.28,[f.hero]);assert(!f.events.includes('unit'),'sideways evasion leaves the stream of fire');
  while(gun.phase==='fire')f.step(1/60,[f.hero]);
- assert.equal(g.fire,4);assert.equal(g.spreadDegrees,6);assert.equal(gun.shots,48);assert.equal(gun.phase,'cooldown');
+ assert.equal(g.fire,10);assert.equal(g.spreadDegrees,6);assert.equal(gun.shots,120);assert.equal(gun.phase,'cooldown');
  const count=gun.shots;f.step(g.cooldown-.08,[]);assert.equal(gun.shots,count);
  f.step(.16,[]);assert.equal(gun.phase,'idle');
  const angle=gun.select([{...f.hero,shapes:[{center:new T.Vector3(0,30,4)}]}]);
@@ -84,7 +84,7 @@ for(const [motors,y,wall,velocity] of [
  f.drone.model.turret.rotation.y=0;
  f.drone.root.updateMatrixWorld(true);
  gun.fire();assert.equal(gun.shots,count,'fuselage blocks a mechanically invalid round');
- console.log('PASS acquisition, spin-up, 48-round burst, 35°/s tracking limit, sideways evasion, cooldown and self-occlusion');
+ console.log('PASS acquisition, spin-up, 120-round burst, 35°/s tracking limit, sideways evasion, cooldown and self-occlusion');
 }
 
 {

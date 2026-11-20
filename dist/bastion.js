@@ -3,7 +3,7 @@ import {BastionRain} from './bastion-rain.js?v=neon-missiles-318';
 import * as THREE from './vendor/three.module.js';
 import {BastionModel} from './bastion-model.js?v=neon-missiles-318';
 import {BastionState} from './bastion-state.js?v=bastion-weapons-278';
-import {BastionProjectiles} from './bastion-projectiles.js?v=neon-missiles-318';
+import {BastionProjectiles} from './bastion-projectiles.js?v=gatling-333';
 import {BastionEffects} from './bastion-effects.js?v=neon-missiles-318';
 import {angleDistance} from './bastion-geometry.js?v=charged-shuriken-130';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
