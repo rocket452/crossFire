@@ -8,9 +8,15 @@ export const RELAY={id:'central-relay',name:'Central relay',...center,floors:24,
 const mapScale=1.3;
 const mapX=x=>center.x+(x-center.x)*mapScale;
 const mapZ=z=>center.z+(z-center.z)*mapScale;
-// Keep the player at the same street intersection in the enlarged district.
+const spawnOffsetX=mapX(MISSION1_HERO_START.x)-center.x;
+const spawnOffsetZ=mapZ(MISSION1_HERO_START.z)-center.z;
+const spawnDistance=Math.hypot(spawnOffsetX,spawnOffsetZ)*1.3;
+// Shift eight degrees onto the street with a clear view of the relay.
+const spawnBearing=Math.atan2(spawnOffsetX,spawnOffsetZ)-THREE.MathUtils.degToRad(8);
 export const WAVE_DEFENSE_HERO_START=Object.freeze({
- x:mapX(MISSION1_HERO_START.x),y:MISSION1_HERO_START.y,z:mapZ(MISSION1_HERO_START.z)
+ x:center.x+Math.sin(spawnBearing)*spawnDistance,
+ y:MISSION1_HERO_START.y,
+ z:center.z+Math.cos(spawnBearing)*spawnDistance
 });
 export const RELAY_INTRO=Object.freeze({
  yaw:Math.atan2(RELAY.x-WAVE_DEFENSE_HERO_START.x,RELAY.z-WAVE_DEFENSE_HERO_START.z),

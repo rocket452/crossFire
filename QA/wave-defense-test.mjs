@@ -4,7 +4,7 @@ import {registerHooks} from 'node:module';
 import * as THREE from '../dist/vendor/three.module.js';
 import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
 import {DestructionWorld} from '../dist/destruction.js';
-import {mission1CityBuildings,MISSION1_CITY_ROADS} from '../dist/evac-city-map.js';
+import {mission1CityBuildings,MISSION1_CITY_ROADS,MISSION1_HERO_START} from '../dist/evac-city-map.js';
 import {ESCORT_APPROACH} from '../dist/evac-approach.js';
 import {WaveDefense,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,waveDefenseBuildings,waveDefenseRoads} from '../dist/wave-defense.js';
 
@@ -24,6 +24,10 @@ const buildings=waveDefenseBuildings(mission1CityBuildings(layout.buildings));
 assert.equal(RELAY.floors*3,72);
 assert.equal(RELAY.footprint,20);
 const spawn=WAVE_DEFENSE_HERO_START;
+const distanceToRelay=p=>Math.hypot(p.x-RELAY.x,p.z-RELAY.z);
+assert(Math.abs(distanceToRelay(spawn)-distanceToRelay(MISSION1_HERO_START)*1.3**2)<1e-9);
+assert(spawn.x>WAVE_DEFENSE_BOUNDS.minX+4&&spawn.x<WAVE_DEFENSE_BOUNDS.maxX-4);
+assert(spawn.z>WAVE_DEFENSE_BOUNDS.minZ+4&&spawn.z<WAVE_DEFENSE_BOUNDS.maxZ-4);
 const forward=new THREE.Vector3(Math.sin(RELAY_INTRO.yaw),0,Math.cos(RELAY_INTRO.yaw));
 const towardRelay=new THREE.Vector3(RELAY.x-spawn.x,0,RELAY.z-spawn.z).normalize();
 assert(forward.distanceTo(towardRelay)<1e-9);
@@ -51,6 +55,7 @@ for(const b of buildings){
  physics.addChunk({type:'wall',building:b.id,floor:0,x:b.x,y:b.floors*1.5,z:b.z,size:[10,b.floors*3,10]});
 }
 const traceBuilding=(a,b,radius=0)=>traceImpact(a,b,{sections:physics.chunks,ground:false,radius});
+assert(!traceBuilding({...spawn,y:4},{x:RELAY.x,y:35,z:RELAY.z}),'spawn has a clear view of the relay');
 const walker={root:new THREE.Group(),combatUnit:{},reset(){this.dead=false;},applyWalkPose(){},shapes(){return [];}};
 let waves,hero=[],result=null,t=0;
 const damage=new UnitDamage(unit=>waves.disable(unit),unit=>{
