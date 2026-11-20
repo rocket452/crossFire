@@ -36,10 +36,10 @@ export function evacuationTeam(lead,current){
 }
 
 export class EvacuationBriefing {
- constructor({inputMode,onStart,combatOnly=false}){
+ constructor({inputMode,onStart,combatOnly=false,defenseMode=false}){
   this.inputMode=inputMode;
   this.onStart=onStart;
-  this.combatOnly=combatOnly;
+  this.defenseMode=defenseMode;this.combatOnly=combatOnly;
   this.pending=true;
   this.dialog=document.createElement('dialog');
   this.dialog.className='evac-briefing';
@@ -62,7 +62,7 @@ export class EvacuationBriefing {
  show(step){
   this.step=step;
   const title={
-   objective:this.combatOnly?'Mission 1':'Civilian Evacuation',
+   objective:this.defenseMode?'Wave Defense':this.combatOnly?'Mission 1':'Civilian Evacuation',
    choose:'Choose your hero',
    tutorial:HEROES.find(hero=>hero.id===this.hero)?.name
   }[step];
@@ -91,6 +91,10 @@ export class EvacuationBriefing {
   this.dialog.querySelector('h2').focus();
  }
  objective(){
+  if(this.defenseMode)return `<p class="evac-briefing-lead">Defend the cyan central relay through four waves.</p>
+   <ul class="evac-objectives"><li>Intercept Bruisers and drones, then defeat the Siege Walker.</li><li>Enemies engage nearby heroes. Clear each wave to earn 30 seconds to reposition.</li><li>If the relay falls, the mission ends.</li></ul>
+   <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
+
   if(this.combatOnly)return `<p class="evac-briefing-lead">Take down the Siege Walker in the cyberpunk district.</p>
    <ul class="evac-objectives"><li>Destroy its three weapons to defeat it.</li>
    <li>Watch the radar for Bruisers from the south and combat drones from the north.</li></ul>
