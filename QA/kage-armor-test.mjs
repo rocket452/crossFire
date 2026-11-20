@@ -6,7 +6,6 @@ registerHooks({resolve(name, context, next){
 }});
 const T=await import('../dist/vendor/three.module.js');
 const {GLTFLoader}=await import('../dist/vendor/GLTFLoader.js');
-const {HumanoidCharacter}=await import('../dist/humanoid-character.js');
 globalThis.window={document:{documentElement:{dataset:{}}},navigator:{},addEventListener(){},
  matchMedia:query=>({matches:query.includes('fine'),addEventListener(){}})};
 const {NinjaHero}=await import('../dist/ninja-hero.js');
@@ -27,7 +26,17 @@ for(const [index,clip]of armored.animations.entries()){
   assert.deepEqual(track.values,old.values);
  }
 }
-const ch=new HumanoidCharacter(armored,{variant:'ninja',height:2.25});
+const actor=Object.assign(Object.create(NinjaHero.prototype),{
+ root:new T.Group(),somersaultPivot:new T.Group(),visual:new T.Group(),appearances:new Map(),
+ starGeometry:new T.BoxGeometry(),red:new T.MeshStandardMaterial(),dark:new T.MeshStandardMaterial(),silver:new T.MeshStandardMaterial()
+});
+actor.somersaultPivot.position.y=1.1;
+actor.root.add(actor.somersaultPivot);
+actor.somersaultPivot.add(actor.visual);
+actor.useAppearance(armored);
+const ch=actor.character;
+assert.deepEqual(ch.root.scale.toArray(),[1.17,.90,1.17]);
+assert.equal(ch.root.getWorldPosition(new T.Vector3()).y,0,'proportion changes keep the rig origin at the feet');
 assert.equal(ch.bones.length,54);
 assert.equal(ch.triangles,2624);
 assert(ch.meshes.some(m=>m.material.name==='Ice blue visor'&&m.material.emissiveIntensity>1));
@@ -70,17 +79,6 @@ for(const clip of ch.clips.values()){
  }
 }
 ch.reset();
-const actor=Object.create(NinjaHero.prototype);
-actor.character=ch;
-actor.root=new T.Group();
-actor.somersaultPivot=new T.Group();
-actor.somersaultPivot.position.y=1.1;
-actor.visual=new T.Group();
-actor.root.add(actor.somersaultPivot);actor.somersaultPivot.add(actor.visual);actor.visual.add(ch.root);
-ch.root.position.y=-1.1;
-actor.starGeometry=new T.BoxGeometry();
-actor.red=actor.dark=actor.silver=new T.MeshStandardMaterial();
-actor.buildArt();
 assert.equal(actor.scarf,ch.nodes.B_KageScarf);
 assert.equal(actor.heldStar.parent,ch.nodes.B_R_Hand);
 assert.equal(actor.blade.parent,ch.nodes.B_L_Hand);
@@ -126,6 +124,7 @@ const armorCharacter=switching.character;
 const anchor=switching.shuriken.anchor;
 switching.useAppearance(classic);
 assert.equal(switching.character.triangles,1256);
+assert.deepEqual(switching.character.root.scale.toArray(),[1,1,1]);
 assert.equal(armorCharacter.root.parent,null);
 assert.equal(switching.attacks.heldKunai.parent,switching.character.nodes.B_R_Hand);
 assert.equal(switching.heldStar.parent,switching.character.nodes.B_R_Hand);
