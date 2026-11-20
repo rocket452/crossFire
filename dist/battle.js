@@ -109,11 +109,12 @@ let seed=57;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/42949
 let droneImpactShake=0;
 let loaded=false,paused=false,speed=1,simTime=0,frameClock=0,view='overview',slowSeconds=0;let kit={},layout,physics,soldierCrowd,soldierParts,soldierMotion,humanoidModel,pilot,unitDamage,robot,beamEffect,beamCombat,hero,runner,robotMissiles,arsenal,portalHero,plasmaArtillery,solara,eyeBeams,mochi,ninja,prism,axo,ember;let projectileSequence=0;let playerMissiles=0,playerHits=0,playerBuildingHits=0,playerUnitHits=0;let lastPlayerDamage=null;const buildingRecords=new Map(),chunkBatches={},tanks=[],helicopters=[],troops=[],projectiles=[],particles=[],tracers=[];let impactLog=[],shotsFired=0;const weaponImpacts={shell:0,rocket:0,pulse:0,beam:0,electric:0,plasma:0};
 let rosterPause=false;
-const roster=new HeroRoster({maxHeroes:testingMode?1:3,...(testingMode?{storage:null}:{}),onOpen:()=>{ninja?.exit();runner?.exit();pilot?.exit();rosterPause=paused;paused=true;keys.clear();heightInput=0;},onClose:()=>{paused=rosterPause;$('pause').textContent=paused?'▶':'Ⅱ';$('pause').setAttribute('aria-label',paused?'Resume simulation':'Pause simulation');},onApply:()=>{if(!loaded)return;if(testingMode)$('test-hero').value=roster.active[0];configureHeroes();$('reset').click();setView(roster.has('ember')?'ember':roster.has('axo')?'axo':roster.has('prism')?'prism':roster.has('mochi')?'mochi':roster.has('rift')?'portal':roster.has('solara')?'solara':roster.has('violet')?'hero':'overview');updateStats();}});roster.bind();
+const soloRoster=testingMode||mission1Mode;
+const roster=new HeroRoster({maxHeroes:soloRoster?1:3,...(soloRoster?{storage:null}:{}),onOpen:()=>{ninja?.exit();runner?.exit();pilot?.exit();rosterPause=paused;paused=true;keys.clear();heightInput=0;},onClose:()=>{paused=rosterPause;$('pause').textContent=paused?'▶':'Ⅱ';$('pause').setAttribute('aria-label',paused?'Resume simulation':'Pause simulation');},onApply:()=>{if(!loaded)return;if(testingMode)$('test-hero').value=roster.active[0];configureHeroes();$('reset').click();setView(roster.has('ember')?'ember':roster.has('axo')?'axo':roster.has('prism')?'prism':roster.has('mochi')?'mochi':roster.has('rift')?'portal':roster.has('solara')?'solara':roster.has('violet')?'hero':'overview');updateStats();}});roster.bind();
 const evacuationBriefing=districtMode?new EvacuationBriefing({
  inputMode,combatOnly:mission1Mode,
  onStart:id=>{
-  roster.apply(evacuationTeam(id,roster.active),{persist:false});
+  roster.apply(mission1Mode?[id]:evacuationTeam(id,roster.active),{persist:false});
   setView('overview');
   viewport.scrollIntoView({block:'center'});
   if(id==='ninja')ninja.enter();
@@ -490,6 +491,13 @@ window.battleDiagnostics=()=>({mission1:mission1Mode?{buildings:layout?.building
 
 if(districtMode||testingMode||convoyMode){document.querySelectorAll('[data-view="tank"],[data-view="air"],[data-view="infantry"],.factions').forEach(e=>e.hidden=true);document.querySelector('.headline>p').innerHTML=mission1Mode?'Mission 1.<br>Take down the Siege Walker.':'Protect the civilians.<br>Escort them to the evacuation Chinook.';}
 document.querySelector('.viewer').classList.toggle('is-escort',evacuationMode);$('scene-select').value=assetCityMode?'city-test':convoyMode?'convoy':testingMode?'testing':mission1Mode?'mission-1':evacuationMode?'evacuation':'battle';$('evac-status').hidden=!evacuationMode;$('casualty-hud').hidden=!evacuationMode;$('scene-select').onchange=e=>{const url=new URL(location.href);if(['evacuation','mission-1','testing','convoy','city-test'].includes(e.target.value))url.searchParams.set('scene',e.target.value);else url.searchParams.delete('scene');location.href=url.href;};
+
+if(mission1Mode){
+ $('hero-select-title').textContent='Choose your hero.';
+ document.querySelector('.hero-select-header p:last-child').textContent='Select one hero for Mission 1.';
+ document.querySelector('.hero-select-footer>div>span').textContent='Deploying restarts Mission 1.';
+ $('deploy-heroes').textContent='Deploy hero';
+}
 
 $('watch-evac').hidden=!evacuationMode;$('watch-evac').onclick=()=>{setView('overview');view='free';controls.target.set(evacuation.landing.x,2,evacuation.landing.z);camera.position.set(evacuation.landing.x+25,23,evacuation.landing.z+22);controls.update();$('camera-label').textContent='EVACUATION / LANDING ZONE';};
 
