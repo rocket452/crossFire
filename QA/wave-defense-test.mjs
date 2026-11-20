@@ -39,7 +39,9 @@ for(const b of buildings){
 const traceBuilding=(a,b,radius=0)=>traceImpact(a,b,{sections:physics.chunks,ground:false,radius});
 const walker={root:new THREE.Group(),combatUnit:{},reset(){this.dead=false;},applyWalkPose(){},shapes(){return [];}};
 let waves,hero=[],result=null,t=0;
-const damage=new UnitDamage(unit=>waves.disable(unit));
+const damage=new UnitDamage(unit=>waves.disable(unit),unit=>{
+ if(unit===waves.relay)waves.flashRelay();
+});
 const trace=(a,b,owner,radius)=>traceImpact(a,b,{targets:[waves.relay],radius});
 waves=new WaveDefense(scene,damage,{
  walker,visible:()=>true,collapsed:()=>false,status(){},finish:won=>{result=won;},startArsenal(){},
@@ -55,6 +57,13 @@ hero=[{alive:true,shapes:[{center:origin.clone()}]}];
 assert.equal(waves.targets(origin)[0],hero[0]);
 hero=[];assert.equal(waves.targets(origin)[0],waves.relay);
 step(23);assert(waves.relay.health<waves.relay.maxHealth,'incoming Bruiser bolts damage the relay');
+assert(waves.updateRelayFlash(1/60));
+assert.equal(waves.relayFlash,1);
+assert(waves.relayGlow.color.r>.99&&waves.relayGlow.color.b<.05);
+waves.updateRelayFlash(.24);
+waves.updateRelayFlash(0);
+assert.equal(waves.relayFlash,0);
+assert(waves.relayGlow.color.equals(waves.relayGlowColor));
 clear();step(29);assert.equal(waves.wave,1);step(1.2);assert.deepEqual(counts(),[0,4]);assert(waves.flightDrones.every(d=>d.root.position.z<WAVE_DEFENSE_BOUNDS.minZ+28));
 waves.relay.health=waves.relay.maxHealth;const hp=waves.relay.health;for(let i=0;i<2400&&waves.relay.health===hp;i++)step(1/30);assert(waves.relay.health<hp,'drone rounds hit relay');assert.equal(result,null);
 clear();step(30);assert.deepEqual(counts(),[2,2]);

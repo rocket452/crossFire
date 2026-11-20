@@ -176,7 +176,7 @@ relayCity.install(new T.Scene(),relayWorld,[relay],relayBatches,new Map());
 relayCity.applyTexture('buildingColor',buildingMap);
 relayCity.applyTexture('buildingGlow',glowMap);
 for(const batch of Object.values(relayBatches)){
- assert.equal(batch.material.map,null,'yellow paint stays visible after textures load');
+ assert.equal(batch.material.map,null,'dark blue paint stays visible after textures load');
  assert.equal(batch.material.emissiveMap,glowMap);
 }
 const flank=traceImpact({x:relay.x+8,y:12,z:relay.z-15},{x:relay.x+8,y:12,z:relay.z+15},

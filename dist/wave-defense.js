@@ -4,7 +4,7 @@ import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-eva
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
 
-export const RELAY={id:'central-relay',name:'Central relay',...center,floors:24,footprint:20,tint:'#ffd21e',solidPaint:true};
+export const RELAY={id:'central-relay',name:'Central relay',...center,floors:24,footprint:20,tint:'#163963',solidPaint:true};
 const mapScale=1.3;
 const mapX=x=>center.x+(x-center.x)*mapScale;
 const mapZ=z=>center.z+(z-center.z)*mapScale;
@@ -24,6 +24,7 @@ export function waveDefenseBuildings(buildings){
   .filter(b=>Math.hypot(Math.max(0,Math.abs(b.x-center.x)-5),Math.max(0,Math.abs(b.z-center.z)-5))>=43)
   .concat(RELAY);
 }
+const relayFlashSeconds=.24;
 const waves=[[4,0],[0,4],[2,2],[0,0]];
 
 export class WaveDefense extends MissionEnemyWaves {
@@ -45,7 +46,9 @@ export class WaveDefense extends MissionEnemyWaves {
   const root=new THREE.Group();
   root.position.set(center.x,0,center.z);
   scene.add(root);
-  const glow=new THREE.MeshBasicMaterial({color:'#ffdb37',toneMapped:false});
+  const glow=this.relayGlow=new THREE.MeshBasicMaterial({color:'#549df5',toneMapped:false});
+  this.relayGlowColor=glow.color.clone();
+  this.relayFlashColor=new THREE.Color('#ff2424');
   const roof=RELAY.floors*3;
   const plaza=new THREE.Mesh(new THREE.RingGeometry(32,32.35,64),glow);
   plaza.rotation.x=-Math.PI/2;plaza.position.y=.105;root.add(plaza);
@@ -63,12 +66,25 @@ export class WaveDefense extends MissionEnemyWaves {
  }
  reset(){
   super.reset();
+  this.relayFlashRemaining=0;
+  this.relayFlash=0;
+  this.relayGlow.color.copy(this.relayGlowColor);
   this.wave=0;this.remaining=0;this.phase='waiting';
   this.relay.entity.root.visible=true;
   this.relay.health=this.relay.maxHealth;this.relay.alive=true;
   this.walker.dead=true;this.walker.root.visible=false;this.walker.combatUnit.alive=false;
   this.walker.combatUnit.shapes=[];
   this.options.status(this);
+ }
+ flashRelay(){
+  if(!this.ended&&this.relayFlashRemaining===0)this.relayFlashRemaining=relayFlashSeconds;
+ }
+ updateRelayFlash(dt){
+  if(this.relayFlashRemaining===0&&this.relayFlash===0)return false;
+  this.relayFlash=Math.min(1,this.relayFlashRemaining/(relayFlashSeconds*.6));
+  this.relayFlashRemaining=Math.max(0,this.relayFlashRemaining-dt);
+  this.relayGlow.color.copy(this.relayGlowColor).lerp(this.relayFlashColor,this.relayFlash);
+  return true;
  }
  targets(origin){
   const heroes=this.getTargets().filter(u=>u.alive&&!u.dashPhased&&origin.distanceTo(u.shapes[0].center)<30&&this.options.visible(origin,u.shapes[0].center));
