@@ -42,8 +42,9 @@ const relayFlashSeconds=.24;
 const formations=[[4,0],[0,4],[2,2]];
 const countdownSeconds=30;
 export const DEFENSE_UPGRADES=[
- {id:'chain',title:'Chain lightning',detail:'Primary attacks arc to one additional nearby enemy.'},
- {id:'dash',title:'Charged dash',detail:'Dashing generates charge 30% faster than normal movement.'},
+ {id:'chain',hero:'volt',title:'Chain lightning',detail:'Primary attacks arc to one additional nearby enemy.'},
+ {id:'dash',hero:'volt',title:'Charged dash',detail:'Dashing generates charge 30% faster than normal movement.'},
+ {id:'backstab-dash',hero:'ninja',title:'Backstab Dash',detail:'A gold Crosscut backstab banks one extra dash, even if the enemy survives.'},
  {id:'repair',title:'Repair relay',detail:'Restore 30% of the central relay’s maximum HP.'}
 ];
 
@@ -159,9 +160,10 @@ export class WaveDefense extends MissionEnemyWaves {
   ][this.group];
   this.onEvent('Wave '+this.wave+' of 3 · '+battle);
  }
- chooseUpgrade(id,isVolt){
-  if(!this.upgradePending||!DEFENSE_UPGRADES.some(option=>option.id===id))return false;
-  if(id!=='repair'&&(!isVolt||this.upgrades.has(id)))return false;
+ chooseUpgrade(id,hero){
+  const upgrade=DEFENSE_UPGRADES.find(option=>option.id===id);
+  if(!this.upgradePending||!upgrade)return false;
+  if(upgrade.hero&&(upgrade.hero!==hero||this.upgrades.has(id)))return false;
   if(id==='repair')this.relay.health=Math.min(this.relay.maxHealth,this.relay.health+this.relay.maxHealth*.3);
   else this.upgrades.add(id);
   this.upgradePending=false;

@@ -7,12 +7,14 @@ const normalize=v=>{const n=Math.hypot(v.x,v.y,v.z);return n>1e-6?{x:v.x/n,y:v.y
 export class NinjaMotion {
  constructor({sweep=()=>null,onHit=()=>({killed:false}),onDashEnd=()=>{}}={}){Object.assign(this,{sweep,onHit,onDashEnd});this.body=new RunnerMotion({runSpeed:NINJA.runSpeed,boostSpeed:NINJA.runSpeed,wallRun:false});this.reset();}
  get position(){return this.body.position;}get velocity(){return this.body.velocity;}get mode(){return this.body.mode;}get active(){return this.dash!==null;}
- reset(){this.body.reset({x:0,y:.08,z:27});this.jumps=0;this.jumpCount=0;this.doubleJumps=0;this.dash=null;this.fallingCut=null;this.cooldown=0;this.slowFall=0;this.dashes=0;this.resets=0;this.jumpRequested=false;this.jumpBuffer=0;this.coyote=0;this.airAge=0;this.lastResult=null;this.wallJumps=0;this.wallKick=0;this.wallJumpLock=0;this.wallNormal=null;}
+ reset(){this.body.reset({x:0,y:.08,z:27});this.jumps=0;this.jumpCount=0;this.doubleJumps=0;this.dash=null;this.fallingCut=null;this.backstabDashReady=false;this.cooldown=0;this.slowFall=0;this.dashes=0;this.resets=0;this.jumpRequested=false;this.jumpBuffer=0;this.coyote=0;this.airAge=0;this.lastResult=null;this.wallJumps=0;this.wallKick=0;this.wallJumpLock=0;this.wallNormal=null;}
  jump(){this.jumpRequested=true;}
  startDash(target){
   if(this.dash||this.cooldown>1e-8)return false;
   const p=this.position,grounded=this.mode==='ground',direction=normalize({x:target.x-p.x,y:grounded?0:target.y-(p.y+1.2),z:target.z-p.z})||(grounded?{x:Math.sin(this.body.yaw),y:0,z:Math.cos(this.body.yaw)}:null);if(!direction)return false;
-  this.fallingCut=null;this.dash={direction,grounded,remaining:NINJA.dashRange,origin:{...p},hitUnits:new Set()};this.cooldown=NINJA.dashCooldown;this.slowFall=0;this.jumpBuffer=this.coyote=0;this.dashes++;if(!grounded){this.body.support=null;this.body.mode='air';}return true;
+  this.fallingCut=null;this.dash={direction,grounded,remaining:NINJA.dashRange,origin:{...p},hitUnits:new Set()};this.cooldown=this.backstabDashReady?0:NINJA.dashCooldown;
+  this.backstabDashReady=false;
+  this.slowFall=0;this.jumpBuffer=this.coyote=0;this.dashes++;if(!grounded){this.body.support=null;this.body.mode='air';}return true;
  }
  wallJump(sections){
   if(this.mode!=='air'||this.wallJumpLock>0)return false;

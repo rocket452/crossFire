@@ -12,3 +12,17 @@ for(const dt of[1/30,1/60,1/120,.075]){
  const roof={id:'roof',building:'tower',type:'slab',state:'intact',x:0,y:10,z:27,size:[12,.35,12]},landing=new NinjaMotion();landing.body.position.y=15;landing.body.mode='air';landing.jumps=2;landing.body.velocity.y=-4;run(landing,2,{},[roof],dt);assert.equal(landing.mode,'ground');assert(Math.abs(landing.position.y-10.175)<.01);assert.equal(landing.jumps,0);
  console.log('PASS',dt,'32.2m/s ground / 32.2m/s air / 128.8m/s dash, high/double/no triple jumps, roof landing, angled high wall spring and air-jump refresh, six-second dash, exact 48m distance, one-second slow fall, kill reset and no reset on scenery');
 }
+
+const backstab=new NinjaMotion();
+backstab.backstabDashReady=true;
+assert(backstab.startDash({x:0,y:0,z:60}));
+assert.equal(backstab.backstabDashReady,false);
+assert.equal(backstab.cooldown,0);
+assert.equal(backstab.startDash({x:0,y:0,z:55}),false,'extra dash still waits for the first dash to end');
+run(backstab,.5);
+assert(backstab.startDash({x:0,y:0,z:-40}));
+assert.equal(backstab.cooldown,NINJA.dashCooldown);
+backstab.backstabDashReady=true;
+backstab.reset();
+assert.equal(backstab.backstabDashReady,false);
+console.log('PASS Backstab Dash banks exactly one extra dash and clears on reset');
