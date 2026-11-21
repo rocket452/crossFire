@@ -44,13 +44,13 @@ Already-committed strikes and orbs continue when the player releases control or 
 ## Verification
 
 - `QA/runner-storm-test.mjs`: exact delayed impact at 30/60/120 Hz; no duplicate strikes; cooldowns; exact 2/3 cost; slow movement; auto-zaps, energy drain/depletion, cover/parking, recharge collision, insufficient-energy rejection, replacement and reset.
-- `QA/runner-storm-browser.cjs`: real Z/V inputs, warning and delayed damage to nearby enemies, distant target exclusion, floating energy bar, all five primary weapon recharges plus welding beam and Critical Mass, owned-only trace routing, one-orb cap, pause and reset, rendering without JavaScript/shader errors.
+- `QA/runner-storm-browser.cjs`: real Z/V inputs, warning and delayed damage to nearby enemies, distant target exclusion, floating energy bar, Lightning Beam, Welding Beam and Critical Mass recharge, owned-only trace routing, one-orb cap, pause and reset, rendering without JavaScript/shader errors.
 - `QA/runner-storm-touch-browser.cjs`: real touch buttons, timed strike, exact cost, world bar, readable HUD and cleanup.
 - Existing basic-attack, Critical Mass, welding beam and City Battle rescue-dash checks remain the regression suite.
 
 Known prototype limits: the orb parks when blocked rather than navigating around buildings; it does not redirect through portals or intercept missiles. Z targets ground, not roof surfaces. Physical phone FPS and thermal behavior are unmeasured.
 
-Files: added `dist/runner-storm.js`, `dist/runner-storm-fx.js`, three storm QA scripts and this document. Updated `dist/speedster.js`, `dist/battle.js`, `dist/runner-basic-attacks.js`, `dist/runner-whip.js`, `dist/index.html`, `dist/battle.css` and `dist/game-entry.js`.
+Files: added `dist/runner-storm.js`, `dist/runner-storm-fx.js`, three storm QA scripts and this document. Updated `dist/speedster.js`, `dist/battle.js`, `dist/runner-whip.js`, `dist/index.html`, `dist/battle.css` and `dist/game-entry.js`.
 
 ## Revision 264 — Sky Strike visual pass
 

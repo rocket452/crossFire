@@ -1,6 +1,15 @@
 import {WeldElectrifyFX} from './weld-electrify-fx.js?v=weld-stun-art-266';
 import * as THREE from './vendor/three.module.js';
 export const WELDING_BEAM=Object.freeze({range:6,damagePerSecond:600,drainPerSecond:25,stun:.2,radius:.16,pulseRate:20});
+// Sample the reticle with the same thickness as the live beam.
+export function weldAimPoint(camera,sight,trace){
+ const far=camera.clone().addScaledVector(sight,100);
+ const hit=trace(camera,far,WELDING_BEAM.radius);
+ if(!hit)return far;
+ const point=new THREE.Vector3().copy(hit.point);
+ if(hit.unit)point.addScaledVector(sight,WELDING_BEAM.radius*.5);
+ return point;
+}
 // Reuse enemy stun methods, but explicitly exclude every live boss instance.
 export function weldStun(hit,damage,bosses=[]){const u=hit?.unit,e=u?.entity;if(!(damage>0)||u?.kind!=='robot'||!u.alive||!e||bosses.includes(e)||!e.stun)return false;e.stun(WELDING_BEAM.stun);return true;}
 export class RunnerWelder {
