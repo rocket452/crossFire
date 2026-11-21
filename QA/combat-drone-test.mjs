@@ -65,6 +65,16 @@ for(const [motors,y,wall,velocity] of [
 }
 
 {
+ const {drone,hero}=fixture();
+ const gun=drone.gun,origin=drone.model.turret.getWorldPosition(new T.Vector3());
+ hero.shapes[0].center.copy(origin).add(new T.Vector3(0,-10,58));
+ assert.equal(gun.select([hero]),hero,'drone can acquire targets near the doubled 60 m range');
+ hero.shapes[0].center.z=origin.z+61;
+ assert.equal(gun.select([hero]),null,'drone cannot acquire targets outside 60 m');
+ assert(gun.config.speed*gun.config.bulletLifetime>=60);
+}
+
+{
  const f=fixture(),gun=f.drone.gun,g=gun.config;
  f.step(.46,[f.hero]);assert.equal(gun.phase,'acquisition');assert.equal(gun.shots,0);
  f.step(.6,[f.hero]);assert.equal(gun.phase,'spinUp');assert(gun.spin>0&&gun.spin<1);assert.equal(gun.shots,0);
