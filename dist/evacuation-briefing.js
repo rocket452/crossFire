@@ -19,8 +19,9 @@ const training={
   controls:[
    ['Move and aim','WASD · Mouse','Left stick · Drag the scene'],
    ['Jump again in air or near a wall','Space','Jump'],
-   ['Throw, stop and recall laser star','Hold LMB or F, release, then press twice','Hold Laser Star, release, then tap twice'],
-   ['Charge and throw shuriken','Hold and release right click or G','Hold and release Shuriken'],
+   ['Throw or store kunai','Tap LMB or F to throw · Hold to store','Tap Kunai to throw · Hold to store'],
+   ['Throw, stop and recall laser star','Hold RMB or G, release, then press twice','Hold Laser Star, release, then tap twice'],
+   ['Charge and throw shuriken','Hold and release T','Hold and release Shuriken'],
    ['Teleport to a fully charged star','Q','Teleport'],
    ['Dash / sword slash','Shift / R','Dash / Slash'],
    ['Explosive bomb / protective smoke','C / V','Bomb / Smoke']

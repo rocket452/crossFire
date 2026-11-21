@@ -16,9 +16,12 @@ const world=new ShurikenWorld(config,{getSections:()=>[],getEnemies:()=>units});
 const hero={scene:new THREE.Scene(),character:{hand:()=>hand},shurikenWorld:world,getDashEnemies:()=>units,
  shurikenEffects:{tone(){}},aim:()=>new THREE.Vector3(0,2.264,80),hit:(hit,power,kind)=>events.push({unit:hit.unit,power,kind})};
 const star=new LaserShuriken(hero,config.laserStar);
+assert.equal(star.radius,.9);
 const step=(frames,held=false)=>{for(let i=0;i<frames;i++)star.update(1/120,held);};
 step(120,true);
 assert.equal(star.power,1);
+assert.equal(star.radius,3);
+assert.equal(star.mesh.scale.x,3);
 assert(Math.abs(star.mesh.position.y-hand.y-.264)<1e-9,'the charging star spawns 20% farther above Kage’s hand');
 step(1);
 assert(Math.abs(star.mesh.position.y-hand.y-.264)<1e-9,'the released star launches from the charging position');
@@ -38,6 +41,8 @@ for(const [x,z,chargeFrames] of [[0,0,120],[50,39,18]]){
  hero.aim=()=>new THREE.Vector3(x,floor-1,z);
  const nearby=robot(x,z);
  nearby.entity.root.position.y=floor+.5;
+ const outer=chargeFrames===120?robot(x+2.8,z):null;
+ if(outer)outer.entity.root.position.y=floor+.55;
  step(chargeFrames,true);
  assert(!star.groundRange.visible);
  const flightTilt=star.mesh.rotation.x;
@@ -45,8 +50,9 @@ for(const [x,z,chargeFrames] of [[0,0,120],[50,39,18]]){
  assert.equal(star.state,'grinding');
  assert.equal(star.host,null,'ground impact takes precedence over latching to the nearby robot');
  const position=star.mesh.position.clone(),spin=star.mesh.rotation.z;
- assert(position.y>floor&&position.y-floor<.1);
+ assert(position.y>floor&&position.y-floor<.17);
  step(12);
+ if(outer)assert(events.some(e=>e.unit===outer&&e.kind==='laser-grind'),'the larger ground radius damages enemies beyond the previous reach');
  assert(star.mesh.position.equals(position),'the grounded shuriken stays at its impact location');
  assert(star.mesh.rotation.z>spin);
  assert.equal(star.mesh.rotation.x,flightTilt);
