@@ -6,7 +6,10 @@ import sys
 from pathlib import Path
 from mathutils import Matrix, Quaternion, Vector
 
-source, rig, output = map(Path, sys.argv[sys.argv.index('--') + 1:])
+args = sys.argv[sys.argv.index('--') + 1:]
+source, rig, output = map(Path, args[:3])
+# Frog Ninja derives its body from the original armored bind mesh.
+frog_base = args[3:] == ['--frog-base']
 reference = rig.read_bytes()
 json_size = struct.unpack_from('<I', reference, 12)[0]
 gltf = json.loads(reference[20:20 + json_size])
@@ -190,6 +193,31 @@ def fit(index, point):
     elif index >= 63:
         weights = [('B_Spine2',1)]
         p.z -= .022
+    if not frog_base:
+        # Fit the outer shells to the reference silhouette in bind space.
+        if index <= 3 or index >= 63:
+            p.x = -x * 1.20
+            p.z *= 1.13
+        elif 4 <= index < 16:
+            p.x = -x * 1.14
+            p.y = interpolate(z, [(0,0),(.155,.14),(.47,.49),
+                                  (.71,.755),(.927,.968)])
+            p.z *= 1.14
+        elif 16 <= index < 38:
+            if (index-16) % 11 in (2,3):
+                p.y = 1.421 + (p.y-1.421)*1.34
+                p.z = .0126 + (p.z-.0126)*1.22
+        elif index <= 40:
+            p.x = -x * 1.28
+            p.z *= 1.12
+        elif index <= 42:
+            p.x = -x * 1.19
+            p.y -= .075 * min(1,max(0,(1.35-z)/.55))
+        else:
+            # Keep the brow, mask, cheek vents and eyes fitted as one helmet.
+            p.x = -x * 1.19
+            p.y = 1.531 + (z-1.386)*1.12
+            p.z *= 1.14
     weights = [(names[key], weight) for key, weight in weights if weight > 0]
     weights += [(0,0)]*(4-len(weights))
     return p, [joint for joint, weight in weights], [weight for joint, weight in weights]
@@ -223,6 +251,13 @@ for material_index, material in enumerate(mesh.materials):
     if strength > 0:
         props['emissiveFactor'] = list(shader.inputs['Emission Color'].default_value[:3])
         props['extensions'] = {'KHR_materials_emissive_strength':{'emissiveStrength':strength}}
+    if not frog_base:
+        if material.name == 'Crest enamel':
+            props['pbrMetallicRoughness']['baseColorFactor'] = [.95,.025,.055,1]
+            props['emissiveFactor'] = [.8,.012,.025]
+            props['extensions']['KHR_materials_emissive_strength']['emissiveStrength'] = .45
+        if material.name == 'Red luminous trim':
+            props['extensions']['KHR_materials_emissive_strength']['emissiveStrength'] = .85
     primitives.append({'material':len(used),'attributes':{
         'POSITION':accessor(positions,'f',3,'VEC3',34962),
         'NORMAL':accessor(normals,'f',3,'VEC3',34962),
@@ -237,6 +272,12 @@ gltf['extensionsUsed'] = ['KHR_materials_emissive_strength']
 gltf['scenes'][0]['extras'] = {'character': {
     'source':'Kage armor / Explosive LLC animation rig', 'nominalHeight':1.86, 'preserveMaterials':True
 }}
+if not frog_base:
+    # Keep hand sockets aligned as the T-pose span narrows.
+    scene = gltf['scenes'][0]
+    nodes.append({'name':'Armored silhouette','scale':[.70,1,1],
+                  'children':scene['nodes']})
+    scene['nodes'] = [len(nodes)-1]
 binary.extend(b'\0'*(-len(binary)%4))
 gltf['buffers'][0]['byteLength'] = len(binary)
 data = json.dumps(gltf,separators=(',',':')).encode()

@@ -97,7 +97,7 @@ FreeSample.zip. The four optimized WebP files belong alongside the city GLB
 on the private build branch. Regenerate them using the instructions in
 ASSET_CITY_TEST.md. Keep the source ZIP and original PNGs in private storage.
 
-## Armored Kage (revision 323)
+## Armored Kage (revision 364)
 
 The reference FBX stays outside the public checkout. Run Blender with
 `--factory-startup --disable-autoexec -b --python source/rig_kage_armor.py -- /private/kage_reference.fbx /private/humanoid.glb /private/kage-armored.glb`.
@@ -105,7 +105,7 @@ The output embeds the licensed humanoid animation data. Place it in
 `dist/city-assets/licensed-characters/kage-armored.glb` for local testing
 and force-add it only on `site-licensed-assets`. Run
 `node QA/kage-armor-test.mjs` with both runtime models available.
-Use `?kage=classic` to select the original model.
+Use `?kage=armored` to preview the refitted armor, or `?kage=classic` to select the original model.
 
 ## Armored Volt Rush (revision 330)
 
@@ -118,8 +118,10 @@ and force-add it only on `site-licensed-assets`. Run
 
 ## Frog Ninja Kage (revision 356)
 
-Generate from the private armored Kage asset with Python and NumPy using
-`python source/build_kage_frog.py /private/kage-armored.glb /private/kage-frog.glb`.
+Generate the original bind mesh with the Armored Kage Blender command above,
+using `/private/kage-frog-base.glb --frog-base` as its output and final flag.
+Then use Python and NumPy to build Frog Ninja with
+`python source/build_kage_frog.py /private/kage-frog-base.glb /private/kage-frog.glb`.
 Place the GLB alongside the armored model under `dist/city-assets/licensed-characters/`.
 Keep the generated mesh and its embedded animation data on the private build branch.
 Run `node QA/kage-armor-test.mjs --frog` to exercise the model with the Kage controller.
