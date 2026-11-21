@@ -14,10 +14,16 @@ function robot(x,z){
 const target=robot(0,10);
 const world=new ShurikenWorld(config,{getSections:()=>[],getEnemies:()=>units});
 const hero={scene:new THREE.Scene(),character:{hand:()=>hand},shurikenWorld:world,getDashEnemies:()=>units,
- shurikenEffects:{tone(){}},aim:()=>new THREE.Vector3(0,2.22,80),hit:(hit,power,kind)=>events.push({unit:hit.unit,power,kind})};
+ shurikenEffects:{tone(){}},aim:()=>new THREE.Vector3(0,2.264,80),hit:(hit,power,kind)=>events.push({unit:hit.unit,power,kind})};
 const star=new LaserShuriken(hero,config.laserStar);
 const step=(frames,held=false)=>{for(let i=0;i<frames;i++)star.update(1/120,held);};
-step(120,true);assert.equal(star.power,1);step(32);assert.equal(star.state,'flying');
+step(120,true);
+assert.equal(star.power,1);
+assert(Math.abs(star.mesh.position.y-hand.y-.264)<1e-9,'the charging star spawns 20% farther above Kage’s hand');
+step(1);
+assert(Math.abs(star.mesh.position.y-hand.y-.264)<1e-9,'the released star launches from the charging position');
+step(31);
+assert.equal(star.state,'flying');
 step(1,true);assert.equal(star.host,target);step(60);assert(events.filter(e=>e.kind==='laser-grind').length>=3);
 target.entity.root.position.x+=1;step(1);assert.equal(star.mesh.position.x,1);
 hand.x=10;const second=robot(5.5,star.mesh.position.z/2);step(1,true);assert.equal(star.state,'returning');step(90);
