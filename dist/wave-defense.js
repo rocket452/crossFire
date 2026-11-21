@@ -7,7 +7,7 @@ import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
 import {RELAY_TIERS,makeRelayTrim} from './relay-design.js?v=347';
 
 export const RELAY={id:'central-relay',name:'Central relay',...center,floors:24,footprint:20,tint:'#c83d78',asset:'relay',solidPaint:true};
-const mapScale=1.3;
+const mapScale=1.3**2;
 const mapX=x=>center.x+(x-center.x)*mapScale;
 const mapZ=z=>center.z+(z-center.z)*mapScale;
 const spawnOffsetX=mapX(MISSION1_HERO_START.x)-center.x;
@@ -40,7 +40,8 @@ export function waveDefenseBuildings(buildings){
 }
 const relayFlashSeconds=.24;
 const formations=[[4,0],[0,4],[2,2]];
-const countdownSeconds=30;
+export const WAVE_DEFENSE_INTERVAL=15;
+const formationSize=formations.reduce((sum,[ground])=>sum+ground,0)*3;
 export const DEFENSE_UPGRADES=[
  {id:'chain',hero:'volt',title:'Chain lightning',detail:'Primary attacks arc to one additional nearby enemy.'},
  {id:'dash',hero:'volt',title:'Charged dash',detail:'Dashing generates charge 30% faster than normal movement.'},
@@ -50,20 +51,11 @@ export const DEFENSE_UPGRADES=[
 
 export class WaveDefense extends MissionEnemyWaves {
  constructor(scene,damage,options){
-  super(scene,damage,{...options,formationSize:8});
+  super(scene,damage,{...options,formationSize});
   this.options=options;
   this.walker=options.walker;
-  for(const {actor,start} of this.drones){
-   start.z=WAVE_DEFENSE_BOUNDS.minZ+(start.z-ESCORT_APPROACH.minZ);
-   actor.options.bounds=WAVE_DEFENSE_BOUNDS;
-   actor.options.ingress.z=center.z-22-(start.z-WAVE_DEFENSE_BOUNDS.minZ-8)*.35;
-  }
-  for(const [index,unit] of this.members.entries()){
-   unit.spawnPosition.z=WAVE_DEFENSE_BOUNDS.maxZ-(ESCORT_APPROACH.maxZ-unit.spawnPosition.z);
-   unit.getTargets=origin=>this.targets(origin);
-   const lane=unit.spawnPosition.x;
-   unit.objective=()=>new THREE.Vector3(lane,.1,center.z+18+Math.floor(index/2)*6);
-  }
+  for(const {actor} of this.drones)actor.options.bounds=WAVE_DEFENSE_BOUNDS;
+  for(const unit of this.members)unit.getTargets=origin=>this.targets(origin,unit.heroRange);
   const root=new THREE.Group();
   root.position.set(center.x,0,center.z);
   scene.add(root);
@@ -112,6 +104,7 @@ export class WaveDefense extends MissionEnemyWaves {
   this.relayFlash=0;
   this.relayGlow.color.copy(this.relayGlowColor);
   this.wave=1;this.group=0;this.remaining=0;this.phase='waiting';
+  this.bruisersLaunched=0;this.dronesLaunched=0;
   this.upgradePending=false;this.upgrades=new Set();
   this.relay.entity.root.visible=true;
   this.relay.health=this.relay.maxHealth;this.relay.alive=true;
@@ -129,22 +122,40 @@ export class WaveDefense extends MissionEnemyWaves {
   this.relayGlow.color.copy(this.relayGlowColor).lerp(this.relayFlashColor,this.relayFlash);
   return true;
  }
- targets(origin){
-  const heroes=this.getTargets().filter(u=>u.alive&&!u.dashPhased&&origin.distanceTo(u.shapes[0].center)<30&&this.options.visible(origin,u.shapes[0].center));
+ targets(origin,range){
+  const heroes=this.getTargets().filter(u=>{
+   const point=u.shapes[0]?.center;
+   return u.alive&&!u.dashPhased&&point&&origin.distanceTo(point)<=range&&this.options.visible(origin,point);
+  });
   return heroes.length?heroes:[this.relay];
  }
  launch(){
   this.phase='active';
-  this.upgradePending=false;
+  this.upgradePending=this.wave<3&&this.group===formations.length-1;
+  this.remaining=this.wave<3?WAVE_DEFENSE_INTERVAL:0;
   const [ground,air]=this.wave===3?[0,0]:formations[this.group].map(count=>count*this.wave);
   if(ground){
-   const units=this.members.slice(0,ground);
-   for(const unit of units){unit.reset();unit.spawn();}
+   const units=this.members.slice(this.bruisersLaunched,this.bruisersLaunched+ground);
+   this.bruisersLaunched+=ground;
+   for(const [index,unit] of units.entries()){
+    const lane=center.x+(index%2===0?-4:4);
+    const row=Math.floor(index/2);
+    unit.spawnPosition={x:lane,y:.1,z:WAVE_DEFENSE_BOUNDS.maxZ-6-row*ESCORT_APPROACH.rowSpacing};
+    unit.objective=()=>new THREE.Vector3(lane,.1,center.z+18+row*6);
+    unit.reset();
+    unit.spawn();
+   }
    this.alert('south',units);
   }
   if(air){
-   for(const {actor,start} of this.drones.slice(0,air))actor.spawn(start);
-   this.alert('north',this.flightDrones.slice(0,air));
+   const units=this.drones.slice(this.dronesLaunched,this.dronesLaunched+air);
+   this.dronesLaunched+=air;
+   for(const [index,{actor,start}] of units.entries()){
+    const row=Math.floor(index/2);
+    actor.options.ingress.z=center.z-22-row*3.5;
+    actor.spawn({...start,z:WAVE_DEFENSE_BOUNDS.minZ+8+row*8});
+   }
+   this.alert('north',units.map(({actor})=>actor));
   }
   if(this.wave===3){
    const boss=this.walker;
@@ -159,6 +170,9 @@ export class WaveDefense extends MissionEnemyWaves {
    ground+' Bruisers',air+' combat drones',ground+' Bruisers and '+air+' drones'
   ][this.group];
   this.onEvent('Wave '+this.wave+' of 3 · '+battle);
+ }
+ get nextWaveLabel(){
+  return this.group===formations.length-1?'Wave '+(this.wave+1):'Group '+(this.group+2);
  }
  chooseUpgrade(id,hero){
   const upgrade=DEFENSE_UPGRADES.find(option=>option.id===id);
@@ -185,23 +199,25 @@ export class WaveDefense extends MissionEnemyWaves {
   if(this.ended)return;
   this.time=time;
   if(!this.relay.alive||this.options.collapsed()){this.finish(false);return;}
-  if(this.phase==='waiting'){
+  if(this.phase==='waiting')this.launch();
+  else if(this.wave<3){
    this.remaining=Math.max(0,this.remaining-dt);
-   if(this.remaining<1e-6)this.launch();
+   if(this.remaining<1e-6){
+    if(++this.group===formations.length){
+     this.wave++;
+     this.group=0;
+    }
+    this.launch();
+   }
   }
   this.bruisers.update(dt,time);
-  for(const drone of this.flightDrones)if(drone.spawned)drone.update(dt,this.targets(drone.root.position));
+  for(const drone of this.flightDrones){
+   if(drone.spawned)drone.update(dt,this.targets(drone.root.position,drone.gun.config.range));
+  }
   if(this.ended)return;
-  if(this.phase==='active'){
-   if(this.wave===3){
-    if(this.walker.dead)this.finish(true);
-    else this.walker.spawnOrigin.z=Math.min(center.z-35,this.walker.spawnOrigin.z+dt*2);
-   }else if(!this.getTarget()){
-    this.phase='waiting';this.remaining=countdownSeconds;
-    if(++this.group===formations.length){
-     this.wave++;this.group=0;this.upgradePending=true;
-    }
-   }
+  if(this.wave===3){
+   if(this.walker.dead)this.finish(true);
+   else this.walker.spawnOrigin.z=Math.min(center.z-35,this.walker.spawnOrigin.z+dt*2);
   }
   this.options.status(this);
  }

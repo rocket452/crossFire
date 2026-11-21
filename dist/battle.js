@@ -42,7 +42,7 @@ import {EnemyDamageFlash} from './enemy-damage-flash.js?v=348';
 import {HeroMinimap} from './hero-minimap.js?v=347';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
-import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=enemy-range-366';
+import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=timed-defense-367';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=enemy-range-366';
 import {EvacRaiderWaves} from './evac-raider-waves.js?v=enemy-range-366';
 import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-approach.js?v=340';
@@ -257,7 +257,16 @@ function openDefenseUpgrade(mission){
   };
   choices.append(button);
  }
- panel.addEventListener('cancel',event=>event.preventDefault());
+ const skip=document.createElement('button');
+ skip.textContent='Skip upgrade';
+ skip.onclick=()=>{
+  mission.upgradePending=false;
+  closeDefenseUpgrade();
+  if(runner?.active)runner.requestMouseLock();
+  if(ninja?.active)ninja.requestLock();
+ };
+ choices.append(skip);
+ panel.addEventListener('cancel',event=>{event.preventDefault();skip.click();});
  document.querySelector('.viewer').append(panel);
  defenseUpgradePanel=panel;
  runner?.clearInput();ninja?.clearInput();keys.clear();
@@ -270,8 +279,8 @@ function defenseStatus(mission){
  const state=mission.phase==='waiting'?'Preparing':'Wave '+mission.wave+' / 3';
  const text='CENTRAL RELAY · '+Math.ceil(100*mission.relay.health/mission.relay.maxHealth)+'% · '+state;
  if(hud.textContent!==text)hud.textContent=text;
- timer.hidden=mission.phase!=='waiting'||mission.remaining<=0;
- const countdown=(mission.group?'Group '+(mission.group+1):'Wave '+mission.wave)+' in '+Math.ceil(mission.remaining)+'s';
+ timer.hidden=mission.ended||mission.remaining<=0;
+ const countdown=mission.nextWaveLabel+' in '+Math.ceil(mission.remaining)+'s';
  if(timer.textContent!==countdown)timer.textContent=countdown;
  document.querySelector('.boss-health-hud').hidden=mission.wave!==3||!mission.walker.root.visible;
  if(mission.upgradePending&&!defenseUpgradePanel)openDefenseUpgrade(mission);
