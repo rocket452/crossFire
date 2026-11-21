@@ -27,7 +27,7 @@ The resolver checks the ninja's upright capsule against live enemy shapes, intac
 
 The star represents the character's centre (`arrival.anchorHeight`); landing points are feet positions. Solid-surface anchors get enough clearance for the whole body, including the head. Unsupported arrivals keep normal gravity and momentum. Nearby support returns the existing controller to its normal ground mode.
 
-A successful teleport consumes that star, starts the 1.5-second full-throw cooldown and refreshes the existing dash and air double jump once. By default an airborne arrival grants one air jump (the double jump); grounded arrivals regain the normal two-jump sequence. `arrival.airJumps` can grant extra airborne jump credits for experiments. During cooldown, quick throws remain available; a hold can become fully charged once cooldown ends.
+A successful teleport consumes that star, starts the 1.5-second full-throw cooldown and refreshes dash. Kage gets one air jump per airtime. An airborne teleport preserves its spent or available state, and landing restores it. During cooldown, quick throws remain available; a hold can become fully charged once cooldown ends.
 
 Only enemies pierced during that star's flight are eligible for the arrival strike. If one is within range and unobstructed, Kage turns toward it and strikes. Arriving in its rear cone applies the backstab multiplier. No extra strike occurs for an enemy the star never touched. Existing boss armour/module damage rules still apply.
 

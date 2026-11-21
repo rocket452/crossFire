@@ -8,9 +8,9 @@ for(const dt of[1/30,1/60,1/120,.075]){
  m.jump();run(m,.3,{},[],dt);assert(m.startDash({x:0,y:m.position.y+1.2,z:m.position.z-40}));assert(!m.startDash({x:1,y:20,z:5}));const start={...m.position};run(m,.4,{},[],dt);assert(!m.active);assert(Math.abs(m.position.z-start.z+48)<.01);assert(m.cooldown>5.55&&m.slowFall>.9);const altitude=m.position.y;run(m,.8,{},[],dt);assert(altitude-m.position.y<5,'one-second aim window has strongly reduced falling');assert(m.velocity.y>=-3.001);assert(!m.startDash({x:0,y:20,z:0}));run(m,.4,{},[],dt);assert.equal(m.slowFall,0);assert(m.velocity.y< -3,'normal falling resumes after the shorter float');run(m,4.8,{},[],dt);assert.equal(m.cooldown,0);
  let hits=0;const kill=new NinjaMotion({sweep:()=>({t:.5,kind:'missile'}),onHit:()=>{hits++;return{killed:true,damage:18};}});kill.body.position.y=20;kill.body.mode='air';assert(kill.startDash({x:0,y:21.2,z:0}));kill.step({},dt,[]);assert.equal(hits,1);assert.equal(kill.cooldown,0);assert.equal(kill.resets,1);assert(kill.slowFall>.99);assert(kill.startDash({x:12,y:21,z:0}),'immediate airborne kill chain');
  const miss=new NinjaMotion({sweep:()=>({t:.3,kind:'building'}),onHit:()=>({damage:0,killed:false})});miss.body.position.y=20;miss.body.mode='air';miss.startDash({x:0,y:20,z:0});miss.step({},dt,[]);assert(miss.cooldown>5.9);assert(!miss.active);assert.equal(miss.resets,0);
- const wall={id:'wall',building:'tower',type:'wall',state:'intact',x:1.3,y:15,z:27,size:[.25,30,12]},w=new NinjaMotion();w.body.position.y=5;w.body.mode='air';w.jumps=2;w.body.velocity.y=-5;w.jump();run(w,.05,{},[wall],dt);assert.equal(w.wallJumps,1);assert(w.velocity.y>34);assert(w.velocity.x<-10.5,'wall jump kicks away rather than climbing inside the wall');assert.equal(w.jumps,1,'wall spring restores one air jump');w.jump();run(w,.05,{},[wall],dt);assert.equal(w.wallJumps,1,'contact lock prevents repeated wall kicks');assert.equal(w.doubleJumps,1);assert.equal(w.mode,'air');assert.equal(w.body.climbs,0,'ninja does not acquire Volt wall running');
+ const wall={id:'wall',building:'tower',type:'wall',state:'intact',x:1.3,y:15,z:27,size:[.25,30,12]},w=new NinjaMotion();w.body.position.y=5;w.body.mode='air';w.jumps=2;w.body.velocity.y=-5;w.jump();run(w,.05,{},[wall],dt);assert.equal(w.wallJumps,1);assert(w.velocity.y>34);assert(w.velocity.x<-10.5,'wall jump kicks away rather than climbing inside the wall');assert.equal(w.jumps,2,'wall kick preserves the spent air jump');w.jump();run(w,.05,{},[wall],dt);assert.equal(w.wallJumps,1,'contact lock prevents repeated wall kicks');assert.equal(w.doubleJumps,0);assert.equal(w.mode,'air');assert.equal(w.body.climbs,0,'ninja does not acquire Volt wall running');
  const roof={id:'roof',building:'tower',type:'slab',state:'intact',x:0,y:10,z:27,size:[12,.35,12]},landing=new NinjaMotion();landing.body.position.y=15;landing.body.mode='air';landing.jumps=2;landing.body.velocity.y=-4;run(landing,2,{},[roof],dt);assert.equal(landing.mode,'ground');assert(Math.abs(landing.position.y-10.175)<.01);assert.equal(landing.jumps,0);
- console.log('PASS',dt,'32.2m/s ground / 32.2m/s air / 128.8m/s dash, high/double/no triple jumps, roof landing, angled high wall spring and air-jump refresh, six-second dash, exact 48m distance, one-second slow fall, kill reset and no reset on scenery');
+ console.log('PASS',dt,'32.2m/s ground / 32.2m/s air / 128.8m/s dash, high/double/no triple jumps, roof landing, angled high wall spring and independent air jump, six-second dash, exact 48m distance, one-second slow fall, kill reset and no reset on scenery');
 }
 
 const backstab=new NinjaMotion();
@@ -26,3 +26,26 @@ backstab.backstabDashReady=true;
 backstab.reset();
 assert.equal(backstab.backstabDashReady,false);
 console.log('PASS Backstab Dash banks exactly one extra dash and clears on reset');
+
+const climb=new NinjaMotion();
+const corridor=[-2.5,2.5].map(x=>({x,y:200,z:27,size:[.25,400,12],type:'wall',state:'intact',building:'tower'}));
+climb.body.position.x=1.3;
+climb.jump();climb.step({},1/60,corridor);
+climb.jump();climb.step({},1/60,corridor);
+assert.equal(climb.wallJumps,1);
+assert.equal(climb.jumps,1,'an unspent double jump survives a wall kick');
+climb.jump();climb.step({},1/60,corridor);
+assert.equal(climb.doubleJumps,1);
+for(let kick=2;kick<=12;kick++){
+ const toward=kick%2===0?-1:1;
+ for(let frame=0;frame<60;frame++){
+  climb.body.yaw=toward*Math.PI/2;
+  climb.step({forward:1},1/60,corridor);
+  if(climb.wallJumpLock===0&&toward*climb.position.x>1.1)break;
+ }
+ climb.jump();climb.step({},1/60,corridor);
+ assert.equal(climb.wallJumps,kick);
+ assert.equal(climb.jumps,2);
+ assert.equal(climb.mode,'air');
+}
+console.log('PASS 12 consecutive wall kicks with one double jump between landings');

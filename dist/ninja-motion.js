@@ -22,7 +22,7 @@ export class NinjaMotion {
   const p=this.position,from={x:p.x,y:p.y+1.2,z:p.z};let best=null;
   for(let i=0;i<8;i++){const a=i*Math.PI/4,hit=this.body.trace(from,{x:p.x+Math.sin(a)*1.55,y:from.y,z:p.z+Math.cos(a)*1.55},.12);if(hit&&Math.abs(hit.normal.y)<.25&&(!best||hit.t<best.t))best=hit;}
   if(!best)return false;
-  this.wallNormal={...best.normal};this.body.mode='air';this.body.support=null;this.body.normal={x:0,y:1,z:0};this.body.velocity={x:best.normal.x*NINJA.wallPushSpeed,y:NINJA.wallJumpSpeed,z:best.normal.z*NINJA.wallPushSpeed};this.jumps=1;this.jumpCount++;this.wallJumps++;this.wallKick=.22;this.wallJumpLock=.35;this.slowFall=0;this.airAge=0;return true;
+  this.wallNormal={...best.normal};this.body.mode='air';this.body.support=null;this.body.normal={x:0,y:1,z:0};this.body.velocity={x:best.normal.x*NINJA.wallPushSpeed,y:NINJA.wallJumpSpeed,z:best.normal.z*NINJA.wallPushSpeed};this.jumps=Math.max(1,this.jumps);this.jumpCount++;this.wallJumps++;this.wallKick=.22;this.wallJumpLock=.35;this.slowFall=0;this.airAge=0;return true;
  }
  finishDash(){if(!this.dash)return;const groundDash=this.dash.grounded;this.dash=null;this.slowFall=this.mode==='air'?NINJA.slowFallSeconds:0;this.body.velocity={x:0,y:groundDash?this.mode==='ground'?0:this.velocity.y:1.5,z:0};this.onDashEnd({...this.position});}
  applyDashHit(hit){const key=hit.unit||hit.missile;if(key&&this.dash?.hitUnits.has(key))return;if(key)this.dash?.hitUnits.add(key);this.lastResult=this.onHit(hit)||{};if(this.lastResult.killed){this.cooldown=0;this.resets++;}}

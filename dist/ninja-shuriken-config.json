@@ -32,8 +32,6 @@
     "backstabArcDegrees": 120,
     "backstabMultiplier": 2.5,
     "refreshDash": true,
-    "refreshDoubleJump": true,
-    "airJumps": 1,
     "preserveVelocity": true,
     "anchorHeight": 1.1,
     "visibilityTolerance": 0.03
