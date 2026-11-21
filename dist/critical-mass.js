@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-export const CRITICAL_MASS=Object.freeze({maxCharge:2.6,minCharge:.3,powerful:1.8,critical:2.2,overload:2.6,radius:4,selfStun:1,cooldown:3,overloadCooldown:4,cancelCooldown:.35,minDamage:60,maxDamage:360,damageExponent:1.35,edgeMultiplier:.25,powerfulStagger:.8,criticalStagger:1.2,bossStagger:.5,criticalBossStagger:.75});
+export const CRITICAL_MASS=Object.freeze({maxCharge:2.6,minCharge:.3,powerful:1.8,critical:2.2,overload:2.6,radius:8,selfStun:1,cooldown:3,overloadCooldown:4,cancelCooldown:.35,minDamage:60,maxDamage:360,damageExponent:1.35,edgeMultiplier:.25,powerfulStagger:.8,criticalStagger:1.2,bossStagger:.5,criticalBossStagger:.75});
 export function massPower(seconds,c=CRITICAL_MASS){const t=THREE.MathUtils.clamp((seconds-c.minCharge)/(c.maxCharge-c.minCharge),0,1);return{seconds,level:t,damage:c.minDamage+(c.maxDamage-c.minDamage)*t**c.damageExponent,radius:c.radius,powerful:seconds>=c.powerful,critical:seconds>=c.critical};}
 export class CriticalMass {
  constructor({config=CRITICAL_MASS,onBurst=()=>{},onOverload=()=>{}}={}){this.c=config;this.onBurst=onBurst;this.onOverload=onOverload;this.reset();}

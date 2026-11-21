@@ -13,7 +13,7 @@ Critical Mass is a player ability in the existing speedster controller. Hold **R
 | powerful | 1.8 s | Powerful effects and attack interruption begin |
 | critical | 2.2 s | Violet-white unstable charge/warning and stronger stagger |
 | overload | 2.6 s | Automatic backlash; offensive blast is canceled |
-| radius | 4 m | 3D blast radius, tested against existing part shapes |
+| radius | 8 m | 3D blast radius, tested against existing part shapes |
 | selfStun | 1 s | Brief control lock after overload |
 | cooldown | 3 s | Cooldown after a damaging release |
 | overloadCooldown | 4 s | Cooldown from overload time, including the 1 s stun |
@@ -27,7 +27,7 @@ Critical Mass is a player ability in the existing speedster controller. Hold **R
 | bossStagger | 0.5 s | Powerful boss interruption |
 | criticalBossStagger | 0.75 s | Critical boss interruption |
 
-Damage is `60 + 300 × t^1.35`, where `t = clamp((charge - 0.3) / 2.3, 0, 1)`. Multiply by `1 - 0.75 × distance / 4` using distance to the closest point on the selected collider. Existing armor, shield, head/part and weak-point rules then apply. A release below 0.3 s does no damage and uses the short cancellation recovery; a release at 2.6 s is already too late.
+Damage is `60 + 300 × t^1.35`, where `t = clamp((charge - 0.3) / 2.3, 0, 1)`. Multiply by `1 - 0.75 × distance / 8` using distance to the closest point on the selected collider. Existing armor, shield, head/part and weak-point rules then apply. A release below 0.3 s does no damage and uses the short cancellation recovery; a release at 2.6 s is already too late.
 
 ## Combat integration
 
@@ -37,7 +37,7 @@ The Walker's hull remains armored. To hurt a mount, approach that mount closely 
 
 ## Presentation and lifecycle
 
-Charging shows arcs around the actual weighted hands, a growing energy sphere/halo, a gathering arm pose that preserves running legs, pulsing blue-white energy and increasingly rapid synthesized electrical sounds. At 2.2 s the effects/HUD turn violet-white and play a warning cue. LMB may fire simultaneously; its aiming arm takes precedence over the gathering pose.
+Charging shows arcs around the actual weighted hands, a bright energy core and two contracting rings centered on Volt, a gathering arm pose that preserves running legs, pulsing blue-white energy and increasingly rapid synthesized electrical sounds. At 2.2 s the effects/HUD turn violet-white and play a warning cue. LMB may fire simultaneously; its aiming arm takes precedence over the gathering pose.
 
 Successful release creates an expanding spherical shockwave, ring/flash, lightning to damaged enemies, existing electrical hit effects and robot sparks. Backlash uses violet energy, a descending sound, the existing hurt animation/flash, recoil pose and brief camera shake. Geometry is pooled (160 lightning segments, one sphere, halo, ring and flash); no new point lights or dependencies.
 
