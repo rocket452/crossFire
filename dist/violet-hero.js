@@ -28,7 +28,9 @@ export class VioletHero {
  makeOrb(){const group=new THREE.Group(),body=new THREE.Mesh(this.ico,this.forceMat),core=new THREE.Mesh(this.ico,this.coreMat),halo=new THREE.Sprite(this.glowMat);body.scale.setScalar(.70);core.scale.setScalar(.25);halo.scale.setScalar(4.8);group.add(body,core,halo);return group;}
  reset(){this.orbEffects.reset();this.capacitor.reset();this.overloadAge=Infinity;this.overloadBurst.visible=false;this.shieldMaterial.uniforms.risk.value=0;this.aura.material.color.set('#ac35ff');this.aura.material.opacity=.22;this.powerEffect.clear();this.powerDamage=0;this.flightPose.reset();this.visual.quaternion.identity();this.shieldShake.reset();this.character?.reset();for(const o of this.orbs)this.vfx.remove(o.mesh);this.orbs=[];this.defenseCharge=0;this.defenseShots=0;this.defenseTarget=null;this.particles=[];this.root.position.set(-12,30,4);this.root.rotation.set(0,0,0);for(const n of Object.values(this.nodes))n.rotation.set(0,0,0);this.nodes.head.position.set(0,.70,0);this.velocity.set(0,0,0);this.policy.reset();this.threat=null;this.mode='patrol';this.shieldEnergy=3000;this.shieldDeploy=0;this.shieldNormal=new THREE.Vector3(0,0,1);this.shield.visible=false;this.contact.visible=false;this.chargeOrb.visible=false;this.attackCooldown=1.1;this.chargeTime=0;this.charging=false;this.shots=0;this.robotHits=0;this.buildingHits=0;this.damage=0;this.blockedDamage=0;this.blocks=0;this.shieldBreaks=0;this.hitGlow=0;this.trailTimer=0;this.lastAttackBlocked=null;this.rescues=0;this.sparkPool.count=0;this.light.intensity=0;this.aura.position.copy(this.root.position).add(new THREE.Vector3(0,1.5,0));this.root.updateMatrixWorld(true);}
  setEnabled(enabled){this.enabled=!!enabled;this.reset();this.root.visible=this.vfx.visible=this.enabled;}
+ receiveEyeHit(){if(this.active)this.player.hurt.hit();}
  receiveThreat(payload){
+  if(this.active)return;
   const self=payload?.targetUnit?.entity===this;
   if(this.enabled===false||this.capacitor.overloadRemaining>0||(!self&&this.capacitor.remaining>0)){this.threat=null;return;}
   if(!payload||!['charging','firing'].includes(payload.state.phase)||!payload.targetUnit?.alive||(!self&&!['helicopter','civilian'].includes(payload.targetUnit.kind))){this.threat=null;return;}
@@ -40,6 +42,7 @@ export class VioletHero {
  safeGoal(p){for(const b of this.buildings)if(Math.abs(p.x-b.x)<6.2&&Math.abs(p.z-b.z)<6.2)p.y=Math.max(p.y,b.floors*3+1.4);p.y=Math.max(7,p.y);return p;}
  update(dt,time){
   if(this.enabled===false)return;
+  if(this.active){this.player.update(dt,time);return;}
   this.updateOverloadEffect(dt);if(this.capacitor.overloadRemaining>0)this.capacitor.step(dt);const recovering=this.capacitor.overloadRemaining>0;if(recovering){this.threat=null;this.charging=false;this.chargeTime=this.defenseCharge=0;this.mode='overloaded';}else if(this.mode==='overloaded')this.mode='patrol';
   const targetRobot=this.getRobot();
   if(this.capacitor.remaining>0){if(targetRobot?.combatUnit?.alive){this.updatePowerBeam(dt,time,targetRobot);return;}this.capacitor.cancel();this.powerEffect.clear();this.mode='patrol';}
@@ -92,11 +95,11 @@ export class VioletHero {
   this.renderParticles(dt);
   this.light.position.copy(this.shield.visible?this.shield.position: this.chargeOrb.visible?this.chargeOrb.position:center);this.light.intensity=this.shield.visible?25+this.hitGlow*65:this.charging?15+this.chargeTime*15:5;
  }
- updatePowerBeam(dt,time,robot){
+ updatePowerBeam(dt,time,robot,aim=null){
   this.aura.material.color.set('#ac35ff');this.aura.material.opacity=.22;const wasCharging=this.capacitor.phase==='charging',damageSeconds=this.capacitor.step(dt),charging=this.capacitor.phase==='charging',progress=this.capacitor.chargeProgress;
   if(wasCharging&&!charging)this.onEvent('Violet releases the force beam!');
   this.mode=charging?'force-charge':'force-beam';this.velocity.set(0,0,0);this.shield.visible=false;this.shieldDeploy=0;this.contact.visible=false;this.chargeOrb.visible=false;this.charging=false;this.defenseTarget=null;
-  const target=robot.aimPoint(this.root.position),yaw=Math.atan2(target.x-this.root.position.x,target.z-this.root.position.z);this.root.rotation.set(0,yaw,0);
+  const target=aim||robot.aimPoint(this.root.position),yaw=Math.atan2(target.x-this.root.position.x,target.z-this.root.position.z);this.root.rotation.set(0,yaw,0);
   this.flightPose.step(dt,this.velocity,yaw,{raised:true});this.flightPose.applyVisual(this.root,this.visual);if(charging)this.visual.rotateX(-.10*Math.sin(progress*Math.PI));this.pose(time);this.root.updateMatrixWorld(true);
   if(charging)this.posePowerCharge(time,progress);
   else for(const side of['l','r']){const aim=this.nodes.chest.worldToLocal(target.clone()).sub(this.nodes['upperarm_'+side].position).normalize();this.nodes['upperarm_'+side].quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),aim);this.nodes['forearm_'+side].rotation.set(0,0,0);}
@@ -106,7 +109,7 @@ export class VioletHero {
   if(nearHit)from.copy(hands);
   if(hit&&damageSeconds>0)this.powerDamage+=this.onPowerHit(hit,end,VIOLET_BEAM.damagePerSecond*damageSeconds)||0;
   this.powerEffect.update({phase:charging?'charging':'firing',charge:charging?progress:1},from,end.clone().sub(from).normalize(),end,time);this.aura.position.copy(this.root.position).y+=1.5;this.aura.scale.setScalar(7.5);this.light.intensity=0;
-  this.advanceOrbs(dt,time,robot.combatUnit.alive);if(!charging)this.emit(end,2,3);this.renderParticles(dt);
+  this.advanceOrbs(dt,time,!!aim||robot.combatUnit.alive);if(!charging)this.emit(end,2,3);this.renderParticles(dt);
   if(this.capacitor.remaining===0){this.powerEffect.clear();this.mode='patrol';this.attackCooldown=VIOLET_TUNING.normalCooldown;}
  }
  posePowerCharge(time,progress){
@@ -117,11 +120,11 @@ export class VioletHero {
  }
  pose(time){this.flightPose.pose(this.nodes,time);}
  isShielding(){return this.mode==='blocking'||this.shield.visible||this.shieldDeploy>.015;}
- launch(from,target,missile=null){if(this.capacitor.overloadRemaining>0||this.capacitor.remaining>0||this.isShielding()||this.attackCooldown>0)return false;const mesh=this.makeOrb();mesh.position.copy(from);this.vfx.add(mesh);this.orbs.push({mesh,targetMissile:missile,direction:target.clone().sub(from).normalize(),life:5,trail:0});this.shots++;return true;}
+ launch(from,target,missile=null){if(this.capacitor.overloadRemaining>0||this.capacitor.remaining>0||this.isShielding()||this.attackCooldown>0)return false;const mesh=this.makeOrb();mesh.position.copy(from);this.vfx.add(mesh);this.orbs.push({mesh,manual:!!this.active,targetMissile:missile,direction:target.clone().sub(from).normalize(),life:5,trail:0});this.shots++;return true;}
  advanceOrbs(dt,time,alive){
   this.orbEffects.update(dt);
   for(let i=this.orbs.length-1;i>=0;i--){const o=this.orbs[i];o.life-=dt;if((!alive&&!o.targetMissile)||(o.targetMissile&&!o.targetMissile.alive))o.life=0;
-   const robot=this.getRobot();if(!o.riftRedirected&&(alive||o.targetMissile?.alive)){const desired=(o.targetMissile?o.targetMissile.position.clone():robot.aimPoint(o.mesh.position)).sub(o.mesh.position).normalize();o.direction.lerp(desired,1-Math.exp(-2*dt)).normalize();}
+   const robot=this.getRobot();if(!o.manual&&!o.riftRedirected&&(alive||o.targetMissile?.alive)){const desired=(o.targetMissile?o.targetMissile.position.clone():robot.aimPoint(o.mesh.position)).sub(o.mesh.position).normalize();o.direction.lerp(desired,1-Math.exp(-2*dt)).normalize();}
    const from=o.mesh.position.clone(),end=from.clone().addScaledVector(o.direction,42*dt),transit=this.redirect(o,o.mesh.position,end);if(transit){o.mesh.position.copy(transit.position);o.direction.copy(transit.direction);o.targetMissile=null;o.riftRedirected=true;continue;}const hit=o.life>0?this.traceOrb(o.mesh.position,end):null;
    if(hit){const point=new THREE.Vector3(hit.point.x,hit.point.y,hit.point.z);o.mesh.position.copy(point);const amount=this.onOrbHit(hit,point)||0;this.damage+=amount;if(hit.unit?.kind==='robot')this.robotHits++;if(hit.kind==='building')this.buildingHits++;this.orbEffects.trail(o,from,point,dt);this.orbEffects.impact(point,o.direction);this.emit(point,18,2.5);o.life=0;}
    else{if(o.life>0)this.orbEffects.trail(o,from,end,dt);o.mesh.position.copy(end);}
@@ -140,5 +143,5 @@ export class VioletHero {
  }
  triggerOverload(point){this.shieldBreaks++;this.threat=this.defenseTarget=null;this.mode='overloaded';this.shieldEnergy=0;this.shield.visible=this.contact.visible=this.chargeOrb.visible=false;this.shieldDeploy=0;this.charging=false;this.chargeTime=this.defenseCharge=0;this.attackCooldown=Math.max(this.attackCooldown,VIOLET_OVERLOAD.recoverySeconds);this.powerEffect.clear();this.overloadAge=0;this.overloadBurst.position.copy(point);this.overloadBurst.quaternion.copy(this.shield.quaternion);this.overloadBurst.scale.setScalar(1);this.overloadBurst.visible=true;this.overloadRing.material.opacity=.9;this.overloadShell.material.opacity=.6;this.emit(point,55,8);this.onEvent('Violet capacitor overloaded — stored ultimate discharged!');}
  updateOverloadEffect(dt){this.overloadAge+=dt;this.overloadBurst.visible=this.overloadAge<VIOLET_OVERLOAD.burstSeconds;if(!this.overloadBurst.visible)return;const t=this.overloadAge/VIOLET_OVERLOAD.burstSeconds;this.overloadBurst.scale.setScalar(1+t*8);this.overloadRing.material.opacity=(1-t)*.9;this.overloadShell.material.opacity=(1-t)*.5;}
- diagnostics(){return{orbEffects:this.orbEffects.diagnostics(),powerBeam:{...this.capacitor.diagnostics(),damage:this.powerDamage,effect:this.powerEffect.diagnostics()},name:'Violet Sentinel',enabled:this.enabled!==false,mode:this.mode,animation:this.flightPose.diagnostics(),velocity:this.velocity.toArray(),speed:this.velocity.length(),shielding:this.isShielding(),attackCooldown:this.attackCooldown,defenseCharge:this.defenseCharge,tuning:VIOLET_TUNING,defenseTarget:this.defenseTarget?.id||null,defenseShots:this.defenseShots,position:this.root.position.toArray(),triangles:this.character?1256:this.spec.triangles,character:this.character?.diagnostics(),parts:this.spec.parts.length,charging:this.charging,chargeSeconds:this.chargeTime,shots:this.shots,orbs:this.orbs.length,robotHits:this.robotHits,buildingHits:this.buildingHits,damage:this.damage,responses:this.policy.responses,opportunities:this.policy.opportunities,rescues:this.rescues,blocks:this.blocks,blockedDamage:this.blockedDamage,shieldBreaks:this.shieldBreaks,shieldVisible:this.shield.visible,shieldCenter:this.shield.position.toArray(),shieldNormal:this.shieldNormal.toArray(),shieldRadius:5.8*this.shieldDeploy,shieldOffset:SHIELD_FORWARD_OFFSET,shieldShake:{strength:this.shieldShake.strength,impacts:this.shieldShake.impacts,offset:{...this.shieldShake.offset}},shieldEnergy:this.shieldEnergy,selfDefending:!!this.threat?.self,defending:this.threat?.unit?.id||null};}
+ diagnostics(){return{orbEffects:this.orbEffects.diagnostics(),powerBeam:{...this.capacitor.diagnostics(),damage:this.powerDamage,effect:this.powerEffect.diagnostics()},name:'Violet Sentinel',active:!!this.active,enabled:this.enabled!==false,mode:this.mode,animation:this.flightPose.diagnostics(),velocity:this.velocity.toArray(),speed:this.velocity.length(),shielding:this.isShielding(),attackCooldown:this.attackCooldown,defenseCharge:this.defenseCharge,tuning:VIOLET_TUNING,defenseTarget:this.defenseTarget?.id||null,defenseShots:this.defenseShots,position:this.root.position.toArray(),triangles:this.character?1256:this.spec.triangles,character:this.character?.diagnostics(),parts:this.spec.parts.length,charging:this.charging,chargeSeconds:this.chargeTime,shots:this.shots,orbs:this.orbs.length,robotHits:this.robotHits,buildingHits:this.buildingHits,damage:this.damage,responses:this.policy.responses,opportunities:this.policy.opportunities,rescues:this.rescues,blocks:this.blocks,blockedDamage:this.blockedDamage,shieldBreaks:this.shieldBreaks,shieldVisible:this.shield.visible,shieldCenter:this.shield.position.toArray(),shieldNormal:this.shieldNormal.toArray(),shieldRadius:5.8*this.shieldDeploy,shieldOffset:SHIELD_FORWARD_OFFSET,shieldShake:{strength:this.shieldShake.strength,impacts:this.shieldShake.impacts,offset:{...this.shieldShake.offset}},shieldEnergy:this.shieldEnergy,selfDefending:!!this.threat?.self,defending:this.threat?.unit?.id||null};}
 }

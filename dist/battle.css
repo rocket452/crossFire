@@ -194,3 +194,17 @@ dialog.defense-title[open]{display:flex;flex-direction:column;justify-content:sp
 .defense-title button{align-self:center;padding:.8em 1.7em;background:#0a1225e8;border:1px solid #80f3ff;color:white;font:700 clamp(15px,2vw,24px) system-ui;letter-spacing:.08em;cursor:pointer;animation:defense-start-pulse 1.55s ease-in-out infinite alternate}
 @keyframes defense-start-pulse{from{opacity:.66}to{opacity:1;box-shadow:0 0 22px #42dcff66}}
 @media(prefers-reduced-motion:reduce){.defense-title button{animation:none}}
+
+.violet-player{position:absolute;inset:0;pointer-events:none;z-index:5;color:#f7eeff;font:600 12px system-ui}
+.violet-player>i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:9px;height:9px;border:2px solid white;border-radius:50%;box-shadow:0 0 4px #350d5b}
+.violet-player output,.violet-keys{position:absolute;left:50%;transform:translateX(-50%);padding:5px 10px;border-radius:5px;background:#20162fe6;text-align:center;width:max-content;max-width:90%}
+.violet-player output{bottom:52px}.violet-keys{bottom:24px}
+.violet-buttons,.violet-stick{display:none}
+.piloting-violet #hero-readout,.piloting-violet #camera-hint,.piloting-violet .camera-badge{display:none}
+[data-input-mode=touch] .violet-keys{display:none}
+[data-input-mode=touch] .violet-buttons{position:absolute;bottom:16px;right:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.violet-buttons button,.violet-stick{pointer-events:auto;touch-action:none;border:1px solid #bca4ec;background:#231633d9;color:white}
+.violet-buttons button{padding:10px 6px;border-radius:5px}
+[data-input-mode=touch] .violet-stick{display:grid;place-items:center;width:84px;height:84px;position:absolute;bottom:14px;left:12px;border-radius:50%}
+.violet-stick b{width:30px;height:30px;border-radius:50%;background:#b494db}
+[data-input-mode=touch] .violet-player output{bottom:110px}

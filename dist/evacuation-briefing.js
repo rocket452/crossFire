@@ -14,6 +14,17 @@ const training={
   ],
   bonus:'Release Critical Mass before 2.6 seconds to avoid overloading. Attack while stopped, then get moving again to recharge.'
  },
+ violet:{
+  tip:'Fly above the streets to intercept attackers. Face incoming fire and raise your barrier to charge the force beam.',
+  controls:[
+   ['Fly and aim','WASD · Mouse','Left stick · Drag the scene'],
+   ['Ascend / descend','Space / Shift','Rise / Down'],
+   ['Force orb','Left click or F','Orb'],
+   ['Hold barrier','Right click or G','Hold Barrier'],
+   ['Release charged beam','R','Beam']
+  ],
+  bonus:'The force beam has a two-second wind-up. Absorbing too much fire with a full capacitor overloads it.'
+ },
  ninja:{
   tip:'Throw smoke at civilians crossing open streets or waiting at the pad. Allies inside the dome are protected from damage.',
   controls:[
@@ -32,7 +43,7 @@ const training={
 
 export function evacuationTeam(lead,current){
  const allies=current.filter(id=>id!==lead);
- allies.sort((a,b)=>Number(Boolean(training[a]))-Number(Boolean(training[b])));
+ allies.sort((a,b)=>Number(['volt','ninja'].includes(a))-Number(['volt','ninja'].includes(b)));
  return [lead,...allies].slice(0,3);
 }
 
@@ -107,18 +118,18 @@ export class EvacuationBriefing {
    <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
  }
  choices(){
-  return `<div class="evac-briefing-heroes">${['volt','ninja'].map(id=>{
+  return `<div class="evac-briefing-heroes">${(this.defenseMode?['volt','ninja','violet']:['volt','ninja']).map(id=>{
    const hero=HEROES.find(entry=>entry.id===id);
    return `<button type="button" class="evac-briefing-hero" data-hero="${id}" style="--hero-accent:${hero.color}">
     <span class="evac-hero-icon" aria-hidden="true">${hero.icon}</span><strong>${hero.name}</strong>
-    <span>${this.combatOnly?(id==='volt'?'Build charge at high speed and strike with lightning.':'Throw a laser star and teleport to a charged shuriken.'):id==='volt'?'Carry civilians out of danger with a lightning dash.':'Shield civilians from damage with protective smoke.'}</span>
+    <span>${id==='violet'?'Fly, block incoming fire, and unleash a force beam.':this.combatOnly?(id==='volt'?'Build charge at high speed and strike with lightning.':'Throw a laser star and teleport to a charged shuriken.'):id==='volt'?'Carry civilians out of danger with a lightning dash.':'Shield civilians from damage with protective smoke.'}</span>
    </button>`;
   }).join('')}</div>
   <footer><button type="button" class="secondary" data-back>Back</button></footer>`;
  }
  tutorial(){
   const lesson=training[this.hero];
-  const tip=this.combatOnly?(this.hero==='volt'?'Run to build charge, then stop briefly to fire. Use buildings as cover when the Walker winds up.':'Use shuriken teleports and wall jumps to attack from rooftops. Smoke protects allies inside its dome.'):lesson.tip;
+  const tip=this.hero==='violet'?lesson.tip:this.combatOnly?(this.hero==='volt'?'Run to build charge, then stop briefly to fire. Use buildings as cover when the Walker winds up.':'Use shuriken teleports and wall jumps to attack from rooftops. Smoke protects allies inside its dome.'):lesson.tip;
   return `<p class="evac-briefing-lead">${tip}</p>
    <dl class="evac-briefing-controls">${this.controlRows()}</dl>
    <p class="evac-briefing-tip">${lesson.bonus}</p>
