@@ -1,4 +1,4 @@
-import {VioletPlayer} from './violet-player.js?v=violet-touch-376';
+import {VioletPlayer} from './violet-player.js?v=mobile-fullscreen-377';
 import {DefenseTitle} from './defense-title.js';
 import {kageDashCanFinish} from './kage-attacks.js?v=352';
 import {NINJA} from './ninja-motion.js?v=363';
@@ -123,14 +123,26 @@ let loaded=false,paused=false,speed=1,simTime=0,frameClock=0,view='overview',slo
 let rosterPause=false;
 const soloRoster=testingMode||mission1Mode;
 const roster=new HeroRoster({maxHeroes:soloRoster?1:3,...(soloRoster?{storage:null}:{}),onOpen:()=>{hero?.player?.exit();ninja?.exit();runner?.exit();pilot?.exit();rosterPause=paused;paused=true;keys.clear();heightInput=0;},onClose:()=>{paused=rosterPause;$('pause').textContent=paused?'▶':'Ⅱ';$('pause').setAttribute('aria-label',paused?'Resume simulation':'Pause simulation');},onApply:()=>{if(!loaded)return;if(testingMode)$('test-hero').value=roster.active[0];configureHeroes();$('reset').click();setView(roster.has('ember')?'ember':roster.has('axo')?'axo':roster.has('prism')?'prism':roster.has('mochi')?'mochi':roster.has('rift')?'portal':roster.has('solara')?'solara':roster.has('violet')?'hero':'overview');updateStats();}});roster.bind();
+const viewer=document.querySelector('.viewer');
+function setDefenseFullscreen(enabled){
+ viewer.classList.toggle('defense-mobile-fullscreen',enabled);
+ document.body.classList.toggle('defense-mobile-lock',enabled);
+ if(enabled&&!document.fullscreenElement){
+  viewer.requestFullscreen?.()?.catch(()=>{});
+ }else if(!enabled&&document.fullscreenElement===viewer){
+  document.exitFullscreen?.()?.catch(()=>{});
+ }
+}
 const evacuationBriefing=districtMode?new EvacuationBriefing({
  inputMode,defenseMode,combatOnly:mission1Mode,
  onStart:id=>{
   roster.apply(mission1Mode?[id]:evacuationTeam(id,roster.active),{persist:false});
   setView('overview');
-  viewport.scrollIntoView({block:'center'});
+  const mobileDefense=defenseMode&&!inputMode.desktop;
+  if(!mobileDefense)viewport.scrollIntoView({block:'center'});
   const player=id==='violet'?hero.player:id==='ninja'?ninja:runner;
   player.enter(defenseMode?RELAY_INTRO:undefined);
+  if(mobileDefense)setDefenseFullscreen(true);
  }
 }):null;
 const defenseTitle=defenseMode?new DefenseTitle({
@@ -527,7 +539,12 @@ controls.addEventListener('start',()=>{if(pilot?.active)return;view='free';docum
 $('pause').onclick=()=>{hero?.player?.clear();paused=!paused;$('pause').textContent=paused?'▶':'Ⅱ';$('pause').setAttribute('aria-label',paused?'Resume simulation':'Pause simulation');};document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{speed=Number(b.dataset.speed);document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('active',x===b));});
 $('reset').onclick=resetDistrict;
 function resetDistrict(){if(!physics)return;const defensePlayer=defenseMode?controlledHero():null;evacuationCinematic?.reset();droneImpactShake=0;if(districtMode){$('hero-readout').hidden=!roster.has('violet');$('portal-readout').hidden=!roster.has('rift');}buildingSmoke.reset();enemyDamageFlash.clear();enemySeparation.reset();robotDeathEffects.reset();robotStunEffect.clear();missileExplosions.reset();eyeBeams?.reset();portalHero?.reset();solara?.reset();mochi?.reset();prism?.reset();axo?.reset();ember?.reset();plasmaArtillery?.reset();arsenal?.reset();evacuationHelicopterStrike?.reset();robotMissiles?.reset();ninja?.reset();runner?.reset();pilot?.exit();if(pilot){pilot.shots=0;pilot.lastImpact=null;}playerMissiles=playerHits=playerBuildingHits=playerUnitHits=0;lastPlayerDamage=null;unitDamage.reset();for(const u of unitDamage.units)delete u.dashSweep;for(const u of unitDamage.units)if(u.kind!=='infantry'&&u.kind!=='robot'){charUnit(u.entity.root,true);u.entity.wreck=null;}robot.reset();hero?.reset();beamCombat?.reset();physics.reset();for(const c of physics.chunks){syncChunk(c);chunkBatches[c.visualKey||c.type].setColorAt(c.index,new THREE.Color(c.tint));}for(const o of Object.values(chunkBatches)){o.instanceColor.needsUpdate=true;o.seal?.();}for(const p of projectiles)scene.remove(p.mesh);projectiles.length=particles.length=tracers.length=0;for(const p of [smokePool,buildingSmokePool,flashPool,sparkPool])p.count=0;tracerGeo.setDrawRange(0,0);for(const t of tanks){t.root.position.copy(t.start);t.cooldown=1.1+t.i*.65+t.team*.6;}for(const h of helicopters){h.cooldown=2+h.team+h.i*1.5;h.phase=h.team*Math.PI+h.i*.7;h.returning=null;const side=h.team===0?-1:1;h.root.position.set(Math.cos(h.phase)*26+side*10,27+Math.sin(h.phase)*1.4+h.i*5,Math.sin(h.phase)*30);h.root.rotation.set(0,Math.atan2(-Math.sin(h.phase),Math.cos(h.phase)),Math.sin(h.phase)*.06,'YXZ');h.rotor.rotation.y=0;h.tail.rotation.x=0;}evacBlockTime=-1;simTime=shotsFired=projectileSequence=0;soldierCrowd?.reset();weaponImpacts.shell=weaponImpacts.rocket=weaponImpacts.pulse=weaponImpacts.beam=weaponImpacts.electric=weaponImpacts.plasma=0;impactLog=[];evacuation?.reset();missionRaiders?.reset();if(defenseMode){document.querySelector('#defense-result')?.remove();paused=false;}evacuationReinforcement?.reset();if(convoyMode)resetConvoy();if(testingArena)resetTestingEnemies();else if(mission1Mode)positionDistrictHeroes();if(defensePlayer)(defensePlayer===hero?hero.player:defensePlayer).enter(RELAY_INTRO);refreshUnitShapes();feed(convoyMode?'Convoy reset · two pickups ahead.':testingMode?'Combat test reset with selected enemies.':'District rebuilt. Siege Walker attacks begin in five seconds.');updateStats();};
-$('help').onclick=()=>$('guide').showModal();$('close-guide').onclick=()=>$('guide').close();$('fullscreen').onclick=()=>{const shell=document.querySelector('.viewer');if(document.fullscreenElement)document.exitFullscreen?.();else if(shell.requestFullscreen)shell.requestFullscreen().catch(()=>feed('Fullscreen unavailable in this browser.'));else feed('Use landscape orientation for a wider view.');};
+$('help').onclick=()=>$('guide').showModal();$('close-guide').onclick=()=>$('guide').close();$('fullscreen').onclick=()=>{
+ if(defenseMode&&(!inputMode.desktop||viewer.classList.contains('defense-mobile-fullscreen'))){
+  setDefenseFullscreen(!viewer.classList.contains('defense-mobile-fullscreen')&&document.fullscreenElement!==viewer);
+  return;
+ }
+ const shell=document.querySelector('.viewer');if(document.fullscreenElement)document.exitFullscreen?.();else if(shell.requestFullscreen)shell.requestFullscreen().catch(()=>feed('Fullscreen unavailable in this browser.'));else feed('Use landscape orientation for a wider view.');};
 const keys=new Set();let heightInput=0;window.addEventListener('keydown',e=>{if(hero?.active||pilot?.active||runner?.active||ninja?.active||document.querySelector('dialog[open]'))return;if(['INPUT','SELECT','BUTTON','A'].includes(e.target.tagName))return;if(['w','a','s','d','q','e','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase());});window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();heightInput=0;});document.addEventListener('visibilitychange',()=>{if(document.hidden){keys.clear();heightInput=0;}});for(const [id,sign]of [['rise',1],['lower',-1]]){const b=$(id);b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);heightInput=sign;};b.onpointerup=b.onpointercancel=b.onlostpointercapture=()=>heightInput=0;}
 function runnerEscortCamera(){const p=runner.root.position,up=runner.bodyUp,forward=runner.bodyForward,right=new THREE.Vector3().crossVectors(up,forward).normalize(),target=p.clone().addScaledVector(up,1.3),position=up.y<.5?p.clone().addScaledVector(up,7).addScaledVector(right,5).add(new THREE.Vector3(0,3,0)):p.clone().addScaledVector(forward,-7).addScaledVector(right,4).add(new THREE.Vector3(0,4.2,0));const hit=traceImpact(target,position,{sections:physics.chunks,ground:false});if(hit)position.set(hit.point.x,hit.point.y,hit.point.z).addScaledVector(position.clone().sub(target).normalize(),-.35);position.y=Math.max(terrainHeight(position.x,position.z)+.4,position.y);return{position,target};}
 function solaraCamera(){const p=solara.root.position,front=new THREE.Vector3(Math.sin(solara.root.rotation.y),0,Math.cos(solara.root.rotation.y)),side=new THREE.Vector3(front.z,0,-front.x);return{position:p.clone().addScaledVector(front,8).addScaledVector(side,8).add(new THREE.Vector3(0,4,0)),target:p.clone().add(new THREE.Vector3(0,1.45,0))};}

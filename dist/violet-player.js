@@ -22,6 +22,12 @@ export class VioletPlayer {
    button.onpointerdown=e=>{if(!this.available())return;e.preventDefault();button.setPointerCapture(e.pointerId);this.press(key);};
    button.onlostpointercapture=()=>this.keys.delete(key);
   }
+  const fullscreen=document.createElement('button');
+  fullscreen.className='violet-fullscreen';
+  fullscreen.type='button';fullscreen.textContent='⛶';
+  fullscreen.setAttribute('aria-label','Toggle fullscreen');
+  fullscreen.onclick=()=>document.getElementById('fullscreen').click();
+  this.hud.append(fullscreen);
   this.output=this.hud.querySelector('output');
   this.hurt=new HeroHurt(hero.character,hero.visual);
   this.bind();
