@@ -33,7 +33,7 @@ import {PrismwingHero,PRISMWING} from './prismwing-hero.js?v=rainbow-full-solara
 import {BuildingSmoke} from './building-smoke.js?v=building-smoke-155';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=argus-sustained-205';
 import {EnemySeparation} from './enemy-separation.js?v=spider-bruiser-272';
-import {CombatTesting} from './combat-testing.js?v=enemy-range-366';
+import {CombatTesting} from './combat-testing.js?v=bruiser-range-381';
 import {ActorSilhouettes} from './actor-silhouettes.js?v=shogun-skin-310';
 import {RAIDER_COMBAT} from './evac-raider.js?v=enemy-range-366';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=raider-burst-92';
@@ -44,9 +44,9 @@ import {EnemyDamageFlash} from './enemy-damage-flash.js?v=348';
 import {HeroMinimap} from './hero-minimap.js?v=347';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
-import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=defense-size-378';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=enemy-range-366';
-import {EvacRaiderWaves} from './evac-raider-waves.js?v=enemy-range-366';
+import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=bruiser-range-381';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=bruiser-range-381';
+import {EvacRaiderWaves} from './evac-raider-waves.js?v=bruiser-range-381';
 import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-approach.js?v=340';
 import {MochiHero,MOCHI} from './mochi-hero.js?v=overall-performance-238';
 import {VOLT_STUN,VIOLET_ORB,VIOLET_PULSE} from './hero-powers.js?v=violet-charge-380';
@@ -74,7 +74,7 @@ import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=viol
 import {segmentBoxFraction} from './combat-collision.js?v=evac-performance-233';
 import {PlasmaArtillery} from './plasma-artillery.js?v=plasma-impact-220';
 import {RobotEyeBeams} from './robot-eye-beams.js?v=charged-shuriken-130';
-import {RobotArsenal} from './robot-arsenal.js?v=weapon-break-81';
+import {RobotArsenal} from './robot-arsenal.js?v=title-beam-381';
 import {terrainHeight,traceTerrain} from './runner-motion.js?v=overall-performance-238';
 const assetCityMode=new URLSearchParams(location.search).get('scene')==='city-test';
 const testingMode=assetCityMode||new URLSearchParams(location.search).get('scene')==='testing';let testingArena=null,assetCity=null;
@@ -157,8 +157,13 @@ const defenseTitle=defenseMode?new DefenseTitle({
   robot.root.visible=true;robot.combatUnit.alive=true;
   robot.combatUnit.health=robot.combatUnit.maxHealth;
   positionGroundHeroes({x:12,y:.1,z:17});
-  hero.root.position.set(-9,9,17);portalHero.root.position.set(12,.1,-15);
-  arsenal.reset();refreshUnitShapes();
+  // Stage Violet and the cannon in the opening camera shot. Run the normal charge and beam.
+  hero.root.position.set(4,23,21);portalHero.root.position.set(12,.1,-15);
+  const aim=hero.root.position.clone().add(new THREE.Vector3(0,1.4,0))
+   .sub(robot.nodes.upperarm_r.getWorldPosition(new THREE.Vector3())).normalize();
+  robot.cannonTracking.update(0,aim,aim);
+  robot.weapon.step(robot.weapon.remaining);
+  arsenal.reset({openingBeam:true});refreshUnitShapes();
  },
  enter:()=>{configureHeroes();setView('overview');evacuationBriefing.open();}
 }):null;
@@ -244,7 +249,7 @@ function chooseTarget(team,from,heli=false){
 
 }
 function emitParticle(kind,pos,count,scale=1){for(let i=0;i<count;i++){if(particles.length>340)particles.shift();const smoke=kind==='smoke';particles.push({kind,p:pos.clone(),v:new THREE.Vector3((rand()-.5)*(smoke?2:7),smoke?1.3+rand()*2:rand()*5,(rand()-.5)*(smoke?2:7)),life:smoke?2+rand()*1.2:.30+rand()*.4,max:smoke?3.2:.7,size:smoke?.45+rand()*.55:.07+rand()*.10,scale});}}
-function registerUnits(){unitDamage=new UnitDamage(disableUnit,(unit,damage,point,part)=>{if(defenseMode&&unit===missionRaiders?.relay)missionRaiders.flashRelay();if(unit.kind==='civilian')unit.entity.silhouetteHitUntil=simTime+.9;enemyDamageFlash.hit(unit,damage,unit===robot.combatUnit?robot.lastWeaponHitPart:part);});unitDamage.canDamage=(u,p)=>{if(defenseTitle?.active&&u===missionRaiders?.relay)return false;if(ninja?.smoke.protectsUnit(u)){ninja.smoke.absorb();return false;}return true;};for(const t of tanks)unitDamage.add('tank-'+t.team+'-'+t.i,'tank',t);for(const h of helicopters)unitDamage.add('helicopter-'+h.team+'-'+h.i,'helicopter',h);for(const t of troops)unitDamage.add('infantry-'+t.team+'-'+t.i,'infantry',t);unitDamage.add('siege-walker','robot',robot,robot.weapons.maxHealth);refreshUnitShapes();}
+function registerUnits(){unitDamage=new UnitDamage(disableUnit,(unit,damage,point,part)=>{if(defenseMode&&unit===missionRaiders?.relay)missionRaiders.flashRelay();if(unit.kind==='civilian')unit.entity.silhouetteHitUntil=simTime+.9;enemyDamageFlash.hit(unit,damage,unit===robot.combatUnit?robot.lastWeaponHitPart:part);});unitDamage.canDamage=(u,p)=>{if(defenseTitle?.active&&(u===missionRaiders?.relay||u===robot.combatUnit&&robot.weapon.bursts===0))return false;if(ninja?.smoke.protectsUnit(u)){ninja.smoke.absorb();return false;}return true;};for(const t of tanks)unitDamage.add('tank-'+t.team+'-'+t.i,'tank',t);for(const h of helicopters)unitDamage.add('helicopter-'+h.team+'-'+h.i,'helicopter',h);for(const t of troops)unitDamage.add('infantry-'+t.team+'-'+t.i,'infantry',t);unitDamage.add('siege-walker','robot',robot,robot.weapons.maxHealth);refreshUnitShapes();}
 function refreshUnitShapes(){if(!unitDamage)return;for(const u of unitDamage.units){if(defenseMode&&u===robot.combatUnit&&!robot.root.visible){u.shapes=[];continue;}if(testingArena&&u===robot.combatUnit&&!testingArena.walkerEnabled){u.shapes=[];continue;}if(u.entity.evac)continue;const e=u.entity,old=u.shapes;let next=[];if(u.kind==='robot')next=robot.shapes();else if(u.kind==='infantry'){const crouched=e.clip.includes('Crouch'),height=(crouched?(e.character?1.64:1.47):1.86)*e.scale;if(e.disabled)next=[{center:{x:e.x,y:.30,z:e.z+(e.team===0?1:-1)*.65},half:{x:.38,y:.30,z:1.0},rotation:{x:0,y:0,z:0,w:1}}];else next=[{center:{x:e.x,y:e.y+height/2,z:e.z},half:{x:.32*e.scale,y:height/2,z:.48*e.scale},rotation:{x:0,y:Math.sin((e.team===0?1:-1)*Math.PI/4),z:0,w:Math.cos(Math.PI/4)}}];}else{e.root.updateMatrixWorld(true);const box=(offset,half)=>{const c=e.root.localToWorld(new THREE.Vector3(...offset));return{center:{x:c.x,y:c.y,z:c.z},half,rotation:{x:e.root.quaternion.x,y:e.root.quaternion.y,z:e.root.quaternion.z,w:e.root.quaternion.w}};};next=u.kind==='tank'?[box([0,1.05,0],{x:1.75,y:1.05,z:2.3})]:[box([0,.10,.1],{x:1.1,y:1.05,z:2.25}),box([0,.55,-3.8],{x:.40,y:.5,z:1.8})];}next.forEach((shape,i)=>{const previous=shape.part?old.find(s=>s.part===shape.part):old[i];shape.previousCenter=u.dashSweep?.[i]||previous?.center||shape.center;});u.shapes=next;}}
 function charUnit(root,restore=false){root.traverse(o=>{if(!o.isMesh)return;if(restore&&o.userData.originalCombatMaterial){o.material.dispose();o.material=o.userData.originalCombatMaterial;delete o.userData.originalCombatMaterial;}else if(!restore&&!o.userData.originalCombatMaterial){o.userData.originalCombatMaterial=o.material;o.material=o.material.clone();o.material.color.multiplyScalar(.25);}});}
 function disableUnit(unit,point){if(unit.entity===evacuationReinforcement?.adapter.boss){unit.entity.defeat();return;}if(argus?.disable(unit)||convoy?.disable(unit)||testingArena?.disable(unit)||evacuation?.disable(unit)||missionRaiders?.disable(unit))return;if(unit.kind==='robot'){robot.destroy();evacuation?.endEvacuation();feed(evacuation?'Siege Walker destroyed · Chinook withdrawing.':defenseMode?'Siege Walker defeated.':mission1Mode?'Siege Walker defeated. Watch for reinforcements.':'Siege Walker weapons destroyed. Both divisions hold fire.');return;}const e=unit.entity;if(unit.kind==='infantry')soldierCrowd.disable(e);else{charUnit(e.root);e.smokeTimer=0;if(unit.kind==='helicopter'){e.returning=null;e.root.visible=true;e.wreck=physics.addWreck({position:e.root.position,quaternion:e.root.quaternion,size:[2.0,1.6,4.2],mass:2800});}}feed(unit.kind.toUpperCase()+' disabled.');}
@@ -343,7 +348,11 @@ function districtVisible(a,b){const hit=traceImpact(a,b,{sections:physics.chunks
  return (!hit||relayVisible)&&!traceTerrain(a,b);}
 function missionWalkerTargets(){
  const origin=robot.root.position.clone().add(new THREE.Vector3(0,18,0));
- if(defenseTitle?.active)return raiderHeroTargets();
+ if(defenseTitle?.active){
+  const targets=raiderHeroTargets();
+  const violet=targets.find(u=>u.entity===hero);
+  return robot.weapon.bursts===0&&violet?[violet]:targets;
+ }
  if(defenseMode)return missionRaiders.targets(origin);
  return raiderHeroTargets().filter(u=>origin.distanceTo(u.shapes[0].center)<=EVACUATION_CONFIG.walkerTargetRange&&districtVisible(origin,u.shapes[0].center));
 }

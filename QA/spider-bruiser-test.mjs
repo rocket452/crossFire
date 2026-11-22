@@ -10,18 +10,19 @@ for(const hz of[30,60,120]){const {r,hero,damage,removed}=fixture(),other=fixtur
 
 {
  const {r,hero}=fixture(),center=hero.shapes[0].center;
+ assert(Math.abs(r.heroRange-100.8)<1e-8);assert(Math.abs(r.weaponRange-114.24)<1e-8);
  r.moveSpeed=0;r.cooldown=0;
- center.z=169;
+ center.z=102;
  r.selectTarget(r.aimPoint());
- assert.equal(r.target,null,'heroes outside the doubled 168 m detection radius are ignored');
- center.z=165;
+ assert.equal(r.target,null,'heroes outside the 100.8 m detection radius are ignored');
+ center.z=99;
  for(let i=0;i<60*7;i++)r.update(1/60,i/60);
  assert.equal(r.target,hero);
- assert(r.heroHits>0,'a Bruiser bolt can hit a hero beyond the old projectile travel limit');
+ assert(r.heroHits>0,'a Bruiser bolt can hit a hero near the reduced acquisition range');
  hero.kind='helicopter';
- center.z=187;
+ center.z=112;
  r.reset();r.spawn();r.age=3;r.cooldown=0;
  for(let i=0;i<60*7;i++)r.update(1/60,i/60);
- assert(r.hits>0,'a Bruiser bolt can reach an objective near the doubled weapon range');
- console.log('PASS Bruiser doubled hero acquisition and long-range projectile hits');
+ assert(r.hits>0,'a Bruiser bolt can reach an objective near the reduced weapon range');
+ console.log('PASS Bruiser reduced hero acquisition and weapon range');
 }

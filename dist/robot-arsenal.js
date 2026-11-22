@@ -1,7 +1,7 @@
 // Start with a five-second grace period; each cleared attack also pauses five seconds.
 export class RobotArsenal {
- constructor({plasma=false}={}){this.plasma=plasma;this.warningSeconds=2;this.delaySeconds=5;this.startupSeconds=5;this.reset();}
- reset(){this.phase='startup';this.nextPhase='beam';this.elapsed=0;this.clock=0;this.completedBeams=0;this.turns=[];this.transitions=[];}
+ constructor({plasma=false}={}){this.plasma=plasma;this.warningSeconds=2;this.delaySeconds=5;this.reset();}
+ reset({openingBeam=false}={}){this.startupSeconds=openingBeam?0:5;this.phase=openingBeam?'beam':'startup';this.nextPhase=openingBeam?null:'beam';this.elapsed=0;this.clock=0;this.completedBeams=0;this.turns=[];this.transitions=[];}
  rest(nextPhase){this.phase='recovery';this.nextPhase=nextPhase;this.elapsed=0;this.transitions.push({event:'rest',time:this.clock,next:nextPhase});this.transitions=this.transitions.slice(-18);}
  preparing(robot,artillery){return robot.weapon.phase==='charging'||this.phase==='warning'||!!artillery?.shells.some(s=>s.state==='warning');}
  interrupt(robot,pod,artillery){
