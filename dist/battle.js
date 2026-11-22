@@ -1,4 +1,4 @@
-import {VioletPlayer} from './violet-player.js';
+import {VioletPlayer} from './violet-player.js?v=violet-touch-376';
 import {DefenseTitle} from './defense-title.js';
 import {kageDashCanFinish} from './kage-attacks.js?v=352';
 import {NINJA} from './ninja-motion.js?v=363';

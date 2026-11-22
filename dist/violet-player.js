@@ -12,6 +12,7 @@ export class VioletPlayer {
   this.hud=document.createElement('div');
   this.hud.className='violet-player';this.hud.hidden=true;
   this.hud.innerHTML='<i aria-hidden="true"></i><output></output><div class="violet-keys">WASD fly · Space rise · Shift descend · LMB orb · RMB barrier · R beam</div><div class="violet-stick"><b></b></div><div class="violet-buttons"></div>';
+  this.hud.addEventListener('contextmenu',event=>event.preventDefault());
   viewport.append(this.hud);
   const stick=this.hud.querySelector('.violet-stick');
   this.stick=new TouchStick(stick,stick.firstChild,{enabled:()=>this.available()});

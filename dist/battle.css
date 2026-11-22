@@ -203,7 +203,7 @@ dialog.defense-title[open]{display:flex;flex-direction:column;justify-content:sp
 .piloting-violet #hero-readout,.piloting-violet #camera-hint,.piloting-violet .camera-badge{display:none}
 [data-input-mode=touch] .violet-keys{display:none}
 [data-input-mode=touch] .violet-buttons{position:absolute;bottom:16px;right:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
-.violet-buttons button,.violet-stick{pointer-events:auto;touch-action:none;border:1px solid #bca4ec;background:#231633d9;color:white}
+.violet-buttons button,.violet-stick{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;pointer-events:auto;touch-action:none;border:1px solid #bca4ec;background:#231633d9;color:white}
 .violet-buttons button{padding:10px 6px;border-radius:5px}
 [data-input-mode=touch] .violet-stick{display:grid;place-items:center;width:84px;height:84px;position:absolute;bottom:14px;left:12px;border-radius:50%}
 .violet-stick b{width:30px;height:30px;border-radius:50%;background:#b494db}
