@@ -7,7 +7,7 @@ import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
 import {RELAY_TIERS,makeRelayTrim} from './relay-design.js?v=347';
 
 export const RELAY={id:'central-relay',name:'Central relay',...center,floors:24,footprint:20,tint:'#c83d78',asset:'relay',solidPaint:true};
-const mapScale=1.3**2;
+const mapScale=1.3**2*1.4;
 const mapX=x=>center.x+(x-center.x)*mapScale;
 const mapZ=z=>center.z+(z-center.z)*mapScale;
 const spawnOffsetX=mapX(MISSION1_HERO_START.x)-center.x;
