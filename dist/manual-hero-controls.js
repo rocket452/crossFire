@@ -13,7 +13,7 @@ export class ManualHeroControls {
   this.hud.innerHTML='<i aria-hidden="true"></i><output></output><div class="violet-keys"></div><div class="violet-stick"><b></b></div><div class="violet-buttons"></div>';
   this.hud.querySelector('.violet-keys').textContent=hint;
   this.hud.addEventListener('contextmenu',event=>event.preventDefault());
-  viewport.append(this.hud);
+  this.viewport.append(this.hud);
   const stick=this.hud.querySelector('.violet-stick');
   this.stick=new TouchStick(stick,stick.firstChild,{enabled:()=>this.available()});
   const buttons=this.hud.querySelector('.violet-buttons');
