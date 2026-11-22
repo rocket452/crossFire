@@ -3,13 +3,12 @@ import {TouchStick} from './touch-stick.js';
 import {HeroHurt} from './hero-hurt.js';
 
 export class ManualHeroControls {
- constructor(hero,options,{name,hint,actions,codes}){
+ constructor(hero,options,{hint,actions,codes}){
   this.hero=hero;
   Object.assign(this,options);
   this.keys=new Set();
   this.hud=document.createElement('div');
   this.hud.className='violet-player';this.hud.hidden=true;
-  this.hud.dataset.hero=name;
   this.hud.innerHTML='<i aria-hidden="true"></i><output></output><div class="violet-keys"></div><div class="violet-stick"><b></b></div><div class="violet-buttons"></div>';
   this.hud.querySelector('.violet-keys').textContent=hint;
   this.hud.addEventListener('contextmenu',event=>event.preventDefault());
@@ -43,8 +42,9 @@ export class ManualHeroControls {
   this.canvas.addEventListener('pointerdown',e=>{
    if(!this.available())return;
    if(e.pointerType==='mouse'&&e.button!==0&&e.button!==2)return;
-   if(e.pointerType!=='mouse')e.preventDefault();this.drag=e.pointerId;this.lastX=e.clientX;this.lastY=e.clientY;this.canvas.setPointerCapture(e.pointerId);
+   this.drag=e.pointerId;this.lastX=e.clientX;this.lastY=e.clientY;
    if(e.pointerType==='mouse')this.lock();
+   else{e.preventDefault();this.canvas.setPointerCapture(e.pointerId);}
   });
   this.canvas.addEventListener('mousedown',e=>{
    if(this.available()&&(e.button===0||e.button===2))this.press(e.button===2?'Shield':'Fire');

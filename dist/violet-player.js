@@ -7,7 +7,7 @@ import {VIOLET_TUNING} from './violet-flight.js?v=violet-inertia-11';
 export class VioletPlayer extends ManualHeroControls {
  constructor(hero,options){
   super(hero,options,{
-   name:'violet',hint:'WASD fly · Space rise · Shift descend · Hold LMB orb · RMB barrier · E pulse · R beam',
+   hint:'WASD fly · Space rise · Shift descend · Hold LMB orb · RMB barrier · E pulse · R beam',
    actions:[['Rise','Space'],['Down','ShiftLeft'],['Orb','Fire'],['Barrier','Shield'],['Pulse','KeyE'],['Beam','KeyR']],
    codes:['KeyW','KeyS','KeyA','KeyD','Space','ShiftLeft','ShiftRight','KeyF','KeyG','KeyE','KeyR']
   });

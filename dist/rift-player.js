@@ -7,7 +7,7 @@ const RIFT={moveSpeed:14,jumpSpeed:10,blinkRange:28,returnWindow:4,blinkCooldown
 export class RiftPlayer extends ManualHeroControls {
  constructor(hero,options){
   super(hero,options,{
-   name:'rift',hint:'WASD move · Space jump · LMB bolt · RMB blink / return · E redirect',
+   hint:'WASD move · Space jump · LMB bolt · RMB blink / return · E redirect',
    actions:[['Jump','Space'],['Bolt','Fire'],['Blink','Shield'],['Redirect','KeyE']],
    codes:['KeyW','KeyS','KeyA','KeyD','Space','KeyF','KeyG','KeyE']
   });
