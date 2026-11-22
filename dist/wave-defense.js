@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=bruiser-range-381';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=wave-clear-382';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
@@ -132,9 +132,9 @@ export class WaveDefense extends MissionEnemyWaves {
  }
  launch(){
   this.phase='active';
+  this.upgradePending=false;
   const finalGroup=this.group===formations.length-1;
-  this.upgradePending=this.wave===2&&finalGroup;
-  this.remaining=this.wave===3||(this.wave===1&&finalGroup)?0:WAVE_DEFENSE_INTERVAL;
+  this.remaining=this.wave===3||finalGroup?0:WAVE_DEFENSE_INTERVAL;
   const [ground,air]=this.wave===3?[0,0]:formations[this.group].map(count=>count*this.wave);
   if(ground){
    const units=this.members.slice(this.bruisersLaunched,this.bruisersLaunched+ground);
@@ -202,12 +202,12 @@ export class WaveDefense extends MissionEnemyWaves {
   this.time=time;
   if(!this.relay.alive||this.options.collapsed()){this.finish(false);return;}
   if(this.phase==='waiting')this.launch();
-  else if(this.wave===1&&this.group===formations.length-1&&this.phase==='active'){
+  else if(this.wave<3&&this.group===formations.length-1&&this.phase==='active'){
    const enemiesRemain=this.members.some(unit=>unit.combatUnit?.alive)
     ||this.flightDrones.some(drone=>drone.combatUnit?.alive);
    if(!enemiesRemain){
     this.phase='intermission';
-    this.remaining=WAVE_ONE_INTERMISSION;
+    this.remaining=this.wave===1?WAVE_ONE_INTERMISSION:WAVE_DEFENSE_INTERVAL;
     this.upgradePending=true;
    }
   }else if(this.wave<3){

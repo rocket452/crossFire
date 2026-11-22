@@ -35,7 +35,7 @@ waves.update(.01,29.99);
 assert.equal(damage.units.length,0);
 waves.update(.01,30);
 assert.equal(damage.units.length,4);
-assert(damage.units.every(u=>u.health===500&&u.maxHealth===500));
+assert(damage.units.every(u=>u.health===350&&u.maxHealth===350));
 assert(waves.members.every(r=>r.root.position.z>150));
 assert.deepEqual(waves.waveAlerts().map(a=>[a.edge,a.count]),[['south',4]]);
 const dt=1/60;
