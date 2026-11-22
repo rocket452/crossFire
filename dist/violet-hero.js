@@ -15,7 +15,7 @@ export class VioletHero {
   for(const p of spec.parts){const source=gltf.scene.getObjectByName(p.name);if(!source?.isMesh)throw Error('Missing hero mesh '+p.name);const pivot=new THREE.Vector3(...p.pivot),geometry=source.geometry.clone().applyMatrix4(source.matrixWorld);geometry.translate(-pivot.x,-pivot.y,-pivot.z);const material=source.material.clone();if(['sigil','eyes'].includes(p.name)){material.emissive=new THREE.Color('#b84bff');material.emissiveIntensity=3;}const mesh=new THREE.Mesh(geometry,material);mesh.castShadow=true;mesh.receiveShadow=true;if(characterModel&&!['eyes','sigil','cape_top','cape_mid','cape_tail'].includes(p.name))mesh.visible=false;const node=new THREE.Group();node.add(mesh);const parent=p.parent?this.nodes[p.parent]:this.root,parentPivot=p.parent?new THREE.Vector3(...spec.parts.find(q=>q.name===p.parent).pivot):new THREE.Vector3();node.position.copy(pivot).sub(parentPivot);parent.add(node);this.nodes[p.name]=node;this.meshes[p.name]=mesh;}
   this.character=characterModel?new HumanoidCharacter(characterModel,{variant:'violet',height:spec.height}):null;if(this.character)this.root.add(this.character.root);
   this.flightPose=new VioletFlightPose();this.visual=new THREE.Group();this.visual.name='Violet flight presentation';this.visual.position.y=1.5;this.root.add(this.visual);this.visual.add(this.nodes.pelvis);this.nodes.pelvis.position.y-=1.5;if(this.character){this.visual.add(this.character.root);this.character.root.position.y=-1.5;}
-  this.orbs=[];this.particles=[];this.vfx=new THREE.Group();scene.add(this.vfx);this.dummy=new THREE.Object3D();this.temp=new THREE.Vector3();this.goal=new THREE.Vector3();this.velocity=new THREE.Vector3();this.forward=new THREE.Vector3();this.zAxis=new THREE.Vector3(0,0,1);
+  this.orbs=[];this.particles=[];this.vfx=new THREE.Group();scene.add(this.vfx);this.dummy=new THREE.Object3D();this.temp=new THREE.Vector3();this.goal=new THREE.Vector3();this.velocity=new THREE.Vector3();this.zAxis=new THREE.Vector3(0,0,1);
   this.coreMat=new THREE.MeshBasicMaterial({color:'#f5dcff',toneMapped:false});this.forceMat=new THREE.MeshBasicMaterial({color:'#ad40ff',transparent:true,opacity:.55,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false});this.ico=new THREE.IcosahedronGeometry(1,1);
   const size=64,data=new Uint8Array(size*size*4);for(let y=0;y<size;y++)for(let x=0;x<size;x++){const r=Math.hypot((x-32)/32,(y-32)/32),i=(y*size+x)*4;data[i]=data[i+1]=data[i+2]=255;data[i+3]=Math.round(255*Math.pow(Math.max(0,1-r),2));}const texture=new THREE.DataTexture(data,size,size);texture.needsUpdate=true;this.glowMat=new THREE.SpriteMaterial({map:texture,color:'#ac35ff',transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
   this.chargeOrb=this.makeOrb();this.vfx.add(this.chargeOrb);this.aura=new THREE.Sprite(this.glowMat.clone());this.aura.material.opacity=.22;this.aura.scale.setScalar(4.8);this.vfx.add(this.aura);
@@ -81,14 +81,14 @@ export class VioletHero {
    if(this.charging){this.mode='charging';this.chargeTime+=dt;}
   }else if(!shielding&&this.mode==='charging'&&alive){this.chargeTime+=dt;}
   if(this.charging&&alive&&!shielding){
-   const l=this.character?this.character.hand('L'):this.nodes.forearm_l.localToWorld(new THREE.Vector3(0,-.47,.05)),r=this.character?this.character.hand('R'):this.nodes.forearm_r.localToWorld(new THREE.Vector3(0,-.47,.05)),hand=l.add(r).multiplyScalar(.5);this.forward.set(Math.sin(yaw),0,Math.cos(yaw));hand.addScaledVector(this.forward,.30);
-   this.chargeOrb.visible=true;this.chargeOrb.position.copy(hand);this.chargeOrb.scale.setScalar(.2+Math.min(1,this.chargeTime/VIOLET_TUNING.normalCharge)*1.15);this.chargeOrb.rotation.set(time*2,time*3,0);
-   if(this.chargeTime>=VIOLET_TUNING.normalCharge){this.launch(hand,robot.aimPoint(hand));this.charging=false;this.chargeTime=0;this.mode='patrol';this.attackCooldown=VIOLET_TUNING.normalCooldown;}
+   const origin=this.poseOrbCharge(time,this.chargeTime/VIOLET_TUNING.normalCharge);
+   if(this.chargeTime>=VIOLET_TUNING.normalCharge){this.launch(origin,robot.aimPoint(origin));this.chargeOrb.visible=false;this.charging=false;this.chargeTime=0;this.mode='patrol';this.attackCooldown=VIOLET_TUNING.normalCooldown;}
   }else this.chargeOrb.visible=false;
   if(!alive){this.charging=false;this.chargeOrb.visible=false;this.threat=null;if(!this.defenseTarget)this.mode='patrol';}
   if(this.defenseTarget&&!shielding&&this.attackCooldown<=0){
-   this.defenseCharge+=dt;const aim=this.nodes.chest.worldToLocal(this.defenseTarget.position.clone()).sub(this.nodes.upperarm_r.position).normalize();this.nodes.upperarm_r.quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),aim);this.nodes.forearm_r.rotation.set(0,0,0);this.root.updateMatrixWorld(true);this.character?.syncArms(this.nodes);const hand=this.character?this.character.hand('R'):this.nodes.forearm_r.localToWorld(new THREE.Vector3(0,-.47,.05));this.chargeOrb.visible=true;this.chargeOrb.position.copy(hand);this.chargeOrb.scale.setScalar(.25+Math.min(1,this.defenseCharge/VIOLET_TUNING.defenseCharge)*.85);this.chargeOrb.rotation.set(time*3,time*4,0);
-   if(this.defenseCharge>=VIOLET_TUNING.defenseCharge){this.launch(hand,this.defenseTarget.position,this.defenseTarget);this.claimMissile(this.defenseTarget);this.defenseShots++;this.defenseCharge=0;this.attackCooldown=VIOLET_TUNING.defenseCooldown;}
+   this.defenseCharge+=dt;
+   const origin=this.poseOrbCharge(time,this.defenseCharge/VIOLET_TUNING.defenseCharge);
+   if(this.defenseCharge>=VIOLET_TUNING.defenseCharge){this.launch(origin,this.defenseTarget.position,this.defenseTarget);this.chargeOrb.visible=false;this.claimMissile(this.defenseTarget);this.defenseShots++;this.defenseCharge=0;this.attackCooldown=VIOLET_TUNING.defenseCooldown;}
   }else this.defenseCharge=0;
   this.advanceOrbs(dt,time,alive);
   this.trailTimer-=dt;if(this.trailTimer<=0){this.emit(center,2,.5);this.trailTimer=.07;}
@@ -111,6 +111,29 @@ export class VioletHero {
   this.powerEffect.update({phase:charging?'charging':'firing',charge:charging?progress:1},from,end.clone().sub(from).normalize(),end,time);this.aura.position.copy(this.root.position).y+=1.5;this.aura.scale.setScalar(7.5);this.light.intensity=0;
   this.advanceOrbs(dt,time,!!aim||robot.combatUnit.alive);if(!charging)this.emit(end,2,3);this.renderParticles(dt);
   if(this.capacitor.remaining===0){this.powerEffect.clear();this.mode='patrol';this.attackCooldown=VIOLET_TUNING.normalCooldown;}
+ }
+ poseOrbCharge(time,progress){
+  const draw=THREE.MathUtils.smoothstep(progress,0,.2);
+  const release=THREE.MathUtils.smoothstep(progress,.78,1);
+  let left,right;
+  if(this.character){
+   for(const [side,sign] of [['L',-1],['R',1]]){
+    const posed=this.visual.localToWorld(new THREE.Vector3(sign*(.16+.04*release),.23,.48+.26*release));
+    this.character.arm(side,this.character.hand(side).lerp(posed,draw));
+   }
+   left=this.character.hand('L');
+   right=this.character.hand('R');
+  }else{
+   this.posePowerCharge(time,draw*release);
+   left=this.nodes.forearm_l.localToWorld(new THREE.Vector3(0,-.47,.05));
+   right=this.nodes.forearm_r.localToWorld(new THREE.Vector3(0,-.47,.05));
+  }
+  const origin=left.add(right).multiplyScalar(.5);
+  this.chargeOrb.visible=true;
+  this.chargeOrb.position.copy(origin);
+  this.chargeOrb.scale.setScalar(.2+Math.min(1,progress)*1.15);
+  this.chargeOrb.rotation.set(time*2,time*3,0);
+  return origin;
  }
  posePowerCharge(time,progress){
   const reach=THREE.MathUtils.smoothstep(progress,.55,1),tremor=Math.sin(time*(12+progress*16))*.018*progress;

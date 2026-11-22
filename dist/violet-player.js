@@ -124,8 +124,9 @@ export class VioletPlayer {
   h.flightPose.step(dt,h.velocity,this.yaw,{raised:h.charging||shielding,blocking:shielding});h.flightPose.applyVisual(h.root,h.visual);h.pose(time);h.flightPose.applyCharacter(h.character,h.nodes,dt,-this.pitch);this.hurt.applyPose();h.root.updateMatrixWorld(true);
   h.chargeOrb.visible=h.charging;
   if(h.charging){
-   h.chargeTime+=dt;const hand=h.character.hand('R');h.chargeOrb.position.copy(hand);h.chargeOrb.scale.setScalar(.2+h.chargeTime/VIOLET_TUNING.normalCharge);
-   if(h.chargeTime>=VIOLET_TUNING.normalCharge){h.launch(hand,this.aim());h.charging=false;h.chargeTime=0;h.attackCooldown=VIOLET_TUNING.normalCooldown;}
+   h.chargeTime+=dt;
+   const origin=h.poseOrbCharge(time,h.chargeTime/VIOLET_TUNING.normalCharge);
+   if(h.chargeTime>=VIOLET_TUNING.normalCharge){h.launch(origin,this.aim());h.chargeOrb.visible=false;h.charging=false;h.chargeTime=0;h.attackCooldown=VIOLET_TUNING.normalCooldown;}
   }
   h.advanceOrbs(dt,time,true);h.renderParticles(dt);h.aura.position.copy(center);h.light.position.copy(center);this.status();
  }

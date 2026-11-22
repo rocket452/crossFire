@@ -1,4 +1,4 @@
-import {VioletPlayer} from './violet-player.js?v=mobile-fullscreen-377';
+import {VioletPlayer} from './violet-player.js?v=violet-orb-379';
 import {DefenseTitle} from './defense-title.js';
 import {kageDashCanFinish} from './kage-attacks.js?v=352';
 import {NINJA} from './ninja-motion.js?v=363';
@@ -62,7 +62,7 @@ import {traceImpact,UnitDamage} from './combat-collision.js?v=evac-performance-2
 import {SiegeWalker} from './siege-walker.js?v=314';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=hero-hurt-118';
-import {VioletHero} from './violet-hero.js?v=violet-player-374';
+import {VioletHero} from './violet-hero.js?v=violet-orb-379';
 import {Speedster} from './speedster.js?v=volt-abilities-371';
 import {RobotMissiles,WALKER_SALVO_SIZE} from './robot-missiles.js?v=missile-dive-354';
 import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';
