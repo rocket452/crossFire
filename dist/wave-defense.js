@@ -41,6 +41,7 @@ export function waveDefenseBuildings(buildings){
 const relayFlashSeconds=.24;
 const formations=[[4,0],[0,4],[2,2]];
 export const WAVE_DEFENSE_INTERVAL=15;
+const WAVE_ONE_INTERMISSION=30;
 const formationSize=formations.reduce((sum,[ground])=>sum+ground,0)*3;
 export const DEFENSE_UPGRADES=[
  {id:'chain',hero:'volt',title:'Chain lightning',detail:'Primary attacks arc to one additional nearby enemy.'},
@@ -131,8 +132,9 @@ export class WaveDefense extends MissionEnemyWaves {
  }
  launch(){
   this.phase='active';
-  this.upgradePending=this.wave<3&&this.group===formations.length-1;
-  this.remaining=this.wave<3?WAVE_DEFENSE_INTERVAL:0;
+  const finalGroup=this.group===formations.length-1;
+  this.upgradePending=this.wave===2&&finalGroup;
+  this.remaining=this.wave===3||(this.wave===1&&finalGroup)?0:WAVE_DEFENSE_INTERVAL;
   const [ground,air]=this.wave===3?[0,0]:formations[this.group].map(count=>count*this.wave);
   if(ground){
    const units=this.members.slice(this.bruisersLaunched,this.bruisersLaunched+ground);
@@ -200,7 +202,15 @@ export class WaveDefense extends MissionEnemyWaves {
   this.time=time;
   if(!this.relay.alive||this.options.collapsed()){this.finish(false);return;}
   if(this.phase==='waiting')this.launch();
-  else if(this.wave<3){
+  else if(this.wave===1&&this.group===formations.length-1&&this.phase==='active'){
+   const enemiesRemain=this.members.some(unit=>unit.combatUnit?.alive)
+    ||this.flightDrones.some(drone=>drone.combatUnit?.alive);
+   if(!enemiesRemain){
+    this.phase='intermission';
+    this.remaining=WAVE_ONE_INTERMISSION;
+    this.upgradePending=true;
+   }
+  }else if(this.wave<3){
    this.remaining=Math.max(0,this.remaining-dt);
    if(this.remaining<1e-6){
     if(++this.group===formations.length){

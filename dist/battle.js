@@ -43,7 +43,7 @@ import {EnemyDamageFlash} from './enemy-damage-flash.js?v=348';
 import {HeroMinimap} from './hero-minimap.js?v=347';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
-import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=timed-defense-367';
+import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=wave-clear-375';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=enemy-range-366';
 import {EvacRaiderWaves} from './evac-raider-waves.js?v=enemy-range-366';
 import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-approach.js?v=340';
@@ -256,7 +256,7 @@ function openDefenseUpgrade(mission){
  const panel=document.createElement('dialog');
  panel.className='evac-briefing defense-upgrade';
  panel.setAttribute('aria-labelledby','defense-upgrade-title');
- panel.innerHTML='<div class="evac-briefing-inner"><h2 id="defense-upgrade-title">Choose an upgrade</h2><div class="defense-upgrade-options"></div></div>';
+ panel.innerHTML='<div class="evac-briefing-inner"><h2 id="defense-upgrade-title">Choose an upgrade</h2><p data-upgrade-countdown hidden></p><div class="defense-upgrade-options"></div></div>';
  const choices=panel.querySelector('.defense-upgrade-options');
  const heroId=roster.has('volt')?'volt':roster.has('ninja')?'ninja':roster.has('violet')?'violet':null;
  for(const option of DEFENSE_UPGRADES){
@@ -303,6 +303,11 @@ function defenseStatus(mission){
  document.querySelector('.boss-health-hud').hidden=mission.wave!==3||!mission.walker.root.visible;
  if(mission.upgradePending&&!defenseUpgradePanel)openDefenseUpgrade(mission);
  else if(!mission.upgradePending&&defenseUpgradePanel)closeDefenseUpgrade();
+ const modalTimer=defenseUpgradePanel?.querySelector('[data-upgrade-countdown]');
+ if(modalTimer&&mission.phase==='intermission'){
+  modalTimer.hidden=false;
+  if(modalTimer.textContent!==countdown)modalTimer.textContent=countdown;
+ }
 }
 function defenseResult(won){
  if(!won){
