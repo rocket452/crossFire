@@ -2,7 +2,7 @@ import {WalkerWeapons} from './walker-weapons.js?v=city-walker-health-255';
 import {CannonTracking,CANNON_TRACKING} from './cannon-tracking.js?v=beam-tracking-150';
 import * as THREE from './vendor/three.module.js';
 import {trackedBeamWarningPlan} from './beam-aim.js?v=beam-tracking-61';
-import {BeamCycle} from './beam-cycle.js?v=beam-3';
+import {BeamCycle} from './beam-cycle.js?v=title-delay-383';
 import {WalkerGait,solveLegKnee,angleDelta,WALKER_TURN_SPEED} from './walker-gait.js?v=plasma-lead-91';
 
 // Blender-built rigid components; combined weapon durability is the combat health pool.

@@ -2,8 +2,8 @@ import {Vector3} from './vendor/three.module.js';
 
 // Cut on shot boundaries. Within each shot the camera eases behind its subject.
 export class DefenseTitle {
- constructor({startRound,rebuild,enter,actors,obstruction}){
-  Object.assign(this,{startRound,rebuild,enter,actors,obstruction});
+ constructor({startRound,rebuild,enter,actors,obstruction,openingDelay=0}){
+  Object.assign(this,{startRound,rebuild,enter,actors,obstruction,openingDelay});
   this.dialog=document.createElement('dialog');
   this.dialog.className='defense-title';
   this.dialog.setAttribute('aria-labelledby','defense-title-heading');
@@ -36,7 +36,7 @@ export class DefenseTitle {
  frame(camera,dt){
   const {walker,heroes}=this.actors(),boss=walker.root.position.clone();
   boss.y+=walker.dead?4:11;
-  const shot=walker.dead?6:Math.floor(this.time/5.5)%6;
+  const shot=walker.dead?6:Math.floor(Math.max(0,this.time-this.openingDelay)/5.5)%6;
   const target=boss.clone(),eye=new Vector3();
   if(shot%2===0){
    const angle=.45+this.time*.055;

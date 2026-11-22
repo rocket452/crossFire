@@ -1,6 +1,6 @@
 import {RiftPlayer} from './rift-player.js?v=380';
 import {VioletPlayer} from './violet-player.js?v=violet-charge-380';
-import {DefenseTitle} from './defense-title.js';
+import {DefenseTitle} from './defense-title.js?v=title-delay-383';
 import {kageDashCanFinish} from './kage-attacks.js?v=352';
 import {NINJA} from './ninja-motion.js?v=363';
 import {AssetCityLighting} from './asset-city-lighting.js?v=315';
@@ -60,7 +60,7 @@ import {DestructionWorld} from './destruction.js?v=320';
 import {InfantryCrowd} from './infantry.js?v=overall-performance-238';
 import {HelicopterPilot} from './helicopter-pilot.js?v=device-controls-59';
 import {traceImpact,UnitDamage} from './combat-collision.js?v=evac-performance-233';
-import {SiegeWalker} from './siege-walker.js?v=314';
+import {SiegeWalker} from './siege-walker.js?v=title-delay-383';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=hero-hurt-118';
 import {VioletHero} from './violet-hero.js?v=violet-charge-380';
@@ -146,7 +146,9 @@ const evacuationBriefing=districtMode?new EvacuationBriefing({
   if(mobileDefense)setDefenseFullscreen(true);
  }
 }):null;
+const TITLE_BEAM_DELAY=3;
 const defenseTitle=defenseMode?new DefenseTitle({
+ openingDelay:TITLE_BEAM_DELAY,
  actors:()=>({walker:robot,heroes:[runner,hero,portalHero]}),
  obstruction:(a,b)=>traceImpact(a,b,{sections:physics.chunks,ground:false,radius:.25}),
  rebuild:()=>resetDistrict(),
@@ -162,6 +164,7 @@ const defenseTitle=defenseMode?new DefenseTitle({
   const aim=hero.root.position.clone().add(new THREE.Vector3(0,1.4,0))
    .sub(robot.nodes.upperarm_r.getWorldPosition(new THREE.Vector3())).normalize();
   robot.cannonTracking.update(0,aim,aim);
+  robot.weapon.reset({openingChargeDelay:TITLE_BEAM_DELAY});
   robot.weapon.step(robot.weapon.remaining);
   arsenal.reset({openingBeam:true});refreshUnitShapes();
  },
