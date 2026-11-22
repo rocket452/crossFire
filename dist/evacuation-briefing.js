@@ -19,11 +19,23 @@ const training={
   controls:[
    ['Fly and aim','WASD · Mouse','Left stick · Drag the scene'],
    ['Ascend / descend','Space / Shift','Rise / Down'],
-   ['Force orb','Left click or F','Orb'],
+   ['Charge and release force orb','Hold left click or F','Hold Orb'],
    ['Hold barrier','Right click or G','Hold Barrier'],
+   ['Barrier pulse','E','Pulse'],
    ['Release charged beam','R','Beam']
   ],
-  bonus:'The force beam has a two-second wind-up. Absorbing too much fire with a full capacitor overloads it.'
+  bonus:'Longer orb charges hit harder and wider. Barrier Pulse spends 10% shield charge to stun nearby raiders. At 100%, the barrier bursts and hurts Violet.'
+ },
+ rift:{
+  tip:'Blink up to rooftops or past an enemy’s flank. Press Blink again within four seconds to return to your starting point.',
+  controls:[
+   ['Move and aim','WASD · Mouse','Left stick · Drag the scene'],
+   ['Jump','Space','Jump'],
+   ['Rift bolt','Left click or F','Bolt'],
+   ['Blink / return','Right click or G','Blink'],
+   ['Redirect projectiles','E','Redirect']
+  ],
+  bonus:'Set a redirect portal in the path of incoming fire. While a return portal is open, the redirect exit uses that position.'
  },
  ninja:{
   tip:'Throw smoke at civilians crossing open streets or waiting at the pad. Allies inside the dome are protected from damage.',
@@ -118,11 +130,11 @@ export class EvacuationBriefing {
    <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
  }
  choices(){
-  return `<div class="evac-briefing-heroes">${(this.defenseMode?['volt','ninja','violet']:['volt','ninja']).map(id=>{
+  return `<div class="evac-briefing-heroes">${(this.defenseMode?['volt','ninja','violet','rift']:['volt','ninja']).map(id=>{
    const hero=HEROES.find(entry=>entry.id===id);
    return `<button type="button" class="evac-briefing-hero" data-hero="${id}" style="--hero-accent:${hero.color}">
     <span class="evac-hero-icon" aria-hidden="true">${hero.icon}</span><strong>${hero.name}</strong>
-    <span>${id==='violet'?'Fly, block incoming fire, and unleash a force beam.':this.combatOnly?(id==='volt'?'Build charge at high speed and strike with lightning.':'Throw a laser star and teleport to a charged shuriken.'):id==='volt'?'Carry civilians out of danger with a lightning dash.':'Shield civilians from damage with protective smoke.'}</span>
+    <span>${id==='rift'?'Blink, return, and redirect incoming fire.':id==='violet'?'Fly, block incoming fire, and unleash a force beam.':this.combatOnly?(id==='volt'?'Build charge at high speed and strike with lightning.':'Throw a laser star and teleport to a charged shuriken.'):id==='volt'?'Carry civilians out of danger with a lightning dash.':'Shield civilians from damage with protective smoke.'}</span>
    </button>`;
   }).join('')}</div>
   <footer><button type="button" class="secondary" data-back>Back</button></footer>`;

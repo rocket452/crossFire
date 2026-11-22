@@ -1,62 +1,20 @@
 import {Vector3,MathUtils} from './vendor/three.module.js';
-import {TouchStick} from './touch-stick.js';
-import {HeroHurt} from './hero-hurt.js';
+import {ManualHeroControls} from './manual-hero-controls.js?v=380';
 import {SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
-import {VIOLET_BEAM} from './hero-powers.js?v=violet-overload-141';
+import {VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_PULSE} from './hero-powers.js?v=violet-charge-380';
 import {VIOLET_TUNING} from './violet-flight.js?v=violet-inertia-11';
 
-export class VioletPlayer {
- constructor(hero,{camera,canvas,controls,viewport,inputMode,spawn,bounds,blocked,terrain,paused}){
-  Object.assign(this,{hero,camera,canvas,controls,viewport,inputMode,spawn,bounds,blocked,terrain,paused});
-  this.keys=new Set();
-  this.hud=document.createElement('div');
-  this.hud.className='violet-player';this.hud.hidden=true;
-  this.hud.innerHTML='<i aria-hidden="true"></i><output></output><div class="violet-keys">WASD fly · Space rise · Shift descend · LMB orb · RMB barrier · R beam</div><div class="violet-stick"><b></b></div><div class="violet-buttons"></div>';
-  this.hud.addEventListener('contextmenu',event=>event.preventDefault());
-  viewport.append(this.hud);
-  const stick=this.hud.querySelector('.violet-stick');
-  this.stick=new TouchStick(stick,stick.firstChild,{enabled:()=>this.available()});
-  const buttons=this.hud.querySelector('.violet-buttons');
-  for(const [label,key] of [['Rise','Space'],['Down','ShiftLeft'],['Orb','Fire'],['Barrier','Shield'],['Beam','KeyR']]){
-   const button=document.createElement('button');button.textContent=label;buttons.append(button);
-   button.onpointerdown=e=>{if(!this.available())return;e.preventDefault();button.setPointerCapture(e.pointerId);this.press(key);};
-   button.onlostpointercapture=()=>this.keys.delete(key);
-  }
-  const fullscreen=document.createElement('button');
-  fullscreen.className='violet-fullscreen';
-  fullscreen.type='button';fullscreen.textContent='⛶';
-  fullscreen.setAttribute('aria-label','Toggle fullscreen');
-  fullscreen.onclick=()=>document.getElementById('fullscreen').click();
-  this.hud.append(fullscreen);
-  this.output=this.hud.querySelector('output');
-  this.hurt=new HeroHurt(hero.character,hero.visual);
-  this.bind();
- }
- available(){return this.hero.active&&!this.paused()&&!document.querySelector('dialog[open]');}
- clear(){this.keys.clear();this.fireTap=this.beamTap=false;this.drag=null;this.stick.reset();}
- press(key){this.keys.add(key);if(key==='Fire'||key==='KeyF')this.fireTap=true;if(key==='KeyR')this.beamTap=true;}
- lock(){if(this.inputMode.desktop&&!document.pointerLockElement)this.canvas.requestPointerLock?.()?.catch?.(()=>{});}
- bind(){
-  const codes=['KeyW','KeyS','KeyA','KeyD','Space','ShiftLeft','ShiftRight','KeyF','KeyG','KeyR'];
-  window.addEventListener('keydown',e=>{if(!this.available()||!codes.includes(e.code))return;e.preventDefault();if(!e.repeat)this.press(e.code);});
-  window.addEventListener('keyup',e=>this.keys.delete(e.code));
-  this.canvas.addEventListener('contextmenu',e=>{if(this.hero.active)e.preventDefault();});
-  this.canvas.addEventListener('pointerdown',e=>{
-   if(!this.available())return;
-   if(e.pointerType==='mouse'&&e.button!==0&&e.button!==2)return;
-   e.preventDefault();this.drag=e.pointerId;this.lastX=e.clientX;this.lastY=e.clientY;this.canvas.setPointerCapture(e.pointerId);
-   if(e.pointerType==='mouse'){this.lock();this.press(e.button===2?'Shield':'Fire');}
+export class VioletPlayer extends ManualHeroControls {
+ constructor(hero,options){
+  super(hero,options,{
+   name:'violet',hint:'WASD fly · Space rise · Shift descend · Hold LMB orb · RMB barrier · E pulse · R beam',
+   actions:[['Rise','Space'],['Down','ShiftLeft'],['Orb','Fire'],['Barrier','Shield'],['Pulse','KeyE'],['Beam','KeyR']],
+   codes:['KeyW','KeyS','KeyA','KeyD','Space','ShiftLeft','ShiftRight','KeyF','KeyG','KeyE','KeyR']
   });
-  window.addEventListener('pointerup',e=>{if(e.pointerType==='mouse')this.keys.delete(e.button===2?'Shield':'Fire');if(this.drag===e.pointerId)this.drag=null;});
-  this.canvas.addEventListener('pointercancel',()=>this.clear());
-  document.addEventListener('pointerlockchange',()=>{if(this.hero.active&&!document.pointerLockElement)this.clear();});
-  document.addEventListener('pointermove',e=>{
-   if(!this.available()||(document.pointerLockElement!==this.canvas&&this.drag!==e.pointerId))return;
-   const dx=e.pointerType==='touch'?e.clientX-this.lastX:e.movementX,dy=e.pointerType==='touch'?e.clientY-this.lastY:e.movementY;
-   this.lastX=e.clientX;this.lastY=e.clientY;this.yaw-=dx*.003;this.pitch=MathUtils.clamp(this.pitch-dy*.003,-1.35,1.35);
-  });
-  window.addEventListener('blur',()=>this.clear());
  }
+ clear(){super.clear();this.fireTap=this.beamTap=this.pulseTap=false;if(this.hero.active)this.cancelOrb();}
+ cancelOrb(){this.hero.charging=false;this.hero.chargeTime=0;this.hero.chargeOrb.visible=false;}
+ press(key){this.keys.add(key);if(key==='Fire'||key==='KeyF')this.fireTap=true;if(key==='KeyR')this.beamTap=true;if(key==='KeyE')this.pulseTap=true;}
  enter(intro,respawn=true){
   this.clear();this.hero.active=true;this.hud.hidden=false;this.controls.enabled=false;
   this.viewport.classList.add('piloting-violet');this.hero.threat=this.hero.defenseTarget=null;
@@ -69,17 +27,7 @@ export class VioletPlayer {
   if(!this.hero.active)return;
   this.hero.active=false;this.controls.enabled=true;this.hud.hidden=true;this.viewport.classList.remove('piloting-violet');
   if(document.pointerLockElement===this.canvas)document.exitPointerLock();
-  this.clear();this.hurt.clear();this.hero.charging=false;this.hero.chargeTime=0;this.hero.mode='patrol';this.hero.shield.visible=false;this.hero.shieldDeploy=0;
- }
- direction(){return new Vector3(Math.sin(this.yaw)*Math.cos(this.pitch),Math.sin(this.pitch),Math.cos(this.yaw)*Math.cos(this.pitch));}
- frame(){
-  const focus=this.hero.root.position.clone();focus.y+=2;
-  const dir=this.direction(),eye=focus.clone().addScaledVector(dir,-7);
-  eye.y+=1.5;
-  const hit=this.blocked(focus,eye,.18);
-  if(hit)eye.lerpVectors(focus,hit.point,.88);
-  eye.y=Math.max(eye.y,this.terrain(eye.x,eye.z)+.4);
-  this.camera.position.copy(eye);this.camera.lookAt(focus.addScaledVector(dir,28));
+  this.clear();this.hurt.clear();this.cancelOrb();this.hero.mode='patrol';this.hero.shield.visible=false;this.hero.shieldDeploy=0;
  }
  aim(){
   this.frame();const eye=this.camera.position,dir=this.camera.getWorldDirection(new Vector3()),end=eye.clone().addScaledVector(dir,200);
@@ -104,8 +52,9 @@ export class VioletPlayer {
   if(!this.available()){this.clear();return;}
   h.updateOverloadEffect(dt);this.hurt.step(dt);h.hitGlow=Math.max(0,h.hitGlow-2.3*dt);
   if(c.overloadRemaining>0)c.step(dt);
-  if(this.beamTap&&c.start()){h.charging=false;h.chargeTime=0;}
+  if(this.beamTap&&c.start())this.cancelOrb();
   this.beamTap=false;
+  const pulse=this.pulseTap;this.pulseTap=false;
   if(c.remaining>0){h.updatePowerBeam(dt,time,null,this.aim());this.status();return;}
   this.move(dt);
   const shielding=(this.keys.has('Shield')||this.keys.has('KeyG'))&&c.overloadRemaining<=0&&h.shieldEnergy>0;
@@ -118,21 +67,34 @@ export class VioletPlayer {
   h.contact.visible=h.hitGlow>0&&shielding;
   if(!shielding)h.shieldEnergy=Math.min(3000,h.shieldEnergy+250*dt);
   h.attackCooldown=Math.max(0,h.attackCooldown-dt);
-  if(h.isShielding()||c.overloadRemaining>0){h.charging=false;h.chargeTime=0;}
-  else if(h.attackCooldown===0&&(this.fireTap||this.keys.has('Fire')||this.keys.has('KeyF')))h.charging=true;
+  if(pulse&&c.spend(VIOLET_PULSE.cost)){
+   this.onPulse(center);
+   h.orbEffects.impact(center,h.zAxis,VIOLET_PULSE.radius);
+   h.emit(center,28,5);
+  }
+  if(h.isShielding()||c.overloadRemaining>0)this.cancelOrb();
+  else if(h.attackCooldown===0&&this.fireTap)h.charging=true;
   this.fireTap=false;
   h.flightPose.step(dt,h.velocity,this.yaw,{raised:h.charging||shielding,blocking:shielding});h.flightPose.applyVisual(h.root,h.visual);h.pose(time);h.flightPose.applyCharacter(h.character,h.nodes,dt,-this.pitch);this.hurt.applyPose();h.root.updateMatrixWorld(true);
   h.chargeOrb.visible=h.charging;
   if(h.charging){
-   h.chargeTime+=dt;
-   const origin=h.poseOrbCharge(time,h.chargeTime/VIOLET_TUNING.normalCharge);
-   if(h.chargeTime>=VIOLET_TUNING.normalCharge){h.launch(origin,this.aim());h.chargeOrb.visible=false;h.charging=false;h.chargeTime=0;h.attackCooldown=VIOLET_TUNING.normalCooldown;}
+   const held=this.keys.has('Fire')||this.keys.has('KeyF');
+   if(held)h.chargeTime=Math.min(VIOLET_TUNING.normalCharge,h.chargeTime+dt);
+   const charge=h.chargeTime/VIOLET_TUNING.normalCharge;
+   const origin=h.poseOrbCharge(time,charge);
+   if(!held){
+    if(h.launch(origin,this.aim(),null,charge))h.attackCooldown=MathUtils.lerp(.9,VIOLET_TUNING.normalCooldown,charge);
+    this.cancelOrb();
+   }
   }
   h.advanceOrbs(dt,time,true);h.renderParticles(dt);h.aura.position.copy(center);h.light.position.copy(center);this.status();
  }
  status(){
   const h=this.hero,c=h.capacitor;
-  const orb=h.charging?'Charging orb':h.attackCooldown>0?'Orb '+h.attackCooldown.toFixed(1)+'s':'Orb ready';
-  this.output.textContent=orb+' · '+(c.overloadRemaining>0?'Overloaded':c.remaining>0?'Force beam '+c.phase:c.ready?'Force beam ready':'Beam '+Math.round(c.amount/VIOLET_BEAM.required*100)+'%');
+  const orb=h.charging?'Orb '+Math.round(h.chargeTime/VIOLET_TUNING.normalCharge*100)+'%':h.attackCooldown>0?'Orb '+h.attackCooldown.toFixed(1)+'s':'Orb ready';
+  const stored=c.amount+c.overloadDamage;
+  const charge=Math.floor(stored/(VIOLET_BEAM.required+VIOLET_OVERLOAD.extraDamage)*100);
+  const barrier=c.overloadRemaining>0?'SHIELD OVERLOAD':c.remaining>0?'Force beam '+c.phase:'Shield '+charge+'%'+(c.ready?' · Beam ready':'');
+  this.output.textContent=orb+' · '+barrier+(stored>=VIOLET_PULSE.cost?' · Pulse ready':'');
  }
 }

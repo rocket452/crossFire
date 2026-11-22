@@ -1,6 +1,15 @@
 export const VOLT_STUN=Object.freeze({cost:50,cooldown:15,duration:1,damage:450,range:90});
 export const VIOLET_BEAM=Object.freeze({required:1200,chargeDuration:2,duration:4,damagePerSecond:420,originOffset:.55});
 export const VIOLET_OVERLOAD=Object.freeze({extraDamage:600,recoverySeconds:2,burstSeconds:.65});
+export const VIOLET_ORB=Object.freeze({minDamage:55,maxDamage:220,minRadius:2.2,maxRadius:7,interceptDamage:100,interceptRadius:2.2});
+export const VIOLET_PULSE=Object.freeze({cost:180,radius:6,damage:35,stunSeconds:1.1});
+export function violetOrbPower(progress){
+ const charge=Math.max(0,Math.min(1,progress));
+ return {
+  damage:VIOLET_ORB.minDamage+(VIOLET_ORB.maxDamage-VIOLET_ORB.minDamage)*charge,
+  radius:VIOLET_ORB.minRadius+(VIOLET_ORB.maxRadius-VIOLET_ORB.minRadius)*charge
+ };
+}
 // Only confirmed shield absorption fills this resource. No passive regeneration.
 export class BarrierCapacitor {
  constructor(){this.reset();}
@@ -8,6 +17,13 @@ export class BarrierCapacitor {
  absorb(damage){if(this.remaining>0||this.overloadRemaining>0||!Number.isFinite(damage)||damage<=0)return false;this.absorbed+=damage;const needed=Math.max(0,VIOLET_BEAM.required-this.amount);this.amount=Math.min(VIOLET_BEAM.required,this.amount+damage);this.overloadDamage+=Math.max(0,damage-needed);if(this.overloadDamage+1e-8>=VIOLET_OVERLOAD.extraDamage){this.amount=0;this.remaining=0;this.chargeElapsed=0;this.phase='overloaded';this.overloadRemaining=VIOLET_OVERLOAD.recoverySeconds;this.overloads++;return true;}return false;}
  get overloadProgress(){return this.ready?Math.min(1,this.overloadDamage/VIOLET_OVERLOAD.extraDamage):0;}
  get ready(){return this.overloadRemaining<=0&&this.amount>=VIOLET_BEAM.required;}
+ spend(cost){
+  if(this.remaining>0||this.overloadRemaining>0||this.amount+this.overloadDamage<cost)return false;
+  const stored=this.amount+this.overloadDamage-cost;
+  this.amount=Math.min(stored,VIOLET_BEAM.required);
+  this.overloadDamage=stored-this.amount;
+  return true;
+ }
  start(){if(!this.ready||this.remaining>0)return false;this.amount=0;this.overloadDamage=0;this.remaining=VIOLET_BEAM.duration;this.phase='charging';this.chargeElapsed=0;this.casts++;return true;}
  get chargeRemaining(){return this.phase==='charging'?Math.max(0,VIOLET_BEAM.chargeDuration-this.chargeElapsed):0;}
  get chargeProgress(){return this.phase==='charging'?Math.min(1,this.chargeElapsed/VIOLET_BEAM.chargeDuration):this.phase==='firing'?1:0;}

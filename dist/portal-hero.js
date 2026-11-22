@@ -69,25 +69,37 @@ export class PortalHero {
   if(this.traceThreat(from,crossing,{owner:projectile.owner||'siege-walker'})?.t<.999)return null;
   const incoming=to.clone().sub(from).normalize(),rotation=new THREE.Quaternion().setFromUnitVectors(p.normal.clone().multiplyScalar(a>=0?-1:1),pair.exit.normal),direction=incoming.applyQuaternion(rotation),position=pair.exit.position.clone().addScaledVector(UP,pair.exit.radius*.65).addScaledVector(pair.exit.normal,1.2);projectile.riftPair=p.id;this.redirected++;this.addTrace('projectile',crossing,position,0);return{position,direction};
  }
+ receiveEyeHit(){if(this.active)this.player.hurt.hit();}
+ spawnBolt(from,target,power){
+  if(this.bolts.length>=64)return;
+  const dir=target.clone().sub(from).normalize();
+  if(dir.lengthSq()<.5)return;
+  this.bolts.push({position:from,dir,power,life:2,age:0,sparkClock:0,seed:this.shots*2.399});
+  this.shots++;this.emit(from,1,.3);
+ }
  fireBolt(portal){
-  if(this.bolts.length>=64)return;const robot=this.getRobot();if(!robot?.combatUnit?.alive)return;const target=robot.aimPoint(portal.position),from=portal.position.clone().addScaledVector(portal.normal,.22),dir=target.sub(from).normalize();this.bolts.push({position:from,dir,life:2,age:0,sparkClock:0,seed:this.shots*2.399});this.shots++;if(portal.energy)this.portalEnergy.burst(portal.energy);this.emit(from,1,.3);
+  const robot=this.getRobot();if(!robot?.combatUnit?.alive)return;
+  this.spawnBolt(portal.position.clone().addScaledVector(portal.normal,.22),robot.aimPoint(portal.position),8);
+  if(portal.energy)this.portalEnergy.burst(portal.energy);
  }
  update(dt,time){
   if(this.enabled===false)return;
   this.castRemaining=Math.max(0,this.castRemaining-dt);this.time=time;const robot=this.getRobot(),alive=!!robot?.combatUnit?.alive;this.travelCooldown-=dt;this.attackCooldown-=dt;this.rescueCooldown=Math.max(0,this.rescueCooldown-dt);this.rescueScan-=dt;
-  if(alive||this.getThreats().some(t=>t.kind==='plasma')){if(this.rescueScan<=0&&this.rescueCooldown<=0){this.tryRescue();this.rescueScan=.04;}if(alive&&!this.travel&&this.travelCooldown<=0)this.startTravel();if(alive&&!this.travel&&this.attackCooldown<=0){if(!this.tryAttack())this.attackCooldown=.5;}}
+  if(this.active)this.player.update(dt);
+  else if(alive||this.getThreats().some(t=>t.kind==='plasma')){if(this.rescueScan<=0&&this.rescueCooldown<=0){this.tryRescue();this.rescueScan=.04;}if(alive&&!this.travel&&this.travelCooldown<=0)this.startTravel();if(alive&&!this.travel&&this.attackCooldown<=0){if(!this.tryAttack())this.attackCooldown=.5;}}
   if(this.travel){const t=this.travel;t.age+=dt;if(!t.moved&&t.age>=.22){this.root.position.copy(t.destination);this.addTrace('hero',t.from,t.arrival);t.moved=true;this.teleports++;this.emit(t.destination.clone().addScaledVector(UP,1.2),18,2);}
    if(t.moved)this.root.position.lerpVectors(t.destination,t.arrival,Math.min(1,(t.age-.22)/.25));this.root.scale.setScalar(t.age<.22?Math.max(.04,1-t.age/.22):Math.min(1,(t.age-.22)/.25));if(t.age>=.5){this.root.scale.setScalar(1);this.travel=null;this.mode='watching';this.attackCooldown=Math.min(this.attackCooldown,.25);}
   }
-  const target=robot?.root.position||new THREE.Vector3(),yaw=Math.atan2(target.x-this.root.position.x,target.z-this.root.position.z);this.root.rotation.y=yaw;const casting=this.castRemaining>0||this.travel!==null;for(const side of ['l','r']){this.nodes['upperarm_'+side].rotation.set(casting?-1.1:-.15,0,side==='l'?-.28:.28);this.nodes['forearm_'+side].rotation.x=casting?-.48:-.18;this.nodes['thigh_'+side].rotation.x=.025*Math.sin(time*2+(side==='l'?0:Math.PI));this.nodes['coat_'+side].rotation.x=.06*Math.sin(time*2.8);}
+  const target=robot?.root.position||new THREE.Vector3(),yaw=Math.atan2(target.x-this.root.position.x,target.z-this.root.position.z);this.root.rotation.y=this.active?this.player.yaw:yaw;const casting=this.castRemaining>0||this.travel!==null;for(const side of ['l','r']){this.nodes['upperarm_'+side].rotation.set(casting?-1.1:-.15,0,side==='l'?-.28:.28);this.nodes['forearm_'+side].rotation.x=casting?-.48:-.18;this.nodes['thigh_'+side].rotation.x=.025*Math.sin(time*2+(side==='l'?0:Math.PI));this.nodes['coat_'+side].rotation.x=.06*Math.sin(time*2.8);}
   if(this.travel)this.mode='teleporting';else this.mode=this.castRemaining>0?(this.castKind==='rescue'?'rescuing':'casting'):this.portals.some(p=>p.kind==='attack')?'portal-barrage':'watching';
-  this.transportUnits();this.discMaterial.uniforms.time.value=time;
+  if(this.active){if(this.pair?.entry.expiresAt<=time)this.pair=null;}else this.transportUnits();
+  this.discMaterial.uniforms.time.value=time;
   for(let i=this.portals.length-1;i>=0;i--){const p=this.portals[i],age=this.time-p.createdAt;const lifetime=p.expiresAt-p.createdAt;if(age>=lifetime-1e-9){if(p.energy)this.portalEnergy.remove(p.energy);this.scene.remove(p.group);p.ticks.dispose();this.closed.push({id:p.id,kind:p.kind,lifetime});this.closed=this.closed.slice(-12);this.portals.splice(i,1);continue;}const scale=THREE.MathUtils.smoothstep(age,0,.2)*(1-THREE.MathUtils.smoothstep(age,Math.max(.2,lifetime-.35),lifetime));p.group.scale.setScalar(p.radius*Math.max(.001,scale));p.spin.rotation.z=(p.kind.startsWith('rescue')?-1:1)*age*.9;
    if(p.kind==='attack'&&alive&&age>=.35){p.shotClock+=dt;while(p.shotClock>=SHOT_INTERVAL-1e-9){p.shotClock-=SHOT_INTERVAL;this.fireBolt(p);}}
    if(p.energy)this.portalEnergy.update(p.energy,dt,age);
   }
-  for(let i=this.bolts.length-1;i>=0;i--){const b=this.bolts[i];b.life-=dt;b.age+=dt;const end=b.position.clone().addScaledVector(b.dir,BOLT_SPEED*dt),transit=this.redirect(b,b.position,end);if(transit){b.position.copy(transit.position);b.dir.copy(transit.direction);continue;}const hit=this.traceBolt(b.position,end);if(hit){b.position.set(hit.point.x,hit.point.y,hit.point.z);const damage=this.onBoltHit(hit,b.position)||0;this.damage+=damage;if(hit.unit?.kind==='robot')this.robotHits++;this.emit(b.position,4,1.2);b.life=0;}else{b.position.copy(end);b.sparkClock+=dt;if(b.sparkClock>=.05){b.sparkClock%=.05;this.emit(b.position,1,.35);const spark=this.sparks.at(-1);spark.life=spark.max=.28;spark.size=.12;spark.v.addScaledVector(b.dir,-3);}}if(b.life<=0)this.bolts.splice(i,1);}
-  const spellProgress=this.castRemaining>0?1-this.castRemaining/RIFT_CAST_SECONDS:this.travel?Math.min(1,this.travel.age/.5):1;if(this.character){this.character.update('Idle',dt);if(casting)this.spell.pose(this.root,this.character,spellProgress);}else if(casting){const a=spellProgress*Math.PI*2;for(const side of ['l','r']){this.nodes['upperarm_'+side].rotation.z+=(side==='l'?-1:1)*Math.cos(a)*.3;this.nodes['forearm_'+side].rotation.x-=Math.sin(a)*.4;}}this.root.updateMatrixWorld(true);this.spell.update(dt,time,{root:this.root,nodes:this.nodes,character:this.character,active:casting,progress:spellProgress});this.renderEffects(dt);
+  for(let i=this.bolts.length-1;i>=0;i--){const b=this.bolts[i];b.life-=dt;b.age+=dt;const end=b.position.clone().addScaledVector(b.dir,BOLT_SPEED*dt),transit=this.redirect(b,b.position,end);if(transit){b.position.copy(transit.position);b.dir.copy(transit.direction);continue;}const hit=this.traceBolt(b.position,end);if(hit){b.position.set(hit.point.x,hit.point.y,hit.point.z);const damage=this.onBoltHit(hit,b.position,b.power)||0;this.damage+=damage;if(hit.unit?.kind==='robot')this.robotHits++;this.emit(b.position,4,1.2);b.life=0;}else{b.position.copy(end);b.sparkClock+=dt;if(b.sparkClock>=.05){b.sparkClock%=.05;this.emit(b.position,1,.35);const spark=this.sparks.at(-1);spark.life=spark.max=.28;spark.size=.12;spark.v.addScaledVector(b.dir,-3);}}if(b.life<=0)this.bolts.splice(i,1);}
+  const spellProgress=this.castRemaining>0?1-this.castRemaining/RIFT_CAST_SECONDS:this.travel?Math.min(1,this.travel.age/.5):1;if(this.character){this.character.update(this.active&&this.player.walking?'Run':'Idle',dt);if(casting)this.spell.pose(this.root,this.character,spellProgress);}else if(casting){const a=spellProgress*Math.PI*2;for(const side of ['l','r']){this.nodes['upperarm_'+side].rotation.z+=(side==='l'?-1:1)*Math.cos(a)*.3;this.nodes['forearm_'+side].rotation.x-=Math.sin(a)*.4;}}if(this.active)this.player.hurt.applyPose();this.root.updateMatrixWorld(true);this.spell.update(dt,time,{root:this.root,nodes:this.nodes,character:this.character,active:casting,progress:spellProgress});this.renderEffects(dt);
  }
  renderEffects(dt){
   let n=0,g=0;for(const b of this.bolts){
