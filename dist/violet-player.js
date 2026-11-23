@@ -93,7 +93,7 @@ export class VioletPlayer extends ManualHeroControls {
    h.orbEffects.impact(center,h.zAxis,VIOLET_PULSE.radius);
    h.emit(center,28,5);
   }
-  h.flightPose.step(dt,h.velocity,this.yaw,{raised:h.charging||shielding,blocking:shielding});h.flightPose.applyVisual(h.root,h.visual);h.pose(time);h.flightPose.applyCharacter(h.character,h.nodes,dt,-this.pitch);this.hurt.applyPose();h.root.updateMatrixWorld(true);
+  h.flightPose.step(dt,h.velocity,this.yaw,{raised:h.charging||shielding,blocking:shielding});h.flightPose.applyVisual(h.root,h.visual,time);h.pose(time);h.flightPose.applyCharacter(h.character,h.nodes,dt,-this.pitch);this.hurt.applyPose();h.root.updateMatrixWorld(true);
   h.chargeOrb.visible=h.charging;
   if(h.charging){
    if(holdingOrb)h.chargeTime=Math.min(VIOLET_TUNING.normalCharge,h.chargeTime+dt);

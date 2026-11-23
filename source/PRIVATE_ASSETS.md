@@ -141,3 +141,14 @@ Place `violet-armored.glb` in the ignored `dist/city-assets/licensed-characters/
 directory and force-add it only on `site-licensed-assets`. It contains the
 licensed humanoid skin and animation clips. Run `node QA/violet-armor-test.mjs`
 with both private assets present to validate the skin, clips and orb attachments.
+
+## Armored Rift Warden
+
+Build the reference armor with
+`blender -b --python-exit-code 1 --python source/build_rift_armor.py -- /private/humanoid.glb /private/rift-armored.glb`.
+The output retains the licensed rig and original clips. Keep the generated
+GLB under `dist/city-assets/licensed-characters/` in the private build only.
+
+Both Kage armor variants now include flexible hip, knee, and ankle seals from
+`source/rig_kage_armor.py`. Rebuild the regular and frog-base files with that
+script, then regenerate `kage-frog.glb` with `source/build_kage_frog.py`.

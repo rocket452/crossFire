@@ -2,7 +2,7 @@ import {PlasmaImpactEffects} from './plasma-impact-effects.js?v=plasma-impact-22
 import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
 import * as THREE from './vendor/three.module.js';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
-export const PLASMA={gravity:5,warningSeconds:2.4,shotSpacing:1.6,blastRadius:7,projectileRadius:.65,maxShells:2,leadIterations:10,maxLeadSeconds:24};
+export const PLASMA={gravity:5,warningSeconds:2.4,shotSpacing:1.6,blastRadius:7,damage:160,projectileRadius:.65,maxShells:2,leadIterations:10,maxLeadSeconds:24,maxAlignmentSeconds:12};
 // Exact 45-degree ballistic solution, evaluated analytically so the ground aim never drifts.
 export function plasmaTrajectory(from,target,gravity=PLASMA.gravity){
  const dx=target.x-from.x,dz=target.z-from.z,range=Math.hypot(dx,dz),denominator=2*(range+from.y-target.y);if(range<1||denominator<=0)return null;
@@ -19,7 +19,7 @@ export class PlasmaArtillery {
   this.trailPool=new THREE.InstancedMesh(this.coreGeometry,this.haloMaterial,100);this.trailPool.frustumCulled=false;scene.add(this.trailPool);this.dummy=new THREE.Object3D();
   this.muzzleGlow=new THREE.Mesh(this.coreGeometry,this.haloMaterial);scene.add(this.muzzleGlow);this.impactEffects=new PlasmaImpactEffects(scene);this.reset();
  }
- reset(){this.impactEffects.reset();for(const s of this.shells||[])this.removeShell(s);this.shells=[];this.trails=[];this.trailPool.count=0;this.muzzleGlow.visible=false;this.clock=0;this.sequence=0;this.volleys=0;this.launched=0;this.impacts=0;this.blocked=0;this.cancelled=0;this.history=[];}
+ reset(){this.impactEffects.reset();for(const s of this.shells||[])this.removeShell(s);this.shells=[];this.trails=[];this.trailPool.count=0;this.muzzleGlow.visible=false;this.clock=0;this.nextLaunch=0;this.sequence=0;this.volleys=0;this.launched=0;this.impacts=0;this.blocked=0;this.cancelled=0;this.history=[];}
  get busy(){return this.shells.length>0;}
  createMarker(s){
   const group=new THREE.Group();group.position.set(s.target.x,s.target.y+.14,s.target.z);this.scene.add(group);
@@ -56,21 +56,43 @@ export class PlasmaArtillery {
  }
  update(dt,time){
   this.clock+=dt;this.impactEffects.update(dt);this.muzzleGlow.visible=false;
+  const warning=this.shells.find(shell=>shell.state==='warning');
   for(let i=this.shells.length-1;i>=0;i--){const s=this.shells[i];
    if(s.state==='warning'){
     if(!this.isRobotAlive()||!this.canFire()){this.removeShell(s);this.shells.splice(i,1);this.cancelled++;continue;}
-    const muzzle=this.getMuzzle(s.target);s.position.copy(muzzle.position);this.muzzleGlow.visible=true;this.muzzleGlow.position.copy(muzzle.position);this.muzzleGlow.scale.setScalar(.5+Math.min(1,(this.clock-s.createdAt)/PLASMA.warningSeconds)*1.8);
-    if(this.clock>=s.launchAt-1e-9&&muzzle.aligned===false){s.launchAt+=dt;s.impactAt+=dt;}
-    if(this.clock>=s.launchAt-1e-9&&muzzle.aligned!==false){s.trajectory=plasmaTrajectory(muzzle.position,{...s.target,y:s.target.y+PLASMA.projectileRadius+.02});s.impactAt=this.clock+s.trajectory.duration;s.state='flying';s.age=0;s.justLaunched=true;s.position.copy(muzzle.position);s.mesh.visible=true;this.launched++;this.onLaunch(s.position);}
+    if(s===warning){
+     // One turret serves the volley in launch order, with a deadline for obstructed or unreachable aim.
+     s.aimStartedAt??=this.clock;
+     const muzzle=this.getMuzzle(s.target);
+     s.position.copy(muzzle.position);
+     this.muzzleGlow.visible=true;
+     this.muzzleGlow.position.copy(muzzle.position);
+     this.muzzleGlow.scale.setScalar(.5+Math.min(1,(this.clock-s.createdAt)/PLASMA.warningSeconds)*1.8);
+     const launchAt=Math.max(s.launchAt,this.nextLaunch);
+     s.impactAt=Math.max(launchAt,this.clock+(muzzle.alignmentSeconds||0))+s.trajectory.duration;
+     if(this.clock>=launchAt-1e-9&&muzzle.aligned!==false){
+      const trajectory=plasmaTrajectory(muzzle.position,{...s.target,y:s.target.y+PLASMA.projectileRadius+.02});
+      if(!trajectory){this.removeShell(s);this.shells.splice(i,1);this.cancelled++;continue;}
+      s.trajectory=trajectory;s.impactAt=this.clock+trajectory.duration;s.state='flying';s.age=0;
+      s.justLaunched=true;s.mesh.visible=true;this.nextLaunch=this.clock+PLASMA.shotSpacing;
+      this.launched++;this.onLaunch(s.position);
+     }else if(muzzle.aligned===false&&this.clock>=Math.max(launchAt,s.aimStartedAt)+PLASMA.maxAlignmentSeconds){
+      this.removeShell(s);this.shells.splice(i,1);this.cancelled++;continue;
+     }
+    }else{
+     const wait=Math.max(warning.launchAt,this.nextLaunch,this.clock)+PLASMA.shotSpacing;
+     s.impactAt=Math.max(s.launchAt,wait)+s.trajectory.duration;
+    }
    }
    if(s.state==='flying'){
     let hit=null,remaining=s.justLaunched?0:dt;s.justLaunched=false;while(remaining>1e-9&&!hit&&s.age<s.trajectory.duration){const h=Math.min(remaining,1/90,s.trajectory.duration-s.age),end=plasmaPosition(s.trajectory,s.age+h);const transit=this.redirect(s,s.position,end);if(transit){const old=s.trajectory,v=new THREE.Vector3(old.velocity.x,old.velocity.y-old.gravity*s.age,old.velocity.z),velocity=transit.direction.clone().multiplyScalar(v.length()),from=transit.position,ground=this.getGroundHeight(from.x,from.z)+PLASMA.projectileRadius,duration=Math.max(.1,(velocity.y+Math.sqrt(velocity.y*velocity.y+2*old.gravity*Math.max(.1,from.y-ground)))/old.gravity);s.trajectory={from:{...from},velocity:{...velocity},gravity:old.gravity,duration,apex:from.y+Math.max(0,velocity.y)**2/(2*old.gravity)};const target=plasmaPosition(s.trajectory,duration);s.target={x:target.x,y:this.getGroundHeight(target.x,target.z),z:target.z};s.trajectory.target=s.target;s.position.copy(from);s.age=0;s.impactAt=this.clock+duration;s.marker.group.position.set(s.target.x,s.target.y+.14,s.target.z);remaining=0;break;}hit=this.traceSegment(s.position,end,PLASMA.projectileRadius);s.age+=h;remaining-=h;if(hit)s.position.set(hit.point.x,hit.point.y,hit.point.z);else s.position.copy(end);}
     s.mesh.position.copy(s.position);s.core.rotation.set(time*4,time*6,time*3);s.halo.scale.setScalar(2.2+Math.sin(time*17)*.2);s.rings.forEach((ring,j)=>ring.rotation.set(time*(5+j),time*(3-j),time*4+j));
     s.trailClock-=dt;if(s.trailClock<=0){this.trails.push({position:s.position.clone(),life:.6});this.trails=this.trails.slice(-100);s.trailClock=.045;}
-    if(hit||s.age>=s.trajectory.duration-1e-8){if((hit?.kind==='ice-barrier'||hit?.kind==='bubble-shield')&&hit.barrier.onHit(s.position,s)!==false){this.blocked++;this.history.push({id:s.id,planned:{...s.target},actual:s.position.toArray(),early:true,blocked:true,barrier:hit.barrier.id});this.history=this.history.slice(-12);this.removeShell(s);this.shells.splice(i,1);continue;}if(!hit)s.position.copy(s.target);else if(hit.kind==='ground')s.position.y=this.getGroundHeight(s.position.x,s.position.z);const groundY=this.getGroundHeight(s.position.x,s.position.z);this.impactEffects.burst(s.position,{radius:PLASMA.blastRadius,groundY:Math.abs(s.position.y-groundY)<5?groundY:null});this.onImpact(s.position,hit,PLASMA.blastRadius,s.id);this.impacts++;this.history.push({id:s.id,planned:{...s.target},actual:s.position.toArray(),early:!!hit&&s.age<s.trajectory.duration-.1});this.history=this.history.slice(-12);this.removeShell(s);this.shells.splice(i,1);continue;}
+    if(hit||s.age>=s.trajectory.duration-1e-8){if(hit?.kind==='shield'&&hit.barrier.onHit?.(s.position,PLASMA.damage)!==false||(hit?.kind==='ice-barrier'||hit?.kind==='bubble-shield')&&hit.barrier.onHit(s.position,s)!==false){this.blocked++;this.history.push({id:s.id,planned:{...s.target},actual:s.position.toArray(),early:true,blocked:true,barrier:hit.barrier.id});this.history=this.history.slice(-12);this.removeShell(s);this.shells.splice(i,1);continue;}if(!hit)s.position.copy(s.target);else if(hit.kind==='ground')s.position.y=this.getGroundHeight(s.position.x,s.position.z);const groundY=this.getGroundHeight(s.position.x,s.position.z);this.impactEffects.burst(s.position,{radius:PLASMA.blastRadius,groundY:Math.abs(s.position.y-groundY)<5?groundY:null});this.onImpact(s.position,hit,PLASMA.blastRadius,s.id);this.impacts++;this.history.push({id:s.id,planned:{...s.target},actual:s.position.toArray(),early:!!hit&&s.age<s.trajectory.duration-.1});this.history=this.history.slice(-12);this.removeShell(s);this.shells.splice(i,1);continue;}
    }
    const remaining=Math.max(0,s.impactAt-this.clock),duration=s.impactAt-s.createdAt;s.marker.inner.scale.setScalar(PLASMA.blastRadius*Math.max(.07,remaining/duration));s.marker.fill.scale.setScalar(PLASMA.blastRadius*(.96+.04*Math.sin(time*8)));const label=remaining.toFixed(1);if(s.marker.label&&s.marker.lastLabel!==label){const c=s.labelCanvas.getContext('2d');c.clearRect(0,0,512,80);c.fillStyle='rgba(55,17,18,.87)';c.fillRect(0,0,512,80);c.fillStyle='#ffe1b4';c.font='bold 38px sans-serif';c.textAlign='center';c.fillText('PLASMA  '+label+' s',256,54);s.marker.texture.needsUpdate=true;s.marker.lastLabel=label;}
   }
+  if(!this.shells.some(s=>s.state==='warning'))this.muzzleGlow.visible=false;
   let count=0;for(let i=this.trails.length-1;i>=0;i--){const p=this.trails[i];p.life-=dt;if(p.life<=0){this.trails.splice(i,1);continue;}this.dummy.position.copy(p.position);this.dummy.quaternion.identity();this.dummy.scale.setScalar(.55*p.life/.6);this.dummy.updateMatrix();this.trailPool.setMatrixAt(count++,this.dummy.matrix);}this.trailPool.count=count;this.trailPool.instanceMatrix.needsUpdate=true;
 
  }

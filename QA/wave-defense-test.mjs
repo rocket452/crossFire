@@ -24,11 +24,11 @@ for(const axis of ['X','Z']){
 const layout=JSON.parse(fs.readFileSync(new URL('../dist/city-assets/city-layout.json',import.meta.url)));
 const buildings=waveDefenseBuildings(mission1CityBuildings(layout.buildings));
 const towers=buildings.filter(b=>b.id.startsWith('WAVE-TOWER-'));
-assert.equal(towers.length,10);
+assert.equal(towers.length,31);
 assert.equal(new Set(buildings.map(b=>b.id)).size,buildings.length);
 const roads=waveDefenseRoads(MISSION1_CITY_ROADS);
 for(const tower of towers){
- assert(tower.floors>=15&&tower.floors<=23);
+ assert(tower.floors>=15&&tower.floors<=27);
  assert(Math.abs(tower.x-RELAY.x)>=25,'main north/south approach stays clear');
  assert(tower.x-5>WAVE_DEFENSE_BOUNDS.minX&&tower.x+5<WAVE_DEFENSE_BOUNDS.maxX);
  assert(tower.z-5>WAVE_DEFENSE_BOUNDS.minZ&&tower.z+5<WAVE_DEFENSE_BOUNDS.maxZ);

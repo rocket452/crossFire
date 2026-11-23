@@ -1,7 +1,7 @@
 import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=384';
 import {LaserShuriken} from './laser-shuriken.js?v=365';
 import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
-import {KageSmoke,guardHeroInSmoke} from './kage-smoke.js?v=smoke-projectile-219';
+import {KageSmoke,guardHeroInSmoke} from './kage-smoke.js?v=390';
 import {KageBombs} from './kage-bombs.js?v=smoke-projectile-219';
 import {KageAttacks,kageHitPower} from './kage-attacks.js?v=384';
 import {ChargedShuriken} from './charged-shuriken.js?v=352';
@@ -11,8 +11,8 @@ import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 import {HeroHurt} from './hero-hurt.js?v=hero-hurt-118';
 import * as THREE from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=kage-armor-323';
-import {NinjaMotion,NINJA} from './ninja-motion.js?v=drone-decks-385';
-import {terrainHeight} from './runner-motion.js?v=drone-decks-385';
+import {NinjaMotion,NINJA} from './ninja-motion.js?v=390';
+import {terrainHeight} from './runner-motion.js?v=390';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 const UP=new THREE.Vector3(0,1,0),Z=new THREE.Vector3(0,0,1),$=id=>document.getElementById(id);
@@ -128,7 +128,6 @@ export class NinjaHero {
   const airborne=m.mode==='air',duration=this.character.clips.get(clip)?.duration||1,airProgress=clip==='Jump'?Math.min(.58,this.motion.airAge/.32*.58):Math.min(.7,Math.max(0,-m.velocity.y)/NINJA.terminalSpeed*.7);
   this.character.update(clip,dt,{rate:clip.startsWith('Run')?1.5*NINJA.runSpeed/46:1,loop:!airborne,time:airborne?duration*airProgress:null});const n=this.character.nodes;if(this.active)this.hurt.applyPose();
   if(moving&&m.mode==='ground')n.B_Spine1?.rotateX(-.16);if(this.motion.active){n.B_Spine1?.rotateX(.4);n.B_L_Thigh.rotateX(-.8);n.B_R_Thigh.rotateX(.3);n.B_L_Calf.rotateX(.9);n.B_R_Calf.rotateX(.5);}
-  if(this.motion.slowFall>0&&!this.motion.active){n.B_L_Thigh.rotateX(-.4);n.B_R_Thigh.rotateX(.25);n.B_L_Calf.rotateX(.65);n.B_L_UpperArm.rotateZ(-.7);n.B_R_UpperArm.rotateZ(.7);}
   const tuck=this.airTuck>0?Math.sin((1-this.airTuck/.5)*Math.PI):0,land=this.landing>0?Math.sin((1-this.landing/.24)*Math.PI)*this.landingStrength:0;
   if(airborne&&!this.motion.active){n.B_L_Thigh.rotateX(-.35*tuck);n.B_R_Thigh.rotateX(-.2*tuck);n.B_L_Calf.rotateX(.6*tuck);n.B_R_Calf.rotateX(.4*tuck);}
   if(land>0){n.B_L_Thigh.rotateX(-.3*land);n.B_R_Thigh.rotateX(-.3*land);n.B_L_Calf.rotateX(.5*land);n.B_R_Calf.rotateX(.5*land);n.B_Spine1?.rotateX(-.1*land);}
@@ -157,6 +156,7 @@ export class NinjaHero {
  clearDashReset(){this.dashResetSeconds=0;this.dashResetNotice.hidden=true;for(const a of this.dashResetNotice.getAnimations())a.cancel();$('ninja-dash').classList.remove('dash-reset');$('ninja-ability-meter').classList.remove('dash-reset');}
  showDashReset(reason){if(!this.active)return;this.dashResetSeconds=1.6;this.dashResetNotices=(this.dashResetNotices||0)+1;this.dashResetNotice.querySelector('span').textContent=reason;this.dashResetNotice.hidden=false;for(const a of this.dashResetNotice.getAnimations())a.cancel();if(!matchMedia('(prefers-reduced-motion:reduce)').matches)this.dashResetNotice.animate([{transform:'translateX(-50%) scale(.8)',opacity:.5},{transform:'translateX(-50%) scale(1.09)',opacity:1,offset:.3},{transform:'translateX(-50%) scale(1)',opacity:1}],{duration:280,easing:'ease-out'});for(const id of ['ninja-dash','ninja-ability-meter']){const node=$(id);node.classList.remove('dash-reset');void node.offsetWidth;node.classList.add('dash-reset');}}
  updateHUD(){const m=this.motion,dash=$('ninja-dash');$('ninja-speed').textContent=Math.round(m.body.speed*3.6)+' km/h';$('ninja-jumps').textContent=m.mode==='ground'?'HIGH JUMP READY':m.jumps<2?'AIR JUMP READY':'LAND / WALL JUMP';$('ninja-status').textContent=m.active?'SHADOW STRIKE':m.slowFall>0?'SLOW FALL · '+m.slowFall.toFixed(1)+'s':m.cooldown>0?'DASH · '+m.cooldown.toFixed(1)+'s':'DASH READY · KILLS RESET';$('ninja-dash-value').textContent=m.cooldown>0?m.cooldown.toFixed(1)+'s':m.backstabDashReady?'EXTRA DASH':'READY';dash.disabled=m.cooldown>0||m.active;dash.classList.toggle('ready',!dash.disabled);$('ninja-chain-count').textContent=m.resets+' DASH RESETS';}
- receiveEyeHit(){this.eyeHits++;this.hitSeconds=.25;if(this.active)this.hurt.hit();}
+ isDamageProtected(){return this.motion.active;}
+ receiveEyeHit(){if(this.motion.active)return false;this.eyeHits++;this.hitSeconds=.25;if(this.active)this.hurt.hit();}
  diagnostics(){return{shurikenModel:this.shurikenSource,shurikenTriangles:(this.starGeometry.index?.count||this.starGeometry.attributes.position.count)/3,name:'Kage',dashResetFeedback:{visible:!this.dashResetNotice.hidden,remaining:this.dashResetSeconds,notifications:this.dashResetNotices},smoke:this.smoke.diagnostics(),smokeProjectile:this.smokeBombs.diagnostics(),bombs:this.bombs.diagnostics(),attacks:this.attacks.diagnostics(),laserStar:{state:this.laserStar.state,radius:this.laserStar.radius},shuriken:this.shuriken.diagnostics(),hurt:this.hurt.diagnostics(),enabled:this.enabled,active:this.active,controller:this.active?'player':'cpu',...this.motion.diagnostics(),position:this.root.position.toArray(),yaw:this.yaw,pitch:this.pitch,shots:this.shots,damage:this.damage,kills:this.kills,missileKills:this.missileKills,hitCount:this.hitCount,lastHit:this.lastHit,lastThrowOrigin:this.lastThrowOrigin,projectiles:this.projectiles.length,particles:this.particles.length,ribbons:this.ribbons.length,animation:{somersault:this.somersault,somersaultAngle:this.somersaultPivot.rotation.x,airAge:this.motion.airAge,doubleJumpTuck:this.airTuck,landing:this.landing,visualPitch:this.visual.rotation.x,visualRoll:this.visual.rotation.z,clipTime:this.character.actions[this.character.current]?.time},character:this.character.diagnostics(),mouseLocked:this.locked(),eyeHits:this.eyeHits};}
 }

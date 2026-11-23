@@ -23,3 +23,18 @@ const approachFixture=fixture();approachFixture.tank.entity.root={position:new T
 for(const dt of [1/30,1/60]){const f=fixture(),robot={weapon:new BeamCycle(),dead:false},arsenal=new RobotArsenal({plasma:true}),pod=new RobotMissiles(new THREE.Scene(),{scene:new THREE.Group()},{autoFire:false,getMuzzles:()=>Array.from({length:6},()=>({position:new THREE.Vector3(0,18,0),direction:new THREE.Vector3(0,1,1).normalize()})),getTargets:()=>[f.tank],isRobotAlive:()=>true,traceWorld:()=>null,onImpact:()=>{}});f.artillery.onImpact=()=>{};for(let t=0;t<100;t+=dt){arsenal.beforeBeam(robot,pod,f.artillery);robot.weapon.step(dt,robot.beamAllowed);pod.update(dt,t);for(const missile of pod.missiles)if(missile.age>2)pod.hurt(missile,100);f.artillery.update(dt,t);arsenal.update(dt,robot,pod,f.artillery);if(['charging','firing'].includes(robot.weapon.phase))assert(!f.artillery.busy&&!pod.pending&&!pod.missiles.length);if(f.artillery.busy)assert(!pod.pending&&!pod.missiles.length);}const rests=arsenal.transitions.filter(t=>t.event==='rest');assert(rests.length>=3);for(const rest of rests){const ready=arsenal.transitions.find(t=>t.event==='ready'&&t.next===rest.next&&t.time>=rest.time);if(ready)assert(ready.time-rest.time>=5-1e-8&&ready.time-rest.time<=5+dt+1e-6);}
 const turns=arsenal.turns.map(t=>t.weapon);assert(turns.length>=6);assert.deepEqual(turns.slice(0,3),['beam','pod','plasma']);assert(arsenal.turns[0].time>=5+robot.weapon.chargeSeconds+robot.weapon.fireSeconds-1e-8);for(let i=1;i<turns.length;i++)assert.equal(turns[i],{plasma:'beam',beam:'pod',pod:'plasma'}[turns[i-1]]);}
 console.log('PASS Blender 4,452-triangle / 18-part robot, opposite shoulders, true 45-degree ballistics, fixed 7m markers, exact landings at 30/60/120Hz and long frames, blast damage, bounded effects, death/reset, portal prediction/safe exits, radial rescue dash and non-overlapping three-weapon rotation');
+
+const stalled=fixture(),stalledGun=stalled.artillery,attempts=[];
+stalledGun.getMuzzle=target=>{
+ attempts.push(target.x);
+ return {position:new THREE.Vector3(0,21,0),aligned:target.x<0};
+};
+assert(stalledGun.beginVolley());
+attempts.length=0;
+for(let i=0;i<26*60;i++)stalledGun.update(1/60,i/60);
+assert.equal(stalledGun.cancelled,1);
+assert.equal(stalledGun.launched,1);
+assert.equal(stalledGun.impacts,1);
+assert(!stalledGun.busy&&!stalledGun.muzzleGlow.visible);
+assert(attempts.indexOf(-27)>0&&attempts.slice(attempts.indexOf(-27)).every(x=>x===-27));
+console.log('PASS unattainable alignment times out, second shell fires and attack rotation can continue');

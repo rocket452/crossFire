@@ -104,7 +104,12 @@ export class RunnerMotion {
     }
     if(this.mode==='air'){
      // Optional falling gravity blends through the apex; existing runners retain their gravity.
-     const oldY=p.y,riseGravity=input.gravityScale??1,gravity=riseGravity+((input.fallGravityScale??riseGravity)-riseGravity)*clamp(-this.velocity.y/8,0,1);this.velocity.y=Math.max(-(input.fallSpeed??45),this.velocity.y-25*gravity*h);let nextY=p.y+this.velocity.y*h;if(this.player&&this.velocity.y>0){const ceiling=this.trace({x:p.x,y:p.y+2.3,z:p.z},{x:p.x,y:nextY+2.3,z:p.z},.26);if(ceiling&&ceiling.normal.y<-.45){nextY=Math.min(nextY,ceiling.point.y-2.3-.015);this.velocity.y=0;this.jumpBuffer=0;}}p.y=nextY;
+     const oldY=p.y,riseGravity=input.gravityScale??1,descentScale=input.descentScale??1;
+     const vertical=this.velocity.y<0?this.velocity.y/descentScale:this.velocity.y;
+     const gravity=riseGravity+((input.fallGravityScale??riseGravity)-riseGravity)*clamp(-vertical/8,0,1);
+     const nextVertical=Math.max(-(input.fallSpeed??45),vertical-25*gravity*h);
+     this.velocity.y=nextVertical<0?nextVertical*descentScale:nextVertical;
+     let nextY=p.y+this.velocity.y*h;if(this.player&&this.velocity.y>0){const ceiling=this.trace({x:p.x,y:p.y+2.3,z:p.z},{x:p.x,y:nextY+2.3,z:p.z},.26);if(ceiling&&ceiling.normal.y<-.45){nextY=Math.min(nextY,ceiling.point.y-2.3-.015);this.velocity.y=0;this.jumpBuffer=0;}}p.y=nextY;
      if(this.velocity.y<=0){const floor=this.landing(p.x,p.z,oldY+.25,p.y-.08);if(floor){p.x=floor.x;p.z=floor.z;if(floor.assisted)this.assistedLandings++;p.y=floor.height;this.normal=floor.normal;this.support=floor.section;this.velocity.y=0;this.mode='ground';}}
     }
    }

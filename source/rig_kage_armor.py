@@ -1,6 +1,7 @@
 """Fit the authored Kage FBX to the already licensed Crossfire animation rig."""
 import bpy
 import json
+import math
 import struct
 import sys
 from pathlib import Path
@@ -199,9 +200,8 @@ def fit(index, point):
             p.x = -x * 1.20
             p.z *= 1.13
         elif 4 <= index < 16:
-            p.x = -x * 1.14
-            p.y = interpolate(z, [(0,0),(.155,.14),(.47,.49),
-                                  (.71,.755),(.927,.968)])
+            # Add width around each joint's center without shifting the knee off the rig.
+            p.x = sign*(fitted+(abs(x)-original)*width*1.14)
             p.z *= 1.14
         elif 16 <= index < 38:
             if (index-16) % 11 in (2,3):
@@ -264,6 +264,39 @@ for material_index, material in enumerate(mesh.materials):
         'JOINTS_0':accessor(joints,'H',4,'VEC4',34962),
         'WEIGHTS_0':accessor(weights,'f',4,'VEC4',34962)}})
     used.append(props)
+
+# Flexible undersuit keeps the independent armor shells visibly joined as they bend.
+positions, normals, joints, weights = [], [], [], []
+for side in ('L', 'R'):
+    for upper, lower, width, depth, length in [
+        ('B_Pelvis',f'B_{side}_Thigh',.066,.061,.085),
+        (f'B_{side}_Thigh',f'B_{side}_Calf',.058,.059,.075),
+        (f'B_{side}_Calf',f'B_{side}_Foot',.059,.069,.064)
+    ]:
+        center = world(skin['joints'][names[lower]]).translation
+        axis = [(-1,.46),(-.48,.91),(0,1),(.48,.91),(1,.46)]
+        rings = [[Vector((center.x+math.cos(a)*width*radius,center.y+height*length,
+                          center.z+math.sin(a)*depth*radius))
+                  for a in (j*math.tau/8 for j in range(8))] for height,radius in axis]
+        for base in range(len(rings)-1):
+            for j in range(8):
+                k=(j+1)%8
+                for face in [((base,j),(base+1,j),(base,k)),((base,k),(base+1,j),(base+1,k))]:
+                    a,b,c=(rings[r][v] for r,v in face)
+                    normal=(b-a).cross(c-a).normalized()
+                    for (r,v),point in zip(face,(a,b,c)):
+                        mix=max(0,min(1,(axis[r][0]+.75)/1.5))
+                        positions.extend(point)
+                        normals.extend(normal)
+                        joints.extend([names[lower],names[upper],0,0])
+                        weights.extend([1-mix,mix,0,0])
+primitives.append({'material':len(used),'attributes':{
+    'POSITION':accessor(positions,'f',3,'VEC3',34962),
+    'NORMAL':accessor(normals,'f',3,'VEC3',34962),
+    'JOINTS_0':accessor(joints,'H',4,'VEC4',34962),
+    'WEIGHTS_0':accessor(weights,'f',4,'VEC4',34962)}})
+used.append({'name':'Flexible joint seals','pbrMetallicRoughness':{
+    'baseColorFactor':[.028,.032,.048,1],'roughnessFactor':.79,'metallicFactor':0}})
 
 nodes[next(i for i,n in enumerate(nodes) if 'mesh' in n)]['name'] = 'KageArmor'
 gltf['meshes'] = [{'name':'Kage armor','primitives':primitives}]

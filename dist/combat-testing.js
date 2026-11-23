@@ -3,7 +3,7 @@ import {COMBAT_DRONE} from './combat-drone-config.js?v=enemy-range-366';
 import {AstraRonin} from './astra-ronin.js?v=hazard-red-355';
 import {Mireguard} from './mireguard.js?v=hazard-red-355';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-pairs-260';
-import {BastionTesting} from './bastion-testing.js?v=hazard-red-355';
+import {BastionTesting} from './bastion-testing.js?v=390';
 import {ExperimentalRobot} from './experimental-robots.js?v=hazard-red-355';
 import * as THREE from './vendor/three.module.js';
 import {SpiderBruiser} from './spider-bruiser.js?v=wave-clear-382';
@@ -17,7 +17,7 @@ export class CombatTesting {
   this.basic=Array.from({length:7},(_,i)=>new SpiderBruiser(scene,damage,{...options,id:'evac-raider-test-'+i,spawnPosition:{x:COMBAT_ARENA.enemyCorner.x+(i-3)*7*COMBAT_ARENA.formationScale,y:.1,z:COMBAT_ARENA.enemyCorner.z+14*COMBAT_ARENA.formationScale},getTargets:()=>this.heroUnits(),initialCooldown:3+i*.2,energyEffects:this.energyEffects,onEvent:()=>{}}));
   this.experimental=['aegis','scythe'].flatMap((type,row)=>Array.from({length:3},(_,i)=>new ExperimentalRobot(scene,damage,{...options,type,id:'evac-raider-'+type+'-'+i,spawnPosition:{x:COMBAT_ARENA.enemyCorner.x+(i-1)*7*COMBAT_ARENA.formationScale,y:.1,z:COMBAT_ARENA.enemyCorner.z+(14+row*8)*COMBAT_ARENA.formationScale},getTargets:()=>this.heroUnits(),initialCooldown:1+i*.7,energyEffects:this.energyEffects,onEvent:()=>{}})));this.mireguards=Array.from({length:COMBAT_ARENA.mireguardSquads.length*COMBAT_ARENA.mireguardSquadSize},(_,i)=>new Mireguard(scene,damage,{...options,id:'evac-raider-mireguard-'+i,getTargets:()=>this.heroUnits(),energyEffects:this.energyEffects}));this.ronin=new AstraRonin(scene,damage,{...options,id:"evac-raider-ronin",onBuildingStrike:options.onRoninBuildingStrike,getTargets:()=>this.heroUnits(),energyEffects:this.energyEffects});this.members=[this.ronin,...this.basic,...this.experimental,...this.mireguards];
  }
- heroUnits(){return this.getHeroes().map((h,i)=>{let u=this.targets.get(i);if(!u){u={id:'hero-target-'+i,kind:'hero',entity:h};this.targets.set(i,u);}u.alive=!!h?.enabled;u.dashPhased=!!h?.dash?.active;u.shapes=u.alive?[{center:h.root.position.clone().add(new THREE.Vector3(0,1.4,0)),half:{x:.5,y:1,z:.5},rotation:h.root.quaternion.clone()}]:[];return u;}).filter(u=>u.alive&&!u.dashPhased);}
+ heroUnits(){return this.getHeroes().map((h,i)=>{let u=this.targets.get(i);if(!u){u={id:'hero-target-'+i,kind:'hero',entity:h};this.targets.set(i,u);}u.alive=!!h?.enabled;u.dashPhased=!!(h?.dash?.active||h?.motion?.dash);u.shapes=u.alive?[{center:h.root.position.clone().add(new THREE.Vector3(0,1.4,0)),half:{x:.5,y:1,z:.5},rotation:h.root.quaternion.clone()}]:[];return u;}).filter(u=>u.alive&&!u.dashPhased);}
  reset(){const config=this.readConfig();this.walkerEnabled=!!config.walker&&config.preset!=='bastion';this.bastion.reset(config.preset==='bastion');this.preset=config.preset||'basic';this.ronin.setModelVariant(config.roninModel||'shogun');this.count=Math.max(0,Math.min(7,Number(config.drones)||0));for(const r of this.members)r.reset();for(const drone of this.flightDrones)drone.reset();
   if(this.preset==='drone'||this.preset==='drone-pair'){
    const positions=this.preset==='drone'?[[0,80]]:[[0,76],[9,87]];

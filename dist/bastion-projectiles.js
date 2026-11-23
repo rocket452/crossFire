@@ -1,3 +1,4 @@
+import {frontBarrierHit} from './hero-defense.js?v=390';
 import {projectileIntercept} from './projectile-intercept.js?v=bastion-tracks-lead-145';
 import {markVisibleProjectile} from './projectile-silhouette.js?v=charged-shuriken-130';
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=hazard-red-355';
@@ -38,7 +39,31 @@ export class BastionProjectiles {
    if(this.safe(orb.previous,orb.position)){this.clearedSafe++;this.remove(orb);}
   }this.energyEffects.update(dt,this.orbs.filter(o=>o.kind==='gatling').map(o=>{o.energyView??={mesh:{position:o.position},radius:c.projectiles.radius,dir:new THREE.Vector3()};o.energyView.dir.copy(o.velocity).normalize();return o.energyView;}));this.render(time);
  }
- checkPlayer(player,previous){if(player.phased)return;const c=this.config,p=vector(player.position).addScaledVector(vector(player.motion.normal),c.projectiles.collisionHeight),old=vector(previous).addScaledVector(vector(player.motion.normal),c.projectiles.collisionHeight);for(const orb of [...this.orbs]){if(orb.friendly)continue;const distance=segmentDistance(old,p,orb.previous,orb.position);if(distance<c.projectiles.hitRadius+c.projectiles.radius){this.boss.playerHit(orb.position,c.projectiles.damage);this.energyEffects.impact(orb.position,orb.velocity.clone().normalize(),c.projectiles.radius);this.boss.effects?.impact(orb.position,this.cyberpunk?'#ff40a3':'#ff7954');this.remove(orb);}else if(this.boss.coreOpen&&distance<c.projectiles.hitRadius+c.projectiles.radius+c.projectiles.grazeMargin){if(this.boss.state.graze(orb))this.boss.effects?.impact(orb.position,'#8cfff4',.25);}}}
+ checkPlayer(player,previous){
+  if(player.phased)return;
+  const c=this.config,b=this.boss,up=vector(player.motion.normal),p=vector(player.position).addScaledVector(up,c.projectiles.collisionHeight),old=vector(previous).addScaledVector(up,c.projectiles.collisionHeight);
+  const movement=p.clone().sub(old);
+  for(const orb of [...this.orbs]){
+   if(orb.friendly)continue;
+   const distance=segmentDistance(old,p,orb.previous,orb.position);
+   if(distance<c.projectiles.hitRadius+c.projectiles.radius){
+    // Check the same front-facing disk from the moving hero's frame of reference.
+    const from=orb.previous.clone().add(movement);
+    let block=null;
+    for(const barrier of player.entity?.barriers?.()||[]){
+     block=frontBarrierHit(from,orb.position,barrier,c.projectiles.radius);
+     if(block)break;
+    }
+    const point=block?.point||orb.position;
+    if(block)block.barrier.onHit?.(point,c.projectiles.damage);else b.playerHit(point,c.projectiles.damage);
+    this.energyEffects.impact(point,orb.velocity.clone().normalize(),c.projectiles.radius);
+    b.effects?.impact(point,this.cyberpunk?'#ff40a3':'#ff7954');
+    this.remove(orb);
+   }else if(b.coreOpen&&distance<c.projectiles.hitRadius+c.projectiles.radius+c.projectiles.grazeMargin){
+    if(b.state.graze(orb))b.effects?.impact(orb.position,'#8cfff4',.25);
+   }
+  }
+ }
  trace(a,b,radius=0){a=vector(a);b=vector(b);let best=null;for(const orb of this.orbs){if(orb.friendly||orb.kind==='gatling')continue;const h=pointSegment(orb.position,a,b);if(h.distance<this.config.projectiles.radius+radius&&(!best||h.t<best.t))best={orb,kind:'bastion-orb',t:h.t,point:a.clone().lerp(b,h.t)};}return best;}
  render(time){const c=this.config;let i=0,outlined=0;for(const orb of this.orbs){const color=new THREE.Color(orb.friendly?'#79ffdd':orb.warning>0?'#ff8390':orb.kind==='mines'?'#df1833':'#ff414b');this.dummy.position.copy(orb.position);this.dummy.scale.setScalar(c.projectiles.radius*(orb.kind==='mines'?1.35:1));this.dummy.quaternion.identity();if(orb.kind==='gatling'){this.dummy.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),orb.velocity.clone().normalize());this.dummy.scale.z*=c.gatling.trailLength;}this.dummy.updateMatrix();this.mesh.setMatrixAt(i,this.dummy.matrix);this.debugMesh.setMatrixAt(i,this.dummy.matrix);this.mesh.setColorAt(i,this.cyberpunk&&orb.kind==='gatling'?plasmaCore:color);if(orb.kind==='gatling'){this.dummy.scale.multiplyScalar(c.gatling.outlineScale);this.dummy.updateMatrix();this.outline.setMatrixAt(outlined++,this.dummy.matrix);this.dummy.scale.multiplyScalar(1/c.gatling.outlineScale);}this.dummy.scale.multiplyScalar((orb.kind==='gatling'?c.gatling.haloScale:2.1)+Math.sin(time*16+orb.id)*(orb.kind==='gatling'?.08:.18));this.dummy.updateMatrix();this.halo.setMatrixAt(i,this.dummy.matrix);this.halo.setColorAt(i,this.cyberpunk&&orb.kind==='gatling'?plasmaHalo:color);i++;}this.outline.count=outlined;this.outline.instanceMatrix.needsUpdate=true;this.mesh.count=this.halo.count=this.debugMesh.count=i;this.debugMesh.instanceMatrix.needsUpdate=true;this.mesh.instanceMatrix.needsUpdate=this.halo.instanceMatrix.needsUpdate=true;if(i){this.mesh.instanceColor.needsUpdate=this.halo.instanceColor.needsUpdate=true;}}
  diagnostics(){return{directShots:this.directShots,leadShots:this.leadShots,skippedAim:this.skippedAim,energy:this.energyEffects.diagnostics(),active:this.orbs.length,planned:this.barragePlanned||0,pending:this.plan.length,emitted:this.emitted,safeDissolves:this.clearedSafe,deflected:this.deflected,splits:this.splits,curves:this.curves,kinds:Object.fromEntries([...new Set(this.orbs.map(o=>o.kind))].map(k=>[k,this.orbs.filter(o=>o.kind===k).length]))};}

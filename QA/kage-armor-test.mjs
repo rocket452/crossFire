@@ -40,12 +40,13 @@ const ch=actor.character;
 assert.deepEqual(ch.root.scale.toArray(),[1.30,1,1.30]);
 assert.equal(ch.root.getWorldPosition(new T.Vector3()).y,0,'proportion changes keep the rig origin at the feet');
 assert.equal(ch.bones.length,54);
-assert.equal(ch.triangles,frog?5614:2624);
+assert.equal(ch.triangles,frog?5998:3008);
 if(frog){
  for(const name of ['Leaf green skin','Ice white optics','Ion cyan','Visor graphite','Midnight face wrap','Cerulean crest','Palm webbing'])
   assert(ch.meshes.some(m=>m.material.name===name));
 }
 else assert(ch.meshes.some(m=>m.material.name==='Ice blue visor'&&m.material.emissiveIntensity>1));
+assert(ch.meshes.some(mesh=>mesh.material.name==='Flexible joint seals'));
 for(const mesh of ch.meshes){
  const weights=mesh.geometry.attributes.skinWeight,indices=mesh.geometry.attributes.skinIndex;
  for(let i=0;i<weights.count;i++){
@@ -93,7 +94,7 @@ Object.assign(actor,{yaw:0,airTuck:0,landing:0,somersault:0,wallPose:0,time:0,th
  motion:{body:{velocity:new T.Vector3(),mode:'ground'},active:false,slowFall:0,airAge:.25,dash:{direction:new T.Vector3(0,0,1)}},
  shuriken:{charging:false},shurikenEffects:{strikeTime:0},
  shurikenConfig:{slash:{effectSeconds:.32}},
- attacks:{slashTime:0,loading:false,slashDirection:new T.Vector3(0,0,1),slashPoint:p=>p.add(new T.Vector3(0,1.35,0))}});
+ attacks:{poseSlash(){},slashTime:0,loading:false,slashDirection:new T.Vector3(0,0,1),slashPoint:p=>p.add(new T.Vector3(0,1.35,0))}});
 const views={};
 function pose(label,frames=7){
  for(let i=0;i<frames;i++){actor.time+=1/60;actor.pose(1/60,new T.Vector3(0,1.4,12));}

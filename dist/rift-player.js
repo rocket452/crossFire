@@ -1,7 +1,34 @@
-import {Vector3,MathUtils} from './vendor/three.module.js';
+import {Vector3,MathUtils,BufferGeometry,LineBasicMaterial,LineSegments} from './vendor/three.module.js';
 import {ManualHeroControls} from './manual-hero-controls.js?v=drone-decks-385';
 
 const UP=new Vector3(0,1,0);
+const ROOF_AIM_MARGIN=1.15,ROOF_EDGE_MARGIN=1.25,ROOF_AIM_HEIGHT=4;
+export function riftRoofTarget(feet,from,to,{trace,roofBelow,getBuilding,isClear},range){
+ const hit=trace(from,to,0)||trace(from,to,ROOF_AIM_MARGIN);
+ const building=hit?.section?.state==='intact'&&getBuilding(hit.section.building);
+ if(!building)return null;
+ const {x,z,floors}=building,top=floors*3,width=building.footprint??10;
+ if(hit.point.y<top-ROOF_AIM_HEIGHT||hit.point.y>top+ROOF_AIM_HEIGHT)return null;
+ const edge=width/2-ROOF_EDGE_MARGIN;
+ const nearX=MathUtils.clamp(hit.point.x,x-edge,x+edge);
+ const nearZ=MathUtils.clamp(hit.point.z,z-edge,z+edge);
+ for(const [rx,rz] of [[nearX,nearZ],[x,z]]){
+  const surface=roofBelow(rx,rz,top+2,top-2.5);
+  if(surface?.section?.building!==building.id)continue;
+  const landing=new Vector3().copy(surface.point).addScaledVector(UP,.08);
+  if(landing.distanceToSquared(feet)<=range*range&&isClear(landing))return {landing,x,z,width};
+ }
+ return null;
+}
+function roofHighlight(scene){
+ const points=[];
+ for(const x of [-.5,.5])for(const z of [-.5,.5]){
+  points.push(new Vector3(x*.67,0,z),new Vector3(x,0,z),new Vector3(x,0,z),new Vector3(x,0,z*.67));
+ }
+ const marker=new LineSegments(new BufferGeometry().setFromPoints(points),
+  new LineBasicMaterial({color:'#beff66',transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));
+ marker.name='Rift Warden blinkable roof';marker.visible=false;scene.add(marker);return marker;
+}
 const RIFT={moveSpeed:14,jumpSpeed:10,blinkRange:28,returnWindow:4,blinkCooldown:2.5,portalDuration:5,portalCooldown:9,boltCooldown:.4,boltDamage:90};
 
 export class RiftPlayer extends ManualHeroControls {
@@ -12,9 +39,10 @@ export class RiftPlayer extends ManualHeroControls {
    codes:['KeyW','KeyS','KeyA','KeyD','Space','KeyF','KeyG','KeyE']
   });
   this.taps=new Set();
+  this.roofMarker=roofHighlight(hero.scene);
  }
  press(key){super.press(key);this.taps.add(key);}
- clear(){super.clear();this.taps.clear();}
+ clear(){super.clear();this.taps.clear();this.roofMarker.visible=false;}
  enter(intro,respawn=true){
   this.clear();
   const hero=this.hero;
@@ -65,6 +93,10 @@ export class RiftPlayer extends ManualHeroControls {
   if(this.vertical<=0&&this.landOnDeck(position,next)){
    this.grounded=true;this.vertical=0;return;
   }
+  if(this.vertical<=0){
+   const roof=this.roofBelow(next.x,next.z,position.y+.04,next.y-.14);
+   if(roof){position.copy(roof.point).addScaledVector(UP,.08);this.vertical=0;this.grounded=true;return;}
+  }
   const hit=this.sweep(position,next);
   this.grounded=this.vertical<=0&&(!!hit||next.y<=this.terrain(next.x,next.z)+.11);
   if(hit||this.grounded)this.vertical=0;
@@ -73,7 +105,7 @@ export class RiftPlayer extends ManualHeroControls {
    position.lerp(next,fraction);
   }else position.copy(next);
  }
- blink(direction){
+ blink(direction,roof=null){
   const hero=this.hero,from=hero.root.position.clone();
   let to;
   if(this.anchor){
@@ -83,16 +115,18 @@ export class RiftPlayer extends ManualHeroControls {
    this.anchor=null;this.blinkCooldown=RIFT.blinkCooldown;
   }else{
    if(this.blinkCooldown>0||hero.portals.length>9)return;
-   to=this.clamp(from.clone().addScaledVector(direction,RIFT.blinkRange));
-   const collision=this.sweep(from,to);
-   if(collision)to.lerp(from,1-Math.max(0,collision.t-.03));
+   to=roof?.landing||this.clamp(from.clone().addScaledVector(direction,RIFT.blinkRange));
+   if(!roof){
+    const collision=this.sweep(from,to);
+    if(collision)to.lerp(from,1-Math.max(0,collision.t-.03));
+   }
    if(from.distanceTo(to)<1.8)return;
    const gate=hero.openPortal('travel-entry',from.clone().addScaledVector(UP,1.35),direction,1.5);
    gate.expiresAt=hero.time+RIFT.returnWindow;
    this.anchor={feet:from,gate};
    hero.openPortal('travel-exit',to.clone().addScaledVector(UP,1.35),direction,1.35);
   }
-  this.platform=null;this.vertical=0;this.grounded=false;
+  this.roofMarker.visible=false;this.platform=null;this.vertical=0;this.grounded=!!roof;
   hero.root.position.copy(to);hero.addTrace('hero',from,to);hero.emit(to.clone().addScaledVector(UP,1.2),18,3);hero.teleports++;
  }
  redirect(direction){
@@ -119,8 +153,20 @@ export class RiftPlayer extends ManualHeroControls {
   if(this.anchor&&this.anchor.gate.expiresAt<=hero.time){this.anchor=null;this.blinkCooldown=RIFT.blinkCooldown;}
   this.move(dt);
   this.frame();
-  const direction=this.direction();
-  if(this.taps.has('Shield')||this.taps.has('KeyG'))this.blink(direction);
+  const direction=this.direction(),eye=this.camera.position;
+  const roof=!this.anchor&&this.blinkCooldown===0?riftRoofTarget(hero.root.position,eye,
+   eye.clone().addScaledVector(direction,RIFT.blinkRange+(this.cameraDistance??7)+3),{
+    trace:this.blocked,roofBelow:this.roofBelow,getBuilding:this.getBuilding,isClear:p=>{
+     const feet=p.clone().addScaledVector(UP,.49),head=p.clone().addScaledVector(UP,2);
+     return !this.blocked(feet,head,.48);
+    }
+   },RIFT.blinkRange):null;
+  this.roofMarker.visible=!!roof;
+  if(roof){
+   this.roofMarker.position.set(roof.x,roof.landing.y+.025,roof.z);
+   this.roofMarker.scale.setScalar(roof.width);
+  }
+  if(this.taps.has('Shield')||this.taps.has('KeyG'))this.blink(direction,roof);
   if(this.taps.has('KeyE'))this.redirect(direction);
   if((this.keys.has('Fire')||this.keys.has('KeyF')||this.taps.has('Fire')||this.taps.has('KeyF'))&&hero.attackCooldown<=0){
    this.frame();

@@ -1,7 +1,7 @@
-import {RunnerMotion,terrainHeight} from './runner-motion.js?v=drone-decks-385';
+import {RunnerMotion,terrainHeight} from './runner-motion.js?v=390';
 // Air steering response is 40% lower, retaining more takeoff momentum during turns.
 // Jump height scales with launch speed squared: sqrt(0.7) lowers only the first jump by 30%.
-export const NINJA=Object.freeze({runSpeed:32.2,airSpeed:32.2,airAcceleration:3,airDrag:.15,wallPushSpeed:12.6,wallJumpSpeed:40,jumpSpeed:34*Math.sqrt(.7),doubleJumpSpeed:30,gravity:32,fallGravity:44,terminalSpeed:52,coyoteSeconds:.1,jumpBufferSeconds:.15,dashRange:48,dashSpeed:128.8,dashCooldown:6,dashDamage:320,slowFallSeconds:1,slowFallGravity:.12,slowFallSpeed:3,shurikenDamage:55,throwInterval:.22,shurikenSpeed:59.5,shurikenScale:2,shurikenRadius:.24,shurikenRange:127.5,maxProjectiles:36});
+export const NINJA=Object.freeze({runSpeed:32.2,airSpeed:32.2,airAcceleration:3,airDrag:.15,wallPushSpeed:12.6,wallJumpSpeed:40,jumpSpeed:34*Math.sqrt(.7),doubleJumpSpeed:30,gravity:32,fallGravity:44,terminalSpeed:52,coyoteSeconds:.1,jumpBufferSeconds:.15,dashRange:48,dashSpeed:128.8,dashCooldown:6,dashDamage:320,slowFallSeconds:3,slowFallSpeedScale:.5,shurikenDamage:55,throwInterval:.22,shurikenSpeed:59.5,shurikenScale:2,shurikenRadius:.24,shurikenRange:127.5,maxProjectiles:36});
 const normalize=v=>{const n=Math.hypot(v.x,v.y,v.z);return n>1e-6?{x:v.x/n,y:v.y/n,z:v.z/n}:null;};
 // Uses the same swept walls, roofs, terrain and overlap recovery as Volt, without wall running.
 export class NinjaMotion {
@@ -29,9 +29,9 @@ export class NinjaMotion {
   const p=this.position,from={x:p.x,y:p.y+1.2,z:p.z};let best=null;
   for(let i=0;i<8;i++){const a=i*Math.PI/4,hit=this.body.trace(from,{x:p.x+Math.sin(a)*1.55,y:from.y,z:p.z+Math.cos(a)*1.55},.12);if(hit&&Math.abs(hit.normal.y)<.25&&(!best||hit.t<best.t))best=hit;}
   if(!best)return false;
-  this.wallNormal={...best.normal};this.body.mode='air';this.body.support=null;this.body.normal={x:0,y:1,z:0};this.body.velocity={x:best.normal.x*NINJA.wallPushSpeed,y:NINJA.wallJumpSpeed,z:best.normal.z*NINJA.wallPushSpeed};this.jumps=Math.max(1,this.jumps);this.jumpCount++;this.wallJumps++;this.wallKick=.22;this.wallJumpLock=.35;this.slowFall=0;this.airAge=0;return true;
+  this.wallNormal={...best.normal};this.body.mode='air';this.body.support=null;this.body.normal={x:0,y:1,z:0};this.body.velocity={x:best.normal.x*NINJA.wallPushSpeed,y:NINJA.wallJumpSpeed,z:best.normal.z*NINJA.wallPushSpeed};this.jumps=Math.max(1,this.jumps);this.jumpCount++;this.wallJumps++;this.wallKick=.22;this.wallJumpLock=.35;this.airAge=0;return true;
  }
- finishDash(){if(!this.dash)return;const groundDash=this.dash.grounded;this.dash=null;this.slowFall=this.mode==='air'?NINJA.slowFallSeconds:0;this.body.velocity={x:0,y:groundDash?this.mode==='ground'?0:this.velocity.y:1.5,z:0};this.onDashEnd({...this.position});}
+ finishDash(){if(!this.dash)return;const groundDash=this.dash.grounded;this.dash=null;this.slowFall=this.mode==='air'?NINJA.slowFallSeconds:0;this.body.velocity={x:0,y:groundDash&&this.mode==='air'?Math.min(0,this.velocity.y)*NINJA.slowFallSpeedScale:0,z:0};this.onDashEnd({...this.position});}
  applyDashHit(hit){const key=hit.unit||hit.missile;if(key&&this.dash?.hitUnits.has(key))return;if(key)this.dash?.hitUnits.add(key);this.lastResult=this.onHit(hit)||{};if(this.lastResult.killed){this.cooldown=0;this.resets++;}}
  applyDashContacts(sweep,fraction){for(const hit of sweep?.contacts||[])if(hit.t<=fraction+1e-8)this.applyDashHit(hit);}
  stepGroundDash(dt,sections){
@@ -69,7 +69,7 @@ export class NinjaMotion {
   }
  }
  step(input,dt,sections=[]){
-  if(!(dt>0))return;dt=Math.min(dt,.15);this.cooldown=Math.max(0,this.cooldown-dt);this.wallJumpLock=Math.max(0,this.wallJumpLock-dt);this.slowFall=Math.max(0,this.slowFall-dt);
+  if(!(dt>0))return;dt=Math.min(dt,.15);this.cooldown=Math.max(0,this.cooldown-dt);this.wallJumpLock=Math.max(0,this.wallJumpLock-dt);
   if(this.fallingCut){this.jumpRequested=false;this.stepFallingCut(dt,sections);return;}
   if(this.active){
    if(this.dash.grounded){this.stepGroundDash(dt,sections);this.jumpRequested=false;return;}
@@ -85,11 +85,16 @@ export class NinjaMotion {
   const wasGround=this.mode==='ground';this.airAge=wasGround?0:this.airAge+dt;this.coyote=wasGround?NINJA.coyoteSeconds:Math.max(0,this.coyote-dt);if(wasGround)this.jumps=0;else if(this.jumps===0&&this.coyote<=0)this.jumps=1;
   if(this.jumpRequested)this.jumpBuffer=NINJA.jumpBufferSeconds;
   if(this.jumpBuffer>0&&this.wallJump(sections)){this.jumpBuffer=this.coyote=0;}
-  if(this.jumpBuffer>0&&this.jumps<2){const second=this.jumps>0;this.body.velocity.y=second?NINJA.doubleJumpSpeed:NINJA.jumpSpeed;this.body.mode='air';this.body.normal={x:0,y:1,z:0};this.body.support=null;this.body.departedSupportY=null;this.body.jumpBuffer=this.body.coyote=this.jumpBuffer=this.coyote=0;this.jumps++;this.jumpCount++;if(second)this.doubleJumps++;this.slowFall=0;this.airAge=0;}
+  if(this.jumpBuffer>0&&this.jumps<2){const second=this.jumps>0;this.body.velocity.y=second?NINJA.doubleJumpSpeed:NINJA.jumpSpeed;this.body.mode='air';this.body.normal={x:0,y:1,z:0};this.body.support=null;this.body.departedSupportY=null;this.body.jumpBuffer=this.body.coyote=this.jumpBuffer=this.coyote=0;this.jumps++;this.jumpCount++;if(second)this.doubleJumps++;this.airAge=0;}
   this.jumpRequested=false;
   this.body.runSpeed=this.body.boostSpeed=this.mode==='air'?NINJA.airSpeed:NINJA.runSpeed;
   if(this.wallKick>0){this.wallKick=Math.max(0,this.wallKick-dt);this.body.yaw=Math.atan2(this.wallNormal.x,this.wallNormal.z);input={forward:NINJA.wallPushSpeed/NINJA.airSpeed,strafe:0};}
-  this.body.step({...input,player:true,jump:false,airAcceleration:NINJA.airAcceleration,airDrag:NINJA.airDrag,gravityScale:this.slowFall>0?NINJA.slowFallGravity:NINJA.gravity/25,fallGravityScale:this.slowFall>0?NINJA.slowFallGravity:NINJA.fallGravity/25,fallSpeed:this.slowFall>0?NINJA.slowFallSpeed:NINJA.terminalSpeed},dt,sections);
+  const motion={...input,player:true,jump:false,airAcceleration:NINJA.airAcceleration,airDrag:NINJA.airDrag,
+   gravityScale:NINJA.gravity/25,fallGravityScale:NINJA.fallGravity/25,fallSpeed:NINJA.terminalSpeed};
+  const slowedTime=Math.min(this.slowFall,dt);
+  if(slowedTime>0)this.body.step({...motion,descentScale:NINJA.slowFallSpeedScale},slowedTime,sections);
+  if(dt>slowedTime)this.body.step(motion,dt-slowedTime,sections);
+  this.slowFall=Math.max(0,this.slowFall-dt);
   this.jumpBuffer=Math.max(0,this.jumpBuffer-dt);
   if(this.mode==='ground'){this.jumps=0;this.slowFall=0;}
  }

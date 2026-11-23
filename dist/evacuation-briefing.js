@@ -73,15 +73,18 @@ export class EvacuationBriefing {
    if(this.step==='tutorial')this.show('choose');
    else if(this.step==='choose')this.show('objective');
   });
-  this.unsubscribe=inputMode.subscribe(()=>{
+ }
+ open(step='objective'){
+  if(this.dialog.open)return;
+  this.pending=true;
+  this.hero=null;
+  document.body.append(this.dialog);
+  this.show(step);
+  this.unsubscribe=this.inputMode.subscribe(()=>{
    if(this.step==='tutorial'&&this.pending)this.updateControls();
   });
-  document.body.append(this.dialog);
- }
- open(){
-  this.show('objective');
   this.dialog.showModal();
-  this.dialog.querySelector('[data-next]').focus();
+  (this.dialog.querySelector('[data-next]')||this.dialog.querySelector('h2')).focus();
  }
  show(step){
   this.step=step;
