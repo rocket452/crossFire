@@ -34,9 +34,9 @@ const training={
    ['Rift bolt','Left click or F','Bolt'],
    ['Blink / return','Right click or G','Blink'],
    ['Place redirect exit, then entrance','E','Redirect'],
-   ['Deploy an aimed attack portal','R','Attack Portal']
+   ['Deploy an aimed attack portal · 3 charges','R','Attack Portal']
   ],
-  bonus:'Aim the exit where you want redirected shots to go. Then move and place the entrance in the path of incoming fire.'
+  bonus:'Attack Portal regains one charge every five seconds. Aim the Redirect exit where you want shots to go, then place the entrance in the path of incoming fire.'
  },
  ninja:{
   tip:'Throw smoke at civilians crossing open streets or waiting at the pad. Allies inside the dome are protected from damage.',

@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import * as CANNON from './vendor/cannon-es.js';
 import {segmentBoxFraction} from './combat-collision.js';
-import {COMBAT_DRONE} from './combat-drone-config.js?v=396';
+import {COMBAT_DRONE} from './combat-drone-config.js?v=397';
 import {DroneFlight} from './combat-drone-flight.js?v=396';
 import {DroneGun} from './combat-drone-gun.js?v=hazard-red-355';
 import {buildCombatDrone} from './combat-drone-model.js?v=320';

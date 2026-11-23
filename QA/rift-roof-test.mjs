@@ -45,8 +45,12 @@ const roofFeet=point(0,70,-64),roofCamera=point(0,69,-71),across=point(0,69,18);
 const sidePanels=[-3,3].map(x=>({...facade,collisionHalf:undefined,size:[2,72,.4],body:{position:point(x,36,-5)}}));
 const tracePanels=(start,end,radius)=>traceImpact(start,end,{sections:[...sidePanels,roof],ground:false,radius});
 assert.equal(tracePanels(roofCamera,across,0),null);
-const acrossRoof=riftRoofTarget(roofFeet,roofCamera,across,{...options,trace:tracePanels});
+const acrossRoof=riftRoofTarget(roofFeet,roofCamera,across,{...options,trace:tracePanels,standingBuilding:'other tower'});
 assert(acrossRoof&&Math.abs(acrossRoof.landing.y-72.08)<1e-6,'upper facade seam still selects the rooftop across the street');
+const ownFeet=point(0,72.08,-3),ownView=point(0,76,-4),ownAim=point(2,71,3);
+assert(riftRoofTarget(ownFeet,ownView,ownAim,options),'this rooftop would otherwise be an eligible aim target');
+assert.equal(riftRoofTarget(ownFeet,ownView,ownAim,{...options,standingBuilding:building.id}),null,'skip the building underfoot on exact hits');
+assert.equal(riftRoofTarget(ownFeet,ownView,ownAim,{...options,trace:()=>null,standingBuilding:building.id}),null,'skip the building underfoot for silhouette targeting too');
 const cover={...facade,building:'foreground',body:{position:point(0,36,-40)}};
 assert.equal(riftRoofTarget(roofFeet,roofCamera,across,{
  ...options,trace:(start,end,radius)=>traceImpact(start,end,{sections:[cover,...sidePanels,roof],ground:false,radius})

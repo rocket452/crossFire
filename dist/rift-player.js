@@ -6,10 +6,10 @@ const UP=new Vector3(0,1,0);
 const ROOF_AIM_MARGIN=1.15,ROOF_EDGE_MARGIN=1.25,ROOF_AIM_HEIGHT=4;
 const ROOF_BLINK_RANGE=112,ROOF_BLINK_HEIGHT=90;
 const facadeDepth=top=>MathUtils.clamp(top*.18,ROOF_AIM_HEIGHT,12);
-export function riftRoofTarget(feet,from,to,{trace,roofBelow,getBuilding,buildings=[],isClear,onOutOfRange=()=>{}}){
+export function riftRoofTarget(feet,from,to,{trace,roofBelow,getBuilding,buildings=[],standingBuilding,isClear,onOutOfRange=()=>{}}){
  const hit=trace(from,to,0);
  const direct=hit?.section?.state==='intact'&&getBuilding(hit.section.building);
- if(direct){
+ if(direct&&direct.id!==standingBuilding){
   const top=direct.floors*3;
   if(hit.point.y>=top-facadeDepth(top)&&hit.point.y<=top+ROOF_AIM_HEIGHT){
    return roofLanding(direct,hit.point,feet,roofBelow,isClear,onOutOfRange);
@@ -19,11 +19,12 @@ export function riftRoofTarget(feet,from,to,{trace,roofBelow,getBuilding,buildin
  // Look for the upper silhouette in front of any solid crossed by the exact ray.
  let nearest=hit?.t??1,building=null,aim=null;
  for(const candidate of buildings){
+  if(candidate.id===standingBuilding||candidate===direct)continue;
   const top=candidate.floors*3,depth=facadeDepth(top),width=candidate.footprint??10;
   const center={x:candidate.x,y:top+(ROOF_AIM_HEIGHT-depth)/2,z:candidate.z};
   const half={x:width/2+ROOF_AIM_MARGIN,y:(depth+ROOF_AIM_HEIGHT)/2,z:width/2+ROOF_AIM_MARGIN};
   const t=segmentBoxFraction(from,to,center,half);
-  if(t===null||t<=.005||t>=nearest||candidate===direct)continue;
+  if(t===null||t<=.005||t>=nearest)continue;
   nearest=t;building=candidate;
   aim=from.clone().lerp(to,t);
  }
@@ -55,6 +56,7 @@ function roofHighlight(scene){
  marker.name='Rift Warden blinkable roof';marker.visible=false;scene.add(marker);return marker;
 }
 const RIFT={moveSpeed:14,jumpSpeed:10,blinkRange:28,returnWindow:4,blinkCooldown:2.5,portalDuration:5,portalCooldown:9,boltCooldown:.4,boltDamage:90};
+const ATTACK_PORTAL_CHARGES=3,ATTACK_PORTAL_RECHARGE=5;
 
 export class RiftPlayer extends ManualHeroControls {
  constructor(hero,options){
@@ -79,6 +81,7 @@ export class RiftPlayer extends ManualHeroControls {
   if(respawn)hero.root.position.set(this.spawn.x,this.terrain(this.spawn.x,this.spawn.z)+.1,this.spawn.z);
   else hero.root.position.copy(position);
   this.anchor=null;this.redirectExit=null;this.platform=null;this.vertical=0;this.walking=false;this.grounded=true;
+  this.attackPortalCharges=ATTACK_PORTAL_CHARGES;this.attackPortalRecharge=0;
   this.blinkCooldown=this.portalCooldown=0;hero.attackCooldown=0;
   this.hurt.reset();hero.root.rotation.y=this.yaw=intro.yaw;this.pitch=.12;this.frame();this.lock();
  }
@@ -119,11 +122,11 @@ export class RiftPlayer extends ManualHeroControls {
   this.vertical-=24*dt;
   const next=this.clamp(position.clone().addScaledVector(UP,this.vertical*dt));
   if(this.vertical<=0&&this.landOnDeck(position,next)){
-   this.grounded=true;this.vertical=0;return;
+   this.grounded=true;this.vertical=0;return this.platform.deck.building;
   }
   if(this.vertical<=0){
    const roof=this.roofBelow(next.x,next.z,position.y+.04,next.y-.14);
-   if(roof){position.copy(roof.point).addScaledVector(UP,.08);this.vertical=0;this.grounded=true;return;}
+   if(roof){position.copy(roof.point).addScaledVector(UP,.08);this.vertical=0;this.grounded=true;return roof.section?.building;}
   }
   const hit=this.sweep(position,next);
   this.grounded=this.vertical<=0&&(!!hit||next.y<=this.terrain(next.x,next.z)+.11);
@@ -201,31 +204,42 @@ export class RiftPlayer extends ManualHeroControls {
 
  attackPortal(direction){
   const hero=this.hero;
-  if(hero.portals.some(p=>p.playerAimed))return;
+  if(this.attackPortalCharges<=0)return;
   const center=hero.root.position.clone().addScaledVector(UP,1.65);
-  const position=center.clone().addScaledVector(direction,3.2);
+  // Aim down freely while placing the portal in front of Rift at chest height.
+  const placement=direction.y<0?new Vector3(Math.sin(this.yaw),0,Math.cos(this.yaw)):direction;
+  const position=center.clone().addScaledVector(placement,3.2);
   position.y=Math.max(position.y,this.terrain(position.x,position.z)+.65);
   if(this.blocked(center,position,.65))return;
   const aim=this.boltAim().sub(position);
   const normal=aim.dot(direction)>.2?aim.normalize():direction;
-  hero.openPlayerAttack(position,normal);
+  if(!hero.openPlayerAttack(position,normal))return;
+  if(this.attackPortalCharges===ATTACK_PORTAL_CHARGES)this.attackPortalRecharge=ATTACK_PORTAL_RECHARGE;
+  this.attackPortalCharges--;
  }
 
  update(dt){
   if(!this.available()){this.clear();return;}
   const hero=this.hero;
   this.hurt.step(dt);
+  if(this.attackPortalCharges<ATTACK_PORTAL_CHARGES){
+   this.attackPortalRecharge-=dt;
+   while(this.attackPortalRecharge<=1e-8&&this.attackPortalCharges<ATTACK_PORTAL_CHARGES){
+    this.attackPortalCharges++;
+    this.attackPortalRecharge+=ATTACK_PORTAL_RECHARGE;
+   }
+  }
   if(this.redirectExit&&!hero.portals.includes(this.redirectExit))this.redirectExit=null;
   this.blinkCooldown=Math.max(0,this.blinkCooldown-dt);this.portalCooldown=Math.max(0,this.portalCooldown-dt);
   if(this.anchor&&this.anchor.gate.expiresAt<=hero.time){this.anchor=null;this.blinkCooldown=RIFT.blinkCooldown;}
-  this.move(dt);
+  const standingBuilding=this.move(dt);
   this.frame();
   const direction=this.camera.getWorldDirection(new Vector3());
   const eye=this.camera.position.clone().addScaledVector(direction,this.camera.near);
   let roofOutOfRange=false;
   const roof=!this.anchor&&this.blinkCooldown===0&&hero.portals.length<=9?riftRoofTarget(hero.root.position,eye,
    eye.clone().addScaledVector(direction,Math.hypot(ROOF_BLINK_RANGE,ROOF_BLINK_HEIGHT)+(this.cameraDistance??7)+12),{
-    trace:this.blocked,roofBelow:this.roofBelow,getBuilding:this.getBuilding,buildings:this.buildings,onOutOfRange:()=>{roofOutOfRange=true;},isClear:p=>{
+    trace:this.blocked,roofBelow:this.roofBelow,getBuilding:this.getBuilding,buildings:this.buildings,standingBuilding,onOutOfRange:()=>{roofOutOfRange=true;},isClear:p=>{
      const feet=p.clone().addScaledVector(UP,.49),head=p.clone().addScaledVector(UP,2);
      return !this.blocked(feet,head,.48);
     }
@@ -253,8 +267,8 @@ export class RiftPlayer extends ManualHeroControls {
   const blink=this.roofMarker.visible?'Blink to rooftop':this.anchor?'Return '+(this.anchor.gate.expiresAt-hero.time).toFixed(1)+'s':this.blinkCooldown?'Blink '+this.blinkCooldown.toFixed(1)+'s':roofOutOfRange?'Rooftop out of range':'Blink ready';
   const redirect=this.redirectExit?'Place entrance':hero.pair?'Redirect active '+Math.max(0,hero.pair.entry.expiresAt-hero.time).toFixed(1)+'s':
    this.portalCooldown?'Redirect '+this.portalCooldown.toFixed(1)+'s':'Place exit';
-  const portal=hero.portals.find(p=>p.playerAimed);
-  const attack=portal?'Attack portal '+Math.max(0,portal.expiresAt-hero.time).toFixed(1)+'s':'Attack portal ready';
+  const refill=this.attackPortalCharges<ATTACK_PORTAL_CHARGES?' · +1 in '+this.attackPortalRecharge.toFixed(1)+'s':'';
+  const attack='Attack portals '+this.attackPortalCharges+'/'+ATTACK_PORTAL_CHARGES+refill;
   this.output.textContent=blink+' · '+redirect+' · '+attack;
  }
 }

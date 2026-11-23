@@ -49,7 +49,7 @@ assert(highPatrol.drone.gun.shots>=48,'high Mission 1 flight can still engage a 
   tick();hoverTilt=Math.max(hoverTilt,tilt());
   assert(Math.abs(body.position.y-altitude)<.35);
  }
- assert(hoverTilt>.1&&hoverTilt<4,'rotor variance produces a small physical hover correction');
+ assert(hoverTilt>.1&&hoverTilt<1,'rotor variance produces a subtle physical hover correction');
  drone.goal.x=40;
  let maxBank=0;
  for(let i=0;i<120;i++){tick();maxBank=Math.max(maxBank,tilt());}

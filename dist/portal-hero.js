@@ -52,6 +52,7 @@ export class PortalHero {
   const portal=this.openPortal('attack',position,direction,1.45);
   if(!portal)return;
   portal.playerAimed=true;this.castRemaining=RIFT_CAST_SECONDS;this.castKind='attack';
+  return portal;
  }
  tryRescue(){
   if(this.pair&&this.pair.entry.expiresAt>this.time)return false;if(this.portals.length>8)return false;
