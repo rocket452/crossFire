@@ -11,10 +11,17 @@ export class NinjaMotion {
  jump(){this.jumpRequested=true;}
  startDash(target){
   if(this.dash||this.cooldown>1e-8)return false;
-  const p=this.position,grounded=this.mode==='ground',direction=normalize({x:target.x-p.x,y:grounded?0:target.y-(p.y+1.2),z:target.z-p.z})||(grounded?{x:Math.sin(this.body.yaw),y:0,z:Math.cos(this.body.yaw)}:null);if(!direction)return false;
+  const p=this.position;
+  let direction=normalize({x:target.x-p.x,y:target.y-(p.y+1.2),z:target.z-p.z});
+  const grounded=this.mode==='ground'&&(direction?.y??0)<=.025;
+  if(grounded){
+   direction=normalize({x:target.x-p.x,y:0,z:target.z-p.z})
+    ||{x:Math.sin(this.body.yaw),y:0,z:Math.cos(this.body.yaw)};
+  }
+  if(!direction)return false;
   this.fallingCut=null;this.dash={direction,grounded,remaining:NINJA.dashRange,origin:{...p},hitUnits:new Set()};this.cooldown=this.backstabDashReady?0:NINJA.dashCooldown;
   this.backstabDashReady=false;
-  this.slowFall=0;this.jumpBuffer=this.coyote=0;this.dashes++;if(!grounded){this.body.support=null;this.body.mode='air';}return true;
+  this.slowFall=0;this.jumpBuffer=this.coyote=0;this.dashes++;if(!grounded){this.body.support=null;this.body.departedSupportY=null;this.body.mode='air';}return true;
  }
  wallJump(sections){
   if(this.mode!=='air'||this.wallJumpLock>0)return false;

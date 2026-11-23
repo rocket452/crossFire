@@ -1,5 +1,5 @@
 import {Vector3,MathUtils} from './vendor/three.module.js';
-import {ManualHeroControls} from './manual-hero-controls.js?v=380';
+import {ManualHeroControls} from './manual-hero-controls.js?v=hero-framing-384';
 import {SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
 import {VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_PULSE} from './hero-powers.js?v=violet-charge-380';
 import {VIOLET_TUNING} from './violet-flight.js?v=violet-inertia-11';
@@ -61,6 +61,7 @@ export class VioletPlayer extends ManualHeroControls {
   h.mode=shielding?'blocking':'patrol';h.root.rotation.set(0,this.yaw,0);
   h.shieldDeploy=MathUtils.damp(h.shieldDeploy,shielding?1:0,12,dt);h.shield.visible=h.shieldDeploy>.015;
   const center=h.root.position.clone();center.y+=1.5;
+  this.frame();
   const direction=this.direction();h.shieldNormal.copy(direction);
   h.shield.position.copy(center).addScaledVector(direction,SHIELD_FORWARD_OFFSET);h.shield.quaternion.setFromUnitVectors(h.zAxis,direction);h.shield.scale.setScalar(h.shieldDeploy);h.shield.updateMatrixWorld(true);
   h.shieldMaterial.uniforms.time.value=time;h.shieldMaterial.uniforms.hit.value=h.hitGlow;h.shieldMaterial.uniforms.risk.value=c.overloadProgress;

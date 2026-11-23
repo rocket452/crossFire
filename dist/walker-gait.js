@@ -8,11 +8,14 @@ export function patrolPosition(time){return{x:Math.sin(time*.15)*1.3,z:Math.sin(
 
 export class WalkerGait {
  constructor(){this.cycle=3.2;this.swingDuration=1.0;this.reset();}
- reset(){
-  this.yaw=0;this.turnRate=0;this.footfalls=0;this.lastLanding=-100;
-  this.feet=['l','r'].map((side,i)=>({side,offset:i*this.cycle/2,anchor:{x:i===0?-1.75:1.75,z:0},yaw:0,pitch:0,swinging:false,landedAt:-100,ankle:{x:i===0?-1.75:1.75,y:1.62,z:0}}));
-  this.pose={x:0,y:-.65,z:0,yaw:0,sway:0,roll:0,twist:0,compression:0,feet:this.feet};
-  return this.update(0,0,0);
+ reset(yaw=0){
+  this.yaw=yaw;this.turnRate=0;this.footfalls=0;this.lastLanding=-100;
+  this.feet=['l','r'].map((side,i)=>{
+   const lateral=i===0?-1.75:1.75,x=lateral*Math.cos(yaw),z=-lateral*Math.sin(yaw);
+   return {side,offset:i*this.cycle/2,anchor:{x,z},yaw,pitch:0,swinging:false,landedAt:-100,ankle:{x,y:1.62,z}};
+  });
+  this.pose={x:0,y:-.65,z:0,yaw,sway:0,roll:0,twist:0,compression:0,feet:this.feet};
+  return this.update(0,0,yaw);
  }
  update(dt,time,desiredYaw=this.yaw){
   const previousYaw=this.yaw;

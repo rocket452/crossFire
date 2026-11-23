@@ -12,12 +12,59 @@ export class KageAttacks {
   this.kunai=new THREE.InstancedMesh(blade,flightMaterials||new THREE.MeshBasicMaterial({color:'#d8fff6',toneMapped:false}),config.kunai.maxProjectiles);this.kunai.frustumCulled=false;this.group.add(this.kunai);
   this.outlines=new THREE.InstancedMesh(blade,new THREE.MeshBasicMaterial({color:'#142334',side:THREE.BackSide,toneMapped:false}),config.kunai.maxProjectiles);this.outlines.frustumCulled=false;this.group.add(this.outlines);
   this.trails=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial({color:'#a6ffe9',transparent:true,opacity:.85,depthWrite:false,toneMapped:false}),config.kunai.maxProjectiles);this.trails.frustumCulled=false;this.group.add(this.trails);
-  const coneRadius=config.slash.range*Math.tan(config.slash.coneDegrees*Math.PI/360),coneGeometry=new THREE.ConeGeometry(coneRadius,config.slash.range,32,1,true);coneGeometry.rotateX(-Math.PI/2);coneGeometry.translate(0,0,config.slash.range/2);
-  this.arc=new THREE.Mesh(coneGeometry,new THREE.MeshBasicMaterial({color:'#a8fff0',transparent:true,opacity:.12,depthWrite:false,side:THREE.DoubleSide,toneMapped:false}));this.arcRoot=new THREE.Group();this.arcRoot.add(this.arc);this.group.add(this.arcRoot);
-  this.coneRim=new THREE.Mesh(new THREE.TorusGeometry(coneRadius,.035,4,40),this.arc.material.clone());this.coneRim.position.z=config.slash.range;this.arcRoot.add(this.coneRim);const rays=[];for(let i=0;i<8;i++){const angle=i*Math.PI/4;rays.push(new THREE.Vector3(),new THREE.Vector3(Math.cos(angle)*coneRadius,Math.sin(angle)*coneRadius,config.slash.range));}this.coneRays=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(rays),new THREE.LineBasicMaterial({color:'#a8fff0',transparent:true,opacity:.3,depthWrite:false}));this.arcRoot.add(this.coneRays);
+  this.arcRoot=new THREE.Group();
+  this.arcRoot.name='Kage slash trail';
+  this.group.add(this.arcRoot);
+  this.slashSegments=32;
+  this.arc=this.makeSlashRibbon('#52ddff',.9,config.slash.range*.82);
+  this.arcEdge=this.makeSlashRibbon('#e7ffff',.2,config.slash.range*.83);
   this.shadowRoot=new THREE.Group();this.shadowRoot.name='Stored shadow kunai';this.group.add(this.shadowRoot);this.shadowKunai=[];const silhouette=new THREE.Shape();silhouette.moveTo(0,.42);for(const[x,y]of[[-.15,.05],[-.055,-.12],[-.055,-.28],[.055,-.28],[.055,-.12],[.15,.05]])silhouette.lineTo(x,y);silhouette.closePath();const shadowGeometry=new THREE.ShapeGeometry(silhouette),shadowMat=new THREE.MeshBasicMaterial({color:'#21132f',transparent:true,opacity:.94,side:THREE.DoubleSide,depthWrite:false,toneMapped:false}),edgeMat=new THREE.LineBasicMaterial({color:'#b89aff',transparent:true,opacity:.9,depthWrite:false,toneMapped:false}),edgeGeometry=new THREE.BufferGeometry().setFromPoints(silhouette.getPoints().map(p=>new THREE.Vector3(p.x,p.y,.015))),ringGeometry=new THREE.TorusGeometry(.085,.022,4,12),ringMat=new THREE.MeshBasicMaterial({color:'#9f7cea',transparent:true,opacity:.85,depthWrite:false,toneMapped:false});
   for(let i=0;i<config.kunai.maxStored;i++){const marker=new THREE.Group();marker.name='Shadow kunai '+(i+1);marker.add(new THREE.Mesh(shadowGeometry,shadowMat),new THREE.LineLoop(edgeGeometry,edgeMat));const ring=new THREE.Mesh(ringGeometry,ringMat);ring.position.y=-.38;marker.add(ring);this.shadowRoot.add(marker);this.shadowKunai.push(marker);}
   this.panel=document.createElement('div');this.panel.id='kage-weapons-meter';this.panel.innerHTML='<b data-kunai>KUNAI READY</b><span data-slash>SLASH READY · R</span>';document.getElementById('ninja-hud').append(this.panel);this.reset();
+ }
+ makeSlashRibbon(color,width,radius){
+  const positions=[],indices=[];
+  for(let i=0;i<=this.slashSegments;i++){
+   const t=i/this.slashSegments,angle=THREE.MathUtils.lerp(-1,1,t);
+   const taper=Math.sin(t*Math.PI)*(.45+.55*t);
+   for(const r of [radius-width*taper,radius]){
+    positions.push(Math.sin(angle)*r,.24*Math.sin(angle)*r,Math.cos(angle)*r);
+   }
+   if(i>0){const j=i*2;indices.push(j-2,j-1,j,j-1,j+1,j);}
+  }
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geometry.setIndex(indices);
+  const mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({
+   color,transparent:true,depthWrite:false,side:THREE.DoubleSide,
+   blending:THREE.AdditiveBlending,toneMapped:false
+  }));
+  this.arcRoot.add(mesh);
+  return mesh;
+ }
+ poseSlash(){
+  if(this.slashTime<=0)return;
+  const h=this.hero,t=1-this.slashTime/this.config.slash.effectSeconds;
+  const windUp=THREE.MathUtils.smoothstep(t,0,.14);
+  const swing=THREE.MathUtils.smoothstep(t,.14,.53);
+  const recovery=1-THREE.MathUtils.smoothstep(t,.58,1);
+  const twist=(windUp*.55-swing*1.28)*recovery;
+  const spine=h.character.nodes.B_Spine1;
+  spine?.rotateY(twist);
+  spine?.rotateX(-Math.asin(this.slashDirection.y)*.5*recovery);
+  spine?.rotateZ(-twist*.24);
+  h.character.root.updateWorldMatrix(true,true);
+  const origin=h.root.position.clone();
+  origin.y+=this.config.slash.height;
+  const arm=(side,local)=>{
+   const target=local.applyQuaternion(this.slashRotation).add(origin);
+   h.character.arm(side,h.character.hand(side).lerp(target,recovery));
+  };
+  const blade=this.fallingSwing
+   ?new THREE.Vector3(-.42,.95-.98*swing,.24+.88*swing)
+   :new THREE.Vector3(-.94+1.66*swing,.52-.60*swing,.23+.65*Math.sin(swing*Math.PI));
+  arm('L',blade);
+  arm('R',new THREE.Vector3(.55,.12+.25*windUp,-.3+.42*swing));
  }
  reset(){this.cooldown=this.slashCooldown=this.slashTime=this.loadTime=0;this.held=this.loading=false;this.stored=0;this.queue=[];this.bolts=[];this.volleyClock=0;this.throws=this.volleys=this.slashes=0;this.lastVolley=0;this.slashHits=0;this.lastSlashHits=0;this.slashRotation=new THREE.Quaternion();this.slashDirection=new THREE.Vector3(0,0,1);this.slashOrigin=new THREE.Vector3();this.kunai.count=this.trails.count=0;if(this.outlines)this.outlines.count=0;this.arcRoot.visible=false;this.clearStoredVisual();}
  clearStoredVisual(){if(this.shadowRoot)this.shadowRoot.visible=false;for(const m of this.shadowKunai||[])m.visible=false;}
@@ -27,7 +74,6 @@ export class KageAttacks {
  input(held,dt){const c=this.config.kunai;if(held&&!this.loading&&this.cooldown<=0&&!this.queue.length){this.loading=true;this.loadTime=0;this.stored=1;}if(held&&this.loading){this.loadTime+=dt;this.stored=Math.min(c.maxStored,1+Math.floor((this.loadTime+1e-8)/c.storeSeconds));}if(!held&&this.held&&this.loading)this.release(this.hero.aim());this.held=held;}
  // The cone and feedback share a frozen frame centered on the existing cursor aim point.
  captureSlashAim(center){const direction=this.hero.aim().clone().sub(center);if(direction.lengthSq()<1e-8)direction.set(Math.sin(this.hero.yaw),0,Math.cos(this.hero.yaw));direction.normalize();const right=new THREE.Vector3(direction.z,0,-direction.x);if(right.lengthSq()<1e-8)right.set(Math.cos(this.hero.yaw),0,-Math.sin(this.hero.yaw));right.normalize();const up=new THREE.Vector3().crossVectors(direction,right).normalize();this.slashDirection.copy(direction);this.slashRotation.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right,up,direction));}
- slashPoint(local){return local.clone().applyQuaternion(this.slashRotation).add(this.slashOrigin);}
  inCone(point,center){const c=this.config.slash,d=point.clone().sub(center),along=d.dot(this.slashDirection),radius=Math.max(0,along)*Math.tan(c.coneDegrees*Math.PI/360);return along>=-1e-6&&along<=c.range+1e-6&&Math.max(0,d.lengthSq()-along*along)<=radius*radius+1e-6;}
  coneHit(unit,center){const h=this.hero,c=this.config.slash,nearest=h.shurikenWorld.nearest(unit,center),radius=c.range*Math.tan(c.coneDegrees*Math.PI/360);if(!nearest||nearest.point.distanceToSquared(center)>c.range*c.range+radius*radius+1e-6)return null;
   const end=center.clone().addScaledVector(this.slashDirection,c.range),direct=traceImpact(center,end,{targets:[unit],ground:false,radius:0});if(direct&&this.clearLine(center,new THREE.Vector3().copy(direct.point)))return{point:new THREE.Vector3().copy(direct.point),part:direct.part};
@@ -65,7 +111,20 @@ export class KageAttacks {
   this.render(dt);
  }
  render(dt=0){const h=this.hero,c=this.config;let i=0;for(const b of this.bolts){this.dummy.position.copy(b.position);this.dummy.quaternion.setFromUnitVectors(forward,b.dir);this.dummy.scale.setScalar(c.kunai.visualScale);this.dummy.updateMatrix();this.kunai.setMatrixAt(i,this.dummy.matrix);this.dummy.scale.multiplyScalar(c.kunai.outlineScale);this.dummy.updateMatrix();this.outlines.setMatrixAt(i,this.dummy.matrix);this.dummy.position.addScaledVector(b.dir,-c.kunai.trailLength/2);this.dummy.scale.set(c.kunai.trailWidth,c.kunai.trailWidth,c.kunai.trailLength);this.dummy.updateMatrix();this.trails.setMatrixAt(i++,this.dummy.matrix);}this.kunai.count=this.outlines.count=this.trails.count=i;this.kunai.instanceMatrix.needsUpdate=this.outlines.instanceMatrix.needsUpdate=this.trails.instanceMatrix.needsUpdate=true;
-  this.arcRoot.visible=this.slashTime>0;if(this.arcRoot.visible){const t=1-this.slashTime/c.slash.effectSeconds;this.arcRoot.position.copy(this.slashOrigin);this.arcRoot.quaternion.copy(this.slashRotation);if(this.fallingSwing)this.arcRoot.scale.set(.12,.12,.24);else this.arcRoot.scale.setScalar(1);this.arc.material.opacity=(1-t)*.12;this.coneRim.material.opacity=(1-t)*.5;this.coneRays.material.opacity=(1-t)*.3;}
+  const slashProgress=1-this.slashTime/c.slash.effectSeconds;
+  this.arcRoot.visible=this.slashTime>0&&slashProgress>.14;
+  if(this.arcRoot.visible){
+   const sweep=THREE.MathUtils.smoothstep(slashProgress,.14,.54);
+   const fade=1-THREE.MathUtils.smoothstep(slashProgress,.46,1);
+   this.arcRoot.position.copy(this.slashOrigin);
+   this.arcRoot.quaternion.copy(this.slashRotation);
+   if(this.fallingSwing)this.arcRoot.scale.set(.16,.3,.32);else this.arcRoot.scale.setScalar(1);
+   const segments=Math.floor(sweep*this.slashSegments)*6;
+   this.arc.geometry.setDrawRange(0,segments);
+   this.arcEdge.geometry.setDrawRange(0,segments);
+   this.arc.material.opacity=fade*.67;
+   this.arcEdge.material.opacity=fade;
+  }
   const count=h.active&&h.enabled&&this.loading?this.stored:0;this.shadowRoot.visible=count>0;if(count){const head=h.character.nodes.B_Head.getWorldPosition(new THREE.Vector3());this.shadowRoot.position.set(head.x,Math.max(head.y+c.kunai.shadowHeight,h.root.position.y+2.9),head.z);this.shadowRoot.quaternion.copy(h.camera.quaternion);}for(let j=0;j<this.shadowKunai.length;j++){const marker=this.shadowKunai[j],wasVisible=marker.visible;marker.visible=j<count;if(!marker.visible)continue;marker.userData.age=wasVisible?(marker.userData.age||0)+dt:0;const offset=j-(count-1)/2;marker.position.set(offset*c.kunai.shadowSpacing,-Math.abs(offset)*.1+Math.sin(h.time*3+j*.8)*.035,0);marker.rotation.z=-offset*.12;marker.scale.setScalar(c.kunai.shadowScale*(.75+.25*Math.min(1,marker.userData.age/.12)));}
   this.heldKunai.visible=!!h.enabled&&!h.shuriken.charging&&h.throwPose<=0;this.panel.hidden=!h.active;this.panel.querySelector('[data-kunai]').textContent=this.loading?'KUNAI '+this.stored+' / '+c.kunai.maxStored+' STORED':this.cooldown>0?'KUNAI · '+this.cooldown.toFixed(1)+'s':'KUNAI READY · LMB / F';this.panel.querySelector('[data-slash]').textContent=this.slashCooldown>0?'SLASH · '+this.slashCooldown.toFixed(1)+'s':'SLASH READY · R';const button=document.getElementById('ninja-slash');if(button)button.disabled=this.slashCooldown>0;
  }

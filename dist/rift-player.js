@@ -1,5 +1,5 @@
 import {Vector3,MathUtils} from './vendor/three.module.js';
-import {ManualHeroControls} from './manual-hero-controls.js?v=380';
+import {ManualHeroControls} from './manual-hero-controls.js?v=hero-framing-384';
 
 const UP=new Vector3(0,1,0);
 const RIFT={moveSpeed:14,jumpSpeed:10,blinkRange:28,returnWindow:4,blinkCooldown:2.5,portalDuration:5,portalCooldown:9,boltCooldown:.4,boltDamage:90};
@@ -114,6 +114,7 @@ export class RiftPlayer extends ManualHeroControls {
   this.blinkCooldown=Math.max(0,this.blinkCooldown-dt);this.portalCooldown=Math.max(0,this.portalCooldown-dt);
   if(this.anchor&&this.anchor.gate.expiresAt<=hero.time){this.anchor=null;this.blinkCooldown=RIFT.blinkCooldown;}
   this.move(dt);
+  this.frame();
   const direction=this.direction();
   if(this.taps.has('Shield')||this.taps.has('KeyG'))this.blink(direction);
   if(this.taps.has('KeyE'))this.redirect(direction);

@@ -1,8 +1,7 @@
 // Simulation-time weapon clock. Charging deals no damage; a burst lasts seven seconds.
 export class BeamCycle {
- constructor(){this.fireSeconds=7;this.coolSeconds=7.5;this.reset();}
- reset({openingChargeDelay=0}={}){this.openingChargeDelay=openingChargeDelay;this.phase='cooling';this.elapsed=0;this.remaining=3.8;this.damageClock=0;this.bursts=0;this.tickCount=0;}
- get chargeSeconds(){return 3.2+(this.bursts===0?this.openingChargeDelay:0);}
+ constructor(){this.chargeSeconds=3.2;this.fireSeconds=7;this.coolSeconds=7.5;this.reset();}
+ reset({startupSeconds=3.8}={}){this.phase='cooling';this.elapsed=0;this.remaining=startupSeconds;this.damageClock=0;this.bursts=0;this.tickCount=0;}
  stop(){this.phase='off';this.elapsed=0;this.damageClock=0;}
  step(dt,canStart=false){
   if(this.phase==='off')return{phase:'off',elapsed:0,charge:0,progress:0,damageSeconds:0,events:[]};

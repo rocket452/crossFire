@@ -2,8 +2,8 @@ import {WalkerWeapons} from './walker-weapons.js?v=city-walker-health-255';
 import {CannonTracking,CANNON_TRACKING} from './cannon-tracking.js?v=beam-tracking-150';
 import * as THREE from './vendor/three.module.js';
 import {trackedBeamWarningPlan} from './beam-aim.js?v=beam-tracking-61';
-import {BeamCycle} from './beam-cycle.js?v=title-delay-383';
-import {WalkerGait,solveLegKnee,angleDelta,WALKER_TURN_SPEED} from './walker-gait.js?v=plasma-lead-91';
+import {BeamCycle} from './beam-cycle.js?v=384';
+import {WalkerGait,solveLegKnee,angleDelta,WALKER_TURN_SPEED} from './walker-gait.js?v=384';
 
 // Blender-built rigid components; combined weapon durability is the combat health pool.
 export class SiegeWalker {
@@ -45,14 +45,14 @@ export class SiegeWalker {
   }
   this.detachedParts=new Set();this.weapons=new WalkerWeapons({healthMultiplier:weaponHealthMultiplier,onDestroyed:m=>this.destroyWeapon(m)});this.reset();
  }
- reset(){
+ reset({yaw=0}={}){
   for(const w of this.wrecks){this.onRemoveDebris(w.body);w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
   for(const signal of this.signalMeshes.values())signal.visible=true;
   this.wrecks=[];this.detachedParts.clear();this.weapons.reset();this.staggerPose=null;this.stunRemaining=0;this.stunKind=null;this.stuns=0;this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;this.plasmaRecoil=0;this.plasmaCharging=false;this.plasmaAim=null;this.beamAllowed=true;this.podWarning={active:false,progress:0,pulse:false};
   this.cannonTracking.reset();this.weapon.reset();this.eyeTarget=null;this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
   for(const [name,n]of Object.entries(this.nodes)){n.rotation.set(0,0,0);n.position.copy(this.restPositions[name]);}
   if(this.nodes.rocket_pod)this.nodes.rocket_pod.rotation.x=-Math.PI/4;if(this.nodes.plasma_cannon)this.nodes.plasma_cannon.rotation.x=-Math.PI/4;
-  this.walkPose=this.gait.reset();this.applyWalkPose(this.walkPose);
+  this.walkPose=this.gait.reset(yaw);this.applyWalkPose(this.walkPose);
   for(const m of Object.values(this.meshes)){m.material.color.set('#ffffff');if(m.material.emissive)m.material.emissiveIntensity=m===this.meshes.reactor||m===this.meshes.visor?2:0;}
   this.root.updateMatrixWorld(true);
  }

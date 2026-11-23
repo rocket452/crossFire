@@ -1,3 +1,4 @@
+import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=384';
 import {Vector3,MathUtils} from './vendor/three.module.js';
 import {TouchStick} from './touch-stick.js';
 import {HeroHurt} from './hero-hurt.js';
@@ -62,14 +63,17 @@ export class ManualHeroControls {
   });
   window.addEventListener('blur',()=>this.clear());
  }
- direction(){return new Vector3(Math.sin(this.yaw)*Math.cos(this.pitch),Math.sin(this.pitch),Math.cos(this.yaw)*Math.cos(this.pitch));}
+ cameraFocus(){return this.hero.root.position.clone().add(new Vector3(0,1.65,0));}
+ direction(){return heroViewDirection(this.camera,this.cameraFocus(),this.yaw,this.pitch);}
  frame(){
-  const focus=this.hero.root.position.clone();focus.y+=2;
-  const dir=this.direction(),eye=focus.clone().addScaledVector(dir,-7);
+  const focus=this.cameraFocus();
+  const forward=new Vector3(Math.sin(this.yaw),0,Math.cos(this.yaw));
+  const eye=focus.clone().addScaledVector(forward,-7);
   eye.y+=1.5;
+  pitchHeroBoom(eye,focus,forward,this.pitch);
   const hit=this.blocked(focus,eye,.18);
   if(hit)eye.lerpVectors(focus,hit.point,.88);
   eye.y=Math.max(eye.y,this.terrain(eye.x,eye.z)+.4);
-  this.camera.position.copy(eye);this.camera.lookAt(focus.addScaledVector(dir,28));
+  this.camera.position.copy(eye);this.camera.lookAt(eye.clone().addScaledVector(this.direction(),28));
  }
 }
