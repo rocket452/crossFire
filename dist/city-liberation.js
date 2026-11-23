@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=397';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=399';
 import {LiberationBuild} from './liberation-build.js?v=398';
 import {escortMovementBounds} from './evac-approach.js?v=315';
 

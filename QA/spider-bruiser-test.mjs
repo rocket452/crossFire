@@ -26,3 +26,21 @@ for(const hz of[30,60,120]){const {r,hero,damage,removed}=fixture(),other=fixtur
  assert(r.hits>0,'a Bruiser bolt can reach an objective near the reduced weapon range');
  console.log('PASS Bruiser reduced hero acquisition and weapon range');
 }
+
+for(const hz of [30,60,120]){
+ const {r,hero}=fixture(),dt=1/hz,times=[];
+ r.moveSpeed=0;r.cooldown=0;
+ for(let frame=0;frame<10*hz&&times.length<12;frame++){
+  const time=frame*dt;
+  hero.shapes[0].center.x=2*Math.sin(time);
+  const before=r.shots;
+  r.update(dt,time);
+  if(r.shots>before)times.push(time);
+ }
+ assert.equal(times.length,12);
+ for(let i=1;i<times.length;i++){
+  const expected=i%4===0?3:.25;
+  assert(Math.abs(times[i]-times[i-1]-expected)<=dt+1e-7,'shot '+(i+1)+' at '+hz+' Hz');
+ }
+ console.log('PASS',hz+'Hz','three four-shot Bruiser bursts with a three-second firing gap on a moving hero');
+}
