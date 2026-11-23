@@ -1,5 +1,5 @@
 import {RiftPlayer} from './rift-player.js?v=drone-decks-385';
-import {VioletPlayer} from './violet-player.js?v=386-shield';
+import {VioletPlayer} from './violet-player.js?v=387';
 import {DefenseTitle} from './defense-title.js?v=386';
 import {kageDashCanFinish} from './kage-attacks.js?v=384';
 import {NINJA} from './ninja-motion.js?v=drone-decks-385';
@@ -63,7 +63,7 @@ import {traceImpact,UnitDamage} from './combat-collision.js?v=evac-performance-2
 import {SiegeWalker} from './siege-walker.js?v=386';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=hero-hurt-118';
-import {VioletHero} from './violet-hero.js?v=386';
+import {VioletHero} from './violet-hero.js?v=387';
 import {Speedster} from './speedster.js?v=386';
 import {RobotMissiles,WALKER_SALVO_SIZE} from './robot-missiles.js?v=drone-decks-385';
 import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';

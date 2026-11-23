@@ -3,7 +3,7 @@ import {Vector3,MathUtils} from './vendor/three.module.js';
 import {ManualHeroControls} from './manual-hero-controls.js?v=drone-decks-385';
 import {SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
 import {VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_PULSE} from './hero-powers.js?v=386';
-import {VIOLET_TUNING} from './violet-flight.js?v=violet-inertia-11';
+import {VIOLET_TUNING} from './violet-flight.js?v=387';
 
 export class VioletPlayer extends ManualHeroControls {
  constructor(hero,options){

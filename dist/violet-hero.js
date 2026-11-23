@@ -3,7 +3,7 @@ import * as THREE from './vendor/three.module.js';
 import {BarrierCapacitor,VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_ORB,VIOLET_SHIELD_CHARGE_RATE,violetOrbPower} from './hero-powers.js?v=386';
 import {violetBeamEffect} from './hero-power-effects.js?v=powers-48';
 import {ShieldShake,SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
-import {advanceVioletFlight,VIOLET_TUNING} from './violet-flight.js?v=violet-inertia-11';
+import {advanceVioletFlight,VIOLET_TUNING} from './violet-flight.js?v=387';
 import {RescuePolicy,interceptPoint} from './hero-defense.js?v=evacuation-57';
 
 import {VioletFlightPose} from './violet-flight-pose.js?v=violet-pose-26';
@@ -63,7 +63,7 @@ export class VioletHero {
    this.shieldEnergy=Math.min(3000,this.shieldEnergy+250*dt);
   }
   const destination=this.goal.clone();if(this.mode==='intercepting'&&this.root.position.distanceTo(this.goal)>10)destination.y=Math.max(destination.y,29);
-  const speed=this.mode==='intercepting'?VIOLET_TUNING.rescueSpeed:this.mode==='blocking'?16:this.mode==='defending'?VIOLET_TUNING.defenseSpeed:VIOLET_TUNING.patrolSpeed;
+  const speed=this.mode==='intercepting'?VIOLET_TUNING.rescueSpeed:this.mode==='blocking'?VIOLET_TUNING.barrierSpeed:this.mode==='defending'?VIOLET_TUNING.defenseSpeed:VIOLET_TUNING.patrolSpeed;
   advanceVioletFlight(this.root.position,this.velocity,destination,dt,{speed,rescue:this.mode==='intercepting'||this.mode==='blocking'});
   const facing=this.threat?this.threat.from:this.defenseTarget?this.defenseTarget.position:robot?robot.root.position.clone().add(new THREE.Vector3(0,14,0)):new THREE.Vector3();
   const yaw=Math.atan2(facing.x-this.root.position.x,facing.z-this.root.position.z);this.root.rotation.set(0,yaw,0,'YXZ');
