@@ -54,6 +54,8 @@ const actor=Object.assign(Object.create(Speedster.prototype),{
  nodes:{},lookPose:new RunnerLookPose(),dash:{active:false},critical:{stunned:false,charging:false},
  welder:{active:false},active:true,firing:false,charging:false,yaw:0,pitch:0
 });
+actor.camera=new THREE.PerspectiveCamera(65,1,.08,450);
+actor.camera.position.set(0,3,-6);
 actor.motion.reset({x:0,y:0,z:0});
 actor.motion.yaw=0;
 for(const p of spec.parts){
