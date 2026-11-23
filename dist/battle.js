@@ -358,7 +358,7 @@ function defenseResult(won){
  hero?.player?.exit();portalHero?.player?.exit();runner?.exit();ninja?.exit();
  const panel=document.createElement('dialog');
  panel.id='defense-result';panel.className='evac-briefing';
- panel.innerHTML='<div class="evac-briefing-inner"><h2>'+(won?'Evacuation secured':'Rocket destroyed')+'</h2><p>'+(won?'The rocket escaped and the Bastion was defeated.':'The evacuation rocket was lost before it cleared the city.')+'</p><button>Play again</button></div>';
+ panel.innerHTML='<div class="evac-briefing-inner"><h2>'+(won?'Evacuation secured':'Evacuation rocket destroyed')+'</h2><p>'+(won?'The rocket escaped and the Bastion was defeated.':'The evacuation rocket was lost before it cleared the city.')+'</p><button>Play again</button></div>';
  document.querySelector('.viewer').append(panel);
  panel.addEventListener('cancel',e=>e.preventDefault());
  panel.querySelector('button').onclick=()=>{
