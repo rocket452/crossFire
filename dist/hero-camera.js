@@ -1,11 +1,11 @@
 import {MathUtils,Vector3} from './vendor/three.module.js';
 
 // Swing the boom down as aim rises so the hero remains below the reticle.
-export function pitchHeroBoom(eye,focus,forward,pitch){
- const angle=Math.max(0,pitch)*1.2;
+export function pitchHeroBoom(eye,focus,forward,pitch,{lift=1.2,overheadClearance=.16}={}){
+ const angle=Math.max(0,pitch)*lift;
  const back=(focus.x-eye.x)*forward.x+(focus.z-eye.z)*forward.z;
  const height=eye.y-focus.y;
- const swing=MathUtils.clamp(angle,0,Math.atan2(height,back)+Math.PI/2-.16);
+ const swing=MathUtils.clamp(angle,0,Math.atan2(height,back)+Math.PI/2-overheadClearance);
  return eye.addScaledVector(forward,back-back*Math.cos(swing)-height*Math.sin(swing))
   .setY(focus.y+height*Math.cos(swing)-back*Math.sin(swing));
 }

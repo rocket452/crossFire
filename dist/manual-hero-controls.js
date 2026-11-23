@@ -1,5 +1,5 @@
 import {carryPlatform,landOnPlatform,platformAttachment} from './moving-platform.js?v=385';
-import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=384';
+import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=392';
 import {Vector3,MathUtils} from './vendor/three.module.js';
 import {TouchStick} from './touch-stick.js';
 import {HeroHurt} from './hero-hurt.js';
@@ -81,7 +81,7 @@ export class ManualHeroControls {
   const forward=new Vector3(Math.sin(this.yaw),0,Math.cos(this.yaw));
   const eye=focus.clone().addScaledVector(forward,-(this.cameraDistance??7));
   eye.y+=(this.cameraHeight??3.15)-1.65;
-  pitchHeroBoom(eye,focus,forward,this.pitch);
+  pitchHeroBoom(eye,focus,forward,this.pitch,this.boomTuning);
   const hit=this.blocked(focus,eye,.18);
   if(hit)eye.lerpVectors(focus,hit.point,.88);
   eye.y=Math.max(eye.y,this.terrain(eye.x,eye.z)+.4);

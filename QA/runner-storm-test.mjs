@@ -51,3 +51,23 @@ for(const rate of [30,60,120]){
  assert(s.events.some(e=>e.kind==='fade'));
 }
 console.log('PASS maximum 20-second Ball Lightning lifetime across simulation rates even with continuous recharge');
+
+{
+ const strikes=[],buildings=[];
+ const near=new T.Vector3(1,0,0),unit=(name,y,x=near.x,z=near.z)=>({
+  id:name,kind:'robot',alive:true,shapes:[{center:new T.Vector3(x,y,z),half:{x:.5,y:.5,z:.5},part:'hull'}]
+ });
+ const ground=unit('ground',1),air=unit('air',88),outside=unit('outside',30,9,8),above=unit('above',C.strikeHeight+5);
+ air.shapes.push({...air.shapes[0],part:'engine',center:new T.Vector3(1,87,.4)});
+ const wall=(y,x)=>({building:'tower',state:'intact',hp:10,size:[2,1,2],body:{position:new T.Vector3(x,y,0)}});
+ const lowWall=wall(4,0),highWall=wall(62,0),outsideWall=wall(30,17);
+ const storm=new RunnerStorm({getUnits:()=>[ground,air,outside,above],getSections:()=>[lowWall,highWall,outsideWall],
+  onHit:(hit,power)=>{strikes.push({hit,power});return power;},
+  onStrikeBuildings:ids=>buildings.push(...ids)
+ });
+ storm.strikeNow(new T.Vector3(0,.08,0));
+ assert.deepEqual(strikes.map(v=>v.hit.unit?.id||v.hit.section.body.position.y),['ground','air',4,62]);
+ assert.equal(strikes[0].power,strikes[1].power,'same horizontal distance gives the same damage at every elevation');
+ assert.deepEqual(buildings,['tower'],'building supports are checked once per strike');
+}
+console.log('PASS vertical cylinder reaches aerial targets and all in-range floors, with no duplicate hit on a multipart robot');

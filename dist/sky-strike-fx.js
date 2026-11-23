@@ -1,10 +1,10 @@
 import * as THREE from './vendor/three.module.js';
-import {VOLT_STORM as C} from './runner-storm.js?v=386';
-export const SKY_STRIKE_ART=Object.freeze({life:1.5,segments:320,sparks:64,boltHeight:65});
+import {VOLT_STORM as C} from './runner-storm.js?v=392';
+export const SKY_STRIKE_ART=Object.freeze({life:1.5,segments:320,sparks:64,boltHeight:C.strikeHeight});
 const UP=new THREE.Vector3(0,1,0);
 export class SkyStrikeFX {
  constructor(parent){this.root=new THREE.Group();this.root.name='Sky Strike corona and afterglow';parent.add(this.root);const mat=(color,opacity=1)=>new THREE.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,toneMapped:false}),cylinder=new THREE.CylinderGeometry(1,1,1,5,1,true);this.core=new THREE.InstancedMesh(cylinder,mat('#f1ffff'),SKY_STRIKE_ART.segments);this.glow=new THREE.InstancedMesh(cylinder,mat('#268eff',.28),SKY_STRIKE_ART.segments);this.sparks=new THREE.InstancedMesh(cylinder,mat('#b9faff'),SKY_STRIKE_ART.sparks);for(const m of[this.core,this.glow,this.sparks]){m.frustumCulled=false;this.root.add(m);}this.rings=Array.from({length:3},()=>{const m=new THREE.Mesh(new THREE.RingGeometry(.96,1,80),mat('#62dbff',.8));m.rotation.x=-Math.PI/2;this.root.add(m);return m;});this.crown=Array.from({length:3},()=>new THREE.Mesh(new THREE.TorusGeometry(1,.025,4,48),mat('#8eb8ff',.7)));
-  this.channel=new THREE.Mesh(new THREE.CylinderGeometry(.45,1,1,16,1,true),mat('#7bb8ff',.19));
+  this.channel=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,24,1,true),mat('#7bb8ff',.19));
   this.root.add(...this.crown,this.channel);
   this.charge=new THREE.Mesh(new THREE.IcosahedronGeometry(1,2),mat('#bceeff',.65));this.flash=new THREE.Mesh(new THREE.SphereGeometry(1,24,12),mat('#c6faff',.25));this.disc=new THREE.Mesh(new THREE.CircleGeometry(1,64),mat('#288eff',.12));this.disc.rotation.x=-Math.PI/2;this.root.add(this.charge,this.flash,this.disc);this.dummy=new THREE.Object3D();this.clear();}
  clear(){this.seen=new WeakSet();this.bursts=[];this.hide();}
@@ -49,7 +49,7 @@ export class SkyStrikeFX {
     bolt(from,to,.015+progress*.027,i+Math.floor(time*12),4);
    }
    if(progress>.83){
-    const height=21;
+    const height=SKY_STRIKE_ART.boltHeight;
     const leader=(progress-.83)/.17;
     const top=origin.clone().addScaledVector(UP,height);
     const end=origin.clone().addScaledVector(UP,height*(1-leader));
@@ -70,9 +70,9 @@ export class SkyStrikeFX {
      bolt(fork,p.clone().addScaledVector(UP,height*.28),.11*strength,seed+i*3,10);
     }
     this.channel.visible=true;
-    this.channel.position.copy(p).y+=SKY_STRIKE_ART.boltHeight*.36;
-    this.channel.scale.set(2+age*3,SKY_STRIKE_ART.boltHeight*.72,2+age*3);
-    this.channel.material.opacity=.22*strength;
+    this.channel.position.copy(p).y+=SKY_STRIKE_ART.boltHeight*.5;
+    this.channel.scale.set(C.strikeRadius,SKY_STRIKE_ART.boltHeight,C.strikeRadius);
+    this.channel.material.opacity=.16*strength;
 
    }
    this.flash.visible=true;this.flash.position.copy(p);const radius=C.strikeRadius*(1-Math.exp(-age*12));this.flash.scale.set(Math.max(.2,radius),Math.max(.15,radius*.45),Math.max(.2,radius));this.flash.material.opacity=.42*Math.exp(-age*7);this.disc.visible=true;this.disc.position.copy(p);this.disc.scale.setScalar(C.strikeRadius*.9);this.disc.material.opacity=.18*fade*fade;

@@ -35,7 +35,7 @@ export class EvacRaider {
   }
   if(this.wrecks.length){for(const s of this.restMaterials){s.m.color.multiplyScalar(.45);if(s.emissive)s.m.emissiveIntensity=0;}this.root.visible=false;}
  }
- syncWrecks(){for(const w of this.wrecks){w.group.position.copy(w.body.position);w.group.quaternion.copy(w.body.quaternion);}}
+ syncWrecks(){for(const w of this.wrecks)if(!w.body.robotWreckExpired){w.group.position.copy(w.body.position);w.group.quaternion.copy(w.body.quaternion);}}
  sync(){this.root.updateMatrixWorld(true);if(!this.combatUnit)return;if(!this.combatUnit.alive){this.combatUnit.shapes=[];return;}if(this.art){const shape=(node,local,half,part)=>({center:node.localToWorld(new THREE.Vector3(...local)),half:{x:half[0]*RAIDER_COMBAT.modelScale,y:half[1]*RAIDER_COMBAT.modelScale,z:half[2]*RAIDER_COMBAT.modelScale},rotation:node.getWorldQuaternion(new THREE.Quaternion()),part});this.combatUnit.shapes=[shape(this.parts.body,[0,0,0],[.95,.76,.76],'hull'),shape(this.parts.head,[0,.02,.04],[.59,.36,.51],'head'),shape(this.root,[0,1,0],[1.45,.95,1.65],'hull'),shape(this.parts.arm_l,[0,-.6,.1],[.38,1.1,.5],'hull'),shape(this.parts.arm_r,[0,-.15,.8],[.4,.7,1.05],'hull')];}else this.combatUnit.shapes=[{center:this.aimPoint(),half:{x:1.5*RAIDER_COMBAT.modelScale,y:2.5*RAIDER_COMBAT.modelScale,z:1.2*RAIDER_COMBAT.modelScale},rotation:this.parts.body.getWorldQuaternion(new THREE.Quaternion())},{center:this.root.localToWorld(new THREE.Vector3(0,.75,0)),half:{x:1.45*RAIDER_COMBAT.modelScale,y:.72*RAIDER_COMBAT.modelScale,z:1.65*RAIDER_COMBAT.modelScale},rotation:this.root.quaternion.clone()}];}
 
  selectTarget(origin){

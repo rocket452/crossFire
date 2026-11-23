@@ -86,10 +86,11 @@ export class CombatDrone {
  }
  contact({contact}){
   const speed=Math.abs(contact.getImpactVelocityAlongNormal());
-  const offset=contact.bi===this.body?contact.ri:contact.rj;
+  const front=contact.bi===this.body,offset=front?contact.ri:contact.rj;
+  const grounded=(front?-contact.ni.y:contact.ni.y)>.45||!!this.pendingContact?.grounded;
   if(!this.pendingContact||this.pendingContact.speed<speed){
-   this.pendingContact={speed,point:new THREE.Vector3().copy(this.body.position).add(offset)};
-  }
+   this.pendingContact={speed,point:new THREE.Vector3().copy(this.body.position).add(offset),grounded};
+  }else this.pendingContact.grounded=grounded;
  }
  sync(){
   if(!this.body)return;
@@ -174,9 +175,9 @@ export class CombatDrone {
  processContact(contact){
   const c=this.config.crash;
   this.contacted=true;
-  const {point,speed}=contact;
+  const {point,speed,grounded}=contact;
   this.peakImpact=Math.max(this.peakImpact,speed);
-  if(speed>=c.crashSpeed&&(this.mode!=='flying'||speed>=c.explosionSpeed))this.landWreck();
+  if(speed>=c.crashSpeed&&(this.mode!=='flying'||speed>=c.explosionSpeed))this.landWreck(grounded);
   if(speed<c.scrapeSpeed||this.clock<this.nextContact)return;
   this.contacts++;this.nextContact=this.clock+c.contactCooldown;
   this.options.particle('spark',point,Math.min(28,Math.round(speed*1.8)),Math.min(2,speed*.17));
@@ -193,13 +194,13 @@ export class CombatDrone {
    }
   }
  }
- landWreck(){
+ landWreck(grounded=false){
   if(this.mode==='wreck')return;
   this.mode='wreck';this.wreckAt=this.clock;this.gun.stop();this.flight.forces.fill(0);
   this.body.allowSleep=true;
   this.body.linearDamping=.37;this.body.angularDamping=.5;
   this.combatUnit.alive=false;this.combatUnit.shapes=[];
-  this.options.onWreck({body:this.body,size:this.config.hullSize});
+  this.options.onWreck({body:this.body,size:this.config.hullSize,grounded});
   this.options.onEvent('Combat drone down.');
  }
  sound(kind,seconds){
@@ -284,7 +285,7 @@ export class CombatDrone {
   }
   for(let i=this.fragments.length-1;i>=0;i--){
    const piece=this.fragments[i];
-   if(this.clock>=piece.expires){
+   if(piece.body.robotWreckExpired||!piece.body.robotWreckTracked&&this.clock>=piece.expires){
     this.removeFragment(piece);this.fragments.splice(i,1);
    }
   }
@@ -294,7 +295,7 @@ export class CombatDrone {
    const pending=this.pendingContact;this.pendingContact=null;
    if(pending)this.processContact(pending);
    if(this.mode==='failing'&&this.contacted&&this.body.velocity.length()<.72&&this.body.angularVelocity.length()<.7)this.landWreck();
-   if(this.clock-this.wreckAt>=this.config.crash.wreckLifetime){
+   if(this.body.robotWreckExpired||!this.body.robotWreckTracked&&this.clock-this.wreckAt>=this.config.crash.wreckLifetime){
     this.stopSmoke(this.body);this.physics.world.removeEventListener('preStep',this.stepPhysics);
     this.physics.removeWreck(this.body);this.body=null;this.root.visible=false;
    }else this.sync();

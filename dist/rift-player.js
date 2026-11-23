@@ -1,8 +1,8 @@
-import {Vector3,MathUtils,BufferGeometry,LineBasicMaterial,LineSegments} from './vendor/three.module.js';
-import {ManualHeroControls} from './manual-hero-controls.js?v=drone-decks-385';
+import {Vector3,MathUtils,RingGeometry,MeshBasicMaterial,Mesh,DoubleSide} from './vendor/three.module.js';
+import {ManualHeroControls} from './manual-hero-controls.js?v=392';
 
 const UP=new Vector3(0,1,0);
-const ROOF_AIM_MARGIN=1.15,ROOF_EDGE_MARGIN=1.25,ROOF_AIM_HEIGHT=4;
+const ROOF_AIM_MARGIN=1.15,ROOF_EDGE_MARGIN=1.25,ROOF_AIM_HEIGHT=4,ROOF_BLINK_HEIGHT=90;
 export function riftRoofTarget(feet,from,to,{trace,roofBelow,getBuilding,isClear},range){
  const hit=trace(from,to,0)||trace(from,to,ROOF_AIM_MARGIN);
  const building=hit?.section?.state==='intact'&&getBuilding(hit.section.building);
@@ -16,17 +16,17 @@ export function riftRoofTarget(feet,from,to,{trace,roofBelow,getBuilding,isClear
   const surface=roofBelow(rx,rz,top+2,top-2.5);
   if(surface?.section?.building!==building.id)continue;
   const landing=new Vector3().copy(surface.point).addScaledVector(UP,.08);
-  if(landing.distanceToSquared(feet)<=range*range&&isClear(landing))return {landing,x,z,width};
+  const horizontal=Math.hypot(landing.x-feet.x,landing.z-feet.z);
+  if(horizontal<=range&&Math.abs(landing.y-feet.y)<=ROOF_BLINK_HEIGHT&&isClear(landing))return {landing,x,z,width};
  }
  return null;
 }
 function roofHighlight(scene){
- const points=[];
- for(const x of [-.5,.5])for(const z of [-.5,.5]){
-  points.push(new Vector3(x*.67,0,z),new Vector3(x,0,z),new Vector3(x,0,z),new Vector3(x,0,z*.67));
- }
- const marker=new LineSegments(new BufferGeometry().setFromPoints(points),
-  new LineBasicMaterial({color:'#beff66',transparent:true,opacity:.9,depthWrite:false,toneMapped:false}));
+ const rim=new RingGeometry(Math.SQRT1_2-.026,Math.SQRT1_2,4,1,Math.PI/4).rotateX(-Math.PI/2);
+ const marker=new Mesh(rim,new MeshBasicMaterial({
+  color:'#beff66',opacity:.9,transparent:true,side:DoubleSide,depthTest:false,depthWrite:false,toneMapped:false
+ }));
+ marker.renderOrder=91;
  marker.name='Rift Warden blinkable roof';marker.visible=false;scene.add(marker);return marker;
 }
 const RIFT={moveSpeed:14,jumpSpeed:10,blinkRange:28,returnWindow:4,blinkCooldown:2.5,portalDuration:5,portalCooldown:9,boltCooldown:.4,boltDamage:90};
@@ -34,15 +34,16 @@ const RIFT={moveSpeed:14,jumpSpeed:10,blinkRange:28,returnWindow:4,blinkCooldown
 export class RiftPlayer extends ManualHeroControls {
  constructor(hero,options){
   super(hero,options,{
-   hint:'WASD move · Space jump · LMB bolt · RMB blink / return · E redirect',
+   hint:'WASD move · Space jump · LMB bolt · RMB blink / return · E place entrance / exit',
    actions:[['Jump','Space'],['Bolt','Fire'],['Blink','Shield'],['Redirect','KeyE']],
    codes:['KeyW','KeyS','KeyA','KeyD','Space','KeyF','KeyG','KeyE']
   });
   this.taps=new Set();
+  this.boomTuning={lift:1.34,overheadClearance:.075};
   this.roofMarker=roofHighlight(hero.scene);
  }
  press(key){super.press(key);this.taps.add(key);}
- clear(){super.clear();this.taps.clear();this.roofMarker.visible=false;}
+ clear(){super.clear();this.taps.clear();this.roofMarker.visible=false;this.hud.removeAttribute('data-roof-target');}
  enter(intro,respawn=true){
   this.clear();
   const hero=this.hero;
@@ -52,7 +53,7 @@ export class RiftPlayer extends ManualHeroControls {
   hero.reset();
   if(respawn)hero.root.position.set(this.spawn.x,this.terrain(this.spawn.x,this.spawn.z)+.1,this.spawn.z);
   else hero.root.position.copy(position);
-  this.anchor=null;this.platform=null;this.vertical=0;this.walking=false;this.grounded=true;
+  this.anchor=null;this.redirectEntry=null;this.platform=null;this.vertical=0;this.walking=false;this.grounded=true;
   this.blinkCooldown=this.portalCooldown=0;hero.attackCooldown=0;
   this.hurt.reset();this.yaw=intro.yaw;this.pitch=.12;this.frame();this.lock();
  }
@@ -131,31 +132,45 @@ export class RiftPlayer extends ManualHeroControls {
  }
  redirect(direction){
   const hero=this.hero;
-  if(this.portalCooldown>0||hero.portals.length>9)return;
+  if(this.portalCooldown>0)return;
+  const entry=this.redirectEntry;
+  if(hero.portals.length>=(entry?12:11))return;
   const center=hero.root.position.clone().addScaledVector(UP,1.65);
-  const entry=center.clone().addScaledVector(direction,4.2);
-  if(this.blocked(center,entry,1))return;
-  const side=new Vector3(direction.z,0,-direction.x).normalize();
-  const exit=this.anchor?this.anchor.gate.position.clone():center.clone().addScaledVector(side,7);
-  const exitNormal=this.anchor?direction:side;
-  if(this.blocked(exit,exit.clone().addScaledVector(UP,1.7).addScaledVector(exitNormal,1.2),.5))return;
-  const a=hero.openPortal('transport-entry',entry,direction,2.65);
-  const b=hero.openPortal('transport-exit',exit,exitNormal,2.65);
-  a.expiresAt=b.expiresAt=hero.time+RIFT.portalDuration;
-  hero.pair={entry:a,exit:b};this.portalCooldown=RIFT.portalCooldown;
+  const position=center.clone().addScaledVector(direction,4.2);
+  position.y=Math.max(position.y,this.terrain(position.x,position.z)+.65);
+  if(this.blocked(center,position,1))return;
+  if(!entry){
+   const placeholder=hero.openPortal('transport-preview',position,direction,2.65);
+   if(!placeholder)return;
+   placeholder.expiresAt=Infinity;
+   this.redirectEntry=placeholder;
+  }else{
+   const clear=position.clone().addScaledVector(direction,1.9);
+   if(position.distanceTo(entry.position)<entry.radius*2||this.blocked(position,clear,.5))return;
+   const exit=hero.openPortal('transport-exit',position,direction,entry.radius);
+   if(!exit)return;
+   entry.kind='transport-entry';
+   entry.disc.visible=true;
+   entry.expiresAt=exit.expiresAt=hero.time+RIFT.portalDuration;
+   hero.pair={entry,exit,playerPlaced:true,activeAt:hero.time};
+   this.redirectEntry=null;
+   this.portalCooldown=RIFT.portalCooldown;
+  }
   hero.castRemaining=.45;hero.castKind='rescue';
  }
+
  update(dt){
   if(!this.available()){this.clear();return;}
   const hero=this.hero;
   this.hurt.step(dt);
+  if(this.redirectEntry&&!hero.portals.includes(this.redirectEntry))this.redirectEntry=null;
   this.blinkCooldown=Math.max(0,this.blinkCooldown-dt);this.portalCooldown=Math.max(0,this.portalCooldown-dt);
   if(this.anchor&&this.anchor.gate.expiresAt<=hero.time){this.anchor=null;this.blinkCooldown=RIFT.blinkCooldown;}
   this.move(dt);
   this.frame();
   const direction=this.direction(),eye=this.camera.position;
-  const roof=!this.anchor&&this.blinkCooldown===0?riftRoofTarget(hero.root.position,eye,
-   eye.clone().addScaledVector(direction,RIFT.blinkRange+(this.cameraDistance??7)+3),{
+  const roof=!this.anchor&&this.blinkCooldown===0&&hero.portals.length<=9?riftRoofTarget(hero.root.position,eye,
+   eye.clone().addScaledVector(direction,Math.hypot(RIFT.blinkRange,ROOF_BLINK_HEIGHT)+(this.cameraDistance??7)+3),{
     trace:this.blocked,roofBelow:this.roofBelow,getBuilding:this.getBuilding,isClear:p=>{
      const feet=p.clone().addScaledVector(UP,.49),head=p.clone().addScaledVector(UP,2);
      return !this.blocked(feet,head,.48);
@@ -177,7 +192,10 @@ export class RiftPlayer extends ManualHeroControls {
    hero.attackCooldown=RIFT.boltCooldown;hero.castRemaining=.22;hero.castKind='attack';
   }
   this.taps.clear();
-  const blink=this.anchor?'Return '+(this.anchor.gate.expiresAt-hero.time).toFixed(1)+'s':this.blinkCooldown?'Blink '+this.blinkCooldown.toFixed(1)+'s':'Blink ready';
-  this.output.textContent=blink+' · '+(this.portalCooldown?'Redirect '+this.portalCooldown.toFixed(1)+'s':'Redirect ready');
+  this.hud.toggleAttribute('data-roof-target',this.roofMarker.visible);
+  const blink=this.roofMarker.visible?'Blink to rooftop':this.anchor?'Return '+(this.anchor.gate.expiresAt-hero.time).toFixed(1)+'s':this.blinkCooldown?'Blink '+this.blinkCooldown.toFixed(1)+'s':'Blink ready';
+  const redirect=this.redirectEntry?'Place exit':hero.pair?'Redirect active '+Math.max(0,hero.pair.entry.expiresAt-hero.time).toFixed(1)+'s':
+   this.portalCooldown?'Redirect '+this.portalCooldown.toFixed(1)+'s':'Redirect ready';
+  this.output.textContent=blink+' · '+redirect;
  }
 }

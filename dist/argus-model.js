@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {ArgusFrame} from './argus-frame.js?v=argus-torso-202';
+import {ArgusFrame} from './argus-frame.js?v=392';
 import {segmentBoxFraction} from './combat-collision.js';
 const turnDelta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 // Dedicated Blender Aster frame with stable gameplay part IDs and world-space foot IK.

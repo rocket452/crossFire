@@ -29,7 +29,13 @@ export class RunnerDash {
   for(const p of candidates){const next=this.next([{...a,position:p}],{x:0,z:0},0,this.nearby([{...a,position:p}]),false);if(!next)continue;const q=next[0].position;if(reserved.some(b=>Math.abs(q.x-b.position.x)<a.half.x+b.half.x&&Math.abs(q.z-b.position.z)<a.half.z+b.half.z&&Math.abs(q.y+a.half.y-b.position.y-b.half.y)<a.half.y+b.half.y))continue;return q;}
   return copy(a.origin);
  }
- finish(motion){const dash=this.active;if(!dash)return;const reserved=[{position:copy(motion.position),half:dash.actors[0].half}];for(const a of dash.actors.slice(1)){if(!a.unit.alive){a.unit.dashCarried=a.unit.dashPhased=false;this.onPhaseUnit(a.unit,false);continue;}const p=this.placement(a,motion.position,reserved),old=copy(a.position);this.onMoveUnit(a.unit,p);this.rescues.moved(a.unit,old,p);a.position=p;reserved.push(a);a.unit.dashCarried=a.unit.dashPhased=false;this.onPhaseUnit(a.unit,false);this.effect('reform',p,a.unit.kind==='tank'?2.2:1);}this.effect('reform',motion.position,1.3);this.active=null;}
+ finish(motion,{coast=false}={}){const dash=this.active;if(!dash)return;const reserved=[{position:copy(motion.position),half:dash.actors[0].half}];for(const a of dash.actors.slice(1)){if(!a.unit.alive){a.unit.dashCarried=a.unit.dashPhased=false;this.onPhaseUnit(a.unit,false);continue;}const p=this.placement(a,motion.position,reserved),old=copy(a.position);this.onMoveUnit(a.unit,p);this.rescues.moved(a.unit,old,p);a.position=p;reserved.push(a);a.unit.dashCarried=a.unit.dashPhased=false;this.onPhaseUnit(a.unit,false);this.effect('reform',p,a.unit.kind==='tank'?2.2:1);}this.effect('reform',motion.position,1.3);this.active=null;
+  if(coast){
+   motion.velocity.x=dash.direction.x*DASH.speed;
+   motion.velocity.z=dash.direction.z*DASH.speed;
+   motion.speed=DASH.speed;
+  }
+ }
 
  allies(motion){return this.getUnits().filter(u=>u.alive&&friendly(u)&&!u.dashCarried&&Math.abs(foot(u).y-motion.position.y)<=2&&dist(foot(u),motion.position)<=DASH.radius);}
  actors(motion){return[{position:copy(motion.position),half:{x:.38,y:1.3,z:.38}},...this.allies(motion).map(u=>this.actor(u))];}

@@ -1,17 +1,17 @@
-import {CombatDrone} from './combat-drone.js?v=386';
+import {CombatDrone} from './combat-drone.js?v=392';
 import {COMBAT_DRONE} from './combat-drone-config.js?v=enemy-range-366';
-import {AstraRonin} from './astra-ronin.js?v=hazard-red-355';
-import {Mireguard} from './mireguard.js?v=hazard-red-355';
+import {AstraRonin} from './astra-ronin.js?v=392';
+import {Mireguard} from './mireguard.js?v=392';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-pairs-260';
-import {BastionTesting} from './bastion-testing.js?v=390';
-import {ExperimentalRobot} from './experimental-robots.js?v=hazard-red-355';
+import {BastionTesting} from './bastion-testing.js?v=392';
+import {ExperimentalRobot} from './experimental-robots.js?v=392';
 import * as THREE from './vendor/three.module.js';
-import {SpiderBruiser} from './spider-bruiser.js?v=wave-clear-382';
+import {SpiderBruiser} from './spider-bruiser.js?v=392';
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=hazard-red-355';
 // Reuses the live drone, projectile, damage and wreck systems; no mission spawning.
 export class CombatTesting {
  constructor(scene,damage,{getHeroes,readConfig,bastionConfig,...options}){
-  this.bastion=new BastionTesting(scene,damage,bastionConfig,{getHeroes,arenaBounds:COMBAT_ARENA.movementBounds,onEvent:options.onEvent,traceProjectile:(a,b,r)=>options.trace(a,b,'bastion',r),onProjectileImpact:options.onBastionImpact,rainLanding:options.rainLanding,onRainImpact:options.onBastionRainImpact});this.flightDrones=options.drone?Array.from({length:2},(_,i)=>new CombatDrone(scene,damage,{
+  this.bastion=new BastionTesting(scene,damage,bastionConfig,{getHeroes,arenaBounds:COMBAT_ARENA.movementBounds,onEvent:options.onEvent,onDeathBlast:options.onBastionDeathBlast,traceProjectile:(a,b,r)=>options.trace(a,b,'bastion',r),onProjectileImpact:options.onBastionImpact,rainLanding:options.rainLanding,onRainImpact:options.onBastionRainImpact});this.flightDrones=options.drone?Array.from({length:2},(_,i)=>new CombatDrone(scene,damage,{
    ...options.drone,id:'combat-drone-'+i,bounds:COMBAT_ARENA.movementBounds,onEvent:options.onEvent
   })):[];this.getHeroes=getHeroes;this.readConfig=readConfig;this.targets=new Map();this.energyEffects=new RaiderEnergyEffects(scene);
   this.basic=Array.from({length:7},(_,i)=>new SpiderBruiser(scene,damage,{...options,id:'evac-raider-test-'+i,spawnPosition:{x:COMBAT_ARENA.enemyCorner.x+(i-3)*7*COMBAT_ARENA.formationScale,y:.1,z:COMBAT_ARENA.enemyCorner.z+14*COMBAT_ARENA.formationScale},getTargets:()=>this.heroUnits(),initialCooldown:3+i*.2,energyEffects:this.energyEffects,onEvent:()=>{}}));

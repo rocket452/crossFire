@@ -1,4 +1,4 @@
-import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=384';
+import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=392';
 import {LaserShuriken} from './laser-shuriken.js?v=365';
 import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
 import {KageSmoke,guardHeroInSmoke} from './kage-smoke.js?v=390';

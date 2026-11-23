@@ -4,12 +4,13 @@ import {CityBroadphase} from './physics-grid.js?v=ground-rubble-89';
 export const BUILDING_DURABILITY_MULTIPLIER=1.3;
 export const BUILDING_COLLISION_RELEASE_FRACTION=.75;
 export const NON_ROBOT_BUILDING_DAMAGE_MULTIPLIER=.1;
+export const ROBOT_WRECK_SECONDS=30;
 const sectionHealth=type=>({column:10,slab:6,wall:4}[type]??4)*BUILDING_DURABILITY_MULTIPLIER;
 // Physics-only module: real rigid bodies, support bookkeeping, and bounded activation.
 export class DestructionWorld {
  constructor({onDamage=()=>{},onDetach=()=>{},onCollapse=()=>{},onFreeze=()=>{},onMove=()=>{},maxDynamic=160,playerReserve=0}={}){
   this.world=new CANNON.World({gravity:new CANNON.Vec3(0,-9.81,0),allowSleep:true});this.world.broadphase=new CityBroadphase();this.world.collisionMatrix=new CANNON.ObjectCollisionMatrix();this.world.collisionMatrixPrevious=new CANNON.ObjectCollisionMatrix();this.world.solver.iterations=8;this.world.defaultContactMaterial.friction=.62;this.world.defaultContactMaterial.restitution=.07;
-  this.chunks=[];this.queryGrid=new SectionQueryGrid();this.chunks.querySegment=(a,b,r)=>this.queryGrid.query(a,b,r);this.buildings=new Map();this.dynamic=[];this.falling=new Set();this.wrecks=[];this.queue=[];this.pending=new Set();this.groundContacts=new Set();this.terrainBodies=new Set();this.terrainSlopes=[];this.collisionlessFragments=0;this.clock=0;this.impacts=0;this.detached=0;this.collapses=0;this.maxDynamic=maxDynamic;this.playerReserve=Math.max(0,Math.min(maxDynamic-1,playerReserve));this.onDamage=onDamage;this.onDetach=onDetach;this.onCollapse=onCollapse;this.onFreeze=onFreeze;this.onMove=onMove;
+  this.chunks=[];this.queryGrid=new SectionQueryGrid();this.chunks.querySegment=(a,b,r)=>this.queryGrid.query(a,b,r);this.buildings=new Map();this.dynamic=[];this.falling=new Set();this.wrecks=[];this.robotWrecks=new Map();this.queue=[];this.pending=new Set();this.groundContacts=new Set();this.terrainBodies=new Set();this.terrainSlopes=[];this.collisionlessFragments=0;this.clock=0;this.impacts=0;this.detached=0;this.collapses=0;this.maxDynamic=maxDynamic;this.playerReserve=Math.max(0,Math.min(maxDynamic-1,playerReserve));this.onDamage=onDamage;this.onDetach=onDetach;this.onCollapse=onCollapse;this.onFreeze=onFreeze;this.onMove=onMove;
   const ground=new CANNON.Body({mass:0,shape:new CANNON.Plane()});ground.quaternion.setFromEuler(-Math.PI/2,0,0);ground.position.y=.08;ground.aabbNeedsUpdate=true;this.world.addBody(ground);this.terrainBodies.add(ground);
  }
  addChunk(info){
@@ -19,7 +20,34 @@ export class DestructionWorld {
  addTerrainPyramid({x,z,height,slopeX,slopeZ}){this.terrainSlopes.push({x,z,height,slopeX,slopeZ});const rx=height/slopeX,rz=height/slopeZ,shape=new CANNON.ConvexPolyhedron({vertices:[new CANNON.Vec3(-rx,0,0),new CANNON.Vec3(0,0,rz),new CANNON.Vec3(rx,0,0),new CANNON.Vec3(0,0,-rz),new CANNON.Vec3(0,height,0)],faces:[[0,1,4],[1,2,4],[2,3,4],[3,0,4],[3,2,1,0]]}),body=new CANNON.Body({mass:0,shape});body.position.set(x,.08,z);body.aabbNeedsUpdate=true;this.world.addBody(body);this.terrainBodies.add(body);this.world.broadphase.markStaticsDirty();return body;}
  addDynamicBody(body){this.world.addBody(body);this.wrecks.push(body);return body;}
  addWreck({position,quaternion,size,mass=2400}){const body=new CANNON.Body({mass,shape:new CANNON.Box(new CANNON.Vec3(size[0]/2,size[1]/2,size[2]/2))});body.position.copy(position);body.quaternion.copy(quaternion);body.updateMassProperties();body.aabbNeedsUpdate=true;body.angularVelocity.set(.35,.1,-.20);body.velocity.set(0,-1.5,0);body.linearDamping=.12;body.angularDamping=.3;body.allowSleep=true;return this.addDynamicBody(body);}
- removeWreck(body){const index=this.wrecks.indexOf(body);if(index<0)return;this.world.removeBody(body);this.wrecks.splice(index,1);this.world.broadphase.markStaticsDirty();}
+ trackRobotWreck(body,onExpire,{grounded=false}={}){
+  if(!body||this.robotWrecks.has(body)||!this.wrecks.includes(body))return;
+  const track={groundAt:grounded?this.clock:null,onExpire,onContact:null};
+  track.onContact=({other,body:hitBody,contact})=>{
+   const support=other||hitBody;
+   const normalY=contact&&(contact.bi===body?-contact.ni.y:contact.ni.y);
+   if(track.groundAt===null&&(this.terrainBodies.has(support)||normalY>.45))track.groundAt=this.clock;
+  };
+  body.robotWreckTracked=true;
+  body.addEventListener('collide',track.onContact);
+  this.robotWrecks.set(body,track);
+ }
+ removeWreck(body){
+  const track=this.robotWrecks.get(body);
+  if(track){body.removeEventListener('collide',track.onContact);this.robotWrecks.delete(body);}
+  const index=this.wrecks.indexOf(body);
+  if(index<0)return;
+  this.world.removeBody(body);this.wrecks.splice(index,1);this.world.broadphase.markStaticsDirty();
+ }
+ expireRobotWrecks(){
+  for(const [body,track] of this.robotWrecks){
+   if(track.groundAt===null&&body.sleepState===CANNON.Body.SLEEPING)track.groundAt=this.clock;
+   if(track.groundAt===null||this.clock-track.groundAt<ROBOT_WRECK_SECONDS-1e-8)continue;
+   body.robotWreckExpired=true;
+   this.removeWreck(body);
+   track.onExpire?.();
+  }
+ }
  resizeCollider(c,factor){const shape=c.body.shapes[0];shape.halfExtents.set(c.size[0]*factor,c.size[1]*factor,c.size[2]*factor);shape.updateConvexPolyhedronRepresentation();shape.updateBoundingSphereRadius();c.body.updateBoundingRadius();c.body.aabbNeedsUpdate=true;}
  queueDetach(c,origin,strength=1,urgent=false){if(c.state!=='intact'||c.collisionDisabled)return;if(this.pending.has(c)){if(urgent){const i=this.queue.findIndex(t=>t.c===c);if(i>=0){const t=this.queue.splice(i,1)[0];t.urgent=urgent;t.origin={...origin};t.strength=strength;this.queue.unshift(t);}}return;}this.pending.add(c);const task={c,origin:{...origin},strength,urgent};if(urgent)this.queue.unshift(task);else this.queue.push(task);}
  detach(c,origin,strength,urgent=false){
@@ -96,9 +124,10 @@ export class DestructionWorld {
   if(this.dynamic.length||this.wrecks.some(b=>b.type===CANNON.Body.DYNAMIC))this.world.step(1/60,dt,4);
   for(const c of this.groundContacts)this.disableGroundedCollision(c);this.groundContacts.clear();
   this.stepReleasedDebris(dt);
+  this.expireRobotWrecks();
   for(const b of this.wrecks)if(b.type===CANNON.Body.DYNAMIC&&b.sleepState===CANNON.Body.SLEEPING){b.type=CANNON.Body.STATIC;b.mass=0;b.updateMassProperties();this.world.broadphase.markStaticsDirty();}
   for(const c of [...this.dynamic])if(c.body.sleepState===CANNON.Body.SLEEPING||(this.clock-c.born>18&&c.body.velocity.length()<.3))this.freeze(c);
  }
- reset(){this.queryGrid.reset();for(const b of this.wrecks)this.world.removeBody(b);this.wrecks=[];for(const c of this.chunks){c.state='intact';c.hasDetached=false;c.collisionDisabled=false;c.body.collisionFilterMask=-1;c.body.collisionResponse=true;c.hp=c.maxHp;c.scorch=0;c.body.type=CANNON.Body.STATIC;c.body.mass=0;c.body.position.set(c.x,c.y,c.z);c.body.quaternion.setFromEuler(0,c.yaw||0,0);c.body.velocity.setZero();c.body.angularVelocity.setZero();this.resizeCollider(c,.5);c.body.updateMassProperties();c.body.aabbNeedsUpdate=true;}this.dynamic=[];this.falling.clear();this.queue=[];this.pending.clear();this.groundContacts.clear();this.collisionlessFragments=0;this.clock=this.impacts=this.detached=this.collapses=0;for(const b of this.buildings.values()){b.failed.clear();b.destroyed.clear();b.collisionDisabled=false;}this.world.broadphase.markStaticsDirty();}
+ reset(){this.queryGrid.reset();for(const b of [...this.wrecks])this.removeWreck(b);for(const c of this.chunks){c.state='intact';c.hasDetached=false;c.collisionDisabled=false;c.body.collisionFilterMask=-1;c.body.collisionResponse=true;c.hp=c.maxHp;c.scorch=0;c.body.type=CANNON.Body.STATIC;c.body.mass=0;c.body.position.set(c.x,c.y,c.z);c.body.quaternion.setFromEuler(0,c.yaw||0,0);c.body.velocity.setZero();c.body.angularVelocity.setZero();this.resizeCollider(c,.5);c.body.updateMassProperties();c.body.aabbNeedsUpdate=true;}this.dynamic=[];this.falling.clear();this.queue=[];this.pending.clear();this.groundContacts.clear();this.collisionlessFragments=0;this.clock=this.impacts=this.detached=this.collapses=0;for(const b of this.buildings.values()){b.failed.clear();b.destroyed.clear();b.collisionDisabled=false;}this.world.broadphase.markStaticsDirty();}
  stats(){return{fallingFragments:this.falling.size,collisionlessBuildings:[...this.buildings.values()].filter(b=>b.collisionDisabled).length,buildingCollisionReleaseFraction:BUILDING_COLLISION_RELEASE_FRACTION,collisionlessFragments:this.collisionlessFragments,nonRobotDamageMultiplier:NON_ROBOT_BUILDING_DAMAGE_MULTIPLIER,robotDamageMultiplier:1,impacts:this.impacts,detached:this.detached,collapses:this.collapses,activeBodies:this.dynamic.length+this.wrecks.filter(b=>b.type===CANNON.Body.DYNAMIC).length,queued:this.queue.length,seconds:this.clock,playerReserve:this.playerReserve,totalChunks:this.chunks.length};}
 }

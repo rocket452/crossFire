@@ -33,9 +33,9 @@ export class PortalHero {
  }
  tracePoint(trace,t){return trace.from.clone().lerp(trace.to,t).addScaledVector(UP,Math.sin(Math.PI*t)*trace.arc);}
  openPortal(kind,position,normal,radius){
-  if(this.portals.length>=12)return null;const group=new THREE.Group();group.position.copy(position);group.quaternion.setFromUnitVectors(FORWARD,normal.clone().normalize());this.scene.add(group);const spin=new THREE.Group();group.add(spin);const outer=new THREE.Mesh(this.ringGeometry,this.ringMaterial),inner=new THREE.Mesh(this.ringGeometry,this.innerMaterial),disc=new THREE.Mesh(this.discGeometry,this.discMaterial);inner.scale.setScalar(.83);inner.position.z=.025;spin.add(outer,inner);group.add(disc);
+  if(this.portals.length>=12)return null;const group=new THREE.Group();group.position.copy(position);group.quaternion.setFromUnitVectors(FORWARD,normal.clone().normalize());this.scene.add(group);const spin=new THREE.Group();group.add(spin);const outer=new THREE.Mesh(this.ringGeometry,this.ringMaterial),inner=new THREE.Mesh(this.ringGeometry,this.innerMaterial),disc=new THREE.Mesh(this.discGeometry,this.discMaterial);inner.scale.setScalar(.83);inner.position.z=.025;spin.add(outer,inner);group.add(disc);disc.visible=kind!=='transport-preview';
   const ticks=new THREE.InstancedMesh(this.tickGeometry,this.ringMaterial,6);for(let i=0;i<6;i++){const a=i*Math.PI/3;this.dummy.position.set(Math.cos(a)*.87,Math.sin(a)*.87,.04);this.dummy.rotation.set(0,0,a);this.dummy.scale.setScalar(1);this.dummy.updateMatrix();ticks.setMatrixAt(i,this.dummy.matrix);}spin.add(ticks);
-  const p={id:'rift-'+(++this.sequence),kind,position:position.clone(),normal:normal.clone(),radius,createdAt:this.time,expiresAt:this.time+(kind.startsWith('travel-')?1.5:5),group,spin,ticks,shotClock:0};if(kind==='attack'){p.energy=this.portalEnergy.create(group);this.portalEnergy.update(p.energy,0,0);}this.portals.push(p);this.portalsOpened++;this.emit(position,10,radius*.7);return p;
+  const p={id:'rift-'+(++this.sequence),kind,position:position.clone(),normal:normal.clone(),radius,createdAt:this.time,expiresAt:this.time+(kind.startsWith('travel-')?1.5:5),group,spin,disc,ticks,shotClock:0};if(kind==='attack'){p.energy=this.portalEnergy.create(group);this.portalEnergy.update(p.energy,0,0);}this.portals.push(p);this.portalsOpened++;this.emit(position,10,radius*.7);return p;
  }
  emit(position,count,spread=1){for(let i=0;i<count;i++){if(this.sparks.length>=120)this.sparks.shift();const a=i*2.399+this.sequence;this.sparks.push({p:position.clone(),v:new THREE.Vector3(Math.cos(a)*spread,Math.sin(a*1.7)*spread,Math.sin(a)*spread),life:.35+(i%4)*.1,max:.65});}}
  startTravel(){
@@ -65,10 +65,10 @@ export class PortalHero {
   }
  }
  redirect(projectile,from,to){
-  const pair=this.pair;if(this.enabled===false||!pair||this.time>=pair.entry.expiresAt||this.time-pair.entry.createdAt<.2||projectile.riftPair===pair.entry.id)return null;
+  const pair=this.pair;if(this.enabled===false||!pair||this.time>=pair.entry.expiresAt||this.time<(pair.activeAt??pair.entry.createdAt+.2)||projectile.riftPair===pair.entry.id)return null;
   const p=pair.entry,a=from.clone().sub(p.position).dot(p.normal),b=to.clone().sub(p.position).dot(p.normal);if(a*b>0||Math.abs(a-b)<1e-9)return null;const t=a/(a-b);if(t<0||t>1)return null;const crossing=from.clone().lerp(to,t);if(crossing.distanceTo(p.position)>p.radius)return null;
   if(this.traceThreat(from,crossing,{owner:projectile.owner||'siege-walker'})?.t<.999)return null;
-  const incoming=to.clone().sub(from).normalize(),rotation=new THREE.Quaternion().setFromUnitVectors(p.normal.clone().multiplyScalar(a>=0?-1:1),pair.exit.normal),direction=incoming.applyQuaternion(rotation),position=pair.exit.position.clone().addScaledVector(UP,pair.exit.radius*.65).addScaledVector(pair.exit.normal,1.2);projectile.riftPair=p.id;this.redirected++;this.addTrace('projectile',crossing,position,0);return{position,direction};
+  const incoming=to.clone().sub(from).normalize(),rotation=new THREE.Quaternion().setFromUnitVectors(p.normal.clone().multiplyScalar(a>=0?-1:1),pair.exit.normal),direction=incoming.applyQuaternion(rotation),position=pair.exit.position.clone().addScaledVector(UP,pair.playerPlaced?0:pair.exit.radius*.65).addScaledVector(pair.exit.normal,1.2);projectile.riftPair=p.id;this.redirected++;this.addTrace('projectile',crossing,position,0);return{position,direction};
  }
  receiveEyeHit(){if(this.active)this.player.hurt.hit();}
  spawnBolt(from,target,power){

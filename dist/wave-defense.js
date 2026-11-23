@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=386';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=392';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
@@ -60,7 +60,8 @@ const relayFlashSeconds=.24;
 const walkerRelayCloseRange=55;
 const formations=[[4,0],[0,4],[2,2]];
 export const WAVE_DEFENSE_INTERVAL=15;
-const WAVE_INTERMISSIONS=[15,7.5];
+const WAVE_INTERMISSIONS=[20,12.5];
+const BASTION_VICTORY_DELAY=5;
 const formationSize=formations.reduce((sum,[ground])=>sum+ground,0)*3;
 export const DEFENSE_UPGRADES=[
  {id:'chain',hero:'volt',title:'Chain lightning',detail:'Primary attacks arc to one additional nearby enemy.'},
@@ -87,6 +88,7 @@ export class WaveDefense extends MissionEnemyWaves {
   this.relayFlash=0;
   this.rocket.reset();
   this.launchElapsed=0;
+  this.victoryRemaining=null;
   this.wave=1;this.group=0;this.remaining=0;this.phase='waiting';
   this.bruisersLaunched=0;this.dronesLaunched=0;
   this.upgradePending=false;this.upgrades=new Set();
@@ -221,7 +223,11 @@ export class WaveDefense extends MissionEnemyWaves {
   if(this.ended)return;
   if(this.wave===3){
    if(this.phase==='reinforcements'){
-    if(this.options.finalBossDefeated())this.finish(true);
+    if(this.options.finalBossDefeated()){
+     if(this.victoryRemaining===null)this.victoryRemaining=BASTION_VICTORY_DELAY;
+     else this.victoryRemaining=Math.max(0,this.victoryRemaining-dt);
+     if(this.victoryRemaining<=1e-8)this.finish(true);
+    }
    }else if(this.walker.dead){
     if(this.phase!=='launching'){
      this.phase='launching';

@@ -33,9 +33,9 @@ const training={
    ['Jump','Space','Jump'],
    ['Rift bolt','Left click or F','Bolt'],
    ['Blink / return','Right click or G','Blink'],
-   ['Redirect projectiles','E','Redirect']
+   ['Place redirect entrance, then exit','E','Redirect']
   ],
-  bonus:'Set a redirect portal in the path of incoming fire. While a return portal is open, the redirect exit uses that position.'
+  bonus:'Place the entrance in the path of incoming fire. Move and aim before placing the exit to send shots in that direction.'
  },
  ninja:{
   tip:'Throw smoke at civilians crossing open streets or waiting at the pad. Allies inside the dome are protected from damage.',

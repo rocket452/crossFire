@@ -33,3 +33,33 @@ let blocked=0;firing.traceProjectile=(a,z)=>({barrier:{onHit:()=>blocked++},poin
 b.projectiles.reset();b.state.enter('barrage');p.position.set(-30,0,-30);const center=new THREE.Vector3(-30,1.3,-30),g=b.projectiles.spawn(center.clone().add(new THREE.Vector3(3.1,0,0)),center.clone().add(new THREE.Vector3(5,0,0)),'gatling');b.projectiles.checkPlayer(p,p.position);b.projectiles.checkPlayer(p,p.position);assert(g.grazed);assert.equal(b.state.grazes,1);const hitOrb=b.projectiles.spawn(new THREE.Vector3(-30,1.3,-40),new THREE.Vector3(-30,1.3,-20),'gatling');hitOrb.previous.set(-30,1.3,-40);hitOrb.position.set(-30,1.3,-20);b.projectiles.checkPlayer(p,p.position);assert.equal(b.state.hitsTaken,1);
 b.reset();b.state.enter('windup');b.state.enter('pulse');b.pulseWarningElapsed=config.pulse.proximityWindup;b.addWave(1);b.waves[0].age=.4;const cp=config.core.locations[b.state.coreIndex].position,angle=Math.atan2(cp[0],cp[2]),bodyPlayer={position:new THREE.Vector3(Math.sin(angle)*6,9.6,Math.cos(angle)*6),motion:{mode:'wall',support:{building:'bastion'},normal:{x:0,y:0,z:1}}};b.checkWaves(bodyPlayer,bodyPlayer.position);assert(b.state.gapBonus);
 console.log('PASS Gatling-only encounter, paced 200-shot twin direct/lead stream, speed, safe corridor, spinning six-barrel model/recoil, animated muzzle, destructible arms/weapons, cover impacts, permanent weak points, interrupt, graze cap, gap and reset.',firing.model.art.stats);
+
+const staged=create(),impactStages=[];
+staged.onDeathBlast=(point,options)=>impactStages.push({point,options});
+staged.state.enter('windup');
+staged.state.patterns=['beam-wall'];
+staged.state.enter('barrage');
+staged.model.animate(1,0,p.position,false,staged.state);
+assert.equal(staged.model.art.spinSpeed,0,'laser wall does not wind up the Gatlings');
+
+staged.state.patterns=['gatling'];
+staged.state.enter('barrage');
+staged.projectiles.beginBarrage();
+staged.player=p;
+staged.model.art.gunDirection=()=>new THREE.Vector3(0,-1,0);
+staged.projectiles.fire(staged.projectiles.plan[0]);
+assert.equal(staged.projectiles.emitted,2,'off-axis barrels still fire along their own aim');
+assert.equal(staged.projectiles.offAimShots,2);
+
+staged.defeat();staged.defeat();
+assert(!staged.combatUnit.alive&&staged.combatUnit.shapes.length===0);
+assert.equal(staged.projectiles.orbs.length,0);
+for(let i=0;i<300;i++)staged.updateWorld(1/60,i/60,p);
+assert(staged.model.deck.position.y<13&&staged.model.deck.rotation.x>.6);
+assert.equal(impactStages.length,6);
+assert.equal(impactStages.filter(hit=>hit.options.ground).length,1);
+staged.reset();
+assert.equal(staged.model.deck.position.y,18);
+assert.equal(staged.model.deck.rotation.x,0);
+assert(!staged.dead);
+console.log('PASS separate attack cues and Gatling fire under aim error; staged Bastion collapse stops all attacks and resets.');

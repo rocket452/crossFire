@@ -6,7 +6,7 @@ import {ShieldShake,SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12'
 import {advanceVioletFlight,VIOLET_TUNING} from './violet-flight.js?v=387';
 import {RescuePolicy,interceptPoint} from './hero-defense.js?v=evacuation-57';
 
-import {VioletFlightPose} from './violet-flight-pose.js?v=390';
+import {VioletFlightPose} from './violet-flight-pose.js?v=392';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 export class VioletHero {
  constructor(scene,gltf,spec,{characterModel=null,getRobot,traceOrb,onOrbHit,onPowerHit=()=>0,redirect=()=>null,onEvent=()=>{},buildings=[],getMissileTarget=()=>null,claimMissile=()=>{}}){

@@ -258,9 +258,9 @@ export class SiegeWalker {
   const angle=this.wrecks.length*2.399,dx=center.x-this.root.position.x,dz=center.z-this.root.position.z,length=Math.hypot(dx,dz);body.velocity.set(length>.5?dx/length*3.4:Math.cos(angle)*2.4,2.8,length>.5?dz/length*3.4:Math.sin(angle)*2.4);body.angularVelocity.set(Math.sin(angle)*.8,.35,Math.cos(angle)*.8);mesh.material.color.multiplyScalar(.48);if(mesh.material.emissive)mesh.material.emissiveIntensity=0;
   const wreck={name,mesh,group,body,size:box.size.toArray(),half:{x:box.size.x/2,y:box.size.y/2,z:box.size.z/2}};this.wrecks.push(wreck);this.onWreck(wreck);return wreck;
  }
- syncWrecks(){for(const w of this.wrecks){w.group.position.copy(w.body.position);w.group.quaternion.copy(w.body.quaternion);}}
+ syncWrecks(){for(const w of this.wrecks)if(!w.body.robotWreckExpired){w.group.position.copy(w.body.position);w.group.quaternion.copy(w.body.quaternion);}}
  shapes(){
-  if(this.broken)return this.wrecks.map(w=>({center:{...w.body.position},half:w.half,rotation:{...w.body.quaternion}}));
+  if(this.broken)return this.wrecks.filter(w=>!w.body.robotWreckExpired).map(w=>({center:{...w.body.position},half:w.half,rotation:{...w.body.quaternion}}));
   this.root.updateMatrixWorld(true);const result=[];
   for(const [name,mesh]of Object.entries(this.meshes)){
    if(name==='reactor'||name==='visor'||!this.isPartAvailable(name))continue;

@@ -47,20 +47,20 @@ export class VioletFlightPose {
  }
  applyVisual(root,visual,time=0){
   visual.quaternion.copy(root.getWorldQuaternion(new THREE.Quaternion()).invert()).multiply(this.orientation);
-  const rumble=this.flight;
-  visual.rotateX(rumble*(Math.sin(time*20)*.012+Math.sin(time*31)*.006));
-  visual.rotateZ(rumble*(Math.sin(time*16)*.021+Math.sin(time*27)*.009));
-  visual.position.y=1.5+rumble*(Math.sin(time*21)*.022+Math.sin(time*13)*.014);
+  const rumble=this.flight,hover=(1-this.flight)*(1-this.action);
+  visual.rotateX(Math.sin(time*1.9+.45)*.036*hover+rumble*(Math.sin(time*20)*.012+Math.sin(time*31)*.006));
+  visual.rotateZ(Math.sin(time*1.55)*.062*hover+rumble*(Math.sin(time*16)*.021+Math.sin(time*27)*.009));
+  visual.position.y=1.5+hover*(Math.sin(time*2.65)*.14+Math.sin(time*4.9)*.023)+rumble*(Math.sin(time*21)*.022+Math.sin(time*13)*.014);
  }
  pose(nodes,time){
   this.time=time;
   const f=this.flight,a=this.action,lerp=THREE.MathUtils.lerp;
   for(const[side,sign]of[['l',-1],['r',1]]){
-   const leading=side==='r',hover=-.06+Math.sin(time*1.3+sign)*.025;
-   nodes['upperarm_'+side].rotation.set(lerp(lerp(hover,leading?-2.97:-.30,f),-1.35,a),0,lerp(-sign*.10,-sign*.32,a));
-   nodes['forearm_'+side].rotation.set(lerp(lerp(-.16,leading?-.05:-1.0,f),-.15,a),0,0);
-   nodes['thigh_'+side].rotation.set(lerp(.04+Math.sin(time*1.5+sign)*.025,leading?-.05:.06,f),0,-sign*.025);
-   nodes['shin_'+side].rotation.set(lerp(.16+Math.sin(time*1.5+sign)*.025,leading?.035:.10,f),0,0);
+   const leading=side==='r',hover=-.12+Math.sin(time*2.65+sign*.62)*.14;
+   nodes['upperarm_'+side].rotation.set(lerp(lerp(hover,leading?-2.97:-.30,f),-1.35,a),0,lerp(-sign*(.15+Math.sin(time*2.1+sign)*.045*(1-f)),-sign*.32,a));
+   nodes['forearm_'+side].rotation.set(lerp(lerp(-.22+Math.sin(time*2.65+sign*.62-.75)*.09,leading?-.05:-1.0,f),-.15,a),0,0);
+   nodes['thigh_'+side].rotation.set(lerp(.07+Math.sin(time*2.65+sign)*.075,leading?-.05:.06,f),0,-sign*.025);
+   nodes['shin_'+side].rotation.set(lerp(.22+Math.sin(time*2.65+sign-.65)*.085,leading?.035:.10,f),0,0);
   }
   nodes.head.position.set(0,.70,0);nodes.head.quaternion.identity();
   nodes.chest.rotation.x=this.blocking?-.06:.015;
