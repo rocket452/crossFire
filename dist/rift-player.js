@@ -1,5 +1,5 @@
 import {Vector3,MathUtils,RingGeometry,MeshBasicMaterial,Mesh,DoubleSide} from './vendor/three.module.js';
-import {ManualHeroControls} from './manual-hero-controls.js?v=393';
+import {ManualHeroControls} from './manual-hero-controls.js?v=395';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 
 const UP=new Vector3(0,1,0);
