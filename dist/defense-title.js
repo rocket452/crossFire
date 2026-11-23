@@ -41,12 +41,20 @@ export class DefenseTitle {
   const target=boss.clone(),eye=new Vector3();
   if(shot%2===0){
    const angle=.45+this.time*.055;
-   eye.copy(boss).add(new Vector3(Math.sin(angle)*47,32,Math.cos(angle)*47));
+   const opening=shot===0;
+   const radius=opening?47/Math.min(1,Math.max(.6,camera.aspect+.25)):47;
+   eye.copy(boss).add(new Vector3(Math.sin(angle)*radius,opening?40:32,Math.cos(angle)*radius));
+   if(opening){
+    const violet=heroes[1].root.position.clone().add(new Vector3(0,1.4,0));
+    target.lerp(violet,.32);
+   }
   }else{
    const p=heroes[(shot-1)/2].root.position.clone();p.y+=1.65;
    const away=p.clone().sub(boss);away.y=0;away.normalize();
-   eye.copy(p).addScaledVector(away,6).add(new Vector3(away.z*2,2.2,-away.x*2));
-   target.copy(p).lerp(boss,.38);
+   const followsViolet=shot===3;
+   eye.copy(p).addScaledVector(away,followsViolet?9:6)
+    .add(new Vector3(away.z*2,followsViolet?4.6:2.2,-away.x*2));
+   target.copy(p).lerp(boss,followsViolet?.12:.38);
    const hit=this.obstruction(p,eye);
    if(hit)eye.lerpVectors(p,hit.point,.85);
   }
