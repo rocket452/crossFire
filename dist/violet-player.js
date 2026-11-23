@@ -40,12 +40,13 @@ export class VioletPlayer extends ManualHeroControls {
   this.frame();const eye=this.camera.position,dir=this.camera.getWorldDirection(new Vector3()),end=eye.clone().addScaledVector(dir,200);
   const hit=this.hero.traceOrb(eye,end);return hit?new Vector3().copy(hit.point):end;
  }
- move(dt){
+ move(dt,shielding=false){
   const h=this.hero,p=h.root.position,k=this.keys;
   this.carryDeck(p);
   const f=Number(k.has('KeyW'))-Number(k.has('KeyS'))+this.stick.value.y,r=Number(k.has('KeyD'))-Number(k.has('KeyA'))+this.stick.value.x;
-  const desired=new Vector3(Math.sin(this.yaw)*f-Math.cos(this.yaw)*r,Number(k.has('Space'))-Number(k.has('ShiftLeft')||k.has('ShiftRight')),Math.cos(this.yaw)*f+Math.sin(this.yaw)*r).clampLength(0,1).multiplyScalar(VIOLET_TUNING.defenseSpeed);
-  h.velocity.lerp(desired,1-Math.exp(-5*dt));
+  const speed=VIOLET_TUNING.defenseSpeed*(shielding?.5:1);
+  const desired=new Vector3(Math.sin(this.yaw)*f-Math.cos(this.yaw)*r,Number(k.has('Space'))-Number(k.has('ShiftLeft')||k.has('ShiftRight')),Math.cos(this.yaw)*f+Math.sin(this.yaw)*r).clampLength(0,1).multiplyScalar(speed);
+  h.velocity.lerp(desired,1-Math.exp(-5*dt)).clampLength(0,speed);
   for(const axis of ['x','z','y']){
    const next=p.clone();next[axis]+=h.velocity[axis]*dt;
    next.x=MathUtils.clamp(next.x,this.bounds.minX,this.bounds.maxX);next.z=MathUtils.clamp(next.z,this.bounds.minZ,this.bounds.maxZ);
@@ -72,8 +73,8 @@ export class VioletPlayer extends ManualHeroControls {
   this.beamTap=false;
   const pulse=this.pulseTap;this.pulseTap=false;
   if(c.remaining>0){h.updatePowerBeam(dt,time,null,this.aim());this.status();return;}
-  this.move(dt);
   const shielding=(this.keys.has('Shield')||this.keys.has('KeyG'))&&c.overloadRemaining<=0&&h.shieldEnergy>0;
+  this.move(dt,shielding);
   h.mode=shielding?'blocking':'patrol';h.root.rotation.set(0,this.yaw,0);
   h.shieldDeploy=MathUtils.damp(h.shieldDeploy,shielding?1:0,12,dt);h.shield.visible=h.shieldDeploy>.015;
   const center=h.root.position.clone();center.y+=1.5;
