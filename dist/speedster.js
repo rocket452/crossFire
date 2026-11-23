@@ -210,7 +210,7 @@ export class Speedster {
   if(this.active)this.hurt.applyPose();
   this.lookPose.update(dt,{root:this.root,normal:b.normal,direction:this.aimDirection(),character:this.character,nodes:this.nodes,enabled:this.active&&!this.dash.active});
  }
- receiveEyeHit(){if(this.dash.active)return;this.eyeHits=(this.eyeHits||0)+1;this.eyeHitSeconds=.32;if(this.active)this.hurt.hit();}
+ receiveEyeHit(point,power){if(this.dash.active)return;if(this.onLiberationHit?.(power)===false)return false;this.eyeHits=(this.eyeHits||0)+1;this.eyeHitSeconds=.32;if(this.active)this.hurt.hit();}
  cameraFocus(){
   const wall=this.motion.mode==='wall',target=this.root.position.clone();
   target.y+=wall?.65:1.65;

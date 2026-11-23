@@ -61,10 +61,10 @@ export function evacuationTeam(lead,current){
 }
 
 export class EvacuationBriefing {
- constructor({inputMode,onStart,combatOnly=false,defenseMode=false}){
+ constructor({inputMode,onStart,combatOnly=false,defenseMode=false,liberationMode=false}){
   this.inputMode=inputMode;
   this.onStart=onStart;
-  this.defenseMode=defenseMode;this.combatOnly=combatOnly;
+  this.liberationMode=liberationMode;this.defenseMode=defenseMode;this.combatOnly=combatOnly;
   this.pending=true;
   this.dialog=document.createElement('dialog');
   this.dialog.className='evac-briefing';
@@ -90,7 +90,7 @@ export class EvacuationBriefing {
  show(step){
   this.step=step;
   const title={
-   objective:this.defenseMode?'Wave Defense':this.combatOnly?'Mission 1':'Civilian Evacuation',
+   objective:this.liberationMode?'City Liberation':this.defenseMode?'Wave Defense':this.combatOnly?'Mission 1':'Civilian Evacuation',
    choose:'Choose your hero',
    tutorial:HEROES.find(hero=>hero.id===this.hero)?.name
   }[step];
@@ -119,6 +119,9 @@ export class EvacuationBriefing {
   this.dialog.querySelector('h2').focus();
  }
  objective(){
+  if(this.liberationMode)return `<p class="evac-briefing-lead">Clear two occupied districts and defeat the Siege Walker and Bastion.</p>
+   <ul class="evac-objectives"><li>Hunt Bruisers and drones for XP and credits. Each level lets you choose an upgrade.</li><li>Spend credits to heal or reroll your choices. Your build carries into the next district.</li><li>If your hero falls, the run ends.</li></ul>
+   <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
   if(this.defenseMode)return `<p class="evac-briefing-lead">Protect the evacuation rocket while it prepares for liftoff.</p>
    <ul class="evac-objectives"><li>Clear the first two waves and defeat the Siege Walker to launch the rocket.</li><li>Enemies engage nearby heroes. Choose an upgrade between waves. Defeat the Bastion if reinforcements arrive.</li><li>If the relay falls, the mission ends.</li></ul>
    <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
