@@ -9,6 +9,7 @@ const facade={type:'wall',building:'tower',state:'intact',size:[10,72,.4],body:{
 const roof={type:'slab',building:'tower',state:'intact',size:[10,.2,10],body:{position:point(0,71.9,0)}};
 const sections=[facade,roof];
 const options={
+ buildings:[building],
  trace:(from,to,radius)=>traceImpact(from,to,{sections,ground:false,radius}),
  getBuilding:id=>id===building.id?building:null,
  roofBelow:(x,z,top,bottom)=>traceImpact(point(x,top,z),point(x,bottom,z),{
@@ -31,9 +32,25 @@ const farStreet=point(0,.18,-115.75),farCamera=point(0,.48,-123.75);
 const farRoof=riftRoofTarget(farStreet,farCamera,aim,options);
 assert(farRoof,'an eligible rooftop can be reached from 112 m away');
 assert.equal(farRoof.landing.z-farStreet.z,112);
-assert.equal(riftRoofTarget(farStreet.clone().setZ(-115.76),farCamera,aim,options),null,'roof beyond 112 m');
+let outOfRange=false;
+assert.equal(riftRoofTarget(farStreet.clone().setZ(-115.76),farCamera,aim,{
+ ...options,onOutOfRange:()=>{outOfRange=true;}
+}),null,'roof beyond 112 m');
+assert(outOfRange,'a visible safe roof outside Blink range gives HUD feedback');
 assert.equal(riftRoofTarget(point(0,-20,-23),camera,aim,options),null,'vertical limit');
 assert.equal(riftRoofTarget(street,camera,aim,{...options,isClear:()=>false}),null,'blocked arrival');
+
+// Looking from another rooftop through a seam in the modular upper facade.
+const roofFeet=point(0,70,-64),roofCamera=point(0,69,-71),across=point(0,69,18);
+const sidePanels=[-3,3].map(x=>({...facade,collisionHalf:undefined,size:[2,72,.4],body:{position:point(x,36,-5)}}));
+const tracePanels=(start,end,radius)=>traceImpact(start,end,{sections:[...sidePanels,roof],ground:false,radius});
+assert.equal(tracePanels(roofCamera,across,0),null);
+const acrossRoof=riftRoofTarget(roofFeet,roofCamera,across,{...options,trace:tracePanels});
+assert(acrossRoof&&Math.abs(acrossRoof.landing.y-72.08)<1e-6,'upper facade seam still selects the rooftop across the street');
+const cover={...facade,building:'foreground',body:{position:point(0,36,-40)}};
+assert.equal(riftRoofTarget(roofFeet,roofCamera,across,{
+ ...options,trace:(start,end,radius)=>traceImpact(start,end,{sections:[cover,...sidePanels,roof],ground:false,radius})
+}),null,'foreground cover blocks silhouette targeting');
 roof.state='detached';
 assert.equal(riftRoofTarget(street,camera,aim,options),null,'a destroyed roof has no indicator');
 

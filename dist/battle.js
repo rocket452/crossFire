@@ -1,4 +1,4 @@
-import {RiftPlayer} from './rift-player.js?v=393';
+import {RiftPlayer} from './rift-player.js?v=394';
 import {VioletPlayer} from './violet-player.js?v=393';
 import {DefenseTitle} from './defense-title.js?v=386';
 import {kageDashCanFinish} from './kage-attacks.js?v=393';
@@ -854,7 +854,7 @@ if(defenseMode){
   paused:()=>paused||missionRaiders.ended||missionRaiders.upgradePending
  };
  hero.player=new VioletPlayer(hero,{...manualOptions,onPulse:violetBarrierPulse});
- portalHero.player=new RiftPlayer(portalHero,{...manualOptions,getBuilding:id=>buildingRecords.get(id),roofBelow:(x,z,top,bottom)=>{
+ portalHero.player=new RiftPlayer(portalHero,{...manualOptions,buildings:layout.buildings,getBuilding:id=>buildingRecords.get(id),roofBelow:(x,z,top,bottom)=>{
   const a={x,y:top,z},b={x,y:bottom,z};
   const sections=physics.chunks.querySegment(a,b,0).filter(c=>c.type==='slab'&&c.state==='intact'&&!c.hasDetached);
   return traceImpact(a,b,{sections,ground:false,radius:0});
