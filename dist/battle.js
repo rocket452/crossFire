@@ -1,5 +1,5 @@
 import {RiftPlayer} from './rift-player.js?v=drone-decks-385';
-import {VioletPlayer} from './violet-player.js?v=387';
+import {VioletPlayer} from './violet-player.js?v=388';
 import {DefenseTitle} from './defense-title.js?v=386';
 import {kageDashCanFinish} from './kage-attacks.js?v=384';
 import {NINJA} from './ninja-motion.js?v=drone-decks-385';
@@ -49,7 +49,7 @@ import {MissionEnemyWaves} from './mission-enemy-waves.js?v=386';
 import {EvacRaiderWaves} from './evac-raider-waves.js?v=wave-clear-382';
 import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-approach.js?v=340';
 import {MochiHero,MOCHI} from './mochi-hero.js?v=overall-performance-238';
-import {VOLT_STUN,VIOLET_BEAM,VIOLET_ORB,VIOLET_PULSE} from './hero-powers.js?v=386';
+import {VOLT_STUN,VIOLET_BEAM,VIOLET_ORB,VIOLET_PULSE} from './hero-powers.js?v=388';
 import {RobotStunEffect} from './hero-power-effects.js?v=mochi-56';
 import {EvacuationScene,districtHeroUnits} from './evacuation.js?v=mission-one-325';
 import * as THREE from 'three';
@@ -63,7 +63,7 @@ import {traceImpact,UnitDamage} from './combat-collision.js?v=evac-performance-2
 import {SiegeWalker} from './siege-walker.js?v=386';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=hero-hurt-118';
-import {VioletHero} from './violet-hero.js?v=387';
+import {VioletHero} from './violet-hero.js?v=388';
 import {Speedster} from './speedster.js?v=386';
 import {RobotMissiles,WALKER_SALVO_SIZE} from './robot-missiles.js?v=drone-decks-385';
 import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';

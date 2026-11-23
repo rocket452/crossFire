@@ -1,5 +1,5 @@
 export const VOLT_STUN=Object.freeze({cost:50,cooldown:15,duration:1,damage:450,range:90});
-export const VIOLET_BEAM=Object.freeze({required:1200,chargeDuration:2,duration:4,damagePerSecond:420,buildingDamageScale:1,originOffset:.55});
+export const VIOLET_BEAM=Object.freeze({required:1200,chargeDuration:2,duration:4,damagePerSecond:840,range:400,buildingDamageScale:1,originOffset:.55});
 export const VIOLET_OVERLOAD=Object.freeze({extraDamage:600,recoverySeconds:2,burstSeconds:.65});
 export const VIOLET_ORB=Object.freeze({minDamage:55,maxDamage:350,minRadius:2.2,maxRadius:7,minBuildingDamage:20,maxBuildingDamage:95,interceptDamage:100,interceptRadius:2.2});
 export const VIOLET_SHIELD_CHARGE_RATE=2;

@@ -2,7 +2,7 @@ import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
 import {Vector3,MathUtils} from './vendor/three.module.js';
 import {ManualHeroControls} from './manual-hero-controls.js?v=drone-decks-385';
 import {SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
-import {VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_PULSE} from './hero-powers.js?v=386';
+import {VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_PULSE} from './hero-powers.js?v=388';
 import {VIOLET_TUNING} from './violet-flight.js?v=387';
 
 export class VioletPlayer extends ManualHeroControls {
@@ -36,8 +36,8 @@ export class VioletPlayer extends ManualHeroControls {
   if(document.pointerLockElement===this.canvas)document.exitPointerLock();
   this.clear();this.hurt.clear();this.cancelOrb();this.hero.mode='patrol';this.hero.shield.visible=false;this.hero.shieldDeploy=0;
  }
- aim(){
-  this.frame();const eye=this.camera.position,dir=this.camera.getWorldDirection(new Vector3()),end=eye.clone().addScaledVector(dir,200);
+ aim(range=200){
+  this.frame();const eye=this.camera.position,dir=this.camera.getWorldDirection(new Vector3()),end=eye.clone().addScaledVector(dir,range);
   const hit=this.hero.traceOrb(eye,end);return hit?new Vector3().copy(hit.point):end;
  }
  move(dt,shielding=false){
@@ -72,7 +72,7 @@ export class VioletPlayer extends ManualHeroControls {
   if(this.beamTap&&c.start())this.cancelOrb();
   this.beamTap=false;
   const pulse=this.pulseTap;this.pulseTap=false;
-  if(c.remaining>0){h.updatePowerBeam(dt,time,null,this.aim());this.status();return;}
+  if(c.remaining>0){h.updatePowerBeam(dt,time,null,this.aim(VIOLET_BEAM.range+this.cameraDistance));this.status();return;}
   const shielding=(this.keys.has('Shield')||this.keys.has('KeyG'))&&c.overloadRemaining<=0&&h.shieldEnergy>0;
   this.move(dt,shielding);
   h.mode=shielding?'blocking':'patrol';h.root.rotation.set(0,this.yaw,0);

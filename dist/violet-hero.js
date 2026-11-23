@@ -1,6 +1,6 @@
 import {VioletOrbEffects} from './violet-orb-effects.js?v=violet-charge-380';
 import * as THREE from './vendor/three.module.js';
-import {BarrierCapacitor,VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_ORB,VIOLET_SHIELD_CHARGE_RATE,violetOrbPower} from './hero-powers.js?v=386';
+import {BarrierCapacitor,VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_ORB,VIOLET_SHIELD_CHARGE_RATE,violetOrbPower} from './hero-powers.js?v=388';
 import {violetBeamEffect} from './hero-power-effects.js?v=powers-48';
 import {ShieldShake,SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
 import {advanceVioletFlight,VIOLET_TUNING} from './violet-flight.js?v=387';
@@ -47,7 +47,7 @@ export class VioletHero {
   this.updateOverloadEffect(dt);if(this.capacitor.overloadRemaining>0)this.capacitor.step(dt);const recovering=this.capacitor.overloadRemaining>0;if(recovering){this.threat=null;this.charging=false;this.chargeTime=this.defenseCharge=0;this.mode='overloaded';}else if(this.mode==='overloaded')this.mode='patrol';
   const targetRobot=this.getRobot();
   if(this.capacitor.remaining>0){if(targetRobot?.combatUnit?.alive){this.updatePowerBeam(dt,time,targetRobot);return;}this.capacitor.cancel();this.powerEffect.clear();this.mode='patrol';}
-  if(this.capacitor.ready&&!this.isShielding()&&!this.threat&&targetRobot?.combatUnit?.alive){const from=this.root.position.clone().add(new THREE.Vector3(0,1.5,0)),target=targetRobot.aimPoint(from),hit=this.traceOrb(from,target);if(hit?.unit===targetRobot.combatUnit&&this.capacitor.start()){this.charging=false;this.chargeTime=0;this.defenseCharge=0;this.threat=null;this.velocity.set(0,0,0);this.onEvent('Violet gathers absorbed barrier energy — force beam charging!');this.updatePowerBeam(dt,time,targetRobot);return;}}
+  if(this.capacitor.ready&&!this.isShielding()&&!this.threat&&targetRobot?.combatUnit?.alive){const from=this.root.position.clone().add(new THREE.Vector3(0,1.5,0)),target=targetRobot.aimPoint(from),hit=this.traceOrb(from,target);if(from.distanceToSquared(target)<=VIOLET_BEAM.range**2&&hit?.unit===targetRobot.combatUnit&&this.capacitor.start()){this.charging=false;this.chargeTime=0;this.defenseCharge=0;this.threat=null;this.velocity.set(0,0,0);this.onEvent('Violet gathers absorbed barrier energy — force beam charging!');this.updatePowerBeam(dt,time,targetRobot);return;}}
   const shake=this.shieldShake.step(dt);const robot=this.getRobot(),alive=!!robot?.combatUnit?.alive;this.hitGlow=Math.max(0,this.hitGlow-dt*2.3);
   this.attackCooldown=Math.max(0,this.attackCooldown-dt);this.defenseTarget=recovering?null:this.getMissileTarget(this.root.position);if(this.defenseTarget){this.charging=false;this.chargeTime=0;}
   if(this.threat&&alive&&this.shieldEnergy>0){
@@ -106,7 +106,13 @@ export class VioletHero {
   else for(const side of['l','r']){const aim=this.nodes.chest.worldToLocal(target.clone()).sub(this.nodes['upperarm_'+side].position).normalize();this.nodes['upperarm_'+side].quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),aim);this.nodes['forearm_'+side].rotation.set(0,0,0);}
   this.root.updateMatrixWorld(true);if(this.character)this.flightPose.applyCharacter(this.character,this.nodes,dt);
   if(charging&&this.character){const reach=THREE.MathUtils.smoothstep(progress,.55,1);for(const[side,sign]of[['L',-1],['R',1]]){const hand=this.root.localToWorld(new THREE.Vector3(sign*(.34-.12*progress),1.55+.25*reach+Math.sin(time*15+sign)*.025*progress,.45+.65*reach));this.character.arm(side,hand);}}
-  const left=this.character?this.character.hand('L'):this.nodes.forearm_l.getWorldPosition(new THREE.Vector3()),right=this.character?this.character.hand('R'):this.nodes.forearm_r.getWorldPosition(new THREE.Vector3()),hands=left.add(right).multiplyScalar(.5),forward=target.clone().sub(hands).normalize(),from=hands.clone().addScaledVector(forward,VIOLET_BEAM.originOffset),nearHit=this.traceOrb(hands,from),hit=nearHit||this.traceOrb(from,target),end=hit?new THREE.Vector3(hit.point.x,hit.point.y,hit.point.z):target;
+  const left=this.character?this.character.hand('L'):this.nodes.forearm_l.getWorldPosition(new THREE.Vector3());
+  const right=this.character?this.character.hand('R'):this.nodes.forearm_r.getWorldPosition(new THREE.Vector3());
+  const hands=left.add(right).multiplyScalar(.5),forward=target.clone().sub(hands).normalize();
+  const from=hands.clone().addScaledVector(forward,VIOLET_BEAM.originOffset);
+  const far=from.clone().addScaledVector(forward,Math.min(VIOLET_BEAM.range,Math.max(0,target.clone().sub(from).dot(forward))));
+  const nearHit=this.traceOrb(hands,from),hit=nearHit||this.traceOrb(from,far);
+  const end=hit?new THREE.Vector3().copy(hit.point):far;
   if(nearHit)from.copy(hands);
   if(hit&&damageSeconds>0)this.powerDamage+=this.onPowerHit(hit,end,VIOLET_BEAM.damagePerSecond*damageSeconds)||0;
   this.powerEffect.update({phase:charging?'charging':'firing',charge:charging?progress:1},from,end.clone().sub(from).normalize(),end,time);this.aura.position.copy(this.root.position).y+=1.5;this.aura.scale.setScalar(7.5);this.light.intensity=0;

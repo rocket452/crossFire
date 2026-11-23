@@ -11,8 +11,8 @@ function fixture(){
 for(const dt of[1/30,1/60,1/120,.075]){
  const {hero,events}=fixture(),anchor=hero.root.position.clone();let elapsed=0,firstPose=null,movedArms=false;
  while(elapsed<6-1e-8){hero.update(dt,elapsed+=dt);assert(hero.root.position.distanceTo(anchor)<1e-10);assert.equal(hero.velocity.length(),0);assert(!hero.isShielding());assert.equal(hero.shots,0);if(elapsed<2-1e-8){assert.equal(hero.mode,'force-charge');assert.equal(hero.powerDamage,0);assert(!hero.powerEffect.diagnostics().beamVisible&&hero.powerEffect.root.visible);const pose=hero.nodes.forearm_l.getWorldQuaternion(new THREE.Quaternion());if(!firstPose)firstPose=pose;else if(firstPose.angleTo(pose)>.05)movedArms=true;}if(hero.capacitor.remaining>0)assert(!hero.launch(new THREE.Vector3(),new THREE.Vector3(0,0,1)));}
- assert(movedArms,'charge changes the casting pose');assert(Math.abs(hero.powerDamage-1680)<1e-6,'two-second windup preserves all four seconds of 420 DPS');assert.equal(hero.capacitor.casts,1);assert(!hero.powerEffect.root.visible);assert.equal(events.filter(m=>m==='Violet releases the force beam!').length,1);
- console.log('PASS',dt,'stationary animated charge, no early beam/damage/shield/orbs, full 1680 damage, one firing event and clean completion');
+ assert(movedArms,'charge changes the casting pose');assert(Math.abs(hero.powerDamage-3360)<1e-6,'two-second windup preserves all four seconds of 840 DPS');assert.equal(hero.capacitor.casts,1);assert(!hero.powerEffect.root.visible);assert.equal(events.filter(m=>m==='Violet releases the force beam!').length,1);
+ console.log('PASS',dt,'stationary animated charge, no early beam/damage/shield/orbs, full 3360 damage, one firing event and clean completion');
 }
 for(const reason of['self-defense','target-death','deselect','reset']){
  const {hero,robot}=fixture();hero.update(.5,.5);assert.equal(hero.capacitor.phase,'charging');
@@ -20,4 +20,13 @@ for(const reason of['self-defense','target-death','deselect','reset']){
  else if(reason==='target-death'){robot.combatUnit.alive=false;hero.update(.1,.6);}
  else if(reason==='deselect')hero.setEnabled(false);else hero.reset();
  assert.equal(hero.capacitor.remaining,0);assert.equal(hero.capacitor.phase,'idle');assert.equal(hero.powerDamage,0);assert(!hero.powerEffect.root.visible);console.log('PASS charge cancellation:',reason);
+}
+
+{
+ const {hero}=fixture(),lengths=[];
+ hero.traceOrb=(from,to)=>{lengths.push(from.distanceTo(to));return null;};
+ assert(hero.capacitor.start());
+ hero.updatePowerBeam(2.1,2.1,null,new THREE.Vector3(0,24,600));
+ assert(Math.max(...lengths)>399.999&&Math.max(...lengths)<400.001);
+ console.log('PASS force beam reaches 400 m from its muzzle and cannot trace farther');
 }
