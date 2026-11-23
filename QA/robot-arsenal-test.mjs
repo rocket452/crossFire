@@ -17,3 +17,22 @@ for(const dt of [1/30,1/60,1/120,.075]){
 }
 assert(Math.abs(SHIELD_FORWARD_OFFSET-2.21)<1e-10);assert(Math.abs(SHIELD_FORWARD_OFFSET/1.7-1.3)<1e-10);const shake=new ShieldShake();shake.kick(30);let max=0;for(let i=0;i<120;i++){const p=shake.step(1/60);max=Math.max(max,Math.abs(p.x)+Math.abs(p.y));assert(Object.values(p).every(Number.isFinite));}assert(max>.02);assert(shake.strength<.00001);shake.kick(100);shake.kick(100);assert.equal(shake.strength,1);shake.reset();assert.equal(shake.strength,0);assert.equal(shake.impacts,0);
 console.log('PASS exact +30% shield offset, visible bounded hit shake, decay, repeated damage and reset');
+
+{
+ const arsenal=new RobotArsenal({plasma:true});
+ const walker={weapon:new BeamCycle(),stunRemaining:0,dead:false};
+ let salvos=0,missileTarget=true;
+ const pod={beginSalvo:()=>{salvos++;return true;},pending:0,missiles:[]};
+ const hasTarget=phase=>phase==='warning'&&missileTarget;
+ arsenal.update(5,walker,pod,null,hasTarget);
+ assert.equal(arsenal.phase,'warning','a distant rocket skips the beam and starts the missile warning');
+ arsenal.update(2,walker,pod,null,hasTarget);
+ assert.equal(salvos,1);
+ arsenal.reset();missileTarget=false;
+ arsenal.update(5,walker,pod,null,hasTarget);
+ assert.equal(arsenal.phase,'startup','no target waits for a legal attack without disabling intact weapons');
+ missileTarget=true;
+ arsenal.update(1/60,walker,pod,null,hasTarget);
+ assert.equal(arsenal.phase,'warning');
+ console.log('PASS Wave Defense skips ineligible weapons and resumes after an eligible target appears');
+}

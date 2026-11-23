@@ -42,10 +42,10 @@ export class HeroMinimap {
   if(data.exit)entries.push({...data.exit,kind:'exit',label:'Convoy evacuation exit'});
   if(data.dropship)entries.push({...data.dropship,id:'bastion-dropship',kind:'dropship',label:'Bastion dropship incoming'});
   if(data.helicopter)entries.push({...data.helicopter,id:'evac-helicopter',kind:'helicopter',label:'Evacuation helicopter'});
-  if(data.relay)entries.push({...data.relay,kind:'relay',label:'Central relay · defend this building'});
+  if(data.relay)entries.push({...data.relay,kind:'relay',label:'Evacuation rocket · protect the launch'});
   const live=new Set(entries.map(e=>e.id));for(const[id,m]of this.nodes)if(!live.has(id)){m.node.remove();this.nodes.delete(id);}
   for(const entry of entries){let marker=this.nodes.get(entry.id);if(!marker){marker=this.makeMarker(entry);this.nodes.set(entry.id,marker);}marker.entry=entry;marker.title.textContent=entry.label;marker.node.classList.toggle('new-wave',entry.kind==='enemy'&&waveEnemies.has(entry.id));marker.node.classList.toggle('targeted',entry.kind==='civilian'&&!!entry.targeted);marker.node.setAttribute('data-targeted',String(!!entry.targeted));}
-  this.root.setAttribute('aria-label',`Rotating hero minimap. ${people.length} civilians on the ground; ${enemies.length} enemies. Small yellow circles show civilian groups; flashing red circles warn of targeted groups; red diamonds show enemies; red crosshairs show impending plasma impacts; green H marks evacuation. Up follows the camera. Distant groups stay at the rim; arrows mark other distant units.${data.relay?' The magenta tower marks the central relay.':''}${latest?' Enemy wave incoming: '+latest.count+' Bruiser'+(latest.count===1?'':'s')+' from '+latest.edge+'.':''}`);
+  this.root.setAttribute('aria-label',`Rotating hero minimap. ${people.length} civilians on the ground; ${enemies.length} enemies. Small yellow circles show civilian groups; flashing red circles warn of targeted groups; red diamonds show enemies; red crosshairs show impending plasma impacts; green H marks evacuation. Up follows the camera. Distant groups stay at the rim; arrows mark other distant units.${data.relay?' The magenta rocket marks the launch pad.':''}${latest?' Enemy wave incoming: '+latest.count+' Bruiser'+(latest.count===1?'':'s')+' from '+latest.edge+'.':''}`);
  }
  makeMarker(entry){
   const node=svg('g',{'data-kind':entry.kind,'data-id':entry.id,class:'minimap-marker '+entry.kind},this.markers),title=svg('title',{},node);title.textContent=entry.label;
@@ -61,7 +61,7 @@ export class HeroMinimap {
   else if(entry.kind==='exit')svg('path',{d:'M-4 6V-7H6L2 -2H-4Z'},node);
   else if(entry.kind==='relay'){
    svg('circle',{r:12,fill:'#102831',stroke:'#ff73b6','stroke-width':2},node);
-   svg('path',{d:'M-7 7H7V4H4V-2H6V-8L3-6V-4H-3V-6L-6-8V-2H-4V4H-7Z',fill:'#ffc0df'},node);
+   svg('path',{d:'M0-9Q5-5 4 3L7 8 2 6 0 10-2 6-7 8-4 3Q-5-5 0-9Z',fill:'#ffc0df'},node);
   }
   else if(entry.kind==='ally')svg('circle',{r:2.6,class:'minimap-symbol'},node);
   else if(entry.kind==='dropship'){svg('circle',{r:14,fill:'none',stroke:'#ff9299','stroke-width':2},node);svg('circle',{r:11,fill:'#ff1836',stroke:'#650715','stroke-width':1.5},node);}

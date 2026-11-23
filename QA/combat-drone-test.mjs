@@ -153,3 +153,31 @@ for(const [motors,y,wall,velocity] of [
  assert(!f.events.includes('unit'),'30 m/s continuous lateral movement escapes initial fire');
  console.log('PASS continuous 30 m/s lateral evasion during live projectile flight');
 }
+
+{
+ const {drone,destroy}=fixture();
+ const {RunnerMotion}=await import(root+'runner-motion.js');
+ const body=new RunnerMotion(),deck=drone.deck;
+ body.getPlatforms=()=>deck.isActive()?[deck]:[];
+ body.reset({x:0,y:deck.body.position.y+4,z:0});
+ body.mode='air';
+ for(let i=0;i<60&&!body.platform;i++)body.step({player:true},1/60);
+ assert.equal(body.mode,'ground');
+ assert.equal(body.support,deck);
+ const local=body.platform.local.clone();
+ drone.body.position.set(5,drone.body.position.y+2,4);
+ drone.body.quaternion.setFromEuler(0,.45,0);
+ drone.sync();
+ body.step({player:true},1/60);
+ const moved=local.applyQuaternion(deck.body.quaternion).add(deck.body.position);
+ assert(moved.distanceTo(body.position)<.001,'standing hero rides the moving drone');
+ body.step({player:true,jump:true},1/60);
+ assert.equal(body.mode,'air');assert.equal(body.platform,null);assert(body.velocity.y>0);
+ body.reset({x:moved.x,y:moved.y+1,z:moved.z});body.mode='air';
+ for(let i=0;i<60&&!body.platform;i++)body.step({player:true},1/60);
+ assert.equal(body.support,deck);
+ destroy(0);
+ body.step({player:true},1/60);
+ assert.equal(body.mode,'air');assert.equal(body.platform,null);
+ console.log('PASS drone landing, translation and rotation support, jump, and release on engine failure');
+}

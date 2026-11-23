@@ -1,5 +1,5 @@
 import {Vector3,MathUtils} from './vendor/three.module.js';
-import {ManualHeroControls} from './manual-hero-controls.js?v=hero-framing-384';
+import {ManualHeroControls} from './manual-hero-controls.js?v=drone-decks-385';
 
 const UP=new Vector3(0,1,0);
 const RIFT={moveSpeed:14,jumpSpeed:10,blinkRange:28,returnWindow:4,blinkCooldown:2.5,portalDuration:5,portalCooldown:9,boltCooldown:.4,boltDamage:90};
@@ -24,7 +24,7 @@ export class RiftPlayer extends ManualHeroControls {
   hero.reset();
   if(respawn)hero.root.position.set(this.spawn.x,this.terrain(this.spawn.x,this.spawn.z)+.1,this.spawn.z);
   else hero.root.position.copy(position);
-  this.anchor=null;this.vertical=0;this.walking=false;this.grounded=true;
+  this.anchor=null;this.platform=null;this.vertical=0;this.walking=false;this.grounded=true;
   this.blinkCooldown=this.portalCooldown=0;hero.attackCooldown=0;
   this.hurt.reset();this.yaw=intro.yaw;this.pitch=.12;this.frame();this.lock();
  }
@@ -49,6 +49,7 @@ export class RiftPlayer extends ManualHeroControls {
  }
  move(dt){
   const keys=this.keys,position=this.hero.root.position;
+  this.carryDeck(position);
   const f=Number(keys.has('KeyW'))-Number(keys.has('KeyS'))+this.stick.value.y;
   const r=Number(keys.has('KeyD'))-Number(keys.has('KeyA'))+this.stick.value.x;
   const motion=new Vector3(Math.sin(this.yaw)*f-Math.cos(this.yaw)*r,0,Math.cos(this.yaw)*f+Math.sin(this.yaw)*r).clampLength(0,1);
@@ -58,9 +59,12 @@ export class RiftPlayer extends ManualHeroControls {
    if(position.distanceToSquared(next)<1e-9||this.sweep(position,next))continue;
    position.copy(next);this.walking=true;
   }
-  if(this.grounded&&this.taps.has('Space'))this.vertical=RIFT.jumpSpeed;
+  if(this.grounded&&this.taps.has('Space')){this.vertical=RIFT.jumpSpeed;this.platform=null;}
   this.vertical-=24*dt;
   const next=this.clamp(position.clone().addScaledVector(UP,this.vertical*dt));
+  if(this.vertical<=0&&this.landOnDeck(position,next)){
+   this.grounded=true;this.vertical=0;return;
+  }
   const hit=this.sweep(position,next);
   this.grounded=this.vertical<=0&&(!!hit||next.y<=this.terrain(next.x,next.z)+.11);
   if(hit||this.grounded)this.vertical=0;
@@ -88,7 +92,7 @@ export class RiftPlayer extends ManualHeroControls {
    this.anchor={feet:from,gate};
    hero.openPortal('travel-exit',to.clone().addScaledVector(UP,1.35),direction,1.35);
   }
-  this.vertical=0;this.grounded=false;
+  this.platform=null;this.vertical=0;this.grounded=false;
   hero.root.position.copy(to);hero.addTrace('hero',from,to);hero.emit(to.clone().addScaledVector(UP,1.2),18,3);hero.teleports++;
  }
  redirect(direction){

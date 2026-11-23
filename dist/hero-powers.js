@@ -1,7 +1,8 @@
 export const VOLT_STUN=Object.freeze({cost:50,cooldown:15,duration:1,damage:450,range:90});
 export const VIOLET_BEAM=Object.freeze({required:1200,chargeDuration:2,duration:4,damagePerSecond:420,originOffset:.55});
 export const VIOLET_OVERLOAD=Object.freeze({extraDamage:600,recoverySeconds:2,burstSeconds:.65});
-export const VIOLET_ORB=Object.freeze({minDamage:55,maxDamage:220,minRadius:2.2,maxRadius:7,interceptDamage:100,interceptRadius:2.2});
+export const VIOLET_ORB=Object.freeze({minDamage:55,maxDamage:350,minRadius:2.2,maxRadius:7,interceptDamage:100,interceptRadius:2.2});
+export const VIOLET_SHIELD_CHARGE_RATE=2;
 export const VIOLET_PULSE=Object.freeze({cost:180,radius:6,damage:35,stunSeconds:1.1});
 export function violetOrbPower(progress){
  const charge=Math.max(0,Math.min(1,progress));

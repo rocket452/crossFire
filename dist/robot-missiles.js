@@ -25,6 +25,13 @@ export class RobotMissiles {
   if(cyberpunk)exhaust.multiplyScalar(2.5);
   this.flameMaterial=new THREE.MeshBasicMaterial({color:exhaust,toneMapped:false});
   this.flameOffset=cyberpunk?-.84:-1.35;
+  this.tipOffset=new THREE.Box3().setFromObject(this.template).max.z;
+  this.tipGeometry=new THREE.SphereGeometry(.13,8,6);
+  this.tipMaterial=new THREE.MeshBasicMaterial({color:new THREE.Color('#ff4d65').multiplyScalar(3),toneMapped:false});
+  this.tipHaloMaterial=new THREE.MeshBasicMaterial({
+   color:'#ff234e',toneMapped:false,transparent:true,opacity:.23,
+   blending:THREE.AdditiveBlending,depthWrite:false
+  });
   this.reset();
  }
  reset(){for(const m of this.missiles||[])this.scene.remove(m.mesh);this.missiles=[];this.clock=0;this.cooldown=5.2;this.pending=0;this.launchClock=0;this.launched=0;this.salvos=0;this.intercepted=0;this.impacts=0;this.expired=0;this.byHero={violet:0,volt:0,solara:0,other:0};this.sequence=0;this.targetIndex=0;}
@@ -33,7 +40,17 @@ export class RobotMissiles {
   if(!this.canLaunch())return;
   const targets=this.getTargets().filter(u=>u.alive&&u.shapes?.length);if(!targets.length)return;
   const index=this.targetIndex++,target=targets[index%targets.length],muzzles=this.getMuzzles(),rail=(WALKER_SALVO_SIZE-this.pending)%muzzles.length,muzzle=muzzles[rail];if(!muzzle)return;
-  const mesh=this.template.clone(true);const parts=[];mesh.traverse(o=>{if(o.isMesh)parts.push(o);});for(const part of parts)projectileSilhouette(part,'#ffad54');mesh.position.copy(muzzle.position);const flame=new THREE.Mesh(this.flameGeometry,this.flameMaterial);flame.position.z=this.flameOffset;mesh.add(flame);this.scene.add(mesh);
+  const mesh=this.template.clone(true);const parts=[];mesh.traverse(o=>{if(o.isMesh)parts.push(o);});for(const part of parts)projectileSilhouette(part,'#ffad54');mesh.position.copy(muzzle.position);const flame=new THREE.Mesh(this.flameGeometry,this.flameMaterial);flame.position.z=this.flameOffset;mesh.add(flame);
+  if(Number.isFinite(this.tipOffset)){
+   const tip=new THREE.Mesh(this.tipGeometry,this.tipMaterial);
+   tip.name='Glowing missile tip';
+   tip.position.z=this.tipOffset;
+   const halo=new THREE.Mesh(this.tipGeometry,this.tipHaloMaterial);
+   halo.scale.setScalar(1.9);
+   tip.add(halo);
+   mesh.add(tip);
+  }
+  this.scene.add(mesh);
   const m={id:'siege-missile-'+(++this.sequence),alive:true,health:18,age:0,life:22,speed:MISSILE_SPEED,radius:.36,position:mesh.position,previous:mesh.position.clone(),direction:muzzle.direction.clone().normalize(),velocity:new THREE.Vector3(),origin:mesh.position.clone(),target,targetPoint:new THREE.Vector3().copy(target.shapes[0].center),mesh,flame,trail:0,claim:null,claimUntil:0};
   mesh.quaternion.setFromUnitVectors(this.forward,m.direction);
   this.missiles.push(m);this.launched++;this.onLaunch(m.position);return m;

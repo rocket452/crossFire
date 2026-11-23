@@ -1,4 +1,4 @@
-import {CombatDrone} from './combat-drone.js?v=enemy-range-366';
+import {CombatDrone} from './combat-drone.js?v=drone-decks-385';
 import {COMBAT_DRONE} from './combat-drone-config.js?v=enemy-range-366';
 import {AstraRonin} from './astra-ronin.js?v=hazard-red-355';
 import {Mireguard} from './mireguard.js?v=hazard-red-355';

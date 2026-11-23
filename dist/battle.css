@@ -212,5 +212,4 @@ dialog.defense-title[open]{display:flex;flex-direction:column;justify-content:sp
 body.defense-mobile-lock{overflow:hidden}
 .viewer.defense-mobile-fullscreen{position:fixed;inset:0;z-index:1000}
 .viewer.defense-mobile-fullscreen #viewport{width:100%}
-.violet-fullscreen{display:none}
-[data-input-mode=touch] .violet-fullscreen{display:block;position:absolute;pointer-events:auto;touch-action:manipulation;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));padding:6px 10px;border:1px solid #bca4ec;border-radius:5px;background:#231633d9;color:white}
+.violet-fullscreen{display:block;position:absolute;pointer-events:auto;touch-action:manipulation;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));padding:6px 10px;border:1px solid #bca4ec;border-radius:5px;background:#231633d9;color:white}

@@ -1,12 +1,12 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=wave-clear-382';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=drone-decks-385';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
 
-import {RELAY_TIERS,makeRelayTrim} from './relay-design.js?v=347';
+import {DefenseRocket,EVAC_ROCKET} from './defense-rocket.js?v=385';
 
-export const RELAY={id:'central-relay',name:'Central relay',...center,floors:24,footprint:20,tint:'#c83d78',asset:'relay',solidPaint:true};
+export const RELAY={id:'evacuation-rocket',name:'Evacuation rocket',...center};
 const mapScale=1.3**2*1.4;
 const mapX=x=>center.x+(x-center.x)*mapScale;
 const mapZ=z=>center.z+(z-center.z)*mapScale;
@@ -22,8 +22,8 @@ export const WAVE_DEFENSE_HERO_START=Object.freeze({
 });
 export const RELAY_INTRO=Object.freeze({
  yaw:Math.atan2(RELAY.x-WAVE_DEFENSE_HERO_START.x,RELAY.z-WAVE_DEFENSE_HERO_START.z),
- pitch:.31,
- markerHeight:RELAY.floors*3+10,
+ pitch:.14,
+ markerHeight:EVAC_ROCKET.height+6,
  duration:3.5
 });
 export const WAVE_DEFENSE_BOUNDS=Object.freeze({
@@ -33,12 +33,25 @@ export const WAVE_DEFENSE_BOUNDS=Object.freeze({
 export const waveDefenseRoads=roads=>roads.map(r=>({
  ...r,x:mapX(r.x),z:mapZ(r.z),width:r.width*mapScale,depth:r.depth*mapScale
 }));
+// Sites between the existing streets and outside the relay's north/south
+// approaches and the diagonal from the player spawn. Coordinates are pre-scale.
+const skylineTowers=[
+ [-108,-12,18],[-60,-12,16],[-84,36,21],
+ [-12,-12,19],[12,12,23],
+ [-84,60,20],[-60,84,15],
+ [-36,84,22],[-36,132,17],[12,108,19]
+];
+const skylineTints=['#8299b6','#a49abb','#668d9e'];
 export function waveDefenseBuildings(buildings){
  return buildings.map(b=>({...b,x:mapX(b.x),z:mapZ(b.z)}))
   .filter(b=>Math.hypot(Math.max(0,Math.abs(b.x-center.x)-5),Math.max(0,Math.abs(b.z-center.z)-5))>=43)
-  .concat(RELAY);
+  .concat(skylineTowers.map(([x,z,floors],i)=>({
+   id:'WAVE-TOWER-'+(i+1),name:'Wave Defense high-rise',
+   x:mapX(x),z:mapZ(z),floors,tint:skylineTints[i%skylineTints.length]
+  })));
 }
 const relayFlashSeconds=.24;
+const walkerRelayCloseRange=55;
 const formations=[[4,0],[0,4],[2,2]];
 export const WAVE_DEFENSE_INTERVAL=15;
 const WAVE_ONE_INTERMISSION=30;
@@ -47,7 +60,7 @@ export const DEFENSE_UPGRADES=[
  {id:'chain',hero:'volt',title:'Chain lightning',detail:'Primary attacks arc to one additional nearby enemy.'},
  {id:'dash',hero:'volt',title:'Charged dash',detail:'Dashing generates charge 30% faster than normal movement.'},
  {id:'backstab-dash',hero:'ninja',title:'Backstab Dash',detail:'A gold Crosscut backstab banks one extra dash, even if the enemy survives.'},
- {id:'repair',title:'Repair relay',detail:'Restore 30% of the central relay’s maximum HP.'}
+ {id:'repair',title:'Repair rocket',detail:'Restore 30% of the evacuation rocket’s maximum HP.'}
 ];
 
 export class WaveDefense extends MissionEnemyWaves {
@@ -57,57 +70,21 @@ export class WaveDefense extends MissionEnemyWaves {
   this.walker=options.walker;
   for(const {actor} of this.drones)actor.options.bounds=WAVE_DEFENSE_BOUNDS;
   for(const unit of this.members)unit.getTargets=origin=>this.targets(origin,unit.heroRange);
-  const root=new THREE.Group();
-  root.position.set(center.x,0,center.z);
-  scene.add(root);
-  const glow=this.relayGlow=new THREE.MeshBasicMaterial({color:'#ff65ac',toneMapped:false,side:THREE.DoubleSide});
-  this.relayGlowColor=glow.color.clone();
-  this.relayFlashColor=new THREE.Color('#ff2424');
-  const roof=RELAY.floors*3;
-  const plaza=new THREE.Mesh(new THREE.RingGeometry(32,32.35,64),glow);
-  plaza.rotation.x=-Math.PI/2;plaza.position.y=.105;root.add(plaza);
-  const trim=makeRelayTrim();
-  let tierTop=0;
-  for(const tier of RELAY_TIERS){
-   tierTop+=tier.height;
-   const band=new THREE.Mesh(trim,glow);
-   band.position.y=tierTop;
-   band.scale.set(tier.width*.509,1,tier.width*.509);
-   root.add(band);
-  }
-  const antenna=new THREE.Mesh(new THREE.CylinderGeometry(.35,1.6,8,4),glow);
-  for(const x of [-6.5,6.5]){
-   const mast=antenna.clone();
-   mast.position.set(x,roof+3.5,0);
-   mast.rotation.y=Math.PI/4;
-   mast.rotation.z=-Math.sign(x)*.18;
-   root.add(mast);
-  }
-  const halo=new THREE.Mesh(new THREE.TorusGeometry(3.7,.22,6,32),glow);
-  halo.position.y=roof+4;
-  root.add(halo);
-  const core=new THREE.Mesh(new THREE.OctahedronGeometry(2.1),glow);
-  core.position.y=roof+4;
-  root.add(core);
-  this.relay=damage.add(RELAY.id,'structure',{root,evac:true},3200);
-  let tierBase=0;
-  this.relay.shapes=RELAY_TIERS.map(tier=>{
-   const half={x:tier.width/2+.3,y:tier.height/2,z:tier.width/2+.3};
-   const shape={center:new THREE.Vector3(center.x,tierBase+half.y,center.z),half};
-   tierBase+=tier.height;
-   return shape;
-  });
+  this.rocket=new DefenseRocket(scene,RELAY);
+  this.relay=damage.add(RELAY.id,'structure',{root:this.rocket.root,evac:true},EVAC_ROCKET.health);
+  this.relay.shapes=this.rocket.shapes;
   this.reset();
  }
  reset(){
   super.reset();
   this.relayFlashRemaining=0;
   this.relayFlash=0;
-  this.relayGlow.color.copy(this.relayGlowColor);
+  this.rocket.reset();
+  this.launchElapsed=0;
   this.wave=1;this.group=0;this.remaining=0;this.phase='waiting';
   this.bruisersLaunched=0;this.dronesLaunched=0;
   this.upgradePending=false;this.upgrades=new Set();
-  this.relay.entity.root.visible=true;
+  this.relay.shapes=this.rocket.shapes;
   this.relay.health=this.relay.maxHealth;this.relay.alive=true;
   this.walker.dead=true;this.walker.root.visible=false;this.walker.combatUnit.alive=false;
   this.walker.combatUnit.shapes=[];
@@ -120,7 +97,7 @@ export class WaveDefense extends MissionEnemyWaves {
   if(this.relayFlashRemaining===0&&this.relayFlash===0)return false;
   this.relayFlash=Math.min(1,this.relayFlashRemaining/(relayFlashSeconds*.6));
   this.relayFlashRemaining=Math.max(0,this.relayFlashRemaining-dt);
-  this.relayGlow.color.copy(this.relayGlowColor).lerp(this.relayFlashColor,this.relayFlash);
+  this.rocket.pose(this.relayFlash);
   return true;
  }
  targets(origin,range){
@@ -129,6 +106,17 @@ export class WaveDefense extends MissionEnemyWaves {
    return u.alive&&!u.dashPhased&&point&&origin.distanceTo(point)<=range&&this.options.visible(origin,point);
   });
   return heroes.length?heroes:[this.relay];
+ }
+ walkerTargets(origin,heroRange,weapon,playerPosition){
+  const candidates=this.getTargets().filter(u=>u.alive&&u.shapes[0]?.center);
+  const heroes=candidates.filter(u=>!u.dashPhased
+   &&origin.distanceTo(u.shapes[0].center)<=heroRange
+   &&this.options.visible(origin,u.shapes[0].center));
+  if(heroes.length)return heroes;
+  // A nearby player behind cover can still draw the Walker away from the relay.
+  const nearby=playerPosition&&Math.hypot(origin.x-playerPosition.x,origin.z-playerPosition.z)<=heroRange;
+  const close=Math.hypot(origin.x-center.x,origin.z-center.z)<=walkerRelayCloseRange;
+  return this.relay.alive&&!nearby&&(weapon==='missiles'||close)?[this.relay]:[];
  }
  launch(){
   this.phase='active';
@@ -200,7 +188,7 @@ export class WaveDefense extends MissionEnemyWaves {
  update(dt,time){
   if(this.ended)return;
   this.time=time;
-  if(!this.relay.alive||this.options.collapsed()){this.finish(false);return;}
+  if(!this.relay.alive&&this.phase!=='reinforcements'){this.finish(false);return;}
   if(this.phase==='waiting')this.launch();
   else if(this.wave<3&&this.group===formations.length-1&&this.phase==='active'){
    const enemiesRemain=this.members.some(unit=>unit.combatUnit?.alive)
@@ -226,8 +214,23 @@ export class WaveDefense extends MissionEnemyWaves {
   }
   if(this.ended)return;
   if(this.wave===3){
-   if(this.walker.dead)this.finish(true);
-   else this.walker.spawnOrigin.z=Math.min(center.z-35,this.walker.spawnOrigin.z+dt*2);
+   if(this.phase==='reinforcements'){
+    if(this.options.finalBossDefeated())this.finish(true);
+   }else if(this.walker.dead){
+    if(this.phase!=='launching'){
+     this.phase='launching';
+     this.onEvent('Siege Walker defeated · evacuation rocket igniting.');
+    }
+    this.launchElapsed+=dt;
+    this.rocket.climb(this.launchElapsed);
+    if(this.launchElapsed>=EVAC_ROCKET.launchSeconds){
+     this.phase='reinforcements';
+     this.relay.alive=false;
+     this.relay.shapes=[];
+     this.rocket.root.visible=false;
+     this.onEvent('Evacuation rocket cleared the city.');
+    }
+   }else this.walker.spawnOrigin.z=Math.min(center.z-35,this.walker.spawnOrigin.z+dt*2);
   }
   this.options.status(this);
  }

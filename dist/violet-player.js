@@ -1,12 +1,13 @@
+import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
 import {Vector3,MathUtils} from './vendor/three.module.js';
-import {ManualHeroControls} from './manual-hero-controls.js?v=hero-framing-384';
+import {ManualHeroControls} from './manual-hero-controls.js?v=drone-decks-385';
 import {SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
-import {VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_PULSE} from './hero-powers.js?v=violet-charge-380';
+import {VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_PULSE} from './hero-powers.js?v=385';
 import {VIOLET_TUNING} from './violet-flight.js?v=violet-inertia-11';
 
 export class VioletPlayer extends ManualHeroControls {
  constructor(hero,options){
-  super(hero,options,{
+  super(hero,{...options,cameraDistance:6.5,cameraHeight:2.94*HERO_CAMERA.heightMultiplier},{
    hint:'WASD fly · Space rise · Shift descend · Hold LMB orb · RMB barrier · E pulse · R beam',
    actions:[['Rise','Space'],['Down','ShiftLeft'],['Orb','Fire'],['Barrier','Shield'],['Pulse','KeyE'],['Beam','KeyR']],
    codes:['KeyW','KeyS','KeyA','KeyD','Space','ShiftLeft','ShiftRight','KeyF','KeyG','KeyE','KeyR']
@@ -16,16 +17,22 @@ export class VioletPlayer extends ManualHeroControls {
  cancelOrb(){this.hero.charging=false;this.hero.chargeTime=0;this.hero.chargeOrb.visible=false;}
  press(key){this.keys.add(key);if(key==='Fire'||key==='KeyF')this.fireTap=true;if(key==='KeyR')this.beamTap=true;if(key==='KeyE')this.pulseTap=true;}
  enter(intro,respawn=true){
-  this.clear();this.hero.active=true;this.hud.hidden=false;this.controls.enabled=false;
+  this.clear();this.platform=null;
+  if(!this.hero.active)this.savedLens={fov:this.camera.fov,near:this.camera.near};
+  this.camera.fov=65;this.camera.near=.08;this.camera.updateProjectionMatrix();
+  this.hero.active=true;this.hud.hidden=false;this.controls.enabled=false;
   this.viewport.classList.add('piloting-violet');this.hero.threat=this.hero.defenseTarget=null;
   if(respawn){
-   this.hero.root.position.set(this.spawn.x,this.spawn.y+4,this.spawn.z);this.hero.attackCooldown=0;this.hurt.reset();
+   this.hero.root.position.set(this.spawn.x,this.spawn.y+4,this.spawn.z);this.hurt.reset();
   }
-  this.hero.velocity.set(0,0,0);this.yaw=intro.yaw;this.pitch=.12;this.frame();this.lock();
+  this.hero.attackCooldown=0;
+  this.hero.velocity.set(0,0,0);this.yaw=intro.yaw;this.pitch=intro.pitch??HERO_CAMERA.defaultPitch;this.frame();this.lock();
  }
  exit(){
   if(!this.hero.active)return;
-  this.hero.active=false;this.controls.enabled=true;this.hud.hidden=true;this.viewport.classList.remove('piloting-violet');
+  this.hero.active=false;
+  Object.assign(this.camera,this.savedLens);this.camera.updateProjectionMatrix();
+  this.controls.enabled=true;this.hud.hidden=true;this.viewport.classList.remove('piloting-violet');
   if(document.pointerLockElement===this.canvas)document.exitPointerLock();
   this.clear();this.hurt.clear();this.cancelOrb();this.hero.mode='patrol';this.hero.shield.visible=false;this.hero.shieldDeploy=0;
  }
@@ -35,6 +42,7 @@ export class VioletPlayer extends ManualHeroControls {
  }
  move(dt){
   const h=this.hero,p=h.root.position,k=this.keys;
+  this.carryDeck(p);
   const f=Number(k.has('KeyW'))-Number(k.has('KeyS'))+this.stick.value.y,r=Number(k.has('KeyD'))-Number(k.has('KeyA'))+this.stick.value.x;
   const desired=new Vector3(Math.sin(this.yaw)*f-Math.cos(this.yaw)*r,Number(k.has('Space'))-Number(k.has('ShiftLeft')||k.has('ShiftRight')),Math.cos(this.yaw)*f+Math.sin(this.yaw)*r).clampLength(0,1).multiplyScalar(VIOLET_TUNING.defenseSpeed);
   h.velocity.lerp(desired,1-Math.exp(-5*dt));
@@ -42,9 +50,17 @@ export class VioletPlayer extends ManualHeroControls {
    const next=p.clone();next[axis]+=h.velocity[axis]*dt;
    next.x=MathUtils.clamp(next.x,this.bounds.minX,this.bounds.maxX);next.z=MathUtils.clamp(next.z,this.bounds.minZ,this.bounds.maxZ);
    next.y=MathUtils.clamp(next.y,this.terrain(next.x,next.z)+.2,140);
+   if(axis==='y'){
+    if(next.y<p.y&&this.landOnDeck(p,next)){h.velocity.y=0;continue;}
+    if(next.y>p.y)this.platform=null;
+   }
    if(p.distanceToSquared(next)<1e-9)continue;
    const lift=new Vector3(0,1.25,0);
    if(this.blocked(p.clone().add(lift),next.clone().add(lift),1.15))h.velocity[axis]=0;else p.copy(next);
+  }
+  if(this.platform){
+   const beneath=p.clone().add(new Vector3(0,-.05,0));
+   this.landOnDeck(p,beneath);
   }
  }
  update(dt,time){
@@ -67,14 +83,13 @@ export class VioletPlayer extends ManualHeroControls {
   h.shieldMaterial.uniforms.time.value=time;h.shieldMaterial.uniforms.hit.value=h.hitGlow;h.shieldMaterial.uniforms.risk.value=c.overloadProgress;
   h.contact.visible=h.hitGlow>0&&shielding;
   if(!shielding)h.shieldEnergy=Math.min(3000,h.shieldEnergy+250*dt);
-  h.attackCooldown=Math.max(0,h.attackCooldown-dt);
   if(pulse&&c.spend(VIOLET_PULSE.cost)){
    this.onPulse(center);
    h.orbEffects.impact(center,h.zAxis,VIOLET_PULSE.radius);
    h.emit(center,28,5);
   }
   if(h.isShielding()||c.overloadRemaining>0)this.cancelOrb();
-  else if(h.attackCooldown===0&&this.fireTap)h.charging=true;
+  else if(this.fireTap)h.charging=true;
   this.fireTap=false;
   h.flightPose.step(dt,h.velocity,this.yaw,{raised:h.charging||shielding,blocking:shielding});h.flightPose.applyVisual(h.root,h.visual);h.pose(time);h.flightPose.applyCharacter(h.character,h.nodes,dt,-this.pitch);this.hurt.applyPose();h.root.updateMatrixWorld(true);
   h.chargeOrb.visible=h.charging;
@@ -84,7 +99,8 @@ export class VioletPlayer extends ManualHeroControls {
    const charge=h.chargeTime/VIOLET_TUNING.normalCharge;
    const origin=h.poseOrbCharge(time,charge);
    if(!held){
-    if(h.launch(origin,this.aim(),null,charge))h.attackCooldown=MathUtils.lerp(.9,VIOLET_TUNING.normalCooldown,charge);
+    h.attackCooldown=0;
+    h.launch(origin,this.aim(),null,charge);
     this.cancelOrb();
    }
   }
@@ -92,7 +108,7 @@ export class VioletPlayer extends ManualHeroControls {
  }
  status(){
   const h=this.hero,c=h.capacitor;
-  const orb=h.charging?'Orb '+Math.round(h.chargeTime/VIOLET_TUNING.normalCharge*100)+'%':h.attackCooldown>0?'Orb '+h.attackCooldown.toFixed(1)+'s':'Orb ready';
+  const orb=h.charging?'Orb '+Math.round(h.chargeTime/VIOLET_TUNING.normalCharge*100)+'%':'Orb ready';
   const stored=c.amount+c.overloadDamage;
   const charge=Math.floor(stored/(VIOLET_BEAM.required+VIOLET_OVERLOAD.extraDamage)*100);
   const barrier=c.overloadRemaining>0?'SHIELD OVERLOAD':c.remaining>0?'Force beam '+c.phase:'Shield '+charge+'%'+(c.ready?' · Beam ready':'');

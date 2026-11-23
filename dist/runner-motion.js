@@ -1,3 +1,4 @@
+import {carryPlatform,platformAttachment} from './moving-platform.js?v=385';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 export const RUNNER_FORGIVENESS={coyoteSeconds:.12,jumpBufferSeconds:.15,landingReach:.28,mantleRise:1.05};
 export const RUNNER_CONTROL={radius:.34,skin:.015,stepHeight:.46,wallIntentSeconds:.10,wallReleaseLock:.3,playerWallSpeed:12,playerWallBoost:24,airWallMinNormalSpeed:3,airWallMinInto:.18,stickyMinClimb:.65};
@@ -16,7 +17,7 @@ function faceNormal(c,p,radius=0,prefer=null){
 }
 export class RunnerMotion {
  constructor({runSpeed=14,boostSpeed=46,wallRun=true}={}){this.runSpeed=runSpeed;this.boostSpeed=boostSpeed;this.wallRun=wallRun;this.bounds={minX:-56,maxX:56,minZ:-56,maxZ:56};this.reset();}
- reset(position={x:-3,y:.08,z:12}){this.position={...position};this.velocity={x:0,y:0,z:0};this.normal={x:0,y:1,z:0};this.mode='ground';this.yaw=Math.PI;this.speed=0;this.distance=0;this.wallSeconds=0;this.idleGrip=0;this.jumping=false;this.support=null;this.climbs=0;this.roofs=0;this.coyote=0;this.jumpBuffer=0;this.assistedLandings=0;this.airTime=0;this.wallLock=0;this.wallIntent=0;this.intentNormal=null;this.slides=0;this.overlapRecoveries=0;this.wallReleases=0;this.stepUps=0;this.departedSupportY=null;this.escapeNormal=null;this.stickyWall=false;this.airClimbs=0;this.knockback=null;}
+ reset(position={x:-3,y:.08,z:12}){this.position={...position};this.velocity={x:0,y:0,z:0};this.normal={x:0,y:1,z:0};this.mode='ground';this.yaw=Math.PI;this.speed=0;this.distance=0;this.wallSeconds=0;this.idleGrip=0;this.jumping=false;this.support=null;this.climbs=0;this.roofs=0;this.coyote=0;this.jumpBuffer=0;this.assistedLandings=0;this.airTime=0;this.wallLock=0;this.wallIntent=0;this.intentNormal=null;this.slides=0;this.overlapRecoveries=0;this.wallReleases=0;this.stepUps=0;this.departedSupportY=null;this.escapeNormal=null;this.stickyWall=false;this.airClimbs=0;this.knockback=null;this.platform=null;}
  // External blast momentum is additive to normal steering and uses the existing swept collisions.
  applyKnockback(velocity,{duration=1,drag=1.4}={}){this.knockback={x:velocity.x,z:velocity.z,remaining:duration,drag};this.velocity.y=Math.max(this.velocity.y,velocity.y);this.mode='air';this.normal={x:0,y:1,z:0};this.support=null;this.stickyWall=false;this.wallLock=Math.max(this.wallLock,duration);this.jumpBuffer=this.coyote=0;}
  trace(a,b,radius=0,prefer=null){const hit=traceImpact(a,b,{sections:this.near,radius,ground:false});if(hit)hit.normal=faceNormal(hit.section,hit.point,radius,prefer);return hit;}
@@ -62,8 +63,14 @@ export class RunnerMotion {
   this.stickyWall=false;this.position={x,y:roof.height,z};this.normal=roof.normal;this.support=roof.section;this.mode='ground';if(!this.player)this.yaw=Math.atan2(-normal.x,-normal.z);this.roofs++;this.coyote=RUNNER_FORGIVENESS.coyoteSeconds;this.velocity={x:-normal.x*Math.min(7,speed*.25),y:0,z:-normal.z*Math.min(7,speed*.25)};return true;
  }
  step(input,dt,sections=[]){
-  if(!(dt>0))return;this.player=!!input.player;if(!this.player)this.stickyWall=false;dt=Math.min(dt,.15);if(input.jump)this.jumpBuffer=RUNNER_FORGIVENESS.jumpBufferSeconds;const start={...this.position},margin=(input.boost?this.boostSpeed:this.runSpeed)*dt+3;
-  const nearby=sections.querySegment?sections.querySegment(this.position,this.position,margin+2).sort((a,b)=>(a.queryOrder??Infinity)-(b.queryOrder??Infinity)):sections;
+  if(!(dt>0))return;this.player=!!input.player;if(!this.player)this.stickyWall=false;dt=Math.min(dt,.15);
+  if(this.platform&&this.mode==='ground'&&this.support===this.platform.deck){
+   if(!carryPlatform(this.platform,this.position)){this.mode='air';this.support=null;}
+  }
+  if(input.jump)this.jumpBuffer=RUNNER_FORGIVENESS.jumpBufferSeconds;const start={...this.position},margin=(input.boost?this.boostSpeed:this.runSpeed)*dt+3;
+  const staticSections=sections.querySegment?sections.querySegment(this.position,this.position,margin+2).sort((a,b)=>(a.queryOrder??Infinity)-(b.queryOrder??Infinity)):sections;
+  const platforms=this.player?this.getPlatforms?.()||[]:[];
+  const nearby=platforms.length?staticSections.concat(platforms):staticSections;
   this.near=nearby.filter(c=>{if(c.hidden||c.collisionDisabled||c.state!=='intact'&&c.state!=='settled')return false;const radius=c.queryRadius??Math.hypot(...c.size)/2;return Math.abs((c.body?.position.x??c.x)-this.position.x)<radius+margin&&Math.abs((c.body?.position.z??c.z)-this.position.z)<radius+margin&&Math.abs((c.body?.position.y??c.y)-this.position.y)<radius+margin+2;});
   let forward=clamp(input.forward||0,-1,1),strafe=clamp(input.strafe||0,-1,1),magnitude=Math.hypot(forward,strafe);if(magnitude>1){forward/=magnitude;strafe/=magnitude;}magnitude=Math.min(1,magnitude);
   const speed=(input.boost?this.boostSpeed:this.runSpeed),steps=Math.max(1,Math.ceil(dt/.008)),h=dt/steps;
@@ -104,6 +111,7 @@ export class RunnerMotion {
    p.x=clamp(p.x,this.bounds.minX,this.bounds.maxX);p.z=clamp(p.z,this.bounds.minZ,this.bounds.maxZ);
    const ground=terrainHeight(p.x,p.z);if(p.y<ground){p.y=ground;this.mode='ground';this.normal=terrainNormal(p.x,p.z);this.velocity.y=0;}
   }
+  this.platform=this.mode==='ground'?platformAttachment(this.support,this.position):null;
   const distance=Math.hypot(this.position.x-start.x,this.position.y-start.y,this.position.z-start.z);this.distance+=distance;this.speed=distance/dt;
  }
  diagnostics(){return{knockback:this.knockback?{...this.knockback}:null,stickyWall:this.stickyWall,airClimbs:this.airClimbs,position:{...this.position},normal:{...this.normal},mode:this.mode,speed:this.speed,distance:this.distance,climbs:this.climbs,roofs:this.roofs,verticalVelocity:this.velocity.y,coyote:this.coyote,jumpBuffer:this.jumpBuffer,assistedLandings:this.assistedLandings,wallLock:this.wallLock,wallIntent:this.wallIntent,slides:this.slides,overlapRecoveries:this.overlapRecoveries,wallReleases:this.wallReleases,stepUps:this.stepUps};}

@@ -115,8 +115,8 @@ export class EvacuationBriefing {
   this.dialog.querySelector('h2').focus();
  }
  objective(){
-  if(this.defenseMode)return `<p class="evac-briefing-lead">Defend the magenta central relay through three waves.</p>
-   <ul class="evac-objectives"><li>Clear three groups in each of the first two waves, then defeat the Siege Walker.</li><li>Enemies engage nearby heroes. Choose an upgrade between waves.</li><li>If the relay falls, the mission ends.</li></ul>
+  if(this.defenseMode)return `<p class="evac-briefing-lead">Protect the evacuation rocket while it prepares for liftoff.</p>
+   <ul class="evac-objectives"><li>Clear the first two waves and defeat the Siege Walker to launch the rocket.</li><li>Enemies engage nearby heroes. Choose an upgrade between waves. Defeat the Bastion if reinforcements arrive.</li><li>If the relay falls, the mission ends.</li></ul>
    <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
 
   if(this.combatOnly)return `<p class="evac-briefing-lead">Take down the Siege Walker in the cyberpunk district.</p>

@@ -2,8 +2,8 @@ import * as THREE from './vendor/three.module.js';
 
 // One transport per Walker defeat. Cargo is visual only until safely on the ground.
 export class EvacuationBastionReinforcement {
- constructor(scene,adapter,config,{getWalker,getGroundHeight,onEvent=()=>{},onLanding=()=>{}}){
-  Object.assign(this,{adapter,config,getWalker,getGroundHeight,onEvent,onLanding});
+ constructor(scene,adapter,config,{getWalker,getGroundHeight,canDeploy=()=>true,onEvent=()=>{},onLanding=()=>{}}){
+  Object.assign(this,{adapter,config,getWalker,getGroundHeight,canDeploy,onEvent,onLanding});
   this.root=new THREE.Group();this.root.name='Bastion heavy dropship';scene.add(this.root);
   const box=new THREE.BoxGeometry(1,1,1),materials={hull:new THREE.MeshStandardMaterial({color:'#303d3f',roughness:.65,metalness:.55}),plate:new THREE.MeshStandardMaterial({color:'#738377',roughness:.6,metalness:.4}),dark:new THREE.MeshStandardMaterial({color:'#172226',roughness:.5,metalness:.7}),light:new THREE.MeshBasicMaterial({color:'#7df6ef',toneMapped:false}),engine:new THREE.MeshBasicMaterial({color:'#65dcff',transparent:true,opacity:.6,depthWrite:false,toneMapped:false})};
   const part=(size,p,mat)=>{const m=new THREE.Mesh(box,materials[mat]);m.scale.fromArray(size);m.position.fromArray(p);this.root.add(m);return m;};
@@ -64,7 +64,7 @@ export class EvacuationBastionReinforcement {
  transition(phase){this.phase=phase;this.elapsed=0;}
  update(dt){
   this.clock+=dt;const c=this.config,b=this.adapter.boss;
-  if(this.phase==='waiting'){const walker=this.getWalker();if(!walker.dead)return;this.destination.copy(walker.root.position);this.destination.y=this.getGroundHeight(this.destination.x,this.destination.z);this.transition('wreck');this.onEvent('Heavy transport inbound · Bastion reinforcement detected.');}
+  if(this.phase==='waiting'){const walker=this.getWalker();if(!walker.dead||!this.canDeploy())return;this.destination.copy(walker.root.position);this.destination.y=this.getGroundHeight(this.destination.x,this.destination.z);this.transition('wreck');this.onEvent('Heavy transport inbound · Bastion reinforcement detected.');}
   this.elapsed+=dt;const d=this.destination,t=this.elapsed;
   if(this.phase==='wreck'&&t>=c.wreckDelay){this.transition('approach');this.root.visible=true;b.root.visible=true;this.marker.visible=true;}
   if(this.phase==='approach'||this.phase==='hover'||this.phase==='drop'){

@@ -2,16 +2,17 @@ import {Vector3} from './vendor/three.module.js';
 
 // Cut on shot boundaries. Within each shot the camera eases behind its subject.
 export class DefenseTitle {
- constructor({startRound,rebuild,enter,actors,obstruction,openingDelay=0}){
-  Object.assign(this,{startRound,rebuild,enter,actors,obstruction,openingDelay});
+ constructor({startRound,rebuild,enter,leave,actors,obstruction,openingDelay=0}){
+  Object.assign(this,{startRound,rebuild,enter,leave,actors,obstruction,openingDelay});
   this.dialog=document.createElement('dialog');
   this.dialog.className='defense-title';
   this.dialog.setAttribute('aria-labelledby','defense-title-heading');
   this.dialog.innerHTML='<header><span>Zero Hour Heroes</span><h1 id="defense-title-heading">Wave <em>Defense</em></h1></header><button type="button">Press Enter to Start</button>';
   document.body.append(this.dialog);
-  this.dialog.oncancel=e=>e.preventDefault();
+  this.dialog.oncancel=e=>{e.preventDefault();this.leave();};
   this.dialog.querySelector('button').onclick=()=>this.start();
   this.dialog.onkeydown=e=>{
+   if(e.key==='Escape'){e.preventDefault();if(!e.repeat)this.leave();}
    if(e.key==='Enter'){e.preventDefault();if(!e.repeat)this.start();}
   };
   this.look=new Vector3();

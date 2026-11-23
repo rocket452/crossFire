@@ -1,3 +1,4 @@
+import {carryPlatform,landOnPlatform,platformAttachment} from './moving-platform.js?v=385';
 import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=384';
 import {Vector3,MathUtils} from './vendor/three.module.js';
 import {TouchStick} from './touch-stick.js';
@@ -63,13 +64,23 @@ export class ManualHeroControls {
   });
   window.addEventListener('blur',()=>this.clear());
  }
+ carryDeck(position){
+  if(!carryPlatform(this.platform,position))this.platform=null;
+ }
+ landOnDeck(position,next){
+  const hit=landOnPlatform(position,next,this.getPlatforms());
+  this.platform=hit?platformAttachment(hit.section,hit.point):null;
+  if(!hit)return false;
+  position.copy(hit.point);
+  return true;
+ }
  cameraFocus(){return this.hero.root.position.clone().add(new Vector3(0,1.65,0));}
  direction(){return heroViewDirection(this.camera,this.cameraFocus(),this.yaw,this.pitch);}
  frame(){
   const focus=this.cameraFocus();
   const forward=new Vector3(Math.sin(this.yaw),0,Math.cos(this.yaw));
-  const eye=focus.clone().addScaledVector(forward,-7);
-  eye.y+=1.5;
+  const eye=focus.clone().addScaledVector(forward,-(this.cameraDistance??7));
+  eye.y+=(this.cameraHeight??3.15)-1.65;
   pitchHeroBoom(eye,focus,forward,this.pitch);
   const hit=this.blocked(focus,eye,.18);
   if(hit)eye.lerpVectors(focus,hit.point,.88);

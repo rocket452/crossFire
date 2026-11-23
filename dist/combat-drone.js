@@ -20,6 +20,12 @@ export class CombatDrone {
   this.scene.add(this.root);
   const com=vector(config.centerOfMass);
   this.hullOffset=com.negate();
+  this.deck={
+   isPlatform:true,type:'slab',state:'intact',size:config.hullSize,
+   body:{position:new THREE.Vector3(),quaternion:new THREE.Quaternion()},
+   isActive:()=>this.mode==='flying'&&this.combatUnit?.alive
+    &&1-2*(this.root.quaternion.x**2+this.root.quaternion.z**2)>.65
+  };
   this.engines=config.engines.map((e,i)=>({...e,...this.model.engines[i],
    offset:vector(e.position).vsub(com), half:half(config.engineSize)}));
   this.gun=new DroneGun(scene,this.model,config.gun,{
@@ -90,6 +96,8 @@ export class CombatDrone {
   this.root.position.copy(this.body.position);
   this.root.quaternion.copy(this.body.quaternion);
   this.root.updateMatrixWorld(true);
+  this.root.localToWorld(this.deck.body.position.copy(this.hullOffset));
+  this.deck.body.quaternion.copy(this.root.quaternion);
   const old=this.combatUnit.shapes;
   this.combatUnit.shapes=this.combatUnit.alive?[
    {part:'hull',offset:this.hullOffset,half:half(this.config.hullSize)},

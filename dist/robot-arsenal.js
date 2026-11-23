@@ -15,10 +15,18 @@ export class RobotArsenal {
  }
  // Pick the first intact mount at or after the requested turn. Test actors without
  // component durability retain the original complete arsenal.
- availablePhase(robot,requested){
+ availablePhase(robot,requested,canTarget=()=>true){
   const order=this.plasma?['beam','warning','plasma']:['beam','warning'],slots={beam:'beam',warning:'missiles',plasma:'plasma'},start=Math.max(0,order.indexOf(requested));
-  for(let i=0;i<order.length;i++){const phase=order[(start+i)%order.length];if(robot.isWeaponWorking?.(slots[phase])!==false)return phase;}return 'disarmed';
+  let working=false;
+  for(let i=0;i<order.length;i++){
+   const phase=order[(start+i)%order.length];
+   if(robot.isWeaponWorking?.(slots[phase])===false)continue;
+   working=true;
+   if(canTarget(phase))return phase;
+  }
+  return working?null:'disarmed';
  }
+
  weaponDestroyed(id,robot,pod,artillery){
   if(id==='eyes')return;
   if(id==='missiles'&&pod){pod.pending=0;if(['warning','salvo'].includes(this.phase)){this.phase='clear';this.elapsed=0;}}
@@ -28,7 +36,7 @@ export class RobotArsenal {
   robot.beamAllowed=false;
  }
  beforeBeam(robot,pod,artillery){robot.beamAllowed=robot.isWeaponWorking?.('beam')!==false&&!robot.stunRemaining&&this.phase==='beam'&&!pod.pending&&!pod.missiles.some(m=>m.alive)&&!artillery?.busy;}
- update(dt,robot,pod,artillery){
+ update(dt,robot,pod,artillery,canTarget){
   if(robot.stunRemaining>0)return;this.clock+=dt;if(robot.dead){this.phase='off';this.nextPhase=null;this.elapsed=0;return;}this.elapsed+=dt;
   if(this.phase==='beam'&&robot.isWeaponWorking?.('beam')===false)this.weaponDestroyed('beam',robot,pod,artillery);
   if(['warning','salvo'].includes(this.phase)&&robot.isWeaponWorking?.('missiles')===false)this.weaponDestroyed('missiles',robot,pod,artillery);
@@ -37,11 +45,20 @@ export class RobotArsenal {
   else if(this.phase==='plasma-clear'&&!artillery?.busy)this.rest('beam');
   else if(this.phase==='beam'&&robot.weapon.bursts>this.completedBeams&&robot.weapon.phase==='cooling'){
    this.completedBeams=robot.weapon.bursts;this.turns.push({weapon:'beam',time:this.clock});this.rest('warning');
+  }else if(canTarget&&this.phase==='beam'&&!['charging','firing'].includes(robot.weapon.phase)&&!canTarget('beam')){
+   const next=this.availablePhase(robot,'warning',canTarget);
+   if(next)this.rest(next);
   }else if(this.phase==='warning'&&this.elapsed>=this.warningSeconds){
    if(pod.beginSalvo()){this.turns.push({weapon:'pod',time:this.clock});this.phase='salvo';this.elapsed=0;}
   }else if(this.phase==='salvo'&&!pod.pending){this.phase='clear';this.elapsed=0;}
   else if(this.phase==='clear'&&!pod.missiles.some(m=>m.alive))this.rest(this.plasma?'plasma':'beam');
-  else if(['startup','recovery'].includes(this.phase)&&this.elapsed>=(this.phase==='startup'?this.startupSeconds:this.delaySeconds)-1e-9){this.phase=this.availablePhase(robot,this.nextPhase);this.nextPhase=null;this.transitions.push({event:'ready',time:this.clock,next:this.phase});this.transitions=this.transitions.slice(-18);this.elapsed=0;}
+  else if(['startup','recovery'].includes(this.phase)&&this.elapsed>=(this.phase==='startup'?this.startupSeconds:this.delaySeconds)-1e-9){
+   const next=this.availablePhase(robot,this.nextPhase,canTarget);
+   if(next){
+    this.phase=next;this.nextPhase=null;this.transitions.push({event:'ready',time:this.clock,next});
+    this.transitions=this.transitions.slice(-18);this.elapsed=0;
+   }
+  }
   this.turns=this.turns.slice(-12);
  }
  warning(){const active=this.phase==='warning',progress=active?Math.min(1,this.elapsed/this.warningSeconds):0;return{active,progress,pulse:active&&Math.floor(this.elapsed*(4+progress*2)*2)%2===0};}

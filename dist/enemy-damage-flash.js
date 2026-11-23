@@ -48,10 +48,15 @@ export class EnemyDamageFlash {
    if(this.states.size>=ENEMY_FLASH.maxTargets){const first=this.states.keys().next().value;this.restore(this.states.get(first));this.states.delete(first);}
    const materials=[],seen=new Set();root.traverse(mesh=>{for(const material of mesh.isMesh?[].concat(mesh.material):[])if(material.emissive&&!seen.has(material)){seen.add(material);materials.push({material,emissive:material.emissive.clone(),intensity:material.emissiveIntensity});}});
    s={unit,part:walker?part:null,materials,life:ENEMY_FLASH.seconds,age:0,painted:false};this.states.set(id,s);
-  }else{if(s.age>=ENEMY_FLASH.retriggerSeconds-1e-8)s.age=0;s.life=ENEMY_FLASH.seconds;}
+  }else{if(s.age>=ENEMY_FLASH.retriggerSeconds-1e-8)s.age=0;s.life=ENEMY_FLASH.seconds;s.emphasis=1;}
   if(unit.entity.type==='mireguard'&&part==='head'){s.age=0;s.headshot=true;}this.hits++;
  }
- paint(s){const fade=Math.max(0,1-s.age/ENEMY_FLASH.seconds);for(const m of s.materials){m.emissive.copy(m.material.emissive);m.intensity=m.material.emissiveIntensity;m.material.emissive.copy(this.color);m.material.emissiveIntensity=ENEMY_FLASH.intensity*(s.headshot?1.6:1)*fade*fade;}s.painted=true;}
+ emphasize(unit,part){
+  const state=this.states.get(unit.entity.weapons?unit.id+':'+part:unit.id);
+  if(!state)return;
+  state.age=0;state.life=.26;state.emphasis=1.55;
+ }
+ paint(s){const fade=Math.max(0,1-s.age/ENEMY_FLASH.seconds);for(const m of s.materials){m.emissive.copy(m.material.emissive);m.intensity=m.material.emissiveIntensity;m.material.emissive.copy(this.color);m.material.emissiveIntensity=ENEMY_FLASH.intensity*(s.headshot?1.6:1)*(s.emphasis??1)*fade*fade;}s.painted=true;}
  update(dt){for(const[id,s]of this.states){this.restore(s);s.life-=Math.max(0,dt);s.age+=Math.max(0,dt);if(s.life<=1e-8||!s.unit.alive||s.part&&s.unit.entity.isPartAvailable?.(s.part)===false)this.states.delete(id);else if(!s.unit.entity.suppressDamageFlash&&!s.unit.entity.pulseCharging)this.paint(s);}}
  diagnostics(){return{dashTargets:this.dashTargets,active:this.states.size,hits:this.hits,color:ENEMY_FLASH.color,seconds:ENEMY_FLASH.seconds,targets:[...this.states.values()].map(s=>({id:s.unit.id,part:s.part,remaining:s.life,age:s.age,materials:s.materials.length}))};}
 }
