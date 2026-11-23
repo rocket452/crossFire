@@ -181,3 +181,19 @@ for(const [motors,y,wall,velocity] of [
  assert.equal(body.mode,'air');assert.equal(body.platform,null);
  console.log('PASS drone landing, translation and rotation support, jump, and release on engine failure');
 }
+
+{
+ const {drone,hero,step}=fixture();
+ const {altitude,aerialClimbFraction}=drone.config.flight;
+ hero.shapes[0].center.set(0,altitude+1,18);
+ step(8,[hero]);
+ assert(drone.root.position.y>altitude+3);
+ assert(drone.root.position.y<altitude*(1+aerialClimbFraction)+.1);
+ assert(drone.gun.shots>0,'a drone climbs to give its underside turret an angle');
+ hero.shapes[0].center.y=altitude*3;
+ drone.plan([hero]);
+ assert(Math.abs(drone.goal.y-altitude*(1+aerialClimbFraction))<.001);
+ drone.plan([]);
+ assert.equal(drone.goal.y,altitude);
+ console.log('PASS drone altitude adjustment gives a firing angle on elevated heroes and respects the 40% climb cap');
+}

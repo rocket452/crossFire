@@ -5,6 +5,12 @@ import {trackedBeamWarningPlan} from './beam-aim.js?v=beam-tracking-61';
 import {BeamCycle} from './beam-cycle.js?v=384';
 import {WalkerGait,solveLegKnee,angleDelta,WALKER_TURN_SPEED} from './walker-gait.js?v=384';
 
+// The cannon mount sits on the right shoulder. Leave the torso to aim across
+// the Walker's centerline instead of swinging the gun through the chest.
+export function constrainWalkerCannon(localDirection){
+ localDirection.x=Math.max(localDirection.x,-.085*Math.max(0,localDirection.z));
+ return localDirection.lengthSq()>1e-8?localDirection.normalize():localDirection.set(0,0,1);
+}
 // Blender-built rigid components; combined weapon durability is the combat health pool.
 export class SiegeWalker {
  constructor(scene,gltf,spec,{onFire,onDebris,onEffect,onFootfall=()=>{},onBeam=()=>{},onDeath=null,onWeaponDestroyed=()=>{},onWreck=()=>{},onRemoveDebris=()=>{},weaponHealthMultiplier=1}){
@@ -135,17 +141,31 @@ export class SiegeWalker {
   let aligned=false;
   if(center){
    this.targetPoint=new THREE.Vector3(center.x,center.y,center.z);
-   const relative=angleDelta(desiredYaw,this.root.rotation.y+this.nodes.pelvis.rotation.y);
+   const horizontal=Math.hypot(center.x-this.root.position.x,center.z-this.root.position.z);
+   const shoulderYaw=Math.asin(THREE.MathUtils.clamp(this.nodes.upperarm_r.position.x/Math.max(1,horizontal),0,.45));
+   const cannonYaw=desiredYaw-(this.plasmaCharging?0:shoulderYaw);
+   const relative=angleDelta(cannonYaw,this.root.rotation.y+this.nodes.pelvis.rotation.y);
    const twist=THREE.MathUtils.clamp(relative,-1.45,1.45);
    const waistStep=(twist-this.nodes.waist.rotation.y)*(1-Math.exp(-4*dt)),waistLimit=THREE.MathUtils.degToRad(CANNON_TRACKING.waistDegreesPerSecond)*dt;
    this.nodes.waist.rotation.y+=(locked||this.beamAllowed!==false)?THREE.MathUtils.clamp(waistStep,-waistLimit,waistLimit):waistStep;
-   const aimError=angleDelta(desiredYaw,this.root.rotation.y+this.nodes.pelvis.rotation.y+this.nodes.waist.rotation.y);
+   const aimError=angleDelta(cannonYaw,this.root.rotation.y+this.nodes.pelvis.rotation.y+this.nodes.waist.rotation.y);
    // Follow live positions without predicting ahead of an instantaneous beam.
    this.root.updateMatrixWorld(true);
-   const shoulder=this.nodes.upperarm_r.getWorldPosition(new THREE.Vector3()),desired=this.targetPoint.clone().sub(shoulder).normalize(),initial=new THREE.Vector3(0,-1,0).transformDirection(this.nodes.forearm_r.matrixWorld),direction=this.cannonTracking.update(dt,desired,initial,this.weapon.phase==='firing'||this.weapon.phase==='charging'&&this.weapon.elapsed+dt>=this.weapon.chargeSeconds-1e-9);
-   const localDirection=direction.clone().applyQuaternion(this.nodes.chest.getWorldQuaternion(new THREE.Quaternion()).invert());
-   this.nodes.upperarm_r.quaternion.setFromUnitVectors(this.ik.down,localDirection);this.nodes.forearm_r.rotation.set(0,0,0);
-   aligned=Math.abs(aimError)<.25&&this.cannonTracking.errorDegrees<CANNON_TRACKING.startErrorDegrees;
+   const shoulder=this.nodes.upperarm_r.getWorldPosition(new THREE.Vector3()),desired=this.targetPoint.clone().sub(shoulder).normalize();
+   const chest=this.nodes.chest.getWorldQuaternion(new THREE.Quaternion()),inverse=chest.clone().invert();
+   const safeAim=constrainWalkerCannon(desired.clone().applyQuaternion(inverse)).applyQuaternion(chest);
+   const initial=new THREE.Vector3(0,-1,0).transformDirection(this.nodes.forearm_r.matrixWorld);
+   const trackingSlowed=this.weapon.phase==='firing'||this.weapon.phase==='charging'&&this.weapon.elapsed+dt>=this.weapon.chargeSeconds-1e-9;
+   const direction=this.cannonTracking.update(dt,safeAim,initial,trackingSlowed);
+   const localDirection=direction.clone().applyQuaternion(inverse);
+   const safeLocal=constrainWalkerCannon(localDirection.clone());
+   if(safeLocal.dot(localDirection)<1-1e-10){
+    // Let the chest yield to the mounted gun if the chassis turns faster than
+    // the world-space tracking limit. The barrel retains its slew speed.
+    this.nodes.chest.quaternion.multiply(new THREE.Quaternion().setFromUnitVectors(safeLocal,localDirection));
+   }
+   this.nodes.upperarm_r.quaternion.setFromUnitVectors(this.ik.down,safeLocal);this.nodes.forearm_r.rotation.set(0,0,0);
+   aligned=Math.abs(aimError)<.25&&direction.angleTo(desired)<THREE.MathUtils.degToRad(CANNON_TRACKING.startErrorDegrees);
   }else{this.nodes.upperarm_r.rotation.x=-.10-swing*.18;this.cannonTracking.reset();}
   this.trackHead(center,dt);
   const state=this.weapon.step(dt,!!center&&aligned&&this.beamAllowed!==false&&this.isWeaponWorking('beam'));

@@ -127,3 +127,17 @@ Keep the generated mesh and its embedded animation data on the private build bra
 Run `node QA/kage-armor-test.mjs --frog` to exercise the model with the Kage controller.
 The model picker supports Frog Ninja, Armored, and Classic, with `?kage=frog`
 as a direct override.
+
+## Armored Violet Defender
+
+Build the reference-inspired mesh from the same private humanoid rig used by
+Volt Rush. From the repository root, run:
+
+```bash
+blender -b --python-exit-code 1 --python-expr "import sys; sys.path.insert(0, 'source'); import runpy; runpy.run_path('source/build_violet_armor.py', run_name='__main__')" -- /private/humanoid.glb /private/violet-armored.glb
+```
+
+Place `violet-armored.glb` in the ignored `dist/city-assets/licensed-characters/`
+directory and force-add it only on `site-licensed-assets`. It contains the
+licensed humanoid skin and animation clips. Run `node QA/violet-armor-test.mjs`
+with both private assets present to validate the skin, clips and orb attachments.

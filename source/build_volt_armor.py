@@ -185,7 +185,7 @@ def helmet():
                  ridge=(.182,1.735,.037))
 
 
-def output(rig, path):
+def output(rig, path, *, name="Volt Rush", mesh_name="VoltRushArmor", double_sided=()):
     reference=rig.read_bytes()
     json_size=struct.unpack_from('<I',reference,12)[0]
     gltf=json.loads(reference[20:20+json_size])
@@ -209,11 +209,13 @@ def output(rig, path):
         return value/12.92 if value<.04045 else ((value+.055)/1.055)**2.4
 
     materials,primitives=[],[]
-    for name,vertices in geometry.items():
-        color,roughness,strength=MATERIALS[name]
+    for material,vertices in geometry.items():
+        color,roughness,strength=MATERIALS[material]
         rgb=[linear(color[i:i+2]) for i in (0,2,4)]
-        mat={'name':name,'pbrMetallicRoughness':{
-            'baseColorFactor':[*rgb,1],'roughnessFactor':roughness,'metallicFactor':.16 if name!='skin' else 0}}
+        mat={'name':material,'pbrMetallicRoughness':{
+            'baseColorFactor':[*rgb,1],'roughnessFactor':roughness,'metallicFactor':.16 if material!='skin' else 0}}
+        if material in double_sided:
+            mat['doubleSided']=True
         if strength:
             mat.update(emissiveFactor=rgb,extensions={'KHR_materials_emissive_strength':{'emissiveStrength':strength}})
         positions,normals,joints,weights=[],[],[],[]
@@ -229,19 +231,19 @@ def output(rig, path):
 
     for node in gltf['nodes']:
         if 'mesh' in node:
-            node['name']='VoltRushArmor'
-    gltf['meshes']=[{'name':'Volt Rush armor','primitives':primitives}]
+            node['name']=mesh_name
+    gltf['meshes']=[{'name':name+' armor','primitives':primitives}]
     gltf['materials']=materials
     gltf['extensionsUsed']=['KHR_materials_emissive_strength']
     gltf['scenes'][0]['extras']={'character':{
-        'source':'Volt Rush armor / Explosive LLC animation rig','nominalHeight':1.86,'preserveMaterials':True}}
+        'source':name+' armor / Explosive LLC animation rig','nominalHeight':1.86,'preserveMaterials':True}}
     binary.extend(b'\0'*(-len(binary)%4))
     gltf['buffers'][0]['byteLength']=len(binary)
     data=json.dumps(gltf,separators=(',',':')).encode()
     data+=b' '*(-len(data)%4)
     path.write_bytes(struct.pack('<4sII',b'glTF',2,28+len(data)+len(binary))+
                      struct.pack('<I4s',len(data),b'JSON')+data+struct.pack('<I4s',len(binary),b'BIN\0')+binary)
-    print(f'Volt Rush: {sum(len(v) for v in geometry.values())//3} triangles, {len(joint_names)} joints, {len(gltf["animations"])} original clips')
+    print(f'{name}: {sum(len(v) for v in geometry.values())//3} triangles, {len(joint_names)} joints, {len(gltf["animations"])} original clips')
 
 
 if __name__=='__main__':

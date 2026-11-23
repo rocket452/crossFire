@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import * as CANNON from './vendor/cannon-es.js';
 import {segmentBoxFraction} from './combat-collision.js';
-import {COMBAT_DRONE} from './combat-drone-config.js?v=enemy-range-366';
+import {COMBAT_DRONE} from './combat-drone-config.js?v=386';
 import {DroneFlight} from './combat-drone-flight.js?v=320';
 import {DroneGun} from './combat-drone-gun.js?v=hazard-red-355';
 import {buildCombatDrone} from './combat-drone-model.js?v=320';
@@ -226,11 +226,12 @@ export class CombatDrone {
    this.anchor.copy(this.ingress);
    this.ingress=null;
   }
-  const near=targets.reduce((best,u)=>{
+  const target=targets.reduce((best,u)=>{
    const center=u.shapes[0]?.center;
-   if(!center)return best;
-   return !best||this.root.position.distanceToSquared(center)<this.root.position.distanceToSquared(best)?center:best;
+   if(!u.alive||!center)return best;
+   return !best||this.root.position.distanceToSquared(center)<this.root.position.distanceToSquared(best.shapes[0].center)?u:best;
   },null);
+  const near=target?.shapes[0].center;
   const orbit=this.clock*2*Math.PI/c.patrolPeriod;
   this.goal.copy(this.anchor).add(new THREE.Vector3(Math.sin(orbit)*c.patrolRadius,0,Math.cos(orbit)*c.patrolRadius));
   if(near){
@@ -244,6 +245,17 @@ export class CombatDrone {
   this.goal.x=clamp(this.goal.x,bounds.minX+5,bounds.maxX-5);
   this.goal.z=clamp(this.goal.z,bounds.minZ+5,bounds.maxZ-5);
   this.goal.y=this.anchor.y;
+  if(target?.kind==='hero'){
+   const horizontal=Math.hypot(near.x-this.root.position.x,near.z-this.root.position.z);
+   if(horizontal<=this.gun.config.range){
+    const mount=this.model.turret.getWorldPosition(new THREE.Vector3());
+    const clearAngle=THREE.MathUtils.degToRad(this.gun.config.minDown+3);
+    const firingAltitude=near.y+(this.root.position.y-mount.y)+Math.tan(clearAngle)*horizontal;
+    const cruiseHeight=this.anchor.y-(this.options.groundHeight?.(this.anchor.x,this.anchor.z)??0);
+    const maxClimb=Math.max(0,cruiseHeight*c.aerialClimbFraction);
+    this.goal.y=clamp(firingAltitude,this.anchor.y,this.anchor.y+maxClimb);
+   }
+  }
   const ahead=this.goal.clone().sub(this.root.position).setY(0).clampLength(0,7).add(this.root.position);
   const base=ahead.setY(.1),above=base.clone().setY(c.obstacleScanHeight);
   const roof=this.options.roof(above,base);

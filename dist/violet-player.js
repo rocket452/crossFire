@@ -2,12 +2,12 @@ import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
 import {Vector3,MathUtils} from './vendor/three.module.js';
 import {ManualHeroControls} from './manual-hero-controls.js?v=drone-decks-385';
 import {SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
-import {VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_PULSE} from './hero-powers.js?v=385';
+import {VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_PULSE} from './hero-powers.js?v=386';
 import {VIOLET_TUNING} from './violet-flight.js?v=violet-inertia-11';
 
 export class VioletPlayer extends ManualHeroControls {
  constructor(hero,options){
-  super(hero,{...options,cameraDistance:6.5,cameraHeight:2.94*HERO_CAMERA.heightMultiplier},{
+  super(hero,{...options,cameraDistance:6.5,cameraHeight:2.94*HERO_CAMERA.heightMultiplier*1.35},{
    hint:'WASD fly · Space rise · Shift descend · Hold LMB orb · RMB barrier · E pulse · R beam',
    actions:[['Rise','Space'],['Down','ShiftLeft'],['Orb','Fire'],['Barrier','Shield'],['Pulse','KeyE'],['Beam','KeyR']],
    codes:['KeyW','KeyS','KeyA','KeyD','Space','ShiftLeft','ShiftRight','KeyF','KeyG','KeyE','KeyR']

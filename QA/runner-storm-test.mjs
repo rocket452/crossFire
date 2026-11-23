@@ -36,3 +36,18 @@ for(const hz of[30,60,120])for(const dir of [new T.Vector3(1,0,0),new T.Vector3(
  fx.update(1.5,4.69,storm);
  assert(!fx.diagnostics().channel&&fx.core.count===0&&fx.sparks.count===0);
 }
+
+for(const rate of [30,60,120]){
+ const {s,energy}=setup();
+ s.bounds={minX:-1000,maxX:1000,minZ:-1000,maxZ:1000};
+ assert(s.launch(new T.Vector3(0,3,0),new T.Vector3(0,0,1),energy));
+ for(let i=0;i<20*rate-1;i++){
+  s.update(1/rate);
+  s.recharge(100);
+ }
+ assert(s.orb&&s.orb.energy===C.orbEnergy);
+ s.update(1/rate);
+ assert.equal(s.orb,null);
+ assert(s.events.some(e=>e.kind==='fade'));
+}
+console.log('PASS maximum 20-second Ball Lightning lifetime across simulation rates even with continuous recharge');

@@ -1,10 +1,10 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=drone-decks-385';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=386';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
 
-import {DefenseRocket,EVAC_ROCKET} from './defense-rocket.js?v=385';
+import {DefenseRocket,EVAC_ROCKET} from './defense-rocket.js?v=386';
 
 export const RELAY={id:'evacuation-rocket',name:'Evacuation rocket',...center};
 const mapScale=1.3**2*1.4;
@@ -54,7 +54,7 @@ const relayFlashSeconds=.24;
 const walkerRelayCloseRange=55;
 const formations=[[4,0],[0,4],[2,2]];
 export const WAVE_DEFENSE_INTERVAL=15;
-const WAVE_ONE_INTERMISSION=30;
+const WAVE_INTERMISSIONS=[15,7.5];
 const formationSize=formations.reduce((sum,[ground])=>sum+ground,0)*3;
 export const DEFENSE_UPGRADES=[
  {id:'chain',hero:'volt',title:'Chain lightning',detail:'Primary attacks arc to one additional nearby enemy.'},
@@ -195,7 +195,7 @@ export class WaveDefense extends MissionEnemyWaves {
     ||this.flightDrones.some(drone=>drone.combatUnit?.alive);
    if(!enemiesRemain){
     this.phase='intermission';
-    this.remaining=this.wave===1?WAVE_ONE_INTERMISSION:WAVE_DEFENSE_INTERVAL;
+    this.remaining=WAVE_INTERMISSIONS[this.wave-1];
     this.upgradePending=true;
    }
   }else if(this.wave<3){

@@ -14,8 +14,9 @@ export class DefenseRocket {
   scene.add(pad,this.root);
   const shell=new THREE.MeshStandardMaterial({color:'#c5dbec',metalness:.48,roughness:.3,emissive:'#000000'});
   const dark=new THREE.MeshStandardMaterial({color:'#192437',metalness:.65,roughness:.45});
-  const stripe=new THREE.MeshStandardMaterial({color:'#362847',metalness:.55,roughness:.35});
-  this.shell=shell;
+  const stripe=new THREE.MeshStandardMaterial({color:'#30244d',metalness:.55,roughness:.35});
+  const titanium=new THREE.MeshStandardMaterial({color:'#7e9cb8',metalness:.65,roughness:.32});
+  this.shell=shell;this.flashColor=new THREE.Color('#ff2424');
   this.neon=new THREE.MeshBasicMaterial({color:new THREE.Color('#ff54aa').multiplyScalar(2),toneMapped:false});
   const glass=new THREE.MeshBasicMaterial({color:new THREE.Color('#80e6ff').multiplyScalar(1.8),toneMapped:false});
   const add=(parent,geometry,material,y)=>{const mesh=new THREE.Mesh(geometry,material);mesh.position.y=y;parent.add(mesh);return mesh;};
@@ -30,6 +31,9 @@ export class DefenseRocket {
   tube(4.55,4.6,1.25,stripe,5.3);
   tube(4.27,4.37,1.6,stripe,16);
   tube(4.17,4.22,.22,this.neon,26.3);
+  tube(3.9,4.3,1.45,titanium,28.2);
+  tube(.8,1.62,2.2,dark,35.6);
+  tube(.34,.63,1.6,glass,37.7);
   tube(2.65,3.75,4.2,dark,2.6);
   for(const side of [-1,1]){
    const window=add(this.root,new THREE.BoxGeometry(1.9,3.1,.5),glass,27);
@@ -40,16 +44,34 @@ export class DefenseRocket {
   for(let i=0;i<4;i++){
    const a=i*Math.PI/2,fin=new THREE.Group();
    fin.rotation.y=a;this.root.add(fin);
-   const finShape=new THREE.Shape().moveTo(3.6,3).lineTo(7,1.8).lineTo(6.25,8.2).lineTo(3.9,13).closePath();
-   fin.add(new THREE.Mesh(new THREE.ExtrudeGeometry(finShape,{depth:.65,bevelEnabled:false}),stripe));
-   const tip=add(fin,new THREE.BoxGeometry(.3,1.6,.76),this.neon,3.45);
-   tip.position.set(6.6,3.45,.34);
+   const finShape=new THREE.Shape().moveTo(3.5,3).lineTo(8.1,2.1).lineTo(7.4,5.4)
+    .lineTo(5.25,8.4).lineTo(3.85,15.8).closePath();
+   const wing=add(fin,new THREE.ExtrudeGeometry(finShape,{depth:.74,bevelEnabled:true,bevelThickness:.14,bevelSize:.14,bevelSegments:1}),titanium,0);
+   wing.position.z=-.37;
+   wing.castShadow=true;
+   const spine=add(fin,new THREE.BoxGeometry(.23,11,.2),glass,9.6);
+   spine.position.set(4.5,9.6,.54);spine.rotation.z=.19;
+   const booster=new THREE.Group();
+   booster.position.x=5.3;fin.add(booster);
+   tube(0,1.1,4,titanium,10.4,booster);
+   tube(1.1,1.35,6.4,stripe,5.2,booster);
+   tube(.96,1.04,1,dark,1.5,booster);
+   tube(1.27,1.31,.24,this.neon,3.1,booster);
+   tube(.86,.86,.16,glass,1.03,booster);
+   const runway=add(pad,new THREE.BoxGeometry(.24,.05,2.6),glass,.66);
+   runway.position.set(Math.sin(a)*9.9,.66,Math.cos(a)*9.9);runway.rotation.y=a;
   }
   this.plume=new THREE.Group();
   this.root.add(this.plume);
   const exhaust=new THREE.MeshBasicMaterial({color:'#ff4faa',blending:THREE.AdditiveBlending,transparent:true,opacity:.58,depthWrite:false,toneMapped:false});
   add(this.plume,new THREE.ConeGeometry(3.3,15,12),exhaust,-7.5).rotation.z=Math.PI;
   add(this.plume,new THREE.ConeGeometry(1.95,10,10),glass,-5).rotation.z=Math.PI;
+  for(let i=0;i<4;i++){
+   const a=i*Math.PI/2,flare=add(this.plume,new THREE.ConeGeometry(.82,7.5,8),exhaust,-2.8);
+   flare.position.x=Math.cos(a)*5.3;
+   flare.position.z=Math.sin(a)*5.3;
+   flare.rotation.z=Math.PI;
+  }
   this.shapes=[[5,5,4.6],[19,9,4.25],[31,5,3.2]].map(([y,h,r])=>({
    center:new THREE.Vector3(site.x,y,site.z),localY:y,half:{x:r,y:h,z:r}
   }));
@@ -59,7 +81,7 @@ export class DefenseRocket {
   for(const shape of this.shapes)shape.center.y=shape.localY;
   this.pose(0);}
  pose(flash){
-  this.neon.color.set('#ff54aa').lerp(new THREE.Color('#ff2424'),flash).multiplyScalar(2+flash);
+  this.neon.color.set('#ff54aa').lerp(this.flashColor,flash).multiplyScalar(2+flash);
   this.shell.emissive.set('#ff2424');this.shell.emissiveIntensity=1.7*flash;
  }
  climb(elapsed){
