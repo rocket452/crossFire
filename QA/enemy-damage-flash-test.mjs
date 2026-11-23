@@ -32,6 +32,14 @@ for(const dt of[1/30,1/60,1/120]){
  robot.weapons.hurt('rocket_pod',1e6);
  const last=robot.weapons.forPart('plasma_cannon');
  last.health=dashPower;assert(kageDashCanFinish(boss,dashPower),'last weapon is in dash range of damage');
+ const cannon=robot.meshes.plasma_cannon.material,cannonBase=cannon.emissive.clone();
+ const torsoBase=robot.meshes.chest.material.emissive.clone(),reactorBase=robot.meshes.reactor.material.emissive.clone();
+ fx.paintDashTargets([boss],.125);
+ assert.equal(cannon.emissive.getHex(),fx.dashColor.getHex());
+ assert(robot.meshes.chest.material.emissive.equals(torsoBase));
+ assert(robot.meshes.reactor.material.emissive.equals(reactorBase));
+ fx.beginDashFrame();
+ assert(cannon.emissive.equals(cannonBase));
  const material=raider.parts.body.children.find(node=>node.isMesh).material;
  const original=material.emissive.clone();
  fx.paintDashTargets([unit],.125);

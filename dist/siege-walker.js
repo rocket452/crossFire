@@ -49,8 +49,26 @@ export class SiegeWalker {
    this.restPositions[p.name]=node.position.clone();this.nodes[p.name]=node;this.meshes[p.name]=mesh;
    const b=geometry.boundingBox;this.boxes[p.name]={center:b.getCenter(new THREE.Vector3()),size:b.getSize(new THREE.Vector3())};
   }
-  this.detachedParts=new Set();this.weapons=new WalkerWeapons({healthMultiplier:weaponHealthMultiplier,onDestroyed:m=>this.destroyWeapon(m)});this.reset();
+  this.detachedParts=new Set();
+  this.decks=['chest','head','foot_l','foot_r'].filter(name=>this.meshes[name]).map(name=>{
+   const box=this.boxes[name],center=box.center.clone();
+   center.y+=box.size.y/2-.075;
+   const deck={name,center,building:'siege-walker',state:'intact',type:'slab',isPlatform:true,
+    size:[box.size.x*.9,.15,box.size.z*.9],body:{position:new THREE.Vector3(),quaternion:new THREE.Quaternion()}};
+   deck.isActive=()=>this.root.visible&&!this.dead&&this.combatUnit?.alive&&this.isPartAvailable(name)
+    &&1-2*(deck.body.quaternion.x**2+deck.body.quaternion.z**2)>.65;
+   return deck;
+  });
+  this.weapons=new WalkerWeapons({healthMultiplier:weaponHealthMultiplier,onDestroyed:m=>this.destroyWeapon(m)});this.reset();
  }
+ syncDecks(){
+  for(const deck of this.decks){
+   const mesh=this.meshes[deck.name];
+   mesh.localToWorld(deck.body.position.copy(deck.center));
+   mesh.getWorldQuaternion(deck.body.quaternion);
+  }
+ }
+ walkableDecks(){return this.decks.filter(deck=>deck.isActive());}
  reset({yaw=0}={}){
   for(const w of this.wrecks){this.onRemoveDebris(w.body);w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
   for(const signal of this.signalMeshes.values())signal.visible=true;
@@ -261,7 +279,7 @@ export class SiegeWalker {
  syncWrecks(){for(const w of this.wrecks)if(!w.body.robotWreckExpired){w.group.position.copy(w.body.position);w.group.quaternion.copy(w.body.quaternion);}}
  shapes(){
   if(this.broken)return this.wrecks.filter(w=>!w.body.robotWreckExpired).map(w=>({center:{...w.body.position},half:w.half,rotation:{...w.body.quaternion}}));
-  this.root.updateMatrixWorld(true);const result=[];
+  this.root.updateMatrixWorld(true);this.syncDecks();const result=[];
   for(const [name,mesh]of Object.entries(this.meshes)){
    if(name==='reactor'||name==='visor'||!this.isPartAvailable(name))continue;
    const b=this.boxes[name],local=b.center.clone();

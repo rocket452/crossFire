@@ -3,6 +3,7 @@ import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 import {prepareKunaiModel} from './kage-kunai-model.js?v=uploaded-kunai-284';
 export function kageHitPower(hit,power,kind){return hit.unit?.entity?.type==='mireguard'&&['ninja-slash','ninja-dash'].includes(kind)?hit.unit.maxHealth*hit.unit.entity.config.kageMeleeFraction:power;}
 const forward=new THREE.Vector3(0,0,1);
+const SLASH_VISUAL_SCALE=1.2;
 // Player primary / melee; movement and the teleport shuriken remain independent.
 export class KageAttacks {
  constructor(hero,config){
@@ -17,7 +18,7 @@ export class KageAttacks {
   this.group.add(this.arcRoot);
   this.slashSegments=32;
   this.arc=this.makeSlashRibbon('#52ddff',.9,config.slash.range*.82);
-  this.arcEdge=this.makeSlashRibbon('#e7ffff',.2,config.slash.range*.83);
+  this.arcEdge=this.makeSlashRibbon('#e7ffff',.27,config.slash.range*.83);
   this.shadowRoot=new THREE.Group();this.shadowRoot.name='Stored shadow kunai';this.group.add(this.shadowRoot);this.shadowKunai=[];const silhouette=new THREE.Shape();silhouette.moveTo(0,.42);for(const[x,y]of[[-.15,.05],[-.055,-.12],[-.055,-.28],[.055,-.28],[.055,-.12],[.15,.05]])silhouette.lineTo(x,y);silhouette.closePath();const shadowGeometry=new THREE.ShapeGeometry(silhouette),shadowMat=new THREE.MeshBasicMaterial({color:'#21132f',transparent:true,opacity:.94,side:THREE.DoubleSide,depthWrite:false,toneMapped:false}),edgeMat=new THREE.LineBasicMaterial({color:'#b89aff',transparent:true,opacity:.9,depthWrite:false,toneMapped:false}),edgeGeometry=new THREE.BufferGeometry().setFromPoints(silhouette.getPoints().map(p=>new THREE.Vector3(p.x,p.y,.015))),ringGeometry=new THREE.TorusGeometry(.085,.022,4,12),ringMat=new THREE.MeshBasicMaterial({color:'#9f7cea',transparent:true,opacity:.85,depthWrite:false,toneMapped:false});
   for(let i=0;i<config.kunai.maxStored;i++){const marker=new THREE.Group();marker.name='Shadow kunai '+(i+1);marker.add(new THREE.Mesh(shadowGeometry,shadowMat),new THREE.LineLoop(edgeGeometry,edgeMat));const ring=new THREE.Mesh(ringGeometry,ringMat);ring.position.y=-.38;marker.add(ring);this.shadowRoot.add(marker);this.shadowKunai.push(marker);}
   this.panel=document.createElement('div');this.panel.id='kage-weapons-meter';this.panel.innerHTML='<b data-kunai>KUNAI READY</b><span data-slash>SLASH READY · R</span>';document.getElementById('ninja-hud').append(this.panel);this.reset();
@@ -118,11 +119,12 @@ export class KageAttacks {
    const fade=1-THREE.MathUtils.smoothstep(slashProgress,.46,1);
    this.arcRoot.position.copy(this.slashOrigin);
    this.arcRoot.quaternion.copy(this.slashRotation);
-   if(this.fallingSwing)this.arcRoot.scale.set(.16,.3,.32);else this.arcRoot.scale.setScalar(1);
+   if(this.fallingSwing)this.arcRoot.scale.set(.16,.3,.32).multiplyScalar(SLASH_VISUAL_SCALE);
+   else this.arcRoot.scale.setScalar(SLASH_VISUAL_SCALE);
    const segments=Math.floor(sweep*this.slashSegments)*6;
    this.arc.geometry.setDrawRange(0,segments);
    this.arcEdge.geometry.setDrawRange(0,segments);
-   this.arc.material.opacity=fade*.67;
+   this.arc.material.opacity=fade*.93;
    this.arcEdge.material.opacity=fade;
   }
   const count=h.active&&h.enabled&&this.loading?this.stored:0;this.shadowRoot.visible=count>0;if(count){const head=h.character.nodes.B_Head.getWorldPosition(new THREE.Vector3());this.shadowRoot.position.set(head.x,Math.max(head.y+c.kunai.shadowHeight,h.root.position.y+2.9),head.z);this.shadowRoot.quaternion.copy(h.camera.quaternion);}for(let j=0;j<this.shadowKunai.length;j++){const marker=this.shadowKunai[j],wasVisible=marker.visible;marker.visible=j<count;if(!marker.visible)continue;marker.userData.age=wasVisible?(marker.userData.age||0)+dt:0;const offset=j-(count-1)/2;marker.position.set(offset*c.kunai.shadowSpacing,-Math.abs(offset)*.1+Math.sin(h.time*3+j*.8)*.035,0);marker.rotation.z=-offset*.12;marker.scale.setScalar(c.kunai.shadowScale*(.75+.25*Math.min(1,marker.userData.age/.12)));}

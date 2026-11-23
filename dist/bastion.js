@@ -1,4 +1,4 @@
-import {ROBOT_WRECK_SECONDS} from './destruction.js?v=392';
+import {ROBOT_WRECK_SECONDS} from './destruction.js?v=393';
 import {BastionBeamWalls} from './bastion-beam-walls.js?v=wall-facing-322';
 import {BastionRain} from './bastion-rain.js?v=390';
 import * as THREE from './vendor/three.module.js';
@@ -10,8 +10,16 @@ import {angleDistance} from './bastion-geometry.js?v=charged-shuriken-130';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 import {absorbDirectionalBarrier} from './hero-defense.js?v=390';
 export class Bastion {
- constructor(scene,damage,config,{onEvent=()=>{},onPlayerHit=()=>{},onWindup=()=>{},onDeathBlast=()=>{},arenaBounds}={}){Object.assign(this,{scene,damage,config,onEvent,onPlayerHit,onWindup,onDeathBlast,arenaBounds});this.model=new BastionModel(scene,config);this.root=this.model.root;this.state=new BastionState(config);this.evac=true;this.projectiles=null;this.waves=[];this.stunRemaining=0;this.feedback='';this.hitCooldown=0;this.reset();this.effects=new BastionEffects(this);this.projectiles=new BastionProjectiles(this);this.rain=new BastionRain(this);this.beamWalls=new BastionBeamWalls(this);}
+ constructor(scene,damage,config,{onEvent=()=>{},onPlayerHit=()=>{},onWindup=()=>{},onDeathBlast=()=>{},arenaBounds}={}){Object.assign(this,{scene,damage,config,onEvent,onPlayerHit,onWindup,onDeathBlast,arenaBounds});this.model=new BastionModel(scene,config);this.root=this.model.root;this.state=new BastionState(config);
+  this.decks=this.model.sections.filter(section=>section.cap);
+  for(const deck of this.decks){
+   deck.isPlatform=true;
+   deck.isActive=()=>!this.dead&&this.root.visible&&this.combatUnit?.alive&&!deck.hidden&&!deck.collisionDisabled
+    &&1-2*(deck.body.quaternion.x**2+deck.body.quaternion.z**2)>.65;
+  }
+  this.evac=true;this.projectiles=null;this.waves=[];this.stunRemaining=0;this.feedback='';this.hitCooldown=0;this.reset();this.effects=new BastionEffects(this);this.projectiles=new BastionProjectiles(this);this.rain=new BastionRain(this);this.beamWalls=new BastionBeamWalls(this);}
  get sections(){return this.model.sections;}
+ walkableDecks(){return this.decks.filter(deck=>deck.isActive());}
  get dead(){return this.state.phase==='defeated';}
  get coreOpen(){return this.state.exposed&&this.stunRemaining<=0;}
  aimWeakPoint(){return this.armsHealth?.[0]>0?'arm-left':this.armsHealth?.[1]>0?'arm-right':'chest';}

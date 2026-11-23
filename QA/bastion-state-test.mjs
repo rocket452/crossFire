@@ -4,6 +4,7 @@ import * as THREE from '../dist/vendor/three.module.js';
 import {BastionState} from '../dist/bastion-state.js';
 import {Bastion} from '../dist/bastion.js';
 import {UnitDamage} from '../dist/combat-collision.js';
+import {RunnerMotion} from '../dist/runner-motion.js';
 const config=JSON.parse(fs.readFileSync(new URL('../dist/bastion-config.json',import.meta.url)));
 // Exercise overlap on legacy attacks; beam-wall safe-gap behavior has its own suite.
 config.barrage.attackSequence=['gatling','skyfall'];
@@ -63,3 +64,17 @@ assert.equal(staged.model.deck.position.y,18);
 assert.equal(staged.model.deck.rotation.x,0);
 assert(!staged.dead);
 console.log('PASS separate attack cues and Gatling fire under aim error; staged Bastion collapse stops all attacks and resets.');
+
+const ride=create(),rider=new RunnerMotion(),head=ride.walkableDecks().find(deck=>deck.id==='bastion-head-cap');
+rider.getPlatforms=()=>ride.walkableDecks();
+rider.reset({x:head.body.position.x,y:head.body.position.y+1,z:head.body.position.z});
+rider.mode='air';rider.velocity.y=-4;
+for(let i=0;i<30;i++)rider.step({player:true},1/60);
+assert.equal(rider.platform.deck,head);
+ride.root.position.x+=3;
+ride.model.sync();
+rider.step({player:true},1/60);
+assert(Math.abs(rider.position.x-head.body.position.x)<1e-8);
+ride.defeat();
+rider.step({player:true},1/60);
+assert(rider.mode==='air'&&!rider.platform);

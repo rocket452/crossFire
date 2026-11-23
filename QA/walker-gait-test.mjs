@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as THREE from '../dist/vendor/three.module.js';
 import {SiegeWalker} from '../dist/siege-walker.js';
+import {landOnPlatform,platformAttachment,carryPlatform} from '../dist/moving-platform.js';
 const bytes=fs.readFileSync(new URL('../dist/city-assets/siege-walker.glb',import.meta.url));
 const jsonLength=bytes.readUInt32LE(12),gltf=JSON.parse(bytes.subarray(20,20+jsonLength).toString());
 const binary=bytes.subarray(28+jsonLength),scene=new THREE.Scene(),model=new THREE.Group();
@@ -47,3 +48,18 @@ for(const rate of [30,120]){
  assert.equal(walker.gait.footfalls,20);
 }
 console.log('PASS repeatable support and IK at 30 / 60 / 120 simulation steps per second');
+
+walker.reset();
+walker.combatUnit={alive:true};
+walker.shapes();
+const headDeck=walker.walkableDecks().find(deck=>deck.name==='head'),head=headDeck.body.position;
+const landing=landOnPlatform({x:head.x,y:head.y+2,z:head.z},{x:head.x,y:head.y-1,z:head.z},walker.walkableDecks());
+assert.equal(landing.section,headDeck);
+const rider={...landing.point},attachment=platformAttachment(headDeck,rider);
+walker.root.position.x+=3;
+walker.shapes();
+assert(carryPlatform(attachment,rider));
+assert(Math.abs(rider.x-landing.point.x-3)<1e-8);
+walker.destroy();
+assert.equal(walker.walkableDecks().length,0);
+assert(!carryPlatform(attachment,rider));

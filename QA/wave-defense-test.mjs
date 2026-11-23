@@ -8,7 +8,7 @@ import {DestructionWorld} from '../dist/destruction.js';
 import {mission1CityBuildings,MISSION1_CITY_ROADS,MISSION1_HERO_START} from '../dist/evac-city-map.js';
 import {ESCORT_APPROACH} from '../dist/evac-approach.js';
 import {EVAC_ROCKET} from '../dist/defense-rocket.js';
-import {WaveDefense,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,WAVE_DEFENSE_INTERVAL,waveDefenseBuildings,waveDefenseRoads} from '../dist/wave-defense.js';
+import {WaveDefense,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,WAVE_DEFENSE_HIGHWAYS,WAVE_DEFENSE_INTERVAL,waveDefenseBuildings,waveDefenseRoads} from '../dist/wave-defense.js';
 
 registerHooks({resolve(name,context,next){
  return name==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(name,context);
@@ -25,15 +25,33 @@ const layout=JSON.parse(fs.readFileSync(new URL('../dist/city-assets/city-layout
 const buildings=waveDefenseBuildings(mission1CityBuildings(layout.buildings));
 const towers=buildings.filter(b=>b.id.startsWith('WAVE-TOWER-'));
 assert.equal(towers.length,31);
+const highwayTowers=buildings.filter(b=>b.id.startsWith('WAVE-HIGHWAY-TOWER-'));
+assert.equal(highwayTowers.filter(b=>b.z<RELAY.z).length,6);
+assert.equal(highwayTowers.filter(b=>b.z>RELAY.z).length,6);
 assert.equal(new Set(buildings.map(b=>b.id)).size,buildings.length);
 const roads=waveDefenseRoads(MISSION1_CITY_ROADS);
+const highways=roads.filter(road=>road.highway);
+assert.deepEqual(WAVE_DEFENSE_HIGHWAYS.map(({toZ})=>toZ),[WAVE_DEFENSE_BOUNDS.minZ,WAVE_DEFENSE_BOUNDS.maxZ]);
+assert.equal(highways.length,2);
+assert(highways.every(road=>road.x===RELAY.x&&road.width===18));
 for(const tower of towers){
  assert(tower.floors>=15&&tower.floors<=27);
  assert(Math.abs(tower.x-RELAY.x)>=25,'main north/south approach stays clear');
  assert(tower.x-5>WAVE_DEFENSE_BOUNDS.minX&&tower.x+5<WAVE_DEFENSE_BOUNDS.maxX);
  assert(tower.z-5>WAVE_DEFENSE_BOUNDS.minZ&&tower.z+5<WAVE_DEFENSE_BOUNDS.maxZ);
  assert(!roads.some(road=>Math.abs(tower.x-road.x)<road.width/2+5&&Math.abs(tower.z-road.z)<road.depth/2+5));
- assert(!buildings.some(other=>other!==tower&&Math.abs(tower.x-other.x)<11&&Math.abs(tower.z-other.z)<11));
+ assert(!buildings.some(other=>{
+  const clearance=6+(other.footprint??10)/2;
+  return other!==tower&&Math.abs(tower.x-other.x)<clearance&&Math.abs(tower.z-other.z)<clearance;
+ }));
+}
+for(const tower of highwayTowers){
+ const half=tower.footprint/2;
+ assert(!roads.some(road=>Math.abs(tower.x-road.x)<road.width/2+half&&Math.abs(tower.z-road.z)<road.depth/2+half));
+ assert(!buildings.some(other=>{
+  const clearance=half+(other.footprint??10)/2;
+  return other!==tower&&Math.abs(tower.x-other.x)<clearance&&Math.abs(tower.z-other.z)<clearance;
+ }));
 }
 assert.equal(EVAC_ROCKET.height,39);
 assert(!buildings.some(b=>b.id===RELAY.id));
@@ -66,11 +84,12 @@ for(const building of buildings){
 for(const b of buildings){
  if(b.id===RELAY.id)continue;
  assert(Math.hypot(Math.max(0,Math.abs(b.x-RELAY.x)-5),Math.max(0,Math.abs(b.z-RELAY.z)-5))>=43);
- physics.addChunk({type:'wall',building:b.id,floor:0,x:b.x,y:b.floors*1.5,z:b.z,size:[10,b.floors*3,10]});
+ const width=b.footprint??10;
+ physics.addChunk({type:'wall',building:b.id,floor:0,x:b.x,y:b.floors*1.5,z:b.z,size:[width,b.floors*3,width]});
 }
 const traceBuilding=(a,b,radius=0)=>traceImpact(a,b,{sections:physics.chunks,ground:false,radius});
 assert(!traceBuilding({...spawn,y:4},{x:RELAY.x,y:35,z:RELAY.z}),'spawn has a clear view of the relay');
-const skylineSections=physics.chunks.filter(c=>c.building.startsWith('WAVE-TOWER-'));
+const skylineSections=physics.chunks.filter(c=>/^WAVE-(HIGHWAY-)?TOWER-/.test(c.building));
 assert(!traceImpact({...spawn,y:4},{x:RELAY.x,y:4,z:RELAY.z},{sections:skylineSections,ground:false,radius:10}),
  'new towers leave room along the route from spawn to relay');
 for(const offset of [-4,0,4]){
@@ -198,8 +217,8 @@ assert(waves.relay.shapes[0].center.y>5);
 step(4);assert.equal(waves.phase,'reinforcements');assert(!waves.rocket.root.visible);
 assert(!waves.relay.alive);assert.equal(waves.relay.shapes.length,0);assert.equal(result,null);
 finalBossDead=true;step(1/30);
-assert.equal(waves.victoryRemaining,5);
-step(5-1/30);assert.equal(result,null,'Bastion defeat leaves time to see the collapse');
+assert.equal(waves.victoryRemaining,9);
+step(9-1/30);assert.equal(result,null,'Bastion defeat leaves time to see the collapse');
 step(1/30);assert.equal(result,true);
 waves.reset();assert(waves.relay.alive);assert.equal(waves.relay.shapes[0].center.y,5);assert.equal(waves.phase,'waiting');assert.deepEqual(counts(),[0,0]);
 assert.equal(waves.upgrades.size,0);
@@ -213,6 +232,9 @@ assert(waves.chooseUpgrade('backstab-dash','ninja'));
 assert(waves.upgrades.has('backstab-dash'));
 waves.upgradePending=true;
 assert.equal(waves.chooseUpgrade('backstab-dash','ninja'),false);
+assert.equal(waves.chooseUpgrade('extra-air-jump','volt'),false);
+assert(waves.chooseUpgrade('extra-air-jump','ninja'));
+assert(waves.upgrades.has('extra-air-jump'));
 damage.hurt(waves.relay,1e6,RELAY);step(100);assert.equal(result,false);assert.equal(waves.wave,1);
 
 const energy=new RunnerEnergy();

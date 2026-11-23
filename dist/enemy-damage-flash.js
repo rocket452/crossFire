@@ -21,8 +21,12 @@ export class EnemyDamageFlash {
    for(const {material} of state.materials)redMaterials.add(material);
   }
   for(const unit of units){
+   const enemy=unit.entity,weapons=enemy.weapons;
+   const part=weapons?.remaining===1?weapons.modules.find(module=>!module.destroyed)?.part:null;
+   const target=weapons?enemy.meshes[part]:enemy.root;
+   if(!target)continue;
    this.dashTargets.push(unit.id);
-   unit.entity.root.traverseVisible(mesh=>{
+   target.traverseVisible(mesh=>{
     if(!mesh.isMesh)return;
     for(const material of [].concat(mesh.material)){
      if(!material.emissive||redMaterials.has(material)||this.dashMaterials.has(material))continue;

@@ -21,7 +21,7 @@ export function carryPlatform(attachment,position){
 export function landOnPlatform(position,next,platforms){
  if(next.y>=position.y||!platforms.length)return null;
  const from=new Vector3().copy(position).add(new Vector3(0,.015,0));
- const hit=traceImpact(from,next,{sections:platforms,ground:false});
+ const hit=traceImpact(from,next,{sections:platforms,radius:0,ground:false});
  if(!hit)return null;
  const {body,size}=hit.section;
  const local=new Vector3().copy(hit.point).sub(body.position).applyQuaternion(body.quaternion.clone().invert());

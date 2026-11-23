@@ -3,7 +3,7 @@ import {COMBAT_DRONE} from './combat-drone-config.js?v=enemy-range-366';
 import {AstraRonin} from './astra-ronin.js?v=392';
 import {Mireguard} from './mireguard.js?v=392';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-pairs-260';
-import {BastionTesting} from './bastion-testing.js?v=392';
+import {BastionTesting} from './bastion-testing.js?v=393';
 import {ExperimentalRobot} from './experimental-robots.js?v=392';
 import * as THREE from './vendor/three.module.js';
 import {SpiderBruiser} from './spider-bruiser.js?v=392';

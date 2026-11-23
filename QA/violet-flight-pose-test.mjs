@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import * as THREE from '../dist/vendor/three.module.js';
 import {VioletFlightPose} from '../dist/violet-flight-pose.js';
+const flight=new VioletFlightPose(),root=new THREE.Group(),visual=new THREE.Group(),time=.13;
+flight.flight=1;
+flight.applyVisual(root,visual,time);
+assert(Math.abs(visual.position.y-1.5-(Math.sin(time*21)*.022+Math.sin(time*13)*.014)*.5)<1e-9);
+flight.flight=0;
+flight.applyVisual(root,visual,time);
+assert(Math.abs(visual.position.y-1.5-Math.sin(time*2.65)*.14-Math.sin(time*4.9)*.023)<1e-9);
 for(const dt of[1/30,1/60,1/120]){
  const pose=new VioletFlightPose(),velocity=new THREE.Vector3(18,8,26);pose.step(0,velocity,1);let last=pose.orientation.clone();
  for(let i=0;i<3/dt;i++){pose.step(dt,velocity,1);assert(pose.orientation.angleTo(last)<.45,'bounded visual rotation on accelerating turn');last.copy(pose.orientation);}

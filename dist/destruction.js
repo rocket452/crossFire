@@ -1,6 +1,7 @@
 import {SectionQueryGrid} from './section-query-grid.js?v=overall-performance-238';
 import * as CANNON from './vendor/cannon-es.js';
 import {CityBroadphase} from './physics-grid.js?v=ground-rubble-89';
+import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 export const BUILDING_DURABILITY_MULTIPLIER=1.3;
 export const BUILDING_COLLISION_RELEASE_FRACTION=.75;
 export const NON_ROBOT_BUILDING_DAMAGE_MULTIPLIER=.1;
@@ -89,6 +90,32 @@ export class DestructionWorld {
    }
    b.aabbNeedsUpdate=true;if(c.state==='falling')this.onMove(c);
   }
+ }
+ sweepBeamDebris(from,to,direction,radius,seconds,onContact){
+  let hits=0;
+  for(const fragments of [this.dynamic,this.falling])for(const chunk of fragments){
+   if(chunk.hidden)continue;
+   const body=chunk.body;
+   const half=chunk.collisionHalf??(chunk.collisionHalf={x:chunk.size[0]/2,y:chunk.size[1]/2,z:chunk.size[2]/2});
+   const fraction=segmentBoxFraction(from,to,body.position,half,body.quaternion,radius);
+   if(fraction===null)continue;
+   const point=new CANNON.Vec3(from.x+(to.x-from.x)*fraction,from.y+(to.y-from.y)*fraction,from.z+(to.z-from.z)*fraction);
+   const offset=point.vsub(body.position);
+   const speed=body.velocity.dot(direction);
+   const kick=Math.min(36*seconds,Math.max(0,16-speed));
+   const change=new CANNON.Vec3(direction.x*kick,direction.y*kick,direction.z*kick);
+   if(chunk.state==='dynamic'){
+    body.wakeUp();body.applyImpulse(change.scale(body.mass),offset);
+   }else{
+    body.velocity.vadd(change,body.velocity);
+    const spin=offset.cross(change).scale(.4/Math.max(1,half.boundingRadius));
+    body.angularVelocity.vadd(spin,body.angularVelocity);
+   }
+   const scorch=Math.min(.92,chunk.scorch+seconds*1.1);
+   if(scorch>chunk.scorch){chunk.scorch=scorch;this.onDamage(chunk);}
+   if(hits++<4)onContact(point);
+  }
+  return hits;
  }
  // Every weapon shares health and persistent scorch, including nonlethal hits.
  damageChunk(c,amount,{source=null}={}){

@@ -6,6 +6,8 @@ import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108'
 import {terrainHeight} from './runner-motion.js?v=overall-performance-238';
 
 export const WALKER_SALVO_SIZE=12;
+export const WALKER_MISSILE_BLAST_RADIUS=7.6;
+export const WALKER_MISSILE_UNIT_BLAST_RADIUS=WALKER_MISSILE_BLAST_RADIUS+3.6;
 const MISSILE_SPEED=34;
 const GUIDANCE_REFERENCE_SPEED=17;
 const FINAL_APPROACH_HEIGHT=3;

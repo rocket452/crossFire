@@ -1,4 +1,4 @@
-import {carryPlatform,landOnPlatform,platformAttachment} from './moving-platform.js?v=385';
+import {carryPlatform,landOnPlatform,platformAttachment} from './moving-platform.js?v=393';
 import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=392';
 import {Vector3,MathUtils} from './vendor/three.module.js';
 import {TouchStick} from './touch-stick.js';

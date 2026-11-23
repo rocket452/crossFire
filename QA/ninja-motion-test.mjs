@@ -1,7 +1,28 @@
 import assert from 'node:assert/strict';
 import {NinjaMotion,NINJA} from '../dist/ninja-motion.js';
 import {RunnerMotion} from '../dist/runner-motion.js';
+import {DestructionWorld} from '../dist/destruction.js';
 const run=(m,s,input={},sections=[],dt=1/60)=>{for(let t=0;t<s-1e-8;t+=dt)m.step(input,Math.min(dt,s-t),sections);};
+
+let extra=true;
+const terrain=new DestructionWorld();
+terrain.addChunk({type:'column',building:'cyberpunk tower',floor:0,x:1.3,y:15,z:27,size:[.25,30,12]});
+const upgraded=new NinjaMotion({hasExtraAirJump:()=>extra});
+upgraded.body.position.y=5;
+upgraded.body.mode='air';
+const jump=()=>{upgraded.jump();run(upgraded,.04,{},terrain.chunks);};
+jump();
+assert.equal(upgraded.wallJumps,1);
+assert.equal(upgraded.airJumpsRemaining,2,'cyberpunk façade kick leaves both midair jumps');
+jump();jump();jump();
+assert.equal(upgraded.doubleJumps,2);
+assert.equal(upgraded.airJumpsRemaining,0);
+run(upgraded,4,{},terrain.chunks);
+assert.equal(upgraded.mode,'ground');
+assert.equal(upgraded.airJumpsRemaining,2);
+extra=false;
+upgraded.reset();
+assert.equal(upgraded.airJumpsRemaining,1,'new unupgraded run restores the base limit');
 for(const dt of[1/30,1/60,1/120,.075]){
  const m=new NinjaMotion();m.body.bounds={minX:-1000,maxX:1000,minZ:-1000,maxZ:1000};m.body.yaw=0;run(m,1,{forward:1},[],dt);assert(Math.abs(m.velocity.z-32.2)<.05);const volt=new RunnerMotion();assert.equal(volt.runSpeed,14);assert.equal(volt.boostSpeed,46);
  m.reset();m.body.position.y=500;m.body.mode='air';m.body.yaw=0;run(m,3,{forward:1},[],dt);assert.equal(m.mode,'air');assert(Math.abs(m.velocity.z-32.2)<.05,'air speed cap remains unchanged once reduced steering settles');m.reset();m.jump();run(m,1,{},[],dt);assert(m.position.y>12&&m.jumps===1);const height=m.position.y;m.jump();run(m,.1,{},[],dt);assert(m.position.y>height+2);assert.equal(m.doubleJumps,1);m.jump();run(m,.1,{},[],dt);assert.equal(m.jumpCount,2,'no third jump in empty air');run(m,5,{},[],dt);assert.equal(m.mode,'ground');assert.equal(m.jumps,0);

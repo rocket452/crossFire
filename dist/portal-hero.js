@@ -48,6 +48,11 @@ export class PortalHero {
   for(const from of candidates){if(this.portals.some(p=>p.kind==='attack'&&p.position.distanceTo(from)<2.8))continue;const direction=target.clone().sub(from).normalize(),position=from.clone().addScaledVector(direction,1.5),hit=this.traceBolt(position,target);if(hit?.unit?.kind!=='robot'&&hit?.kind!=='missile')continue;const p=this.openPortal('attack',position,direction,1.45);if(p){this.castRemaining=RIFT_CAST_SECONDS;this.castKind='attack';this.mode='casting';this.attackCooldown=1.1;return true;}}
   return false;
  }
+ openPlayerAttack(position,direction){
+  const portal=this.openPortal('attack',position,direction,1.45);
+  if(!portal)return;
+  portal.playerAimed=true;this.castRemaining=RIFT_CAST_SECONDS;this.castKind='attack';
+ }
  tryRescue(){
   if(this.pair&&this.pair.entry.expiresAt>this.time)return false;if(this.portals.length>8)return false;
   const threats=this.getThreats(),rescue=findPortalRescue(threats,this.getUnits(),{canRescue:u=>(this.unitCooldown.get(u.id)||0)<=this.time,trace:this.traceThreat});
@@ -79,8 +84,9 @@ export class PortalHero {
   this.shots++;this.emit(from,1,.3);
  }
  fireBolt(portal){
-  const robot=this.getRobot();if(!robot?.combatUnit?.alive)return;
-  this.spawnBolt(portal.position.clone().addScaledVector(portal.normal,.22),robot.aimPoint(portal.position),8);
+  const robot=this.getRobot();if(!portal.playerAimed&&!robot?.combatUnit?.alive)return;
+  const target=portal.playerAimed?portal.position.clone().add(portal.normal):robot.aimPoint(portal.position);
+  this.spawnBolt(portal.position.clone().addScaledVector(portal.normal,.22),target,8);
   if(portal.energy)this.portalEnergy.burst(portal.energy);
  }
  update(dt,time){
@@ -91,12 +97,13 @@ export class PortalHero {
   if(this.travel){const t=this.travel;t.age+=dt;if(!t.moved&&t.age>=.22){this.root.position.copy(t.destination);this.addTrace('hero',t.from,t.arrival);t.moved=true;this.teleports++;this.emit(t.destination.clone().addScaledVector(UP,1.2),18,2);}
    if(t.moved)this.root.position.lerpVectors(t.destination,t.arrival,Math.min(1,(t.age-.22)/.25));this.root.scale.setScalar(t.age<.22?Math.max(.04,1-t.age/.22):Math.min(1,(t.age-.22)/.25));if(t.age>=.5){this.root.scale.setScalar(1);this.travel=null;this.mode='watching';this.attackCooldown=Math.min(this.attackCooldown,.25);}
   }
-  const target=robot?.root.position||new THREE.Vector3(),yaw=Math.atan2(target.x-this.root.position.x,target.z-this.root.position.z);this.root.rotation.y=this.active?this.player.yaw:yaw;const casting=this.castRemaining>0||this.travel!==null;for(const side of ['l','r']){this.nodes['upperarm_'+side].rotation.set(casting?-1.1:-.15,0,side==='l'?-.28:.28);this.nodes['forearm_'+side].rotation.x=casting?-.48:-.18;this.nodes['thigh_'+side].rotation.x=.025*Math.sin(time*2+(side==='l'?0:Math.PI));this.nodes['coat_'+side].rotation.x=.06*Math.sin(time*2.8);}
+  if(!this.active){const target=robot?.root.position||new THREE.Vector3();this.root.rotation.y=Math.atan2(target.x-this.root.position.x,target.z-this.root.position.z);}
+  const casting=this.castRemaining>0||this.travel!==null;for(const side of ['l','r']){this.nodes['upperarm_'+side].rotation.set(casting?-1.1:-.15,0,side==='l'?-.28:.28);this.nodes['forearm_'+side].rotation.x=casting?-.48:-.18;this.nodes['thigh_'+side].rotation.x=.025*Math.sin(time*2+(side==='l'?0:Math.PI));this.nodes['coat_'+side].rotation.x=.06*Math.sin(time*2.8);}
   if(this.travel)this.mode='teleporting';else this.mode=this.castRemaining>0?(this.castKind==='rescue'?'rescuing':'casting'):this.portals.some(p=>p.kind==='attack')?'portal-barrage':'watching';
   if(this.active){if(this.pair?.entry.expiresAt<=time)this.pair=null;}else this.transportUnits();
   this.discMaterial.uniforms.time.value=time;
   for(let i=this.portals.length-1;i>=0;i--){const p=this.portals[i],age=this.time-p.createdAt;const lifetime=p.expiresAt-p.createdAt;if(age>=lifetime-1e-9){if(p.energy)this.portalEnergy.remove(p.energy);this.scene.remove(p.group);p.ticks.dispose();this.closed.push({id:p.id,kind:p.kind,lifetime});this.closed=this.closed.slice(-12);this.portals.splice(i,1);continue;}const scale=THREE.MathUtils.smoothstep(age,0,.2)*(1-THREE.MathUtils.smoothstep(age,Math.max(.2,lifetime-.35),lifetime));p.group.scale.setScalar(p.radius*Math.max(.001,scale));p.spin.rotation.z=(p.kind.startsWith('rescue')?-1:1)*age*.9;
-   if(p.kind==='attack'&&alive&&age>=.35){p.shotClock+=dt;while(p.shotClock>=SHOT_INTERVAL-1e-9){p.shotClock-=SHOT_INTERVAL;this.fireBolt(p);}}
+   if(p.kind==='attack'&&(p.playerAimed||alive)&&age>=.35){p.shotClock+=dt;while(p.shotClock>=SHOT_INTERVAL-1e-9){p.shotClock-=SHOT_INTERVAL;this.fireBolt(p);}}
    if(p.energy)this.portalEnergy.update(p.energy,dt,age);
   }
   for(let i=this.bolts.length-1;i>=0;i--){const b=this.bolts[i];b.life-=dt;b.age+=dt;const end=b.position.clone().addScaledVector(b.dir,BOLT_SPEED*dt),transit=this.redirect(b,b.position,end);if(transit){b.position.copy(transit.position);b.dir.copy(transit.direction);continue;}const hit=this.traceBolt(b.position,end);if(hit){b.position.set(hit.point.x,hit.point.y,hit.point.z);const damage=this.onBoltHit(hit,b.position,b.power)||0;this.damage+=damage;if(hit.unit?.kind==='robot')this.robotHits++;this.emit(b.position,4,1.2);b.life=0;}else{b.position.copy(end);b.sparkClock+=dt;if(b.sparkClock>=.05){b.sparkClock%=.05;this.emit(b.position,1,.35);const spark=this.sparks.at(-1);spark.life=spark.max=.28;spark.size=.12;spark.v.addScaledVector(b.dir,-3);}}if(b.life<=0)this.bolts.splice(i,1);}

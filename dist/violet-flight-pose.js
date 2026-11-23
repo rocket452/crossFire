@@ -47,7 +47,7 @@ export class VioletFlightPose {
  }
  applyVisual(root,visual,time=0){
   visual.quaternion.copy(root.getWorldQuaternion(new THREE.Quaternion()).invert()).multiply(this.orientation);
-  const rumble=this.flight,hover=(1-this.flight)*(1-this.action);
+  const rumble=this.flight*.5,hover=(1-this.flight)*(1-this.action);
   visual.rotateX(Math.sin(time*1.9+.45)*.036*hover+rumble*(Math.sin(time*20)*.012+Math.sin(time*31)*.006));
   visual.rotateZ(Math.sin(time*1.55)*.062*hover+rumble*(Math.sin(time*16)*.021+Math.sin(time*27)*.009));
   visual.position.y=1.5+hover*(Math.sin(time*2.65)*.14+Math.sin(time*4.9)*.023)+rumble*(Math.sin(time*21)*.022+Math.sin(time*13)*.014);

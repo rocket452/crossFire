@@ -30,9 +30,15 @@ export const WAVE_DEFENSE_BOUNDS=Object.freeze({
  minX:mapX(ESCORT_APPROACH.minX),maxX:mapX(ESCORT_APPROACH.maxX),
  minZ:mapZ(ESCORT_APPROACH.minZ),maxZ:mapZ(ESCORT_APPROACH.maxZ)
 });
+export const WAVE_DEFENSE_HIGHWAYS=[
+ {fromZ:center.z-6,toZ:WAVE_DEFENSE_BOUNDS.minZ},
+ {fromZ:center.z+6,toZ:WAVE_DEFENSE_BOUNDS.maxZ}
+];
 export const waveDefenseRoads=roads=>roads.map(r=>({
  ...r,x:mapX(r.x),z:mapZ(r.z),width:r.width*mapScale,depth:r.depth*mapScale
-}));
+})).concat(WAVE_DEFENSE_HIGHWAYS.map(({fromZ,toZ})=>({
+ x:center.x,z:(fromZ+toZ)/2,width:18,depth:Math.abs(fromZ-toZ),highway:true
+})));
 // Sites between the existing streets and outside the relay's north/south
 // approaches and the diagonal from the player spawn. Coordinates are pre-scale.
 const skylineTowers=[
@@ -48,12 +54,19 @@ const skylineTowers=[
  [-60,-60,23],[-60,-36,21],[-36,108,24],[-60,132,22],[-36,156,25]
 ];
 const skylineTints=['#8299b6','#a49abb','#668d9e'];
+const highwayTowers=[
+ [-39,-75,16],[-39,-136,19],[-18,-245,14],[18,-62,17],[18,-131,15],[18,-173,20],
+ [-39,75,16],[-39,136,18],[-18,247,14],[18,96,17],[39,136,20],[39,209,16]
+];
 export function waveDefenseBuildings(buildings){
  return buildings.map(b=>({...b,x:mapX(b.x),z:mapZ(b.z)}))
   .filter(b=>Math.hypot(Math.max(0,Math.abs(b.x-center.x)-5),Math.max(0,Math.abs(b.z-center.z)-5))>=43)
   .concat(skylineTowers.map(([x,z,floors],i)=>({
    id:'WAVE-TOWER-'+(i+1),name:'Wave Defense high-rise',
    x:mapX(x),z:mapZ(z),floors,tint:skylineTints[i%skylineTints.length]
+  })),highwayTowers.map(([dx,dz,floors],i)=>({
+   id:'WAVE-HIGHWAY-TOWER-'+(i+1),name:'Wave Defense highway tower',
+   x:center.x+dx,z:center.z+dz,floors,footprint:8,tint:skylineTints[i%skylineTints.length]
   })));
 }
 const relayFlashSeconds=.24;
@@ -61,12 +74,13 @@ const walkerRelayCloseRange=55;
 const formations=[[4,0],[0,4],[2,2]];
 export const WAVE_DEFENSE_INTERVAL=15;
 const WAVE_INTERMISSIONS=[20,12.5];
-const BASTION_VICTORY_DELAY=5;
+const BASTION_VICTORY_DELAY=9;
 const formationSize=formations.reduce((sum,[ground])=>sum+ground,0)*3;
 export const DEFENSE_UPGRADES=[
  {id:'chain',hero:'volt',title:'Chain lightning',detail:'Primary attacks arc to one additional nearby enemy.'},
  {id:'dash',hero:'volt',title:'Charged dash',detail:'Dashing generates charge 30% faster than normal movement.'},
  {id:'backstab-dash',hero:'ninja',title:'Backstab Dash',detail:'A gold Crosscut backstab banks one extra dash, even if the enemy survives.'},
+ {id:'extra-air-jump',hero:'ninja',title:'Extra Air Jump',detail:'Gain a second midair jump. Wall jumps preserve your remaining air jumps.'},
  {id:'repair',title:'Repair rocket',detail:'Restore 30% of the evacuation rocket’s maximum HP.'}
 ];
 
