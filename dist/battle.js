@@ -1,5 +1,5 @@
 import {RiftPlayer} from './rift-player.js?v=drone-decks-385';
-import {VioletPlayer} from './violet-player.js?v=388';
+import {VioletPlayer} from './violet-player.js?v=orb-movement-389';
 import {DefenseTitle} from './defense-title.js?v=386';
 import {kageDashCanFinish} from './kage-attacks.js?v=384';
 import {NINJA} from './ninja-motion.js?v=drone-decks-385';

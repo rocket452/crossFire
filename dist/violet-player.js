@@ -40,11 +40,11 @@ export class VioletPlayer extends ManualHeroControls {
   this.frame();const eye=this.camera.position,dir=this.camera.getWorldDirection(new Vector3()),end=eye.clone().addScaledVector(dir,range);
   const hit=this.hero.traceOrb(eye,end);return hit?new Vector3().copy(hit.point):end;
  }
- move(dt,shielding=false){
+ move(dt,limited=false){
   const h=this.hero,p=h.root.position,k=this.keys;
   this.carryDeck(p);
   const f=Number(k.has('KeyW'))-Number(k.has('KeyS'))+this.stick.value.y,r=Number(k.has('KeyD'))-Number(k.has('KeyA'))+this.stick.value.x;
-  const speed=VIOLET_TUNING.defenseSpeed*(shielding?.5:1);
+  const speed=VIOLET_TUNING.defenseSpeed*(limited?.5:1);
   const desired=new Vector3(Math.sin(this.yaw)*f-Math.cos(this.yaw)*r,Number(k.has('Space'))-Number(k.has('ShiftLeft')||k.has('ShiftRight')),Math.cos(this.yaw)*f+Math.sin(this.yaw)*r).clampLength(0,1).multiplyScalar(speed);
   h.velocity.lerp(desired,1-Math.exp(-5*dt)).clampLength(0,speed);
   for(const axis of ['x','z','y']){
@@ -74,9 +74,13 @@ export class VioletPlayer extends ManualHeroControls {
   const pulse=this.pulseTap;this.pulseTap=false;
   if(c.remaining>0){h.updatePowerBeam(dt,time,null,this.aim(VIOLET_BEAM.range+this.cameraDistance));this.status();return;}
   const shielding=(this.keys.has('Shield')||this.keys.has('KeyG'))&&c.overloadRemaining<=0&&h.shieldEnergy>0;
-  this.move(dt,shielding);
   h.mode=shielding?'blocking':'patrol';h.root.rotation.set(0,this.yaw,0);
   h.shieldDeploy=MathUtils.damp(h.shieldDeploy,shielding?1:0,12,dt);h.shield.visible=h.shieldDeploy>.015;
+  if(h.isShielding()||c.overloadRemaining>0)this.cancelOrb();
+  else if(this.fireTap)h.charging=true;
+  this.fireTap=false;
+  const holdingOrb=this.keys.has('Fire')||this.keys.has('KeyF');
+  this.move(dt,shielding||(h.charging&&holdingOrb));
   const center=h.root.position.clone();center.y+=1.5;
   this.frame();
   const direction=this.direction();h.shieldNormal.copy(direction);
@@ -89,17 +93,13 @@ export class VioletPlayer extends ManualHeroControls {
    h.orbEffects.impact(center,h.zAxis,VIOLET_PULSE.radius);
    h.emit(center,28,5);
   }
-  if(h.isShielding()||c.overloadRemaining>0)this.cancelOrb();
-  else if(this.fireTap)h.charging=true;
-  this.fireTap=false;
   h.flightPose.step(dt,h.velocity,this.yaw,{raised:h.charging||shielding,blocking:shielding});h.flightPose.applyVisual(h.root,h.visual);h.pose(time);h.flightPose.applyCharacter(h.character,h.nodes,dt,-this.pitch);this.hurt.applyPose();h.root.updateMatrixWorld(true);
   h.chargeOrb.visible=h.charging;
   if(h.charging){
-   const held=this.keys.has('Fire')||this.keys.has('KeyF');
-   if(held)h.chargeTime=Math.min(VIOLET_TUNING.normalCharge,h.chargeTime+dt);
+   if(holdingOrb)h.chargeTime=Math.min(VIOLET_TUNING.normalCharge,h.chargeTime+dt);
    const charge=h.chargeTime/VIOLET_TUNING.normalCharge;
    const origin=h.poseOrbCharge(time,charge);
-   if(!held){
+   if(!holdingOrb){
     h.attackCooldown=0;
     h.launch(origin,this.aim(),null,charge);
     this.cancelOrb();
