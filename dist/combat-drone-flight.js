@@ -9,20 +9,29 @@ export class DroneFlight {
   this.inverse=new CANNON.Quaternion();
   this.up=new CANNON.Vec3();this.angular=new CANNON.Vec3();this.forward=new CANNON.Vec3();
   this.force=new CANNON.Vec3();this.worldYaw=new CANNON.Vec3();
+  this.acceleration=new CANNON.Vec3();
   this.forces=new Array(engines.length).fill(0);
+  this.motorThrust=new Array(engines.length).fill(null);
+  this.flightTime=body.position.x*.11+body.position.z*.07;
  }
- apply(goal,heading,mode,gravity){
+ apply(goal,heading,mode,gravity,dt){
   const {body,engines,config:c}=this;
   const hover=body.mass*gravity/engines.length;
   let thrust=hover*c.failedThrust, pitch=0,roll=0,yaw=0;
+  let motorResponse=1;
   if(mode==='flying'){
+   this.flightTime+=dt;
+   motorResponse=1-Math.exp(-dt/c.motorResponseSeconds);
+   const steeringResponse=1-Math.exp(-dt/c.steeringResponseSeconds);
    const vx=clamp((goal.x-body.position.x)*c.approachGain,-c.maxSpeed,c.maxSpeed);
    const vz=clamp((goal.z-body.position.z)*c.approachGain,-c.maxSpeed,c.maxSpeed);
    const ax=clamp((vx-body.velocity.x)*c.speedDamping,-c.maxAcceleration,c.maxAcceleration);
    const az=clamp((vz-body.velocity.z)*c.speedDamping,-c.maxAcceleration,c.maxAcceleration);
+   this.acceleration.x+=(ax-this.acceleration.x)*steeringResponse;
+   this.acceleration.z+=(az-this.acceleration.z)*steeringResponse;
    const ay=clamp((goal.y-body.position.y)*c.altitudeGain-body.velocity.y*c.climbDamping,-5,5);
    body.quaternion.conjugate(this.inverse);
-   this.up.set(ax,gravity,az);this.up.normalize();
+   this.up.set(this.acceleration.x,gravity,this.acceleration.z);this.up.normalize();
    this.inverse.vmult(this.up,this.up);
    this.inverse.vmult(body.angularVelocity,this.angular);
    pitch=body.inertia.x*(c.attitudeGain*this.up.z-c.angularGain*this.angular.x);
@@ -37,9 +46,18 @@ export class DroneFlight {
   const z2=engines.reduce((total,e)=>total+e.offset.z**2,0);
   let reaction=0;
   for(const [index,engine]of engines.entries()){
-   const value=mode==='wreck'||engine.health<=0?0:clamp(
-    thrust-pitch*engine.offset.z/z2+roll*engine.offset.x/x2+clamp(yaw/(engines.length*c.reactionArm),-hover*c.yawReserve,hover*c.yawReserve)*engine.spin,
-    0,c.maxThrust);
+   let value=0;
+   if(mode!=='wreck'&&engine.health>0){
+    value=thrust-pitch*engine.offset.z/z2+roll*engine.offset.x/x2+clamp(yaw/(engines.length*c.reactionArm),-hover*c.yawReserve,hover*c.yawReserve)*engine.spin;
+    if(mode==='flying'){
+     // Small differences in rotor output give the stabilizer something real to correct.
+     const variation=Math.sin(this.flightTime*(1.35+index*.16)+index*2.399)*hover*c.motorVariation;
+     const requested=clamp(value+variation,0,c.maxThrust);
+     const previous=this.motorThrust[index]??hover;
+     value=previous+(requested-previous)*motorResponse;
+    }else value=clamp(value,0,c.maxThrust);
+   }
+   this.motorThrust[index]=value;
    this.forces[index]=value;
    if(!value)continue;
    this.force.set(0,value,0);

@@ -36,6 +36,36 @@ for(const rate of [30,60,120]){
 const highPatrol=fixture(COMBAT_DRONE.flight.altitude+8);
 highPatrol.step(8,[highPatrol.hero]);
 assert(highPatrol.drone.gun.shots>=48,'high Mission 1 flight can still engage a ground target');
+
+{
+ const {drone,physics,destroy}=fixture(),body=drone.body,altitude=body.position.y;
+ const tick=()=>{physics.step(1/60);drone.syncWrecks();};
+ const tilt=()=>{
+  const u=new T.Vector3(0,1,0).applyQuaternion(drone.root.quaternion);
+  return T.MathUtils.radToDeg(Math.acos(T.MathUtils.clamp(u.y,-1,1)));
+ };
+ let hoverTilt=0;
+ for(let i=0;i<180;i++){
+  tick();hoverTilt=Math.max(hoverTilt,tilt());
+  assert(Math.abs(body.position.y-altitude)<.35);
+ }
+ assert(hoverTilt>.1&&hoverTilt<4,'rotor variance produces a small physical hover correction');
+ drone.goal.x=40;
+ let maxBank=0;
+ for(let i=0;i<120;i++){tick();maxBank=Math.max(maxBank,tilt());}
+ assert(maxBank>12&&body.velocity.x>3,'lateral thrust banks the fuselage and builds speed');
+ drone.goal.x=-40;
+ const start=body.position.x;
+ for(let i=0;i<15;i++)tick();
+ assert(body.velocity.x>0&&body.position.x>start+.6,'the drone coasts into a reversal');
+ for(let i=0;i<150;i++)tick();
+ assert(body.velocity.x< -2,'banking against its momentum eventually reverses the drone');
+ assert(Math.abs(body.position.y-altitude)<.75);
+ destroy(0);tick();
+ assert.equal(drone.flight.forces[0],0,'engine destruction bypasses the motor response delay');
+ assert(drone.flight.forces.slice(1).every(thrust=>thrust>0));
+ console.log(`PASS physical hover correction (${hoverTilt.toFixed(1)}°), bank (${maxBank.toFixed(1)}°), reversal inertia, and immediate engine failure`);
+}
 for(const [motors,y,wall,velocity] of [
  [[0],9.5,false,0],[[1],9.5,false,0],[[2],9.5,false,0],[[3],9.5,false,0],
  [[0,1],9.5,false,0],[[0,3],9.5,false,0],[[0,1,2],9.5,false,0],[[0,1,2,3],9.5,false,0],

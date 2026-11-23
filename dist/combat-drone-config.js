@@ -16,6 +16,7 @@ export const COMBAT_DRONE = {
   altitude: 16, maxThrust: 3200, failedThrust: .92, reactionArm: .58,
   linearDamping: .18, angularDamping: .32, altitudeGain: 2.4, climbDamping: 2.6,
   approachGain: .9, speedDamping: 1.65, maxSpeed: 5, maxAcceleration: 3.8,
+  steeringResponseSeconds: .20, motorResponseSeconds: .10, motorVariation: .045,
   attitudeGain: 13, angularGain: 5.6, yawGain: 3.5, yawDamping: 2.2,
   patrolRadius: 8, patrolPeriod: 19, engagementSpacing: 18, aerialClimbFraction: .4,
   obstacleScanHeight: 72, yawReserve: .22

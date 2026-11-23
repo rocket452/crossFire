@@ -1,8 +1,8 @@
 import * as THREE from './vendor/three.module.js';
 import * as CANNON from './vendor/cannon-es.js';
 import {segmentBoxFraction} from './combat-collision.js';
-import {COMBAT_DRONE} from './combat-drone-config.js?v=386';
-import {DroneFlight} from './combat-drone-flight.js?v=320';
+import {COMBAT_DRONE} from './combat-drone-config.js?v=396';
+import {DroneFlight} from './combat-drone-flight.js?v=396';
 import {DroneGun} from './combat-drone-gun.js?v=hazard-red-355';
 import {buildCombatDrone} from './combat-drone-model.js?v=320';
 
@@ -78,7 +78,10 @@ export class CombatDrone {
   this.anchor=new THREE.Vector3().copy(position);
   this.goal=this.anchor.clone();this.heading=0;
   this.ingress=this.options.ingress?new THREE.Vector3().copy(this.options.ingress):null;
-  this.stepPhysics=()=>this.flight.apply(this.goal,this.heading,this.powerCut?'wreck':this.mode,-this.physics.world.gravity.y);
+  this.stepPhysics=()=>{
+   const world=this.physics.world;
+   this.flight.apply(this.goal,this.heading,this.powerCut?'wreck':this.mode,-world.gravity.y,world.dt);
+  };
   this.physics.world.addEventListener('preStep',this.stepPhysics);
   this.spawned=true;this.mode='flying';this.root.visible=true;
   this.damage.add(this.id,'robot',this,c.hullHealth);

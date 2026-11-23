@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=392';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=396';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
