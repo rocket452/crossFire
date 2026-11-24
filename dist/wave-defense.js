@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=399';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=400';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
@@ -71,11 +71,13 @@ export function waveDefenseBuildings(buildings){
 }
 const relayFlashSeconds=.24;
 const walkerRelayCloseRange=55;
-const formations=[[4,0],[0,4],[2,2]];
+const formations=[[4,0],[0,4],[4,2]];
 export const WAVE_DEFENSE_INTERVAL=15;
 const WAVE_INTERMISSIONS=[20,12.5];
 const BASTION_VICTORY_DELAY=9;
-const formationSize=formations.reduce((sum,[ground])=>sum+ground,0)*3;
+// The two reinforcement waves use these formations at 1x and 2x strength.
+const bruiserCount=formations.reduce((sum,[ground])=>sum+ground,0)*3;
+const droneCount=formations.reduce((sum,[,air])=>sum+air,0)*3;
 export const DEFENSE_UPGRADES=[
  {id:'chain',hero:'volt',title:'Chain lightning',detail:'Primary attacks arc to one additional nearby enemy.'},
  {id:'dash',hero:'volt',title:'Charged dash',detail:'Dashing generates charge 30% faster than normal movement.'},
@@ -86,7 +88,7 @@ export const DEFENSE_UPGRADES=[
 
 export class WaveDefense extends MissionEnemyWaves {
  constructor(scene,damage,options){
-  super(scene,damage,{...options,formationSize});
+  super(scene,damage,{...options,formationSize:bruiserCount,droneCount});
   this.options=options;
   this.walker=options.walker;
   for(const {actor} of this.drones)actor.options.bounds=WAVE_DEFENSE_BOUNDS;

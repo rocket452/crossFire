@@ -145,7 +145,7 @@ assert(waves.flightDrones.filter(d=>d.spawned).every(d=>d.root.position.z<WAVE_D
 const firstCombatUnit=first.combatUnit;
 firstCombatUnit.health=123;
 step(interval);
-assert.deepEqual(counts(),[6,6]);
+assert.deepEqual(counts(),[8,6]);
 assert.equal(first.combatUnit,firstCombatUnit);
 assert.equal(first.combatUnit.health,123,'overlapping spawns preserve health and identity');
 assert.equal(waves.nextWaveLabel,'Wave 2');
@@ -181,7 +181,7 @@ assert.equal(waves.wave,1,'selecting an upgrade does not shorten the break');
 step(1/30);
 assert.equal(waves.wave,2);assert.deepEqual(counts(),[8,0]);
 step(interval);assert.deepEqual(counts(),[8,8]);
-step(interval);assert.deepEqual(counts(),[12,12]);
+step(interval);assert.deepEqual(counts(),[16,12]);
 assert(!waves.upgradePending,'the final Wave 2 group does not open upgrades on arrival');
 step(interval+1);
 assert.equal(waves.wave,2);
