@@ -185,13 +185,18 @@ html[data-input-mode=desktop] .viewer.is-ninja #shuriken-meter{display:block;fle
 body.show-defense-title{overflow:hidden}
 .show-defense-title #viewport{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-height:none!important;aspect-ratio:auto!important;z-index:10000;background:#070c1b}
 .show-defense-title #viewport>:not(canvas){visibility:hidden!important}
-dialog.defense-title[open]{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;box-sizing:border-box;inset:0;width:100%;height:100dvh;max-width:none;max-height:none;margin:0;padding:clamp(22px,5vw,80px);border:0;color:#f4faff;background:linear-gradient(161deg,#070e22dd,transparent 39%),linear-gradient(0deg,#05091de0,transparent 23%);overflow:hidden}
+dialog.defense-title[open]{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;box-sizing:border-box;inset:0;width:100%;height:100dvh;max-width:none;max-height:none;margin:0;padding:clamp(22px,5vw,80px);border:0;color:#f4faff;background:linear-gradient(161deg,#070e22dd,transparent 39%),linear-gradient(0deg,#05091de0,transparent 23%);overflow:hidden;touch-action:none;cursor:grab;user-select:none}
 .defense-title::backdrop{background:transparent}
-.defense-title header{display:block;width:auto;height:auto;border-bottom:0;background:transparent;border-left:4px solid #64f7ff;padding-left:1rem;text-shadow:0 2px 18px #060c27}
-.defense-title header span{font:700 clamp(10px,1vw,16px) system-ui;letter-spacing:.3em;text-transform:uppercase;color:#a9f7ff}
-.defense-title h1{margin:.25rem 0 0;font:900 italic clamp(36px,6.7vw,104px)/.98 system-ui;letter-spacing:-.06em;text-transform:uppercase}
-.defense-title h1 em{color:#84f5ff;font-weight:inherit}
-.defense-title button{align-self:center;padding:.8em 1.7em;background:#0a1225e8;border:1px solid #80f3ff;color:white;font:700 clamp(15px,2vw,24px) system-ui;letter-spacing:.08em;cursor:pointer;animation:defense-start-pulse 1.55s ease-in-out infinite alternate}
+.defense-title:active{cursor:grabbing}
+.defense-title header{display:block;width:auto;height:auto;min-height:0;border-bottom:0;background:transparent;border-left:4px solid #64f7ff;padding:0 0 0 clamp(.65rem,2vw,1.25rem);text-shadow:0 3px 24px #060c27}
+.defense-title h1{margin:0;font:900 italic clamp(34px,8vw,132px)/.95 'Barlow Condensed',system-ui,sans-serif;letter-spacing:-.025em;text-transform:uppercase}
+.defense-title header p{margin:.55rem 0 0;font:700 clamp(14px,2vw,29px)/1.1 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:#a9f7ff}
+.defense-title-actions{position:relative;display:grid;justify-items:center;gap:9px;width:100%}
+.defense-title-orbit-hint{margin:0;color:#cfebf0;font:600 13px system-ui;text-shadow:0 1px 8px #08142d}
+.defense-title button{padding:.8em 1.7em;background:#0a1225e8;border:1px solid #80f3ff;color:white;font:700 clamp(15px,2vw,24px) system-ui;letter-spacing:.08em;cursor:pointer}
+.defense-title [data-title-start]{animation:defense-start-pulse 1.55s ease-in-out infinite alternate}
+.defense-title [data-title-resume]{position:absolute;right:0;bottom:0;padding:.6em .85em;color:#a9f7ff;font:600 13px system-ui;border-color:#4d8094;letter-spacing:normal}
+@media(max-width:680px){.defense-title [data-title-resume]{position:static}}
 @keyframes defense-start-pulse{from{opacity:.66}to{opacity:1;box-shadow:0 0 22px #42dcff66}}
 @media(prefers-reduced-motion:reduce){.defense-title button{animation:none}}
 
