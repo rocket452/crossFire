@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=400';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=401';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
@@ -69,6 +69,8 @@ export function waveDefenseBuildings(buildings){
    x:center.x+dx,z:center.z+dz,floors,footprint:8,tint:skylineTints[i%skylineTints.length]
   })));
 }
+const droneLaneRoofClearance=5;
+const droneLaneHalfWidth=40;
 const relayFlashSeconds=.24;
 const walkerRelayCloseRange=55;
 const formations=[[4,0],[0,4],[4,2]];
@@ -91,6 +93,10 @@ export class WaveDefense extends MissionEnemyWaves {
   super(scene,damage,{...options,formationSize:bruiserCount,droneCount});
   this.options=options;
   this.walker=options.walker;
+  const northLaneBuildings=options.buildings.filter(b=>b.z<center.z&&
+   b.z>=WAVE_DEFENSE_BOUNDS.minZ&&Math.abs(b.x-center.x)<=droneLaneHalfWidth);
+  this.droneOverflightAltitude=northLaneBuildings.reduce((height,b)=>Math.max(height,b.floors*3),0)
+   +droneLaneRoofClearance;
   for(const {actor} of this.drones)actor.options.bounds=WAVE_DEFENSE_BOUNDS;
   for(const unit of this.members)unit.getTargets=origin=>this.targets(origin,unit.heroRange);
   this.rocket=new DefenseRocket(scene,RELAY);
@@ -166,8 +172,13 @@ export class WaveDefense extends MissionEnemyWaves {
    this.dronesLaunched+=air;
    for(const [index,{actor,start}] of units.entries()){
     const row=Math.floor(index/2);
+    // Send one drone per pair over the roofs, alternating sides by row.
+    const high=index%4===1||index%4===2;
+    const y=high?Math.max(start.y,this.droneOverflightAltitude):start.y;
+    actor.options.ingress.y=y;
     actor.options.ingress.z=center.z-22-row*3.5;
-    actor.spawn({...start,z:WAVE_DEFENSE_BOUNDS.minZ+8+row*8});
+    actor.options.cruiseAltitude=start.y;
+    actor.spawn({...start,y,z:WAVE_DEFENSE_BOUNDS.minZ+8+row*8});
    }
    this.alert('north',units.map(({actor})=>actor));
   }

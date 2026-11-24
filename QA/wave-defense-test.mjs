@@ -104,7 +104,7 @@ const damage=new UnitDamage(unit=>waves.disable(unit),unit=>{
 let liveFire=true,droneRelayHits=0;
 const trace=(a,b,owner,radius)=>traceImpact(a,b,{targets:liveFire||owner.startsWith('combat-drone')?[waves.relay]:[],radius});
 waves=new WaveDefense(scene,damage,{
- walker,visible:()=>true,finalBossDefeated:()=>finalBossDead,status(){},finish:won=>{result=won;},startArsenal(){},
+ buildings,walker,visible:()=>true,finalBossDefeated:()=>finalBossDead,status(){},finish:won=>{result=won;},startArsenal(){},
  getTargets:()=>hero,onEvent(){},bruiser:{spiderModel,visible:()=>true,isPathClear:(a,b)=>!traceBuilding({...a,y:1.3},{...b,y:1.3},1.9),trace},
  drone:{physics,visible:()=>true,trace,roof:(a,b)=>traceBuilding(a,b)?.point,redirect:()=>null,audio:()=>null,particle(){},burst(){},onWreck(){},onRemoveSmoke(){},cameraImpact(){},onRoundHit:(hit,power)=>{
   if(hit.unit===waves.relay)droneRelayHits++;
@@ -114,6 +114,18 @@ waves=new WaveDefense(scene,damage,{
 function step(seconds){for(let i=0;i<Math.round(seconds*30);i++){waves.update(1/30,t+=1/30);physics.step(1/30);waves.syncWrecks();}}
 function counts(){return [waves.members,waves.flightDrones].map(group=>group.filter(e=>e.combatUnit?.alive).length);}
 const interval=WAVE_DEFENSE_INTERVAL;
+const northLaneRoof=Math.max(...buildings.filter(b=>b.z<RELAY.z&&b.z>=WAVE_DEFENSE_BOUNDS.minZ&&
+ Math.abs(b.x-RELAY.x)<=40).map(b=>b.floors*3));
+function checkDronePairAltitudes(first,count){
+ const group=waves.flightDrones.slice(first,first+count);
+ assert.equal(group.filter(drone=>drone.root.position.y>northLaneRoof).length,count/2);
+ for(const drone of group){
+  const y=drone.root.position.y;
+  assert(Math.abs(y-drone.ingress.y)<.1,'ingress preserves each assigned spawn altitude');
+  assert(y<=northLaneRoof+5.1,'high drones stay close to the roofline');
+  assert(drone.options.cruiseAltitude<northLaneRoof,'drones can descend into minigun range');
+ }
+}
 assert.equal(interval,15);
 step(1/30);
 assert.deepEqual(counts(),[4,0]);
@@ -141,11 +153,15 @@ step(interval-1/30);
 assert.deepEqual(counts(),[4,0],'no spawn before the countdown expires');
 step(1/30);
 assert.deepEqual(counts(),[4,4],'new group launches while the first group lives');
+checkDronePairAltitudes(0,4);
 assert(waves.flightDrones.filter(d=>d.spawned).every(d=>d.root.position.z<WAVE_DEFENSE_BOUNDS.minZ+30));
 const firstCombatUnit=first.combatUnit;
 firstCombatUnit.health=123;
 step(interval);
 assert.deepEqual(counts(),[8,6]);
+checkDronePairAltitudes(4,2);
+const highDrone=waves.flightDrones[1];
+assert(highDrone.root.position.y>northLaneRoof,'high drone stays above the roofs during approach');
 assert.equal(first.combatUnit,firstCombatUnit);
 assert.equal(first.combatUnit.health,123,'overlapping spawns preserve health and identity');
 assert.equal(waves.nextWaveLabel,'Wave 2');
@@ -162,6 +178,8 @@ assert.equal(waves.relayFlash,0);
 assert.equal(waves.rocket.shell.emissiveIntensity,0);
 liveFire=false;
 step(35);
+assert.equal(highDrone.ingress,null,'high drone completes its approach');
+assert(highDrone.root.position.y<northLaneRoof,'high drone descends under thrust to engage the rocket');
 assert.equal(waves.wave,1,'surviving enemies hold wave 1 open');
 assert.equal(waves.remaining,0);
 const survivors=[...waves.members,...waves.flightDrones].map(actor=>actor.combatUnit).filter(unit=>unit?.alive);
@@ -181,7 +199,9 @@ assert.equal(waves.wave,1,'selecting an upgrade does not shorten the break');
 step(1/30);
 assert.equal(waves.wave,2);assert.deepEqual(counts(),[8,0]);
 step(interval);assert.deepEqual(counts(),[8,8]);
+checkDronePairAltitudes(6,8);
 step(interval);assert.deepEqual(counts(),[16,12]);
+checkDronePairAltitudes(14,4);
 assert(!waves.upgradePending,'the final Wave 2 group does not open upgrades on arrival');
 step(interval+1);
 assert.equal(waves.wave,2);

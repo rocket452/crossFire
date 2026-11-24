@@ -228,6 +228,7 @@ export class CombatDrone {
     return;
    }
    this.anchor.copy(this.ingress);
+   this.anchor.y=this.options.cruiseAltitude??this.ingress.y;
    this.ingress=null;
   }
   const target=targets.reduce((best,u)=>{
