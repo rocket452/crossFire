@@ -136,9 +136,9 @@ export class RiftPlayer extends ManualHeroControls {
    position.lerp(next,fraction);
   }else position.copy(next);
  }
- face(dt){
+ face(dt,aiming=this.hero.castRemaining>0){
   const hero=this.hero,rotation=hero.root.rotation;
-  const target=this.walking&&hero.castRemaining<=0?this.moveYaw:this.yaw;
+  const target=this.walking&&!aiming?this.moveYaw:this.yaw;
   const delta=target-rotation.y;
   rotation.y+=Math.atan2(Math.sin(delta),Math.cos(delta))*(1-Math.exp(-18*dt));
  }

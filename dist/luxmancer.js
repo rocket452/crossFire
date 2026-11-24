@@ -1,6 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
-import {RiftPlayer} from './rift-player.js?v=404';
+import {LuxEffects} from './luxmancer-effects.js?v=407';
+import {RiftPlayer} from './rift-player.js?v=407';
 
 const spells={
  lance:{speed:205,life:1.8,damage:190,gap:.85,length:3,width:.12,color:0xffdc53},
@@ -27,7 +28,7 @@ export class Luxmancer {
   this.scene=scene;this.root=new T.Group();this.root.name='Luxmancer';
   this.character=new HumanoidCharacter(model,{height:2.5});
   this.root.add(this.character.root);scene.add(this.root);
-  this.shots=[];this.free={};this.flashes=[];
+  this.shots=[];this.free={};this.effects=new LuxEffects(scene);
   for(const [kind,s] of Object.entries(spells)){
    this.free[kind]=[];s.material??=glow(s.color);
   }
@@ -39,17 +40,12 @@ export class Luxmancer {
  reset(){
   for(const shot of this.shots)this.recycle(shot);
   this.shots.length=0;
-  for(const f of this.flashes)this.scene.remove(f.mesh);
-  this.flashes.length=0;this.clearLocks();
-  this.cool={lance:0,spray:0,comet:0};this.castRemaining=0;this.character.reset();
+  this.effects.reset();this.clearLocks();
+  this.cool={lance:0,spray:0,comet:0};this.castRemaining=0;this.castKind=null;this.poseKind=null;this.poseWeight=0;this.character.reset();
  }
  setEnabled(value){this.enabled=value;this.root.visible=value;if(!value){this.player?.exit();this.reset();}}
  receiveEyeHit(){if(this.active)this.player.hurt.hit();}
  recycle(shot){shot.mesh.visible=false;this.free[shot.kind].push(shot.mesh);}
- flash(point,size){
-  const mesh=halo();mesh.position.copy(point);mesh.quaternion.copy(this.player.camera.quaternion);
-  mesh.scale.setScalar(.1);this.scene.add(mesh);this.flashes.push({mesh,size,time:0});
- }
  shoot(kind,origin,direction,target=null){
   const s=spells[kind];let mesh=this.free[kind].pop();
   if(!mesh){
@@ -67,8 +63,9 @@ export class Luxmancer {
   mesh.position.copy(origin);mesh.quaternion.setFromUnitVectors(forward,direction);
   const velocity=direction.clone().multiplyScalar(s.speed);
   if(kind==='lance')velocity.y+=4;
-  this.shots.push({mesh,kind,target,v:velocity,life:s.life});
-  this.castRemaining=.22;
+  this.shots.push({mesh,kind,target,v:velocity,life:s.life,trail:[],sampleTime:0});
+  this.castKind=kind;this.castRemaining=kind==='comet'?.36:.23;
+  if(kind!=='comet')this.effects.burst(kind,origin,direction,false);
  }
  clearLocks(){
   this.locks=[];this.charging=false;
@@ -125,15 +122,20 @@ export class Luxmancer {
    }
    const end=p.clone().addScaledVector(shot.v,step),hit=this.traceBolt(p,end);
    shot.life-=step;
-   if(hit){this.onHit(hit,new T.Vector3().copy(hit.point),s.damage);this.flash(hit.point,shot.kind==='spray'?.55:2);}
+   if(hit){
+    this.onHit(hit,new T.Vector3().copy(hit.point),s.damage);
+    this.effects.burst(shot.kind,hit.point,shot.v,true);
+   }
    if(hit||shot.life<=0){this.recycle(shot);this.shots.splice(i,1);continue;}
+   shot.sampleTime+=step;
+   if(shot.sampleTime>=.018||!shot.trail.length){
+    const point=shot.trail.length>=8?shot.trail.pop():new T.Vector3();
+    shot.trail.unshift(point.copy(p));shot.sampleTime%=.018;
+   }
    p.copy(end);shot.mesh.quaternion.setFromUnitVectors(forward,shot.v.clone().normalize());
    if(shot.kind==='comet')shot.mesh.rotateZ(shot.life*10);
   }
-  for(let i=this.flashes.length-1;i>=0;i--){
-   const f=this.flashes[i];f.time+=dt;f.mesh.scale.setScalar(f.size*(.1+f.time*5));
-   if(f.time>.18){this.scene.remove(f.mesh);this.flashes.splice(i,1);}
-  }
+  this.effects.update(dt,this.shots);
  }
  update(dt){
   if(!this.enabled||!this.active||!this.player.available())return;
@@ -147,22 +149,52 @@ export class LuxPlayer extends RiftPlayer {
    codes:['KeyW','KeyA','KeyS','KeyD','Space','KeyE','KeyF','KeyG']});
  }
  clear(){super.clear();this.hero.clearLocks();}
+ poseCast(kind,ray){
+  const h=this.hero,c=h.character;
+  const aim=ray.clone();
+  const weight=h.poseWeight;
+  // The jump clip rolls the shoulders back. Keep both elbows in front of the cloak.
+  if(!this.grounded&&this.vertical>0)aim.y=Math.min(0,aim.y);
+  const side=new T.Vector3().crossVectors(up,aim).normalize();
+  const recoil=h.castKind===kind?T.MathUtils.clamp(h.castRemaining/.23,0,1):0;
+  const right=c.world('B_R_UpperArm');
+  if(kind==='lance'){
+   right.addScaledVector(aim,.70-.27*recoil).addScaledVector(up,.13*recoil-.035);
+   const support=c.world('B_L_UpperArm').lerp(right,.68).addScaledVector(up,-.08);
+   c.arm('L',c.hand('L').lerp(support,weight));
+  }else if(kind==='spray'){
+   right.addScaledVector(aim,.61-.13*recoil).addScaledVector(side,.08)
+    .addScaledVector(up,-.16+.08*recoil);
+   const guard=c.world('B_L_UpperArm').addScaledVector(aim,.32).addScaledVector(up,-.23);
+   c.arm('L',c.hand('L').lerp(guard,weight));
+  }else{
+   const release=!this.keys.has('KeyE');
+   const extend=release?.71:.50+(.09*(h.locks.length/maxLocks));
+   right.addScaledVector(aim,extend).addScaledVector(side,.11).addScaledVector(up,-.08);
+   const focus=c.world('B_L_UpperArm').addScaledVector(aim,release?.40:.57)
+    .addScaledVector(side,-.11).addScaledVector(up,release?-.16:0);
+   c.arm('L',c.hand('L').lerp(focus,weight));
+  }
+  c.arm('R',c.hand('R').lerp(right,weight));
+ }
+
  update(dt){
   const h=this.hero;
-  this.hurt.step(dt);this.move(dt);this.frame();this.face(dt);
-  h.character.update(this.grounded?(this.walking?'Run':'Idle'):(this.vertical>0?'Jump':'Fall'),dt);
-  const ray=this.camera.getWorldDirection(new T.Vector3()),eye=this.camera.position;
-  const end=eye.clone().addScaledVector(ray,380),aim=h.traceBolt(eye,end)?.point||end;
+  this.hurt.step(dt);this.move(dt);this.frame();
   for(const key of Object.keys(h.cool))h.cool[key]=Math.max(0,h.cool[key]-dt);
   h.castRemaining=Math.max(0,h.castRemaining-dt);
   const down=k=>this.keys.has(k)||this.taps.has(k);
   const lance=down('Fire')||down('KeyF'),spray=down('Shield')||down('KeyG');
-  if(lance||spray||h.charging||h.castRemaining){
-   const reach=ray.clone().multiplyScalar(.8);
-   // Keep the elbow forward while the jump animation rolls the shoulders.
-   if(!this.grounded&&this.vertical>0)reach.y=Math.min(0,reach.y);
-   h.character.arm('R',h.character.world('B_R_UpperArm').add(reach));
-  }
+  const wantsVolley=this.keys.has('KeyE')&&!h.cool.comet;
+  const pose=wantsVolley||h.charging?'comet':lance?'lance':spray?'spray':h.castRemaining?h.castKind:null;
+  this.face(dt,!!pose);
+  const clip=this.grounded?(this.walking?'Run':'Idle'):(this.vertical>0?'Jump':'Fall');
+  h.character.update(clip,dt,{loop:this.grounded});
+  const ray=this.camera.getWorldDirection(new T.Vector3()),eye=this.camera.position;
+  const end=eye.clone().addScaledVector(ray,380),aim=h.traceBolt(eye,end)?.point||end;
+  if(pose)h.poseKind=pose;
+  h.poseWeight=T.MathUtils.damp(h.poseWeight,pose?1:0,pose?40:18,dt);
+  if(h.poseWeight>.01)this.poseCast(h.poseKind,ray);
   const origin=h.character.hand('R'),dir=new T.Vector3().copy(aim).sub(origin).normalize();
   for(const kind of ['lance','spray']){
    if(!(kind==='lance'?lance:spray)||h.cool[kind]>0)continue;
@@ -172,18 +204,20 @@ export class LuxPlayer extends RiftPlayer {
     const angle=Math.random()*Math.PI*2,r=.21*Math.sqrt(Math.random());
     velocity.addScaledVector(right,r*Math.cos(angle)).addScaledVector(vertical,r*Math.sin(angle)).normalize();
    }
-   h.shoot(kind,origin,velocity);h.flash(origin,kind==='lance'?.7:.28);h.cool[kind]=spells[kind].gap;
+   h.shoot(kind,origin,velocity);h.cool[kind]=spells[kind].gap;
   }
-  if(this.keys.has('KeyE')&&!h.cool.comet){h.charging=true;h.lock(origin,ray,dt);}
+  if(wantsVolley){h.charging=true;h.lock(origin,ray,dt);}
   if(h.charging&&!this.keys.has('KeyE')){
    const locked=h.locks.filter(targetable);
    for(const [i,u] of locked.entries()){
     const fan=dir.clone().applyAxisAngle(up,(i-(locked.length-1)/2)*.28);
     h.shoot('comet',origin,fan.addScaledVector(up,.4).normalize(),u);
    }
-   if(locked.length){h.flash(origin,1);h.cool.comet=4;}
+   if(locked.length){h.effects.burst('comet',origin,dir,false);h.cool.comet=4;}
    h.clearLocks();
   }
+  h.effects.cast(pose,h.character.hand(pose==='comet'&&wantsVolley?'L':'R'),dir,
+   pose==='comet'?(h.locks.length+h.pendingTime/lockTime)/maxLocks:Math.min(1,h.castRemaining/.23));
   h.drawLocks(this.camera);
   const progress=h.pendingTarget?' · Acquiring '+Math.floor(100*h.pendingTime/lockTime)+'%':'';
   this.output.textContent=h.charging?'Targets locked '+h.locks.length+' / '+maxLocks+progress:

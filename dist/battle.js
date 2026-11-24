@@ -1,5 +1,5 @@
-import {Luxmancer,LuxPlayer} from './luxmancer.js?v=406';
-import {RiftPlayer} from './rift-player.js?v=404';
+import {Luxmancer,LuxPlayer} from './luxmancer.js?v=407';
+import {RiftPlayer} from './rift-player.js?v=407';
 import {VioletPlayer} from './violet-player.js?v=395';
 import {DefenseTitle} from './defense-title.js?v=386';
 import {kageDashCanFinish} from './kage-attacks.js?v=393';
