@@ -93,7 +93,7 @@ def torso():
         loop_emblem(side*.783,1.454,.061,.033,prefix+'Hand')
 
 
-def coat(*, fit=None, fabric="coat", edging="gold edge", lining="rift light", crest=None):
+def coat(*, fit=None, fabric="coat", edging="gold edge", lining="rift light", crest=None, soften=False):
     # Each panel wraps from the back around the hip and points down toward the knee.
     bones=lambda v: armor.blend(v.y,.98,1.39,'B_Pelvis','B_Spine2')
     for side in (-1,1):
@@ -106,6 +106,20 @@ def coat(*, fit=None, fabric="coat", edging="gold edge", lining="rift light", cr
         if fit is not None:
             rows = [[fit(x,y,z) for x,y,z in row] for row in rows]
         rows = [[armor.Vector((side*x,y,z)) for x,y,z in row] for row in rows]
+        if soften:
+            # Ease the folds between the mantle, waist, and two pointed tails.
+            softened = [[v.copy() for v in rows[0]]]
+            for i in range(len(rows)-1):
+                previous = rows[max(0, i-1)]
+                following = rows[min(len(rows)-1, i+2)]
+                for t in (1/3, 2/3, 1):
+                    t2, t3 = t*t, t*t*t
+                    softened.append([
+                        a*(2*t3-3*t2+1) + b*(-2*t3+3*t2)
+                        + (b-before)*.5*(t3-2*t2+t) + (after-a)*.5*(t3-t2)
+                        for before,a,b,after in zip(previous,rows[i],rows[i+1],following)
+                    ])
+            rows = softened
         hem = [a.lerp(b,.85) for a,b in zip(rows[-2],rows[-1])]
         rows.insert(-1,hem)
         points = []
@@ -119,7 +133,7 @@ def coat(*, fit=None, fabric="coat", edging="gold edge", lining="rift light", cr
                 if row==len(rows)-2:
                     material=lining if col<2 else edging
                 else:
-                    material=edging if col==4 else lining if row>=2 and col==0 else fabric
+                    material=edging if col==4 else lining if row>=len(rows)-3 and col==0 else fabric
                 faces.append((face if side>0 else face[::-1],material))
         armor.surface(points,faces,bones)
     if crest is None:

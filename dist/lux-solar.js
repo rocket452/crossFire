@@ -84,10 +84,44 @@ export class LuxSolarEffects {
   const material=light(0xffe887,.85);
   for(let i=0;i<18;i++)this.motes.add(new T.Mesh(facet,material));
   this.pillar.add(this.groundSeal,...this.beams,this.motes);
-  scene.add(this.disc,this.pillar);
+  this.blinkAnchor=sunSeal(1.12);
+  this.blinkPulses=Array.from({length:2},()=> {
+   const group=new T.Group(),seal=sunSeal(1.2),shaft=beam(.63,3.7,0xffd452,.8);
+   group.add(seal,shaft);return {group,seal,shaft};
+  });
+  scene.add(this.disc,this.pillar,this.blinkAnchor,...this.blinkPulses.map(p=>p.group));
   this.reset();
  }
- reset(){this.clock=0;this.disc.visible=false;this.pillar.visible=false;}
+ reset(){
+  this.clock=0;this.disc.visible=false;this.pillar.visible=false;this.blinkAnchor.visible=false;
+  for(const pulse of this.blinkPulses)pulse.group.visible=false;
+ }
+ blink(from,to){
+  this.blinkPulses.forEach((pulse,index)=>{
+   pulse.start=this.clock;
+   pulse.group.position.copy(index?to:from).addScaledVector(up,.05);
+   pulse.group.visible=true;
+  });
+ }
+ updateBlink(anchor){
+  this.blinkAnchor.visible=!!anchor;
+  if(anchor){
+   this.blinkAnchor.position.copy(anchor.feet).addScaledVector(up,.04);
+   this.blinkAnchor.rotation.y=this.clock*.9;
+   const scale=.84+.08*Math.sin(this.clock*6);
+   this.blinkAnchor.scale.set(scale,1,scale);
+  }
+  for(const {group,seal,shaft,start} of this.blinkPulses){
+   if(!group.visible)continue;
+   const progress=(this.clock-start)/.52;
+   group.visible=progress<1;
+   seal.scale.setScalar(.46+progress*1.33);
+   seal.rotation.y=progress*2;
+   shaft.scale.setScalar(Math.max(.02,1-progress*.75));
+   shaft.material.uniforms.alpha.value=.85*Math.max(0,1-progress);
+   shaft.material.uniforms.clock.value=this.clock;
+  }
+ }
  update(dt,position,mode,windup){
   this.clock+=dt;
   this.disc.visible=mode==='flight'||mode==='landing';

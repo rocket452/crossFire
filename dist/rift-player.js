@@ -47,13 +47,13 @@ function roofLanding(building,aim,feet,roofBelow,isClear,onOutOfRange){
  if(outOfRange)onOutOfRange();
  return null;
 }
-function roofHighlight(scene){
+function roofHighlight(scene,color){
  const rim=new RingGeometry(Math.SQRT1_2-.026,Math.SQRT1_2,4,1,Math.PI/4).rotateX(-Math.PI/2);
  const marker=new Mesh(rim,new MeshBasicMaterial({
-  color:'#beff66',opacity:.9,transparent:true,side:DoubleSide,depthTest:false,depthWrite:false,toneMapped:false
+  color,opacity:.9,transparent:true,side:DoubleSide,depthTest:false,depthWrite:false,toneMapped:false
  }));
  marker.renderOrder=91;
- marker.name='Rift Warden blinkable roof';marker.visible=false;scene.add(marker);return marker;
+ marker.name='Blinkable roof';marker.visible=false;scene.add(marker);return marker;
 }
 const RIFT={moveSpeed:14,jumpSpeed:10,blinkRange:28,returnWindow:4,blinkCooldown:2.5,portalDuration:5,portalCooldown:9,boltCooldown:.4,boltDamage:90};
 const ATTACK_PORTAL_CHARGES=3,ATTACK_PORTAL_RECHARGE=5;
@@ -67,7 +67,7 @@ export class RiftPlayer extends ManualHeroControls {
   });
   this.taps=new Set();
   this.boomTuning={lift:1.34,overheadClearance:.075};
-  this.roofMarker=roofHighlight(hero.scene);
+  this.roofMarker=roofHighlight(hero.scene,bindings?.roofColor??'#beff66');
  }
  press(key){super.press(key);this.taps.add(key);}
  clear(){super.clear();this.taps.clear();this.roofMarker.visible=false;this.hud.removeAttribute('data-roof-target');}
@@ -143,29 +143,67 @@ export class RiftPlayer extends ManualHeroControls {
   const delta=target-rotation.y;
   rotation.y+=Math.atan2(Math.sin(delta),Math.cos(delta))*(1-Math.exp(-18*dt));
  }
+ blinkTime(){return this.hero.time;}
+ canStartBlink(){return this.hero.portals.length<=9;}
+ createBlinkAnchor(feet,direction){
+  return this.hero.openPortal('travel-entry',feet.clone().addScaledVector(UP,1.35),direction,1.5);
+ }
+ showBlink(from,to,direction,returning){
+  const hero=this.hero;
+  if(!returning)hero.openPortal('travel-exit',to.clone().addScaledVector(UP,1.35),direction,1.35);
+  hero.addTrace('hero',from,to);
+  hero.emit(to.clone().addScaledVector(UP,1.2),18,3);
+  hero.teleports++;
+ }
+ tickBlink(dt){
+  this.blinkCooldown=Math.max(0,this.blinkCooldown-dt);
+  if(this.anchor&&this.anchor.gate.expiresAt<=this.blinkTime()){
+   this.anchor=null;this.blinkCooldown=RIFT.blinkCooldown;
+  }
+ }
+ aimBlink(direction,standingBuilding){
+  this.roofOutOfRange=false;
+  const eye=this.camera.position.clone().addScaledVector(direction,this.camera.near);
+  const roof=!this.anchor&&this.blinkCooldown===0&&this.canStartBlink()?riftRoofTarget(this.hero.root.position,eye,
+   eye.clone().addScaledVector(direction,Math.hypot(ROOF_BLINK_RANGE,ROOF_BLINK_HEIGHT)+(this.cameraDistance??7)+12),{
+    trace:this.blocked,roofBelow:this.roofBelow,getBuilding:this.getBuilding,buildings:this.buildings,standingBuilding,
+    onOutOfRange:()=>{this.roofOutOfRange=true;},
+    isClear:p=>!this.blocked(p.clone().addScaledVector(UP,.49),p.clone().addScaledVector(UP,2),.48)
+   }):null;
+  this.roofMarker.visible=!!roof;
+  if(roof){
+   this.roofMarker.position.set(roof.x,roof.landing.y+.025,roof.z);
+   this.roofMarker.scale.setScalar(roof.width);
+  }
+  return roof;
+ }
+ blinkStatus(name='Blink'){
+  return this.roofMarker.visible?name+' to rooftop':this.anchor?'Return '+(this.anchor.gate.expiresAt-this.blinkTime()).toFixed(1)+'s':
+   this.blinkCooldown?name+' '+this.blinkCooldown.toFixed(1)+'s':this.roofOutOfRange?'Rooftop out of range':name+' ready';
+ }
  blink(direction,roof=null){
   const hero=this.hero,from=hero.root.position.clone();
   let to;
-  if(this.anchor){
+  const returning=!!this.anchor;
+  if(returning){
    to=this.anchor.feet;
    if(this.sweep(to,to))return;
-   this.anchor.gate.expiresAt=hero.time;
+   this.anchor.gate.expiresAt=this.blinkTime();
    this.anchor=null;this.blinkCooldown=RIFT.blinkCooldown;
   }else{
-   if(this.blinkCooldown>0||hero.portals.length>9)return;
+   if(this.blinkCooldown>0||!this.canStartBlink())return;
    to=roof?.landing||this.clamp(from.clone().addScaledVector(direction,RIFT.blinkRange));
    if(!roof){
     const collision=this.sweep(from,to);
     if(collision)to.lerp(from,1-Math.max(0,collision.t-.03));
    }
    if(from.distanceTo(to)<1.8)return;
-   const gate=hero.openPortal('travel-entry',from.clone().addScaledVector(UP,1.35),direction,1.5);
-   gate.expiresAt=hero.time+RIFT.returnWindow;
+   const gate=this.createBlinkAnchor(from,direction);
+   gate.expiresAt=this.blinkTime()+RIFT.returnWindow;
    this.anchor={feet:from,gate};
-   hero.openPortal('travel-exit',to.clone().addScaledVector(UP,1.35),direction,1.35);
   }
   this.roofMarker.visible=false;this.platform=null;this.vertical=0;this.grounded=!!roof;
-  hero.root.position.copy(to);hero.addTrace('hero',from,to);hero.emit(to.clone().addScaledVector(UP,1.2),18,3);hero.teleports++;
+  hero.root.position.copy(to);this.showBlink(from,to,direction,returning);
  }
  redirect(direction){
   const hero=this.hero;
@@ -231,25 +269,11 @@ export class RiftPlayer extends ManualHeroControls {
    }
   }
   if(this.redirectExit&&!hero.portals.includes(this.redirectExit))this.redirectExit=null;
-  this.blinkCooldown=Math.max(0,this.blinkCooldown-dt);this.portalCooldown=Math.max(0,this.portalCooldown-dt);
-  if(this.anchor&&this.anchor.gate.expiresAt<=hero.time){this.anchor=null;this.blinkCooldown=RIFT.blinkCooldown;}
+  this.tickBlink(dt);this.portalCooldown=Math.max(0,this.portalCooldown-dt);
   const standingBuilding=this.move(dt);
   this.frame();
   const direction=this.camera.getWorldDirection(new Vector3());
-  const eye=this.camera.position.clone().addScaledVector(direction,this.camera.near);
-  let roofOutOfRange=false;
-  const roof=!this.anchor&&this.blinkCooldown===0&&hero.portals.length<=9?riftRoofTarget(hero.root.position,eye,
-   eye.clone().addScaledVector(direction,Math.hypot(ROOF_BLINK_RANGE,ROOF_BLINK_HEIGHT)+(this.cameraDistance??7)+12),{
-    trace:this.blocked,roofBelow:this.roofBelow,getBuilding:this.getBuilding,buildings:this.buildings,standingBuilding,onOutOfRange:()=>{roofOutOfRange=true;},isClear:p=>{
-     const feet=p.clone().addScaledVector(UP,.49),head=p.clone().addScaledVector(UP,2);
-     return !this.blocked(feet,head,.48);
-    }
-   }):null;
-  this.roofMarker.visible=!!roof;
-  if(roof){
-   this.roofMarker.position.set(roof.x,roof.landing.y+.025,roof.z);
-   this.roofMarker.scale.setScalar(roof.width);
-  }
+  const roof=this.aimBlink(direction,standingBuilding);
   if(this.taps.has('Shield')||this.taps.has('KeyG'))this.blink(direction,roof);
   if(this.taps.has('KeyE'))this.redirect(direction);
   const bolt=(this.keys.has('Fire')||this.keys.has('KeyF')||this.taps.has('Fire')||this.taps.has('KeyF'))&&hero.attackCooldown<=0;
@@ -265,7 +289,7 @@ export class RiftPlayer extends ManualHeroControls {
   this.face(dt);
   this.taps.clear();
   this.hud.toggleAttribute('data-roof-target',this.roofMarker.visible);
-  const blink=this.roofMarker.visible?'Blink to rooftop':this.anchor?'Return '+(this.anchor.gate.expiresAt-hero.time).toFixed(1)+'s':this.blinkCooldown?'Blink '+this.blinkCooldown.toFixed(1)+'s':roofOutOfRange?'Rooftop out of range':'Blink ready';
+  const blink=this.blinkStatus();
   const redirect=this.redirectExit?'Place entrance':hero.pair?'Redirect active '+Math.max(0,hero.pair.entry.expiresAt-hero.time).toFixed(1)+'s':
    this.portalCooldown?'Redirect '+this.portalCooldown.toFixed(1)+'s':'Place exit';
   const refill=this.attackPortalCharges<ATTACK_PORTAL_CHARGES?' · +1 in '+this.attackPortalRecharge.toFixed(1)+'s':'';

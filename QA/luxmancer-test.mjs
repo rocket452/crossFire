@@ -215,3 +215,36 @@ assert.equal(struckPart,'hull','the shot hits the body');
 assert.equal(bruiser.combatUnit.alive,false,'a single charged Sunlance defeats a full-health Bruiser');
 assert.equal(combat.damageEvents,1);
 console.log('PASS charged Sunlance one-shot to the Bruiser hull');
+
+hero.reset();
+hero.root.position.set(0,.1,0);
+camera.position.set(0,1.5,-5);camera.lookAt(0,1.5,50);
+Object.assign(p,{roofMarker:new T.Object3D(),hud:{toggleAttribute(){}},bounds:{minX:-200,maxX:200,minZ:-200,maxZ:200},
+ terrain:()=>0,roofBelow:()=>null,blocked:()=>null,sweep:()=>null,getBuilding:()=>null,buildings:[]});
+p.taps.add('KeyX');step(1);
+assert(Math.abs(hero.root.position.z-28)<1e-6);
+assert(hero.solarEffects.blinkAnchor.visible&&hero.solarEffects.blinkPulses.every(pulse=>pulse.group.visible));
+p.taps.add('KeyX');step(1);
+assert.deepEqual(hero.root.position.toArray(),[0,.1,0]);
+assert(!p.anchor&&!hero.solarEffects.blinkAnchor.visible&&p.blinkCooldown>0);
+p.taps.add('KeyX');step(1);
+assert.equal(hero.root.position.z,0,'cooldown blocks instant reactivation');
+step(151);
+
+const rooftop={id:'solar-roof',x:0,z:83,floors:10};
+p.buildings=[rooftop];
+p.roofBelow=(x,z,top,bottom)=>top>=30&&bottom<=30&&Math.abs(z-83)<5?
+ {section:{building:rooftop.id},point:{x,y:30,z}}:null;
+camera.position.set(0,3,-5);camera.lookAt(0,30,83);
+step(1);
+assert(p.roofMarker.visible,'gold roof preview uses the shared Rift targeting');
+p.taps.add('KeyX');step(1);
+assert.equal(hero.root.position.y,30.08);
+assert(p.anchor);
+step(242);
+assert(!p.anchor&&!hero.solarEffects.blinkAnchor.visible,'return window expires');
+step(152);
+assert(!p.roofMarker.visible,'current roof cannot be selected');
+hero.reset();
+assert(!p.anchor&&!hero.solarEffects.blinkPulses.some(pulse=>pulse.group.visible));
+console.log('PASS Solar Blink input, gold effects, return, cooldown, long-range rooftop landing, anchor expiry and reset');

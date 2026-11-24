@@ -204,6 +204,8 @@ dialog.defense-title[open]{display:flex;flex-direction:column;justify-content:sp
 .violet-player>i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:9px;height:9px;border:2px solid white;border-radius:50%;box-shadow:0 0 4px #350d5b}
 .violet-player[data-roof-target]>i{width:15px;height:15px;border-color:#beff66;background:#a5ff4640;box-shadow:0 0 12px #9ced4d}
 .violet-player[data-roof-target] output{color:#d4ff9e}
+.lux-player[data-roof-target]>i{border-color:#ffe286;background:#ffcc5340;box-shadow:0 0 12px #ffca53}
+.lux-player[data-roof-target] output{color:#ffe9a4}
 .violet-player output,.violet-keys{position:absolute;left:50%;transform:translateX(-50%);padding:5px 10px;border-radius:5px;background:#20162fe6;text-align:center;width:max-content;max-width:90%}
 .violet-player output{bottom:52px}.violet-keys{bottom:24px}
 .violet-buttons,.violet-stick{display:none}

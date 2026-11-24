@@ -3,6 +3,7 @@ import {HEROES} from './hero-roster.js?v=404';
 const training={
  lux:{tip:'Use the highway sightlines. Aim slightly above distant targets to account for Sunlance drop.',
   controls:[['Move and jump','WASD · Space','Stick · Jump'],['Sunlance · fires after 1.5s','Hold left click or F · Stand still until you release','Hold Sunlance · Stand still until you release'],['Sunburst machine gun','Hold right click or G','Hold Sunburst'],['Lock and release light volley','Hold E, sweep across targets, then release','Hold Lock volley, aim, then release'],
+   ['Solar Blink','X to blink · X again to return · Aim at a roof edge to jump to the rooftop','Tap Solar Blink · Tap again to return'],
    ['Solar Disc','Q to toggle · Space up · Shift down','Disc to toggle · Jump / Up · Down'],
    ['Solar Communion','Hold R on solid ground · Release to cancel','Hold Recharge on solid ground · Release to cancel']],
   bonus:'Sunlance uses 10 energy, Sunburst uses 1 per shot, and each locked comet uses 6. Flight uses 5 per second. Release Communion to move or attack again.'},

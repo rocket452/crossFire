@@ -1,8 +1,8 @@
 import * as T from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 import {LuxEffects} from './luxmancer-effects.js?v=411';
-import {SOLAR_CONFIG,LuxSolarEffects} from './lux-solar.js?v=408';
-import {RiftPlayer} from './rift-player.js?v=408';
+import {SOLAR_CONFIG,LuxSolarEffects} from './lux-solar.js?v=416';
+import {RiftPlayer} from './rift-player.js?v=416';
 
 const spells={
  lance:{speed:205,life:1.8,damage:350,gap:.85,charge:1.5,length:3,width:.12,color:0xffdc53},
@@ -42,6 +42,7 @@ export class Luxmancer {
  reset(refill=true){
   if(refill)this.energy=SOLAR_CONFIG.capacity;
   this.solarMode=null;this.windup=0;this.lowEnergyTime=0;this.solarEffects.reset();
+  if(this.player){this.player.anchor=null;this.player.blinkCooldown=0;if(this.player.roofMarker)this.player.roofMarker.visible=false;}
   for(const shot of this.shots)this.recycle(shot);
   this.shots.length=0;
   this.effects.reset();this.clearLocks();this.clearLance();
@@ -173,9 +174,10 @@ export class Luxmancer {
 }
 export class LuxPlayer extends RiftPlayer {
  constructor(hero,options){
-  super(hero,options,{hint:'WASD move · Space jump · Hold LMB Sunlance · RMB Sunburst · E lock volley · Q Solar Disc · Space / Shift altitude · Hold R recharge',
-   actions:[['Jump / Up','Space'],['Hold Sunlance','Fire'],['Sunburst','Shield'],['Lock volley','KeyE'],['Disc','KeyQ'],['Down','ShiftLeft'],['Recharge','KeyR']],
-   codes:['KeyW','KeyA','KeyS','KeyD','Space','KeyE','KeyF','KeyG','KeyQ','KeyR','ShiftLeft','ShiftRight']});
+  super(hero,options,{hint:'WASD move · Space jump · Hold LMB Sunlance · RMB Sunburst · E lock volley · Q Solar Disc · Space / Shift altitude · X Solar Blink / return · Hold R recharge',
+   actions:[['Jump / Up','Space'],['Hold Sunlance','Fire'],['Sunburst','Shield'],['Lock volley','KeyE'],['Disc','KeyQ'],['Down','ShiftLeft'],['Recharge','KeyR'],['Solar Blink','KeyX']],
+   roofColor:'#ffdb65',
+   codes:['KeyW','KeyA','KeyS','KeyD','Space','KeyE','KeyF','KeyG','KeyQ','KeyR','KeyX','ShiftLeft','ShiftRight']});
   this.hud.classList.add('lux-player');
   const meter=document.createElement('div');
   meter.className='lux-energy';
@@ -202,6 +204,22 @@ export class LuxPlayer extends RiftPlayer {
   if(this.hero.solarMode==='communion'){
    this.hero.solarMode=null;this.hero.solarEffects.pillar.visible=false;
   }
+ }
+ blinkTime(){return this.hero.solarEffects.clock;}
+ canStartBlink(){return true;}
+ createBlinkAnchor(){return {};}
+ showBlink(from,to){this.hero.solarEffects.blink(from,to);this.frame();}
+ updateSolarBlink(dt,allowed,standingBuilding){
+  this.tickBlink(dt);
+  if(allowed){
+   const direction=this.camera.getWorldDirection(new T.Vector3());
+   const roof=this.aimBlink(direction,standingBuilding);
+   if(this.taps.has('KeyX'))this.blink(direction,roof);
+  }else{
+   this.roofMarker.visible=false;this.roofOutOfRange=false;
+  }
+  this.hud.toggleAttribute('data-roof-target',this.roofMarker.visible);
+  this.hero.solarEffects.updateBlink(this.anchor);
  }
  updateEnergyHud(){
   const h=this.hero;
@@ -312,6 +330,11 @@ export class LuxPlayer extends RiftPlayer {
   const lanceHeld=this.keys.has('Fire')||this.keys.has('KeyF');
   const channeling=this.solarMovement(dt,!lanceHeld);
   this.frame();
+  if(this.roofMarker){
+   const feet=h.root.position;
+   const roof=this.roofBelow(feet.x,feet.z,feet.y+.06,feet.y-.22);
+   this.updateSolarBlink(dt,!channeling&&!lanceHeld,roof?.section?.building);
+  }
   h.solarEffects.update(dt,h.root.position,h.solarMode,h.windup);
   const sprayClock=h.cool.spray>0?h.cool.spray-dt:0;
   h.cool.spray=Math.max(0,sprayClock);
@@ -381,10 +404,11 @@ export class LuxPlayer extends RiftPlayer {
   h.drawLocks(this.camera);
   this.updateEnergyHud();
   const progress=h.pendingTarget?' · Acquiring '+Math.floor(100*h.pendingTime/lockTime)+'%':'';
-  this.output.textContent=lanceProgress?'Sunlance · Charging '+Math.floor(lanceProgress*100)+'%':
+  const spellStatus=lanceProgress?'Sunlance · Charging '+Math.floor(lanceProgress*100)+'%':
    h.charging?'Targets locked '+h.locks.length+' / '+maxLocks+progress:
    h.solarMode==='landing'?'Solar Disc · Landing':h.solarMode==='flight'?'Solar Disc · Flying':
    h.cool.comet?'Light volley '+h.cool.comet.toFixed(1)+'s':'Light volley ready';
+  this.output.textContent=this.roofMarker?spellStatus+' · '+this.blinkStatus('Solar Blink'):spellStatus;
   this.taps.clear();
  }
 }
