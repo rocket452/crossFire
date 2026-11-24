@@ -86,3 +86,20 @@ for(const hz of [30,60,120]){
  assert.equal(r.shots,4,'Bruiser opens fire as soon as it has approached the rocket');
  console.log('PASS close-range evacuation rocket fire');
 }
+
+for(const side of [-1,1]){
+ const {r,hero}=fixture();
+ hero.entity={};
+ hero.shapes[0].center={x:25*side,y:40,z:0};
+ r.isRooftopHero=()=>true;
+ r.objective=()=>new THREE.Vector3(0,.1,100);
+ r.moveSpeed=0;r.cooldown=0;
+ for(let i=0;i<60;i++)r.update(1/60,i/60);
+ assert.equal(r.shots,0,'passing Bruisers do not acquire a rooftop player on sight alone');
+ r.noticeDamageFrom(hero.entity);
+ for(let i=60;i<300;i++)r.update(1/60,i/60);
+ assert.equal(r.target,hero);
+ assert(Math.abs(r.root.rotation.y)<1e-8,'the chassis keeps facing down its lane');
+ assert(r.heroHits>0,'the mounted gun can aim sideways and up at the same time');
+ console.log('PASS rooftop retaliation to the '+(side<0?'left':'right')+' of a Wave Defense lane');
+}
