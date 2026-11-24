@@ -884,7 +884,7 @@ if(defenseMode){
   return traceImpact(a,b,{sections,ground:false,radius:0});
  }};
  portalHero.player=new RiftPlayer(portalHero,groundOptions);
- const model=await new GLTFLoader().loadAsync('city-assets/licensed-characters/luxmancer.glb?v=412');
+ const model=await new GLTFLoader().loadAsync('city-assets/licensed-characters/luxmancer.glb?v=414');
  lux=new Luxmancer(scene,model,{getUnits:()=>unitDamage.units,visible:districtVisible,
   traceBolt:(a,b)=>traceWorld(a,b,{radius:.10,allied:true,livingOnly:true}),
   onHit:(hit,point,power)=>{

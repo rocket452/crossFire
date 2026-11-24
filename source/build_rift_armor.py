@@ -93,7 +93,7 @@ def torso():
         loop_emblem(side*.783,1.454,.061,.033,prefix+'Hand')
 
 
-def coat():
+def coat(*, fit=None, fabric="coat", edging="gold edge", lining="rift light", crest=None):
     # Each panel wraps from the back around the hip and points down toward the knee.
     bones=lambda v: armor.blend(v.y,.98,1.39,'B_Pelvis','B_Spine2')
     for side in (-1,1):
@@ -103,6 +103,8 @@ def coat():
             ((.029,.738,-.223),(.181,.727,-.204),(.215,.72,-.073),(.187,.75,.096)),
             ((.064,.467,-.247),(.228,.562,-.249),(.272,.49,-.116),(.252,.394,.089))
         ]
+        if fit is not None:
+            rows = [[fit(x,y,z) for x,y,z in row] for row in rows]
         rows = [[armor.Vector((side*x,y,z)) for x,y,z in row] for row in rows]
         hem = [a.lerp(b,.85) for a,b in zip(rows[-2],rows[-1])]
         rows.insert(-1,hem)
@@ -115,12 +117,15 @@ def coat():
                 i=row*6+col
                 face=[i,i+1,i+7,i+6]
                 if row==len(rows)-2:
-                    material='rift light' if col<2 else 'gold edge'
+                    material=lining if col<2 else edging
                 else:
-                    material='gold edge' if col==4 else 'rift light' if row>=2 and col==0 else 'coat'
+                    material=edging if col==4 else lining if row>=2 and col==0 else fabric
                 faces.append((face if side>0 else face[::-1],material))
         armor.surface(points,faces,bones)
-    loop_emblem(0,1.323,-.144,.051,'B_Spine2')
+    if crest is None:
+        loop_emblem(0,1.323,-.144,.051,'B_Spine2')
+    else:
+        crest()
 
 
 if __name__=='__main__':
