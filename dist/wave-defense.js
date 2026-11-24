@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=419';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
@@ -131,18 +131,18 @@ export class WaveDefense extends MissionEnemyWaves {
   this.rocket.pose(this.relayFlash);
   return true;
  }
- targets(origin,range,bruiser=null){
+ targets(origin,range,observer=null){
   const heroes=this.getTargets().filter(u=>{
    const point=u.shapes[0]?.center;
    if(!u.alive||u.dashPhased||!point)return false;
    const distance=origin.distanceTo(point);
-   return (bruiser?bruiser.canAcquireHero(u,distance):distance<=range)&&this.options.visible(origin,point);
+   return (observer?observer.canAcquireHero(u,distance):distance<=range)&&this.options.visible(origin,point);
   });
   return heroes.length?heroes:[this.relay];
  }
- walkerTargets(origin,heroRange,weapon,playerPosition,weaponRange=heroRange){
+ walkerTargets(origin,heroRange,weapon,playerPosition,weaponRange=heroRange,aware=()=>true){
   const candidates=this.getTargets().filter(u=>u.alive&&u.shapes[0]?.center);
-  const heroes=candidates.filter(u=>!u.dashPhased
+  const heroes=candidates.filter(aware).filter(u=>!u.dashPhased
    &&origin.distanceTo(u.shapes[0].center)<=weaponRange
    &&this.options.visible(origin,u.shapes[0].center));
   if(heroes.length)return heroes;
@@ -248,7 +248,7 @@ export class WaveDefense extends MissionEnemyWaves {
   }
   this.bruisers.update(dt,time);
   for(const drone of this.flightDrones){
-   if(drone.spawned)drone.update(dt,this.targets(drone.root.position,drone.gun.config.range));
+   if(drone.spawned)drone.update(dt,this.targets(drone.root.position,drone.gun.config.range,drone));
   }
   if(this.ended)return;
   if(this.wave===3){

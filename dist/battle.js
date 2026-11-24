@@ -1,4 +1,4 @@
-import {alertEnemiesToAttacker} from './enemy-alert.js?v=419';
+import {alertEnemiesToAttacker,inFrontOfEnemy} from './enemy-alert.js?v=421';
 import {Luxmancer,LuxPlayer} from './luxmancer.js?v=420';
 import {RiftPlayer} from './rift-player.js?v=416';
 import {VioletPlayer} from './violet-player.js?v=395';
@@ -21,7 +21,7 @@ import {viewportPixelRatio} from './render-budget.js?v=overall-performance-238';
 import {SpatialChunkBatch} from './spatial-chunk-batch.js?v=overall-performance-238';
 import {EvacuationBastionCinematic} from './evacuation-bastion-cinematic.js?v=385';
 import {EvacuationBastionReinforcement} from './evacuation-bastion-reinforcement.js?v=385';
-import {BastionTesting} from './bastion-testing.js?v=393';
+import {BastionTesting} from './bastion-testing.js?v=421';
 import {EvacuationHelicopterStrike} from './evacuation-helicopter-strike.js?v=heli-missiles-222';
 import {evacuationCityBuildings,mission1CityBuildings,EVAC_CITY_ROADS,MISSION1_CITY_ROADS,MISSION1_HERO_START,addEvacuationDistrictRoads} from './evac-city-map.js?v=mission-spawn-326';
 import {guardHeroInSmoke} from './kage-smoke.js?v=390';
@@ -35,9 +35,9 @@ import {PrismwingHero,PRISMWING} from './prismwing-hero.js?v=rainbow-full-solara
 import {BuildingSmoke} from './building-smoke.js?v=building-smoke-155';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=argus-sustained-205';
 import {EnemySeparation} from './enemy-separation.js?v=spider-bruiser-272';
-import {CombatTesting} from './combat-testing.js?v=419';
+import {CombatTesting} from './combat-testing.js?v=421';
 import {ActorSilhouettes} from './actor-silhouettes.js?v=shogun-skin-310';
-import {RAIDER_COMBAT} from './evac-raider.js?v=419';
+import {RAIDER_COMBAT} from './evac-raider.js?v=421';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=415';
 import {NinjaHero} from './ninja-hero.js?v=398';
 import {RobotDeathEffects} from './robot-death-effects.js?v=enemy-low-health-smoke-291';
@@ -46,9 +46,9 @@ import {EnemyDamageFlash} from './enemy-damage-flash.js?v=393';
 import {HeroMinimap} from './hero-minimap.js?v=415';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
-import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,WAVE_DEFENSE_HIGHWAYS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=419';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=419';
-import {EvacRaiderWaves} from './evac-raider-waves.js?v=419';
+import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,WAVE_DEFENSE_HIGHWAYS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=421';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
+import {EvacRaiderWaves} from './evac-raider-waves.js?v=421';
 import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-approach.js?v=393';
 import {MochiHero,MOCHI} from './mochi-hero.js?v=overall-performance-238';
 import {VOLT_STUN,VIOLET_BEAM,VIOLET_ORB,VIOLET_PULSE} from './hero-powers.js?v=388';
@@ -62,7 +62,7 @@ import {DestructionWorld} from './destruction.js?v=393';
 import {InfantryCrowd} from './infantry.js?v=overall-performance-238';
 import {HelicopterPilot} from './helicopter-pilot.js?v=device-controls-59';
 import {traceImpact,UnitDamage} from './combat-collision.js?v=evac-performance-233';
-import {SiegeWalker} from './siege-walker.js?v=415';
+import {SiegeWalker} from './siege-walker.js?v=421';
 import {WalkerBeamImpact} from './walker-beam-impact.js?v=392';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=393';
@@ -86,7 +86,7 @@ const evacuationMode=new URLSearchParams(location.search).get('scene')==='evacua
 const convoyMode=new URLSearchParams(location.search).get('scene')==='convoy';let convoy=null,convoyHUD=null,argus=null,convoyResults=null,resultsPause=false;
 const convoyConfig=convoyMode?await fetch('convoy-config.json?v=argus-sustained-205').then(r=>{if(!r.ok)throw Error('Convoy config unavailable');return r.json();}):null;
 const liberationMode=new URLSearchParams(location.search).get('scene')==='city-liberation';
-const {CityLiberation}=liberationMode?await import('./city-liberation.js?v=419'):{};
+const {CityLiberation}=liberationMode?await import('./city-liberation.js?v=421'):{};
 const {LiberationUI}=liberationMode?await import('./liberation-ui.js?v=398'):{};
 const defenseMode=new URLSearchParams(location.search).get('scene')==='wave-defense';
 const mission1Mode=liberationMode||defenseMode||new URLSearchParams(location.search).get('scene')==='mission-1';
@@ -433,6 +433,9 @@ function isRooftopHero(unit){
  const sections=physics.chunks.querySegment(from,to,0).filter(c=>c.type==='slab'&&c.state==='intact'&&!c.hasDetached);
  return !!traceImpact(from,to,{sections,ground:false,radius:0});
 }
+function walkerAware(unit){
+ return unit.kind!=='hero'||robot.isAlertedTo(unit.entity)||inFrontOfEnemy(robot.root,unit.shapes[0]?.center);
+}
 function missionWalkerTargets(weapon='beam'){
  const origin=robot.root.position.clone().add(new THREE.Vector3(0,18,0));
  if(defenseTitle?.active){
@@ -441,8 +444,12 @@ function missionWalkerTargets(weapon='beam'){
   const violet=targets.find(u=>u.entity===hero);
   return robot.weapon.bursts===0&&violet?[violet]:targets;
  }
- if(defenseMode)return missionRaiders.walkerTargets(origin,EVACUATION_CONFIG.walkerTargetRange,weapon,controlledHero()?.root.position,weapon==='plasma'?WALKER_SNIPER.range:undefined);
- return raiderHeroTargets().filter(u=>origin.distanceTo(u.shapes[0].center)<=(weapon==='plasma'?WALKER_SNIPER.range:EVACUATION_CONFIG.walkerTargetRange)&&districtVisible(origin,u.shapes[0].center));
+ if(defenseMode){
+  const player=controlledHero();
+  const nearbyPlayer=player&&(robot.isAlertedTo(player)||inFrontOfEnemy(robot.root,player.root.position));
+  return missionRaiders.walkerTargets(origin,EVACUATION_CONFIG.walkerTargetRange,weapon,nearbyPlayer?player.root.position:null,weapon==='plasma'?WALKER_SNIPER.range:undefined,walkerAware);
+ }
+ return raiderHeroTargets().filter(walkerAware).filter(u=>origin.distanceTo(u.shapes[0].center)<=(weapon==='plasma'?WALKER_SNIPER.range:EVACUATION_CONFIG.walkerTargetRange)&&districtVisible(origin,u.shapes[0].center));
 }
 function bastionDeathBlast(point,options){
  robotDeathEffects.explode(point,options);
@@ -519,7 +526,7 @@ function ninjaHit(hit,power,kind,player=false){
  return{damage,killed:alive&&!target.alive};
 }
 function alertAfterPlayerHit(unit,attacker){
- alertEnemiesToAttacker(unit,attacker,unitDamage.units,terrainHeight);
+ alertEnemiesToAttacker(unit,attacker,unitDamage.units);
 }
 function droneEngineHealth(hit){
  return hit.unit?.entity?.engines?.find(engine=>engine.id===hit.part)?.health;
@@ -729,7 +736,7 @@ function evacuationPathClear(a,b){
  return !traceImpact(from,to,{sections,ground:false,radius:1.8});
 }
 function maintainEvacPad(center,radius){for(const c of physics.chunks){if(!c.hasDetached||c.hidden||c.collisionDisabled||c.body.position.y>5||Math.abs(c.body.position.x-center.x)>radius-1||Math.abs(c.body.position.z-center.z)>radius-1)continue;const side=c.body.position.z<center.z?-1:1;physics.freeze(c);c.body.position.x=center.x;c.body.position.z=center.z+side*(10+Math.max(...c.size)/2);c.body.aabbNeedsUpdate=true;syncChunk(c);}physics.world.broadphase.markStaticsDirty();evacBlockTime=-1;}
-function evacuationTargets(select=false,weapon='missiles'){const candidates=evacuation.targets(robot.root.position.clone().add(new THREE.Vector3(0,18,0)),[runner,hero,solara,portalHero,mochi,ninja,prism,axo,ember],{helicopters:robot.isWeaponWorking('missiles')});if(!select)return candidates;if(weapon==='missiles'&&evacuationHelicopterStrike?.busy)return evacuationHelicopterStrike.missileTarget?[evacuationHelicopterStrike.missileTarget]:[];if(weapon!=='missiles'&&evacuationHelicopterStrike?.busy)return [];const chosen=evacuation.pick(candidates);if(chosen?.kind==='helicopter'&&weapon!=='missiles'){evacuationHelicopterStrike.request(chosen);return [];}return chosen?[chosen]:[];}
+function evacuationTargets(select=false,weapon='missiles'){const candidates=evacuation.targets(robot.root.position.clone().add(new THREE.Vector3(0,18,0)),[runner,hero,solara,portalHero,mochi,ninja,prism,axo,ember],{helicopters:robot.isWeaponWorking('missiles')}).filter(walkerAware);if(!select)return candidates;if(weapon==='missiles'&&evacuationHelicopterStrike?.busy)return evacuationHelicopterStrike.missileTarget?[evacuationHelicopterStrike.missileTarget]:[];if(weapon!=='missiles'&&evacuationHelicopterStrike?.busy)return [];const chosen=evacuation.pick(candidates);if(chosen?.kind==='helicopter'&&weapon!=='missiles'){evacuationHelicopterStrike.request(chosen);return [];}return chosen?[chosen]:[];}
 function updateCombat(dt){
  if(evacuationCinematic?.active)return;
  enemyDamageFlash.beginFrame();
@@ -743,7 +750,7 @@ function updateCombat(dt){
  testingArena?.bastion.afterHeroes(dt);evacuationReinforcement?.afterHeroes(dt);
  if(!convoyMode&&(!(defenseMode||liberationMode)||robot.root.visible)){
   evacuationHelicopterStrike?.update();
-  const targets=testingArena?testingArena.heroUnits():evacuation?evacuationTargets():mission1Mode?missionWalkerTargets():unitDamage.units;
+  const targets=testingArena?testingArena.heroUnits().filter(walkerAware):evacuation?evacuationTargets():mission1Mode?missionWalkerTargets():unitDamage.units;
   const defenseCombat=defenseMode&&!defenseTitle?.active;
   const canTarget=defenseCombat?phase=>phase==='warning'?missionWalkerTargets('missiles').length>0:targets.length>0:undefined;
   const rocket=defenseCombat?missionRaiders.relay:null;
@@ -878,11 +885,11 @@ async function initialize(){try{const [g,data,infantryModel,infantryMotion,cockp
   await loadPackagedCityTextures(assetCity);
   if(assetCityMode)void setupCityTexturePicker(assetCity,$('test-controls'));
  }
- beamEffect=new EnergyBeamEffect(scene);robot=new SiegeWalker(scene,robotModel,robotSpec,{weaponHealthMultiplier:!evacuationMode&&!testingMode&&!convoyMode?1/WALKER_WEAPON_HEALTH_SCALE:1,onFire:()=>{shotsFired++;feed('Siege Walker unleashed its energy beam.');},onBeam:updateCannonBeam,onDebris:spec=>physics.addWreck(spec),onRemoveDebris:body=>{robotDeathEffects.removePart(body);physics.removeWreck(body);},onDeath:(point,options)=>robotDeathEffects.explode(point,options),onWreck:registerRobotWreck,onWeaponDestroyed:module=>{arsenal?.weaponDestroyed(module.id,robot,robotMissiles,walkerSniper);refreshUnitShapes();feed(module.label+' DESTROYED · weapon offline.');updateStats();},onFootfall:p=>emitParticle('smoke',new THREE.Vector3(p.x,.18,p.z),3,.22),onEffect:(p,smoke)=>{emitParticle('smoke',p,smoke?2:14,smoke?.45:1.2);if(!smoke){emitParticle('spark',p,28);particles.push({kind:'flash',p:p.clone(),v:new THREE.Vector3(),life:.4,max:.4,size:5,scale:1});}}});if(!districtMode&&!testingMode&&!convoyMode){makeTanks();makeHelicopters();makeTroops();}addProps();addTerrain();registerUnits();robotMissiles=new RobotMissiles(scene,missileModel,{cyberpunk:cyberpunkCity,redirect:(p,a,b)=>portalHero?.redirect(p,a,b),autoFire:false,canLaunch:()=>robot.isWeaponWorking('missiles')&&!robot.stunRemaining&&!['charging','firing'].includes(robot.weapon.phase),getMuzzles:()=>Array.from({length:6},(_,i)=>({position:robot.nodes.rocket_pod.localToWorld(new THREE.Vector3((i%3-1)*.94,.8+Math.floor(i/3)*.94,2.5)),direction:new THREE.Vector3(0,0,1).transformDirection(robot.nodes.rocket_pod.matrixWorld)})),getTargets:()=>{if(testingArena)return testingArena.heroUnits();if(evacuation)return evacuationTargets(true);if(mission1Mode)return missionWalkerTargets('missiles');const u=unitDamage.units;return [u.find(v=>v.kind==='helicopter'&&v.entity.team===0&&v.alive&&v.id!==pilot?.active?.combatUnit?.id),u.find(v=>v.kind==='tank'&&v.entity.team===1&&v.alive),u.find(v=>v.kind==='infantry'&&v.entity.team===0&&v.alive),u.find(v=>v.kind==='helicopter'&&v.entity.team===1&&v.alive&&v.id!==pilot?.active?.combatUnit?.id),u.find(v=>v.kind==='tank'&&v.entity.team===0&&v.alive),u.find(v=>v.kind==='infantry'&&v.entity.team===1&&v.alive)].filter(Boolean);},isRobotAlive:()=>!!robot.combatUnit?.alive,traceWorld:(a,b,r)=>traceWorld(a,b,{radius:r,owner:'siege-walker',includeMissiles:false}),onImpact:(p,hit,id)=>explosion(p.clone(),18,WALKER_MISSILE_BLAST_RADIUS,'rocket',false,hit,'siege-walker',id),onBurst:p=>missileExplosions.burst(p,{air:true}),onTrail:p=>emitParticle('smoke',p,1,.19),onLaunch:p=>{shotsFired++;robot.podRecoil=.18;emitParticle('spark',p,5,1.2);},onSalvo:()=>feed('Shoulder pod launching '+WALKER_SALVO_SIZE+' missiles. Heroes intercepting.')} );walkerSniper=new WalkerSniper(scene,{
+ beamEffect=new EnergyBeamEffect(scene);robot=new SiegeWalker(scene,robotModel,robotSpec,{weaponHealthMultiplier:!evacuationMode&&!testingMode&&!convoyMode?1/WALKER_WEAPON_HEALTH_SCALE:1,onFire:()=>{shotsFired++;feed('Siege Walker unleashed its energy beam.');},onBeam:updateCannonBeam,onDebris:spec=>physics.addWreck(spec),onRemoveDebris:body=>{robotDeathEffects.removePart(body);physics.removeWreck(body);},onDeath:(point,options)=>robotDeathEffects.explode(point,options),onWreck:registerRobotWreck,onWeaponDestroyed:module=>{arsenal?.weaponDestroyed(module.id,robot,robotMissiles,walkerSniper);refreshUnitShapes();feed(module.label+' DESTROYED · weapon offline.');updateStats();},onFootfall:p=>emitParticle('smoke',new THREE.Vector3(p.x,.18,p.z),3,.22),onEffect:(p,smoke)=>{emitParticle('smoke',p,smoke?2:14,smoke?.45:1.2);if(!smoke){emitParticle('spark',p,28);particles.push({kind:'flash',p:p.clone(),v:new THREE.Vector3(),life:.4,max:.4,size:5,scale:1});}}});if(!districtMode&&!testingMode&&!convoyMode){makeTanks();makeHelicopters();makeTroops();}addProps();addTerrain();registerUnits();robotMissiles=new RobotMissiles(scene,missileModel,{cyberpunk:cyberpunkCity,redirect:(p,a,b)=>portalHero?.redirect(p,a,b),autoFire:false,canLaunch:()=>robot.isWeaponWorking('missiles')&&!robot.stunRemaining&&!['charging','firing'].includes(robot.weapon.phase),getMuzzles:()=>Array.from({length:6},(_,i)=>({position:robot.nodes.rocket_pod.localToWorld(new THREE.Vector3((i%3-1)*.94,.8+Math.floor(i/3)*.94,2.5)),direction:new THREE.Vector3(0,0,1).transformDirection(robot.nodes.rocket_pod.matrixWorld)})),getTargets:()=>{if(testingArena)return testingArena.heroUnits().filter(walkerAware);if(evacuation)return evacuationTargets(true);if(mission1Mode)return missionWalkerTargets('missiles');const u=unitDamage.units;return [u.find(v=>v.kind==='helicopter'&&v.entity.team===0&&v.alive&&v.id!==pilot?.active?.combatUnit?.id),u.find(v=>v.kind==='tank'&&v.entity.team===1&&v.alive),u.find(v=>v.kind==='infantry'&&v.entity.team===0&&v.alive),u.find(v=>v.kind==='helicopter'&&v.entity.team===1&&v.alive&&v.id!==pilot?.active?.combatUnit?.id),u.find(v=>v.kind==='tank'&&v.entity.team===0&&v.alive),u.find(v=>v.kind==='infantry'&&v.entity.team===1&&v.alive)].filter(Boolean);},isRobotAlive:()=>!!robot.combatUnit?.alive,traceWorld:(a,b,r)=>traceWorld(a,b,{radius:r,owner:'siege-walker',includeMissiles:false}),onImpact:(p,hit,id)=>explosion(p.clone(),18,WALKER_MISSILE_BLAST_RADIUS,'rocket',false,hit,'siege-walker',id),onBurst:p=>missileExplosions.burst(p,{air:true}),onTrail:p=>emitParticle('smoke',p,1,.19),onLaunch:p=>{shotsFired++;robot.podRecoil=.18;emitParticle('spark',p,5,1.2);},onSalvo:()=>feed('Shoulder pod launching '+WALKER_SALVO_SIZE+' missiles. Heroes intercepting.')} );walkerSniper=new WalkerSniper(scene,{
  canFire:()=>!!robot.combatUnit?.alive&&robot.isWeaponWorking('plasma')&&!robot.stunRemaining,
  getMuzzle:target=>robot.aimPlasma(target),
  getTargets:()=>{
-  if(testingArena)return testingArena.heroUnits();
+  if(testingArena)return testingArena.heroUnits().filter(walkerAware);
   if(mission1Mode)return missionWalkerTargets('plasma');
   if(!evacuation)return unitDamage.units.filter(u=>['tank','infantry'].includes(u.kind));
   const visible=evacuationTargets().filter(u=>u.kind!=='helicopter'),priority=evacuation.waveTarget(visible);

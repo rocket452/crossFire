@@ -6,7 +6,7 @@ const approach=(value,target,step)=>value+THREE.MathUtils.clamp(target-value,-st
 export class RoninFlight {
  constructor(actor){this.actor=actor;this.reset();}
  reset(){this.state=null;this.count=0;}
- target(){const a=this.actor,units=a.getTargets(a.root.position).filter(u=>u.alive&&u.shapes.length);return units.find(u=>u.entity?.active)||units.find(u=>u===a.target)||units.sort((x,y)=>flat(a.root.position,x.shapes[0].center)-flat(a.root.position,y.shapes[0].center))[0]||null;}
+ target(){const a=this.actor,units=a.getTargets(a.root.position).filter(u=>u.alive&&u.shapes.length&&(u.kind!=='hero'||a.sensesHero(u)&&a.visible(a.aimPoint(),u.shapes[0].center)));return units.find(u=>u.entity?.active)||units.find(u=>u===a.target)||units.sort((x,y)=>flat(a.root.position,x.shapes[0].center)-flat(a.root.position,y.shapes[0].center))[0]||null;}
  height(goal){const a=this.actor,c=a.config,p=a.root.position,dx=goal.x-p.x,dz=goal.z-p.z,length=dx*dx+dz*dz;let y=c.flightHeight;
   for(const b of a.getBuildings()){const t=length?THREE.MathUtils.clamp(((b.x-p.x)*dx+(b.z-p.z)*dz)/length,0,1):0;
    if(Math.hypot(b.x-p.x-t*dx,b.z-p.z-t*dz)<c.flightBuildingMargin)y=Math.max(y,b.floors*3+c.flightClearance);

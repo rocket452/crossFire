@@ -105,7 +105,7 @@ for(const side of [-1,1]){
 }
 
 {
- const {alertEnemiesToAttacker,ELEVATED_ATTACK_ALERT}=await import('../dist/enemy-alert.js');
+ const {alertEnemiesToAttacker,ENEMY_ALERT}=await import('../dist/enemy-alert.js');
  const {r:near,hero}=fixture(),{r:victim,damage}=fixture(),{r:far}=fixture(),{r:inactive}=fixture();
  const heroActor={root:{position:new THREE.Vector3(0,30,30)}};
  hero.entity=heroActor;
@@ -113,21 +113,22 @@ for(const side of [-1,1]){
  const actors=[victim,near,far,inactive];
  for(const r of actors){r.isRooftopHero=()=>true;r.getTargets=()=>[hero];}
  near.root.position.x=20;
- far.root.position.x=ELEVATED_ATTACK_ALERT.radius+1;
+ far.root.position.x=ENEMY_ALERT.radius+1;
  inactive.spawned=false;
  const units=actors.map(r=>r.combatUnit);
- const ground=()=>0;
+
  heroActor.root.position.y=0;
- alertEnemiesToAttacker(victim.combatUnit,heroActor,units,ground);
- assert.equal(near.retaliation,null,'street-level hits stay local');
+ alertEnemiesToAttacker(victim.combatUnit,heroActor,units);
+ assert.equal(near.retaliation.hero,heroActor,'street-level hits alert nearby enemies');
+ near.retaliation=null;
  heroActor.root.position.y=30;
  damage.hurt(victim.combatUnit,1,victim.aimPoint(),'hull');
- alertEnemiesToAttacker(victim.combatUnit,heroActor,units,ground);
+ alertEnemiesToAttacker(victim.combatUnit,heroActor,units);
  assert.equal(near.retaliation.hero,heroActor,'a nonlethal hit alerts a neighboring Bruiser');
  near.retaliation=null;
  damage.hurt(victim.combatUnit,350,victim.aimPoint(),'hull');
  assert.equal(victim.combatUnit.alive,false);
- alertEnemiesToAttacker(victim.combatUnit,heroActor,units,ground);
+ alertEnemiesToAttacker(victim.combatUnit,heroActor,units);
  assert.equal(near.retaliation.hero,heroActor,'a kill still alerts a neighboring Bruiser');
  assert.equal(far.retaliation,null);
  assert.equal(inactive.retaliation,null);
@@ -138,8 +139,29 @@ for(const side of [-1,1]){
  near.selectTarget(near.aimPoint());
  assert.equal(near.target,hero);
  near.target=null;
- near.age+=ELEVATED_ATTACK_ALERT.seconds;
+ near.age+=ENEMY_ALERT.seconds;
  near.selectTarget(near.aimPoint());
  assert.equal(near.target,null,'unused alert expires');
  console.log('PASS elevated damage and kills alert only active nearby Bruisers, preserving cover and expiry');
+}
+
+{
+ const {r,hero}=fixture();
+ hero.entity={};
+ const point=hero.shapes[0].center;
+ for(const yaw of [0,Math.PI/2,Math.PI]){
+  r.root.rotation.y=yaw;
+  for(const [offset,seen] of [[0,true],[55,true],[65,false],[90,false],[180,false]]){
+   const bearing=yaw+offset*Math.PI/180;
+   point.x=20*Math.sin(bearing);point.z=20*Math.cos(bearing);
+   r.selectTarget(r.aimPoint());
+   assert.equal(r.target===hero,seen);
+  }
+ }
+ r.noticeDamageFrom(hero.entity);
+ r.selectTarget(r.aimPoint());
+ assert.equal(r.target,hero);
+ r.age=r.retaliation.until;r.selectTarget(r.aimPoint());
+ assert.equal(r.target,null);
+ console.log('PASS directional sight, rear hit alert and expiry at three chassis headings');
 }

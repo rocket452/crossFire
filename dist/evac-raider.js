@@ -1,4 +1,4 @@
-import {ELEVATED_ATTACK_ALERT} from './enemy-alert.js?v=419';
+import {ENEMY_ALERT,inFrontOfEnemy} from './enemy-alert.js?v=421';
 import {BruiserModel} from './bruiser-model.js?v=bruiser-model-218';
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=hazard-red-355';
 import * as THREE from './vendor/three.module.js';
@@ -39,9 +39,10 @@ export class EvacRaider {
  syncWrecks(){for(const w of this.wrecks)if(!w.body.robotWreckExpired){w.group.position.copy(w.body.position);w.group.quaternion.copy(w.body.quaternion);}}
  sync(){this.root.updateMatrixWorld(true);if(!this.combatUnit)return;if(!this.combatUnit.alive){this.combatUnit.shapes=[];return;}if(this.art){const shape=(node,local,half,part)=>({center:node.localToWorld(new THREE.Vector3(...local)),half:{x:half[0]*RAIDER_COMBAT.modelScale,y:half[1]*RAIDER_COMBAT.modelScale,z:half[2]*RAIDER_COMBAT.modelScale},rotation:node.getWorldQuaternion(new THREE.Quaternion()),part});this.combatUnit.shapes=[shape(this.parts.body,[0,0,0],[.95,.76,.76],'hull'),shape(this.parts.head,[0,.02,.04],[.59,.36,.51],'head'),shape(this.root,[0,1,0],[1.45,.95,1.65],'hull'),shape(this.parts.arm_l,[0,-.6,.1],[.38,1.1,.5],'hull'),shape(this.parts.arm_r,[0,-.15,.8],[.4,.7,1.05],'hull')];}else this.combatUnit.shapes=[{center:this.aimPoint(),half:{x:1.5*RAIDER_COMBAT.modelScale,y:2.5*RAIDER_COMBAT.modelScale,z:1.2*RAIDER_COMBAT.modelScale},rotation:this.parts.body.getWorldQuaternion(new THREE.Quaternion())},{center:this.root.localToWorld(new THREE.Vector3(0,.75,0)),half:{x:1.45*RAIDER_COMBAT.modelScale,y:.72*RAIDER_COMBAT.modelScale,z:1.65*RAIDER_COMBAT.modelScale},rotation:this.root.quaternion.clone()}];}
 
- noticeDamageFrom(hero){if(hero)this.retaliation={hero,until:this.age+ELEVATED_ATTACK_ALERT.seconds};}
+ noticeDamageFrom(hero){if(hero)this.retaliation={hero,until:this.age+ENEMY_ALERT.seconds};}
  isAlertedTo(hero){return this.retaliation?.hero===hero&&this.age<(this.retaliation?.until??0);}
- canAcquireHero(unit,distance){return distance<=(this.isAlertedTo(unit.entity)?this.weaponRange:this.heroRange);}
+ sensesHero(unit){return this.isAlertedTo(unit.entity)||inFrontOfEnemy(this.root,unit.shapes[0]?.center);}
+ canAcquireHero(unit,distance){return this.sensesHero(unit)&&distance<=(this.isAlertedTo(unit.entity)?this.weaponRange:this.heroRange);}
  selectTarget(origin){
   const distance=u=>origin.distanceTo(new THREE.Vector3().copy(u.shapes[0].center)),priority=u=>u.kind==='hero'?(this.isAlertedTo(u.entity)?-1:0):u.kind==='helicopter'?1:2;
   const targets=this.getTargets(origin).filter(u=>u.alive&&!u.dashPhased&&u.shapes.length&&(u.kind!=='hero'||this.canAcquireHero(u,distance(u)))&&this.visible(origin,u.shapes[0].center));targets.sort((a,b)=>priority(a)-priority(b)||distance(a)-distance(b));let next=targets[0]||null;

@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=419';
+import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=421';
 import {SpiderRobotModel} from './spider-robot-model.js?v=wreck-occlusion-273';
 const angle=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 export const BRUISER_RANGE=Object.freeze({heroRange:RAIDER_COMBAT.heroRange*2.4,weaponRange:330,rocketRange:55});
@@ -11,7 +11,7 @@ export class SpiderBruiser extends EvacRaider {
  canAcquireHero(unit,distance){
   const engaged=this.target&&this.target.entity===unit.entity;
   const retaliating=this.isAlertedTo(unit.entity);
-  if(distance>this.weaponRange)return false;
+  if(distance>this.weaponRange||!this.sensesHero(unit))return false;
   if(this.isRooftopHero(unit))return engaged||retaliating;
   if(engaged)return true;
   return super.canAcquireHero(unit,distance);

@@ -1,4 +1,4 @@
-import {ELEVATED_ATTACK_ALERT} from './enemy-alert.js?v=419';
+import {ENEMY_ALERT,inFrontOfEnemy} from './enemy-alert.js?v=421';
 import * as THREE from './vendor/three.module.js';
 import * as CANNON from './vendor/cannon-es.js';
 import {segmentBoxFraction} from './combat-collision.js';
@@ -119,7 +119,7 @@ export class CombatDrone {
  }
  recordHit(){}
  noticeDamageFrom(hero){
-  if(hero&&this.mode==='flying')this.retaliation={hero,until:this.clock+ELEVATED_ATTACK_ALERT.seconds};
+  if(hero&&this.mode==='flying')this.retaliation={hero,until:this.clock+ENEMY_ALERT.seconds};
  }
  stun(seconds){this.stunRemaining=Math.max(this.stunRemaining,seconds);this.gun.stop();}
  modifyDamage(power,point,part){
@@ -271,10 +271,20 @@ export class CombatDrone {
   const roof=this.options.roof(above,base);
   if(roof)this.goal.y=Math.max(this.goal.y,roof.y+4);
  }
+ canAcquireHero(unit,distance){
+  return distance<=this.gun.config.range && ((this.retaliation?.hero===unit.entity && this.clock<(this.retaliation?.until??0))
+   ||inFrontOfEnemy(this.root,unit.shapes[0]?.center));
+ }
  update(dt,targets){
   if(!this.spawned)return;
   this.clock+=dt;this.stunRemaining=Math.max(0,this.stunRemaining-dt);
   const preferred=this.clock<(this.retaliation?.until??0)?this.retaliation.hero:null;
+  targets=targets.filter(u=>u.kind!=='hero'||(u.shapes[0]&&this.canAcquireHero(u,this.root.position.distanceTo(u.shapes[0].center))
+   &&this.options.visible(this.root.position,u.shapes[0].center)));
+  if(this.gun.target?.kind==='hero'&&!targets.includes(this.gun.target)){
+   if(this.gun.phase==='fire'||this.gun.phase==='cooldown')this.gun.target=null;
+   else this.gun.stop();
+  }
   if(this.mode==='flying')this.plan(targets,preferred);
   this.gun.update(dt,targets,this.mode==='flying'&&this.stunRemaining<=0,preferred);
   for(const [index,e]of this.engines.entries()){

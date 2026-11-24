@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=419';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {LiberationBuild} from './liberation-build.js?v=398';
 import {escortMovementBounds} from './evac-approach.js?v=315';
 
@@ -18,7 +18,6 @@ export class CityLiberation extends MissionEnemyWaves {
   this.options=options;this.damage=damage;this.clearance=false;
   try{this.clearance=options.storage?.getItem(clearanceKey)==='1';}catch{}
   this.actors=[...this.members,...this.flightDrones];
-  for(const unit of this.members)unit.objective=()=>this.hero.root.position.clone();
   this.reset();
  }
  reset(){
@@ -135,6 +134,8 @@ export class CityLiberation extends MissionEnemyWaves {
     p.y=this.drones.find(d=>d.actor===actor).start.y;
     actor.options.ingress=null;actor.spawn(p);
    }else{
+    const rally=this.hero.root.position.clone();
+    actor.objective=()=>actor.target?.shapes[0]?position(actor.target.shapes[0].center):rally;
     actor.spawnPosition=p;actor.reset();actor.spawn();actor.cooldown=1.2;
    }
    const u=actor.combatUnit;

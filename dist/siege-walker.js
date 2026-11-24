@@ -1,3 +1,4 @@
+import {ENEMY_ALERT} from './enemy-alert.js?v=421';
 import {WalkerWeapons} from './walker-weapons.js?v=415';
 import {CannonTracking,CANNON_TRACKING} from './cannon-tracking.js?v=beam-tracking-150';
 import * as THREE from './vendor/three.module.js';
@@ -69,7 +70,9 @@ export class SiegeWalker {
   }
  }
  walkableDecks(){return this.decks.filter(deck=>deck.isActive());}
- reset({yaw=0}={}){
+ noticeDamageFrom(hero){this.retaliation={hero,until:this.perceptionTime+ENEMY_ALERT.seconds};}
+ isAlertedTo(hero){return !!hero&&this.retaliation?.hero===hero&&this.perceptionTime<this.retaliation.until;}
+ reset({yaw=0}={}){this.retaliation=null;this.perceptionTime=0;
   for(const w of this.wrecks){this.onRemoveDebris(w.body);w.group.remove(w.mesh);this.nodes[w.name].add(w.mesh);w.mesh.position.set(0,0,0);w.mesh.quaternion.identity();this.scene.remove(w.group);}
   for(const signal of this.signalMeshes.values())signal.visible=true;
   this.wrecks=[];this.detachedParts.clear();this.weapons.reset();this.staggerPose=null;this.stunRemaining=0;this.stunKind=null;this.stuns=0;this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;this.plasmaRecoil=0;this.plasmaCharging=false;this.plasmaAim=null;this.beamAllowed=true;this.podWarning={active:false,progress:0,pulse:false};
@@ -124,7 +127,7 @@ export class SiegeWalker {
   }
   this.root.updateMatrixWorld(true);
  }
- update(dt,time,targets){
+ update(dt,time,targets){this.perceptionTime+=dt;
   if(this.stunRemaining>0&&!this.dead){this.stunRemaining=Math.max(0,this.stunRemaining-dt);if(this.stunRemaining<1e-8)this.stunRemaining=0;this.animateStagger(dt,time);if(this.stunRemaining===0)this.restoreStagger();this.onBeam(null);return;}
   this.plasmaRecoil=Math.max(0,this.plasmaRecoil-dt*1.5);if(this.nodes.plasma_cannon)this.nodes.plasma_cannon.position.z=this.restPositions.plasma_cannon.z-this.plasmaRecoil;this.flash=Math.max(0,this.flash-dt);this.podRecoil=Math.max(0,this.podRecoil-dt*.8);if(this.nodes.rocket_pod)this.nodes.rocket_pod.position.z=this.restPositions.rocket_pod.z-this.podRecoil;
   if(this.dead){
