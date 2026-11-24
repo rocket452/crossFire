@@ -1,5 +1,5 @@
-import {Luxmancer,LuxPlayer} from './luxmancer.js?v=407';
-import {RiftPlayer} from './rift-player.js?v=407';
+import {Luxmancer,LuxPlayer} from './luxmancer.js?v=408';
+import {RiftPlayer} from './rift-player.js?v=408';
 import {VioletPlayer} from './violet-player.js?v=395';
 import {DefenseTitle} from './defense-title.js?v=386';
 import {kageDashCanFinish} from './kage-attacks.js?v=393';
@@ -72,7 +72,7 @@ import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';
 import {PortalHero} from './portal-hero.js?v=397';
 import {SolaraHero} from './solara-hero.js?v=rainbow-full-solara-290';
 import {HeroRoster} from './hero-roster.js?v=404';
-import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=405';
+import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=408';
 import {segmentBoxFraction} from './combat-collision.js?v=evac-performance-233';
 import {PlasmaArtillery,PLASMA} from './plasma-artillery.js?v=390';
 import {RobotEyeBeams} from './robot-eye-beams.js?v=charged-shuriken-130';

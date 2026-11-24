@@ -66,3 +66,65 @@ hero.reset();assert.equal(hero.shots.length+hero.locks.length,0);
 assert.equal(hero.effects.streaks.count+hero.effects.sparks.count+hero.effects.bursts.length,0);
 assert.equal(hero.effects.sigil.visible,false);
 console.log('PASS animated Luxmancer asset, selection, arcing lance, automatic spread fire, four locks, homing impacts and reset');
+
+const {SOLAR_CONFIG}=await import('../dist/lux-solar.js');
+Object.assign(p,{
+ grounded:true,vertical:0,stick:{value:{x:0,y:0}},
+ bounds:{minX:-200,maxX:200,minZ:-200,maxZ:200},
+ terrain:()=>0,blocked:()=>null,roofBelow:()=>null,getPlatforms:()=>[]
+});
+delete p.move;
+targets.length=0;
+hero.root.position.set(0,.1,0);
+p.keys.add('KeyW');step(60);p.keys.clear();
+assert(Math.abs(hero.root.position.z-14)<.001);
+assert.equal(hero.energy,100,'ground movement is free');
+hero.shoot('lance',origin,ray);
+hero.shoot('spray',origin,ray);
+hero.shoot('comet',origin,ray);
+assert.equal(hero.energy,100-SOLAR_CONFIG.attackCosts.lance-SOLAR_CONFIG.attackCosts.spray-SOLAR_CONFIG.attackCosts.comet);
+const beforeChannel=hero.energy;
+step(60);
+assert.equal(hero.energy,beforeChannel,'energy never passively regenerates');
+const beforeChannelPosition=hero.root.position.clone();
+const hitCount=hits.length;
+const alreadyInFlight=new Set(hero.shots);
+p.keys.add('KeyW');p.keys.add('KeyF');p.keys.add('KeyR');p.taps.add('Space');p.taps.add('KeyQ');
+step(45);
+assert.equal(hero.solarMode,'communion');
+assert(hero.solarEffects.pillar.visible);
+assert.equal(hero.energy,beforeChannel,'wind-up grants zero energy');
+step(30);
+assert(Math.abs(hero.energy-beforeChannel-12.5)<.001,'25 energy per second after channel wind-up');
+assert(hero.root.position.distanceTo(beforeChannelPosition)<1e-6,'channel blocks walking, jumping and flight');
+assert(hero.shots.every(shot=>alreadyInFlight.has(shot)),'channel blocks new attacks');
+assert.equal(hits.length,hitCount);
+p.keys.clear();step(1);
+assert.equal(hero.solarMode,null);
+assert(!hero.solarEffects.pillar.visible);
+
+hero.energy=8;
+p.taps.add('KeyQ');p.keys.add('Space');p.keys.add('KeyW');step(60);p.keys.clear();
+assert(hero.solarEffects.disc.visible);
+assert(Math.abs(hero.energy-3)<.001);
+assert(Math.abs(hero.root.position.y-19.1)<.001);
+assert(Math.abs(hero.root.position.z-45)<.001);
+p.keys.add('KeyR');step(36);
+assert.equal(hero.energy,0);
+assert.equal(hero.solarMode,'landing');
+assert(hero.root.position.y>18,'depletion begins descent without a position jump');
+assert.equal(hero.shoot('lance',origin,ray),false);
+p.keys.clear();
+step(180);
+assert.equal(hero.solarMode,null);
+assert(p.grounded&&!hero.solarEffects.disc.visible);
+assert(Math.abs(hero.root.position.y-.1)<.001,'automatic descent ends at terrain height');
+assert.equal(hero.energy,0);
+
+hero.energy=7;
+hero.locks=[0,1,2].map(()=>({alive:true,shapes:[{center:new T.Vector3(0,8,60)}]}));
+hero.charging=true;step(1);
+assert.equal(hero.shots.length,1,'Light Volley fires as many complete locks as the available energy pays for');
+assert.equal(hero.energy,1);
+hero.reset();
+console.log('PASS Solar Energy costs and persistence, grounded communion wind-up and recovery, free ground travel, powered flight and safe landing');

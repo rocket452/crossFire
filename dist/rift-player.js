@@ -104,13 +104,14 @@ export class RiftPlayer extends ManualHeroControls {
   const lift=new Vector3(0,1.35,0);
   return this.blocked(from.clone().add(lift),to.clone().add(lift),.95);
  }
- move(dt){
+ move(dt,allowInput=true){
   const keys=this.keys,position=this.hero.root.position;
   this.carryDeck(position);
   const startX=position.x,startZ=position.z;
   const f=Number(keys.has('KeyW'))-Number(keys.has('KeyS'))+this.stick.value.y;
   const r=Number(keys.has('KeyD'))-Number(keys.has('KeyA'))+this.stick.value.x;
-  const motion=new Vector3(Math.sin(this.yaw)*f-Math.cos(this.yaw)*r,0,Math.cos(this.yaw)*f+Math.sin(this.yaw)*r).clampLength(0,1);
+  const motion=new Vector3();
+  if(allowInput)motion.set(Math.sin(this.yaw)*f-Math.cos(this.yaw)*r,0,Math.cos(this.yaw)*f+Math.sin(this.yaw)*r).clampLength(0,1);
   this.walking=false;
   for(const axis of ['x','z']){
    const next=position.clone();next[axis]+=motion[axis]*RIFT.moveSpeed*dt;this.clamp(next);
@@ -118,7 +119,7 @@ export class RiftPlayer extends ManualHeroControls {
    position.copy(next);this.walking=true;
   }
   if(this.walking)this.moveYaw=Math.atan2(position.x-startX,position.z-startZ);
-  if(this.grounded&&this.taps.has('Space')){this.vertical=RIFT.jumpSpeed;this.platform=null;}
+  if(allowInput&&this.grounded&&this.taps.has('Space')){this.vertical=RIFT.jumpSpeed;this.platform=null;}
   this.vertical-=24*dt;
   const next=this.clamp(position.clone().addScaledVector(UP,this.vertical*dt));
   if(this.vertical<=0&&this.landOnDeck(position,next)){

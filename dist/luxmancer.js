@@ -1,7 +1,8 @@
 import * as T from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 import {LuxEffects} from './luxmancer-effects.js?v=407';
-import {RiftPlayer} from './rift-player.js?v=407';
+import {SOLAR_CONFIG,LuxSolarEffects} from './lux-solar.js?v=408';
+import {RiftPlayer} from './rift-player.js?v=408';
 
 const spells={
  lance:{speed:205,life:1.8,damage:190,gap:.85,length:3,width:.12,color:0xffdc53},
@@ -29,6 +30,7 @@ export class Luxmancer {
   this.character=new HumanoidCharacter(model,{height:2.5});
   this.root.add(this.character.root);scene.add(this.root);
   this.shots=[];this.free={};this.effects=new LuxEffects(scene);
+  this.solarEffects=new LuxSolarEffects(scene);
   for(const [kind,s] of Object.entries(spells)){
    this.free[kind]=[];s.material??=glow(s.color);
   }
@@ -37,16 +39,28 @@ export class Luxmancer {
   scene.add(this.pendingMark);
   this.reset();this.setEnabled(false);
  }
- reset(){
+ reset(refill=true){
+  if(refill)this.energy=SOLAR_CONFIG.capacity;
+  this.solarMode=null;this.windup=0;this.lowEnergyTime=0;this.solarEffects.reset();
   for(const shot of this.shots)this.recycle(shot);
   this.shots.length=0;
   this.effects.reset();this.clearLocks();
   this.cool={lance:0,spray:0,comet:0};this.castRemaining=0;this.castKind=null;this.poseKind=null;this.poseWeight=0;this.character.reset();
  }
- setEnabled(value){this.enabled=value;this.root.visible=value;if(!value){this.player?.exit();this.reset();}}
+ setEnabled(value){this.enabled=value;this.root.visible=value;if(!value){this.player?.exit();this.reset(false);}}
  receiveEyeHit(){if(this.active)this.player.hurt.hit();}
  recycle(shot){shot.mesh.visible=false;this.free[shot.kind].push(shot.mesh);}
+ spend(cost){
+  if(this.energy+1e-8<cost){this.lowEnergyTime=.65;return false;}
+  this.energy=Math.max(0,this.energy-cost);
+  if(this.energy<1e-8){
+   this.energy=0;
+   if(this.solarMode==='flight')this.solarMode='landing';
+  }
+  return true;
+ }
  shoot(kind,origin,direction,target=null){
+  if(!this.spend(SOLAR_CONFIG.attackCosts[kind]))return false;
   const s=spells[kind];let mesh=this.free[kind].pop();
   if(!mesh){
    mesh=new T.Mesh(gem,s.material);
@@ -66,6 +80,7 @@ export class Luxmancer {
   this.shots.push({mesh,kind,target,v:velocity,life:s.life,trail:[],sampleTime:0});
   this.castKind=kind;this.castRemaining=kind==='comet'?.36:.23;
   if(kind!=='comet')this.effects.burst(kind,origin,direction,false);
+  return true;
  }
  clearLocks(){
   this.locks=[];this.charging=false;
@@ -144,11 +159,107 @@ export class Luxmancer {
 }
 export class LuxPlayer extends RiftPlayer {
  constructor(hero,options){
-  super(hero,options,{hint:'WASD move · Space jump · LMB Sunlance · RMB Sunburst · Hold E to lock, release to fire',
-   actions:[['Jump','Space'],['Sunlance','Fire'],['Sunburst','Shield'],['Lock volley','KeyE']],
-   codes:['KeyW','KeyA','KeyS','KeyD','Space','KeyE','KeyF','KeyG']});
+  super(hero,options,{hint:'WASD move · Space jump · LMB Sunlance · RMB Sunburst · E lock volley · Q Solar Disc · Space / Shift altitude · Hold R recharge',
+   actions:[['Jump / Up','Space'],['Sunlance','Fire'],['Sunburst','Shield'],['Lock volley','KeyE'],['Disc','KeyQ'],['Down','ShiftLeft'],['Recharge','KeyR']],
+   codes:['KeyW','KeyA','KeyS','KeyD','Space','KeyE','KeyF','KeyG','KeyQ','KeyR','ShiftLeft','ShiftRight']});
+  this.hud.classList.add('lux-player');
+  const meter=document.createElement('div');
+  meter.className='lux-energy';
+  meter.innerHTML='<div><strong>Solar Energy</strong><span data-energy-value></span></div><progress aria-label="Solar Energy"></progress>';
+  this.hud.append(meter);
+  this.energyMeter=meter;
+  this.energyBar=meter.querySelector('progress');
+  this.energyLabel=meter.querySelector('[data-energy-value]');
  }
- clear(){super.clear();this.hero.clearLocks();}
+ enter(intro,respawn=true){
+  const energy=this.hero.energy;
+  super.enter(intro,respawn);
+  this.hero.energy=energy;
+  if(!respawn)this.grounded=false;
+  this.updateEnergyHud();
+ }
+ exit(){
+  const energy=this.hero.energy;
+  super.exit();
+  this.hero.energy=energy;
+ }
+ clear(){
+  super.clear();this.hero.clearLocks();
+  if(this.hero.solarMode==='communion'){
+   this.hero.solarMode=null;this.hero.solarEffects.pillar.visible=false;
+  }
+ }
+ updateEnergyHud(){
+  const h=this.hero;
+  if(!this.energyMeter)return;
+  const empty=h.energy===0;
+  this.energyMeter.toggleAttribute('data-empty',empty);
+  this.energyMeter.toggleAttribute('data-insufficient',h.lowEnergyTime>0&&!empty);
+  this.energyBar.max=SOLAR_CONFIG.capacity;this.energyBar.value=h.energy;
+  this.energyLabel.textContent=empty?'Depleted':h.lowEnergyTime>0?'Low energy · '+Math.ceil(h.energy):
+   Math.ceil(h.energy)+' / '+SOLAR_CONFIG.capacity;
+ }
+ moveDisc(dt,landing){
+  const p=this.hero.root.position,keys=this.keys;
+  const f=Number(keys.has('KeyW'))-Number(keys.has('KeyS'))+this.stick.value.y;
+  const r=Number(keys.has('KeyD'))-Number(keys.has('KeyA'))+this.stick.value.x;
+  const vertical=Number(keys.has('Space'))-Number(keys.has('ShiftLeft')||keys.has('ShiftRight'));
+  const speed=landing?SOLAR_CONFIG.glideSpeed:SOLAR_CONFIG.flightSpeed;
+  const motion=new T.Vector3(Math.sin(this.yaw)*f-Math.cos(this.yaw)*r,0,
+   Math.cos(this.yaw)*f+Math.sin(this.yaw)*r).clampLength(0,1);
+  this.walking=false;
+  for(const axis of ['x','z']){
+   const next=p.clone();next[axis]+=motion[axis]*speed*dt;this.clamp(next);
+   if(!this.sweep(p,next))p.copy(next);
+  }
+  this.vertical=landing?-SOLAR_CONFIG.landingSpeed:vertical*SOLAR_CONFIG.climbSpeed;
+  const next=this.clamp(p.clone().addScaledVector(up,this.vertical*dt));
+  if(this.vertical<0&&this.landOnDeck(p,next)){
+   this.finishLanding();return;
+  }
+  const roof=this.vertical<0&&this.roofBelow(next.x,next.z,p.y+.04,next.y-.14);
+  if(roof){p.copy(roof.point).addScaledVector(up,.08);this.finishLanding();return;}
+  const hit=this.sweep(p,next);
+  if(hit)p.lerp(next,Math.max(0,hit.t-.02));
+  else p.copy(next);
+  this.grounded=p.y<=this.terrain(p.x,p.z)+.11;
+  if(this.grounded&&this.vertical<0)this.finishLanding();
+ }
+ finishLanding(){
+  this.grounded=true;
+  this.vertical=0;
+  if(this.hero.solarMode==='landing')this.hero.solarMode=null;
+ }
+ solarMovement(dt){
+  const h=this.hero,c=SOLAR_CONFIG,held=this.keys;
+  h.lowEnergyTime=Math.max(0,h.lowEnergyTime-dt);
+  if(h.solarMode==='communion'&&!held.has('KeyR'))h.solarMode=null;
+  if(!h.solarMode&&this.grounded&&held.has('KeyR')){
+   h.solarMode='communion';h.windup=c.windup;h.clearLocks();
+   h.castRemaining=0;h.poseWeight=0;h.effects.cast(null);
+  }
+  if(h.solarMode==='communion'){
+   super.move(dt,false);
+   if(!this.grounded){h.solarMode=null;return true;}
+   const waiting=Math.min(dt,h.windup);
+   h.windup-=waiting;
+   if(dt-waiting>1e-8)h.energy=Math.min(c.capacity,h.energy+(dt-waiting)*c.recharge);
+   return true;
+  }
+  if(this.taps.has('KeyQ')){
+   if(h.solarMode==='flight')h.solarMode=this.grounded?null:'landing';
+   else if(h.energy>0){h.solarMode='flight';this.platform=null;}
+   else h.lowEnergyTime=.65;
+  }
+  if(h.solarMode==='flight'){
+   const powered=Math.min(dt,h.energy/c.flightDrain);
+   this.moveDisc(powered,false);
+   h.spend(powered*c.flightDrain);
+   if(h.solarMode==='landing'&&dt>powered)this.moveDisc(dt-powered,true);
+  }else if(h.solarMode==='landing')this.moveDisc(dt,true);
+  else this.move(dt);
+  return false;
+ }
  poseCast(kind,ray){
   const h=this.hero,c=h.character;
   const aim=ray.clone();
@@ -180,15 +291,33 @@ export class LuxPlayer extends RiftPlayer {
 
  update(dt){
   const h=this.hero;
-  this.hurt.step(dt);this.move(dt);this.frame();
+  this.hurt.step(dt);
+  const channeling=this.solarMovement(dt);
+  this.frame();
+  h.solarEffects.update(dt,h.root.position,h.solarMode,h.windup);
   for(const key of Object.keys(h.cool))h.cool[key]=Math.max(0,h.cool[key]-dt);
   h.castRemaining=Math.max(0,h.castRemaining-dt);
+  if(channeling){
+   this.updateEnergyHud();
+   this.face(dt,true);
+   h.character.update('Idle',dt);
+   const gather=new T.Vector3(Math.sin(this.yaw),0,Math.cos(this.yaw)).multiplyScalar(.26);
+   for(const side of ['L','R']){
+    const hand=h.character.world('B_'+side+'_UpperArm').add(gather).addScaledVector(up,.05);
+    h.character.arm(side,h.character.hand(side).lerp(hand,1-h.windup/SOLAR_CONFIG.windup));
+   }
+   this.output.textContent=h.windup>0?'Solar Communion · Gathering light':
+    h.energy>=SOLAR_CONFIG.capacity?'Solar Communion · Full':'Solar Communion · Recharging';
+   this.taps.clear();
+   return;
+  }
   const down=k=>this.keys.has(k)||this.taps.has(k);
   const lance=down('Fire')||down('KeyF'),spray=down('Shield')||down('KeyG');
   const wantsVolley=this.keys.has('KeyE')&&!h.cool.comet;
   const pose=wantsVolley||h.charging?'comet':lance?'lance':spray?'spray':h.castRemaining?h.castKind:null;
   this.face(dt,!!pose);
-  const clip=this.grounded?(this.walking?'Run':'Idle'):(this.vertical>0?'Jump':'Fall');
+  const onDisc=h.solarMode==='flight'||h.solarMode==='landing';
+  const clip=onDisc?'Idle':this.grounded?(this.walking?'Run':'Idle'):(this.vertical>0?'Jump':'Fall');
   h.character.update(clip,dt,{loop:this.grounded});
   const ray=this.camera.getWorldDirection(new T.Vector3()),eye=this.camera.position;
   const end=eye.clone().addScaledVector(ray,380),aim=h.traceBolt(eye,end)?.point||end;
@@ -204,23 +333,27 @@ export class LuxPlayer extends RiftPlayer {
     const angle=Math.random()*Math.PI*2,r=.21*Math.sqrt(Math.random());
     velocity.addScaledVector(right,r*Math.cos(angle)).addScaledVector(vertical,r*Math.sin(angle)).normalize();
    }
-   h.shoot(kind,origin,velocity);h.cool[kind]=spells[kind].gap;
+   if(h.shoot(kind,origin,velocity))h.cool[kind]=spells[kind].gap;
   }
   if(wantsVolley){h.charging=true;h.lock(origin,ray,dt);}
   if(h.charging&&!this.keys.has('KeyE')){
    const locked=h.locks.filter(targetable);
-   for(const [i,u] of locked.entries()){
-    const fan=dir.clone().applyAxisAngle(up,(i-(locked.length-1)/2)*.28);
+   const size=Math.min(locked.length,Math.floor((h.energy+1e-8)/SOLAR_CONFIG.attackCosts.comet));
+   if(size<locked.length)h.lowEnergyTime=.65;
+   for(const [i,u] of locked.slice(0,size).entries()){
+    const fan=dir.clone().applyAxisAngle(up,(i-(size-1)/2)*.28);
     h.shoot('comet',origin,fan.addScaledVector(up,.4).normalize(),u);
    }
-   if(locked.length){h.effects.burst('comet',origin,dir,false);h.cool.comet=4;}
+   if(size){h.effects.burst('comet',origin,dir,false);h.cool.comet=4;}
    h.clearLocks();
   }
   h.effects.cast(pose,h.character.hand(pose==='comet'&&wantsVolley?'L':'R'),dir,
    pose==='comet'?(h.locks.length+h.pendingTime/lockTime)/maxLocks:Math.min(1,h.castRemaining/.23));
   h.drawLocks(this.camera);
+  this.updateEnergyHud();
   const progress=h.pendingTarget?' · Acquiring '+Math.floor(100*h.pendingTime/lockTime)+'%':'';
   this.output.textContent=h.charging?'Targets locked '+h.locks.length+' / '+maxLocks+progress:
+   h.solarMode==='landing'?'Solar Disc · Landing':h.solarMode==='flight'?'Solar Disc · Flying':
    h.cool.comet?'Light volley '+h.cool.comet.toFixed(1)+'s':'Light volley ready';
   this.taps.clear();
  }
