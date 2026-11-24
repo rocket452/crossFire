@@ -3,7 +3,7 @@ import {HEROES} from './hero-roster.js?v=404';
 const training={
  lux:{tip:'Use the highway sightlines. Aim slightly above distant targets to account for Sunlance drop.',
   controls:[['Move and jump','WASD · Space','Stick · Jump'],['Sunlance','Left click or F','Sunlance'],['Sunburst machine gun','Hold right click or G','Hold Sunburst'],['Lock and release light volley','Hold E, sweep across targets, then release','Hold Lock volley, aim, then release']],
-  bonus:'Gold rings mark up to four enemies. Each marked enemy draws one seeking light comet.'},
+  bonus:'Keep an enemy in your aim until its ring closes, then line up the next. Release to fire one comet per completed lock, up to four.'},
  volt:{
   tip:'Run to build charge. Hold the rescue dash through a civilian group and release in a clear spot closer to the Chinook.',
   controls:[

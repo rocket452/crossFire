@@ -7,6 +7,9 @@ const spells={
  spray:{speed:115,life:.85,damage:19,gap:.085,length:.95,width:.09,color:0xffae31},
  comet:{speed:66,life:3,damage:115,length:1.65,width:.24,color:0xffef90}
 };
+const lockTime=.35;
+const maxLocks=4;
+const targetable=unit=>unit.alive&&unit.shapes.length>0;
 const up=new T.Vector3(0,1,0),forward=new T.Vector3(0,0,1);
 const gem=new T.OctahedronGeometry(1),ring=new T.TorusGeometry(1,.075,5,32);
 const glow=color=>new T.MeshBasicMaterial({color,toneMapped:false,blending:T.AdditiveBlending,transparent:true,depthWrite:false});
@@ -28,15 +31,16 @@ export class Luxmancer {
   for(const [kind,s] of Object.entries(spells)){
    this.free[kind]=[];s.material??=glow(s.color);
   }
-  this.marks=Array.from({length:4},()=>{const m=halo();scene.add(m);m.visible=false;return m;});
+  this.marks=Array.from({length:maxLocks},()=>{const m=halo();scene.add(m);m.visible=false;return m;});
+  this.pendingMark=new T.Mesh(ring,glow(0xfff1af));
+  scene.add(this.pendingMark);
   this.reset();this.setEnabled(false);
  }
  reset(){
   for(const shot of this.shots)this.recycle(shot);
   this.shots.length=0;
   for(const f of this.flashes)this.scene.remove(f.mesh);
-  this.flashes.length=0;this.locks=[];this.charging=false;
-  this.marks.forEach(m=>m.visible=false);
+  this.flashes.length=0;this.clearLocks();
   this.cool={lance:0,spray:0,comet:0};this.castRemaining=0;this.character.reset();
  }
  setEnabled(value){this.enabled=value;this.root.visible=value;if(!value){this.player?.exit();this.reset();}}
@@ -66,19 +70,49 @@ export class Luxmancer {
   this.shots.push({mesh,kind,target,v:velocity,life:s.life});
   this.castRemaining=.22;
  }
- lock(origin,aim){
-  this.locks=this.locks.filter(unit=>unit.alive&&unit.shapes.length);
-  const candidates=[];
+ clearLocks(){
+  this.locks=[];this.charging=false;
+  this.pendingTarget=null;this.pendingTime=0;
+  this.pendingMark.visible=false;
+  this.marks.forEach(mark=>mark.visible=false);
+ }
+ lock(origin,aim,dt){
+  this.locks=this.locks.filter(targetable);
+  if(this.locks.length>=maxLocks)return;
+  let best=null,bestAlignment=.90;
+  const delta=new T.Vector3();
   for(const unit of this.getUnits()){
-   if(unit.kind!=='robot'||!unit.alive||!unit.shapes.length||this.locks.includes(unit))continue;
-   const delta=new T.Vector3().copy(unit.shapes[0].center).sub(origin),distance=delta.length();
+   if(unit.kind!=='robot'||!targetable(unit)||this.locks.includes(unit))continue;
+   const center=unit.shapes[0].center;
+   const distance=delta.copy(center).sub(origin).length();
    if(distance>140||distance<.1)continue;
-   const alignment=delta.normalize().dot(aim);
-   if(alignment<.90||!this.visible(origin,unit.shapes[0].center))continue;
-   candidates.push({unit,alignment});
+   const alignment=delta.dot(aim)/distance;
+   if(alignment<.90||(unit!==this.pendingTarget&&alignment<bestAlignment)||!this.visible(origin,center))continue;
+   best=unit;bestAlignment=alignment;
+   if(unit===this.pendingTarget)break;
   }
-  candidates.sort((a,b)=>b.alignment-a.alignment);
-  this.locks.push(...candidates.slice(0,4-this.locks.length).map(c=>c.unit));
+  if(best!==this.pendingTarget){this.pendingTarget=best;this.pendingTime=0;}
+  if(!best)return;
+  this.pendingTime+=dt;
+  if(this.pendingTime>=lockTime-1e-8){
+   this.locks.push(best);this.pendingTarget=null;this.pendingTime=0;
+  }
+ }
+ drawLocks(camera){
+  for(const [i,mark] of this.marks.entries()){
+   const unit=this.locks[i];
+   mark.visible=!!unit;
+   if(!unit)continue;
+   mark.position.copy(unit.shapes[0].center);mark.scale.setScalar(1.5);
+   mark.quaternion.copy(camera.quaternion);
+  }
+  const pending=this.pendingTarget;
+  this.pendingMark.visible=!!pending;
+  if(pending){
+   this.pendingMark.position.copy(pending.shapes[0].center);
+   this.pendingMark.quaternion.copy(camera.quaternion);
+   this.pendingMark.scale.setScalar(2.8-1.3*this.pendingTime/lockTime);
+  }
  }
  stepShots(dt){
   for(let i=this.shots.length-1;i>=0;i--){
@@ -112,7 +146,7 @@ export class LuxPlayer extends RiftPlayer {
    actions:[['Jump','Space'],['Sunlance','Fire'],['Sunburst','Shield'],['Lock volley','KeyE']],
    codes:['KeyW','KeyA','KeyS','KeyD','Space','KeyE','KeyF','KeyG']});
  }
- clear(){super.clear();this.hero.charging=false;this.hero.locks=[];this.hero.marks.forEach(m=>m.visible=false);}
+ clear(){super.clear();this.hero.clearLocks();}
  update(dt){
   const h=this.hero;
   this.hurt.step(dt);this.move(dt);this.frame();this.face(dt);
@@ -135,18 +169,20 @@ export class LuxPlayer extends RiftPlayer {
    }
    h.shoot(kind,origin,velocity);h.flash(origin,kind==='lance'?.7:.28);h.cool[kind]=spells[kind].gap;
   }
-  if(down('KeyE')&&!h.cool.comet){h.charging=true;h.lock(origin,ray);}
+  if(this.keys.has('KeyE')&&!h.cool.comet){h.charging=true;h.lock(origin,ray,dt);}
   if(h.charging&&!this.keys.has('KeyE')){
-   for(const [i,u] of h.locks.entries()){
-    if(!u.alive)continue;
-    const fan=dir.clone().applyAxisAngle(up,(i-(h.locks.length-1)/2)*.28);
+   const locked=h.locks.filter(targetable);
+   for(const [i,u] of locked.entries()){
+    const fan=dir.clone().applyAxisAngle(up,(i-(locked.length-1)/2)*.28);
     h.shoot('comet',origin,fan.addScaledVector(up,.4).normalize(),u);
    }
-   if(h.locks.length){h.flash(origin,1);h.cool.comet=4;}
-   h.locks=[];h.charging=false;
+   if(locked.length){h.flash(origin,1);h.cool.comet=4;}
+   h.clearLocks();
   }
-  h.marks.forEach((m,i)=>{const u=h.locks[i];m.visible=!!u;if(u){m.position.copy(u.shapes[0].center);m.scale.setScalar(1.5);m.quaternion.copy(this.camera.quaternion);}});
-  this.output.textContent=h.charging?'Targets locked '+h.locks.length+' / 4':h.cool.comet?'Light volley '+h.cool.comet.toFixed(1)+'s':'Light volley ready';
+  h.drawLocks(this.camera);
+  const progress=h.pendingTarget?' · Acquiring '+Math.floor(100*h.pendingTime/lockTime)+'%':'';
+  this.output.textContent=h.charging?'Targets locked '+h.locks.length+' / '+maxLocks+progress:
+   h.cool.comet?'Light volley '+h.cool.comet.toFixed(1)+'s':'Light volley ready';
   this.taps.clear();
  }
 }

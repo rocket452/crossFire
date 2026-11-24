@@ -34,7 +34,24 @@ for(const x of [-8,-4,0,4,8]){
  const center=new T.Vector3(x,1.5,35);
  targets.push({kind:'robot',alive:true,shapes:[{center,half:new T.Vector3(1,1,1),rotation:new T.Quaternion()}]});
 }
-p.keys.add('KeyE');hero.update(1/60);assert.equal(hero.locks.length,4);
+const step=frames=>{for(let i=0;i<frames;i++)hero.update(1/60);};
+p.keys.add('KeyE');step(20);assert.equal(hero.locks.length,0);
+assert(hero.pendingMark.visible);
+assert.match(p.output.textContent,/Acquiring 95%/);
+step(1);assert.equal(hero.locks.length,1);
+step(10);p.keys.clear();step(1);
+assert.equal(hero.shots.length,1,'release fires completed locks only');
+assert(!hero.pendingMark.visible);
+hero.reset();
+p.keys.add('KeyE');step(10);
+camera.lookAt(0,1.5,-50);step(1);
+assert.equal(hero.pendingTime,0,'breaking aim discards partial progress');
+camera.lookAt(0,1.5,50);
+for(let expected=1;expected<=4;expected++){
+ step(20);assert.equal(hero.locks.length,expected-1);
+ step(1);assert.equal(hero.locks.length,expected);
+}
+step(40);assert.equal(hero.locks.length,4);
 assert.equal(hero.marks.filter(m=>m.visible).length,4);
 p.keys.clear();hero.update(1/60);assert.equal(hero.shots.length,4);
 assert.equal(new Set(hero.shots.map(s=>s.target)).size,4);
