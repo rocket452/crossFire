@@ -116,14 +116,16 @@ function counts(){return [waves.members,waves.flightDrones].map(group=>group.fil
 const interval=WAVE_DEFENSE_INTERVAL;
 const northLaneRoof=Math.max(...buildings.filter(b=>b.z<RELAY.z&&b.z>=WAVE_DEFENSE_BOUNDS.minZ&&
  Math.abs(b.x-RELAY.x)<=40).map(b=>b.floors*3));
+const highDroneAltitude=(northLaneRoof+5)*.7;
 function checkDronePairAltitudes(first,count){
  const group=waves.flightDrones.slice(first,first+count);
- assert.equal(group.filter(drone=>drone.root.position.y>northLaneRoof).length,count/2);
- for(const drone of group){
+ assert.equal(group.filter(drone=>Math.abs(drone.root.position.y-highDroneAltitude)<.1).length,count/2);
+ for(const [index,drone] of group.entries()){
   const y=drone.root.position.y;
   assert(Math.abs(y-drone.ingress.y)<.1,'ingress preserves each assigned spawn altitude');
-  assert(y<=northLaneRoof+5.1,'high drones stay close to the roofline');
-  assert(drone.options.cruiseAltitude<northLaneRoof,'drones can descend into minigun range');
+  const start=waves.drones[first+index].start;
+  assert(Math.abs(y-start.y)<.1||Math.abs(y-highDroneAltitude)<.1,'drone uses the low or high route');
+  assert(!traceBuilding(drone.root.position,drone.ingress,4),'drone ingress clears the buildings');
  }
 }
 assert.equal(interval,15);
@@ -161,7 +163,7 @@ step(interval);
 assert.deepEqual(counts(),[8,6]);
 checkDronePairAltitudes(4,2);
 const highDrone=waves.flightDrones[1];
-assert(highDrone.root.position.y>northLaneRoof,'high drone stays above the roofs during approach');
+assert(Math.abs(highDrone.root.position.y-highDroneAltitude)<1,'high drone holds the lowered approach altitude');
 assert.equal(first.combatUnit,firstCombatUnit);
 assert.equal(first.combatUnit.health,123,'overlapping spawns preserve health and identity');
 assert.equal(waves.nextWaveLabel,'Wave 2');
@@ -179,7 +181,7 @@ assert.equal(waves.rocket.shell.emissiveIntensity,0);
 liveFire=false;
 step(35);
 assert.equal(highDrone.ingress,null,'high drone completes its approach');
-assert(highDrone.root.position.y<northLaneRoof,'high drone descends under thrust to engage the rocket');
+assert(highDrone.root.position.y<highDroneAltitude-5,'high drone descends under thrust to engage the rocket');
 assert.equal(waves.wave,1,'surviving enemies hold wave 1 open');
 assert.equal(waves.remaining,0);
 const survivors=[...waves.members,...waves.flightDrones].map(actor=>actor.combatUnit).filter(unit=>unit?.alive);

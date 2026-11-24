@@ -70,6 +70,7 @@ export function waveDefenseBuildings(buildings){
   })));
 }
 const droneLaneRoofClearance=5;
+const highDroneAltitudeScale=.7;
 const droneLaneHalfWidth=40;
 const relayFlashSeconds=.24;
 const walkerRelayCloseRange=55;
@@ -95,8 +96,8 @@ export class WaveDefense extends MissionEnemyWaves {
   this.walker=options.walker;
   const northLaneBuildings=options.buildings.filter(b=>b.z<center.z&&
    b.z>=WAVE_DEFENSE_BOUNDS.minZ&&Math.abs(b.x-center.x)<=droneLaneHalfWidth);
-  this.droneOverflightAltitude=northLaneBuildings.reduce((height,b)=>Math.max(height,b.floors*3),0)
-   +droneLaneRoofClearance;
+  const northLaneRoof=northLaneBuildings.reduce((height,b)=>Math.max(height,b.floors*3),0);
+  this.highDroneAltitude=(northLaneRoof+droneLaneRoofClearance)*highDroneAltitudeScale;
   for(const {actor} of this.drones)actor.options.bounds=WAVE_DEFENSE_BOUNDS;
   for(const unit of this.members)unit.getTargets=origin=>this.targets(origin,unit.heroRange);
   this.rocket=new DefenseRocket(scene,RELAY);
@@ -172,9 +173,9 @@ export class WaveDefense extends MissionEnemyWaves {
    this.dronesLaunched+=air;
    for(const [index,{actor,start}] of units.entries()){
     const row=Math.floor(index/2);
-    // Send one drone per pair over the roofs, alternating sides by row.
+    // Send one drone per pair along the upper route, alternating sides by row.
     const high=index%4===1||index%4===2;
-    const y=high?Math.max(start.y,this.droneOverflightAltitude):start.y;
+    const y=high?Math.max(start.y,this.highDroneAltitude):start.y;
     actor.options.ingress.y=y;
     actor.options.ingress.z=center.z-22-row*3.5;
     actor.options.cruiseAltitude=start.y;
