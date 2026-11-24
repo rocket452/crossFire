@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=416';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=417';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
@@ -99,7 +99,7 @@ export class WaveDefense extends MissionEnemyWaves {
   const northLaneRoof=northLaneBuildings.reduce((height,b)=>Math.max(height,b.floors*3),0);
   this.highDroneAltitude=(northLaneRoof+droneLaneRoofClearance)*highDroneAltitudeScale;
   for(const {actor} of this.drones)actor.options.bounds=WAVE_DEFENSE_BOUNDS;
-  for(const unit of this.members)unit.getTargets=origin=>this.targets(origin,unit.heroRange);
+  for(const unit of this.members)unit.getTargets=origin=>this.targets(origin,unit.heroRange,unit);
   this.rocket=new DefenseRocket(scene,RELAY);
   this.relay=damage.add(RELAY.id,'structure',{root:this.rocket.root,evac:true},EVAC_ROCKET.health);
   this.relay.shapes=this.rocket.shapes;
@@ -131,10 +131,12 @@ export class WaveDefense extends MissionEnemyWaves {
   this.rocket.pose(this.relayFlash);
   return true;
  }
- targets(origin,range){
+ targets(origin,range,bruiser=null){
   const heroes=this.getTargets().filter(u=>{
    const point=u.shapes[0]?.center;
-   return u.alive&&!u.dashPhased&&point&&origin.distanceTo(point)<=range&&this.options.visible(origin,point);
+   if(!u.alive||u.dashPhased||!point)return false;
+   const distance=origin.distanceTo(point);
+   return (bruiser?bruiser.canAcquireHero(u,distance):distance<=range)&&this.options.visible(origin,point);
   });
   return heroes.length?heroes:[this.relay];
  }

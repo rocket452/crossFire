@@ -137,6 +137,16 @@ const first=waves.members[0],origin=first.root.position;
 assert.equal(first.combatUnit.health,350);
 hero=[{alive:true,shapes:[{center:origin.clone().add(new THREE.Vector3(0,0,-100))}]}];
 assert.equal(waves.targets(origin,first.heroRange)[0],hero[0]);
+const rooftopHero={id:'roof-test',kind:'hero',entity:{},alive:true,
+ shapes:[{center:origin.clone().add(new THREE.Vector3(0,40,-250))}]};
+hero=[rooftopHero];
+const isRooftopHero=first.isRooftopHero;
+first.isRooftopHero=()=>true;
+assert.equal(first.getTargets(origin)[0],waves.relay,'unsighted rooftop players do not interrupt the advance');
+first.noticeDamageFrom(rooftopHero.entity);
+assert.equal(first.getTargets(origin)[0],rooftopHero,'Wave Defense passes distant rooftop retaliation targets through');
+first.isRooftopHero=isRooftopHero;
+first.retaliation=null;
 hero=[];assert.equal(waves.targets(origin,first.heroRange)[0],waves.relay);
 const nearRocket=new THREE.Vector3(RELAY.x,18,RELAY.z+40);
 const farRocket=new THREE.Vector3(RELAY.x,18,RELAY.z+160);

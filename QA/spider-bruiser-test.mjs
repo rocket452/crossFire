@@ -10,7 +10,7 @@ for(const hz of[30,60,120]){const {r,hero,damage,removed}=fixture(),other=fixtur
 
 {
  const {r,hero}=fixture(),center=hero.shapes[0].center;
- assert(Math.abs(r.heroRange-100.8)<1e-8);assert(Math.abs(r.weaponRange-165)<1e-8);
+ assert(Math.abs(r.heroRange-100.8)<1e-8);assert(Math.abs(r.weaponRange-330)<1e-8);
  r.moveSpeed=0;r.cooldown=0;
  center.z=102;
  r.selectTarget(r.aimPoint());
@@ -20,9 +20,9 @@ for(const hz of[30,60,120]){const {r,hero,damage,removed}=fixture(),other=fixtur
  assert.equal(r.target,hero);
  assert(r.heroHits>0,'a Bruiser bolt can hit a hero near the reduced acquisition range');
  hero.kind='helicopter';
- center.z=155;
+ center.z=310;
  r.reset();r.spawn();r.age=3;r.cooldown=0;
- for(let i=0;i<60*7;i++)r.update(1/60,i/60);
+ for(let i=0;i<60*11;i++)r.update(1/60,i/60);
  assert(r.hits>0,'a Bruiser bolt can reach an objective near the extended weapon range');
  console.log('PASS Bruiser detection range and extended objective weapon range');
 }
@@ -71,4 +71,18 @@ for(const hz of [30,60,120]){
  r.selectTarget(r.aimPoint());
  assert.equal(r.target,hero,'a Bruiser can keep tracking a hero it saw climb to a roof');
  console.log('PASS rooftop stealth, provoked long-range return fire, cover, expiry and pursuit');
+}
+
+{
+ const {r,hero:rocket}=fixture();
+ Object.assign(rocket,{id:'evacuation-rocket',kind:'structure'});
+ r.moveSpeed=0;r.cooldown=0;
+ rocket.shapes[0].center.z=56;
+ for(let i=0;i<180;i++)r.update(1/60,i/60);
+ assert.equal(r.target,rocket,'Bruiser keeps the rocket as its objective');
+ assert.equal(r.shots,0,'Bruiser holds fire outside the 55 m rocket range');
+ rocket.shapes[0].center.z=54;
+ for(let i=180;i<360;i++)r.update(1/60,i/60);
+ assert.equal(r.shots,4,'Bruiser opens fire as soon as it has approached the rocket');
+ console.log('PASS close-range evacuation rocket fire');
 }
