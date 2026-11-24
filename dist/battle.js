@@ -1,4 +1,4 @@
-import {Luxmancer,LuxPlayer} from './luxmancer.js?v=405';
+import {Luxmancer,LuxPlayer} from './luxmancer.js?v=406';
 import {RiftPlayer} from './rift-player.js?v=404';
 import {VioletPlayer} from './violet-player.js?v=395';
 import {DefenseTitle} from './defense-title.js?v=386';
@@ -884,7 +884,7 @@ if(defenseMode){
   return traceImpact(a,b,{sections,ground:false,radius:0});
  }};
  portalHero.player=new RiftPlayer(portalHero,groundOptions);
- const model=await new GLTFLoader().loadAsync('city-assets/licensed-characters/luxmancer.glb?v=404');
+ const model=await new GLTFLoader().loadAsync('city-assets/licensed-characters/luxmancer.glb?v=406');
  lux=new Luxmancer(scene,model,{getUnits:()=>unitDamage.units,visible:districtVisible,
   traceBolt:(a,b)=>traceWorld(a,b,{radius:.10,allied:true,livingOnly:true}),
   onHit:(hit,point,power)=>{

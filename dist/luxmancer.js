@@ -157,7 +157,12 @@ export class LuxPlayer extends RiftPlayer {
   h.castRemaining=Math.max(0,h.castRemaining-dt);
   const down=k=>this.keys.has(k)||this.taps.has(k);
   const lance=down('Fire')||down('KeyF'),spray=down('Shield')||down('KeyG');
-  if(lance||spray||h.charging||h.castRemaining)h.character.arm('R',h.character.world('B_R_UpperArm').addScaledVector(ray,.8));
+  if(lance||spray||h.charging||h.castRemaining){
+   const reach=ray.clone().multiplyScalar(.8);
+   // Keep the elbow forward while the jump animation rolls the shoulders.
+   if(!this.grounded&&this.vertical>0)reach.y=Math.min(0,reach.y);
+   h.character.arm('R',h.character.world('B_R_UpperArm').add(reach));
+  }
   const origin=h.character.hand('R'),dir=new T.Vector3().copy(aim).sub(origin).normalize();
   for(const kind of ['lance','spray']){
    if(!(kind==='lance'?lance:spray)||h.cool[kind]>0)continue;
