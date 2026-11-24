@@ -16,30 +16,52 @@ def sun(x, y, z, size, bone, side=None):
     armor.surface(points, [(list(range(16)), 'rift core')], armor.fixed(bone))
 
 def cloak():
-    # Keep both tails behind the armor as the chest and hips rotate.
+    # Rift Warden’s trimmed split cloak, cut behind Luxmancer’s stride.
     rows = [
         ((0,1.452,-.129),(.052,1.455,-.138),(.100,1.458,-.152),(.120,1.465,-.164)),
         ((0,1.29,-.255),(.070,1.29,-.260),(.105,1.29,-.266),(.124,1.28,-.267)),
         ((.053,1.035,-.275),(.109,1.035,-.282),(.151,1.035,-.286),(.177,1.02,-.286)),
         ((.304,.830,-.506),(.331,.82,-.509),(.358,.802,-.495),(.380,.795,-.475)),
-        ((.349,.65,-.715),(.376,.602,-.719),(.414,.552,-.705),(.453,.508,-.693)),
+        ((.349,.65,-.715),(.376,.602,-.719),(.414,.552,-.705),(.453,.448,-.713)),
     ]
     weights = lambda v: armor.blend(v.y,1.015,1.37,'B_Pelvis','B_Spine2')
     for side in (-1,1):
-        points = [(side*x,y,z) for row in rows for x,y,z in row]
+        panel = [[armor.Vector((side*x,y,z)) for x,y,z in row] for row in rows]
+        panel.insert(-1, [a.lerp(b,.84) for a,b in zip(panel[-2],panel[-1])])
+        points = []
+        for inner,fold,edge,outer in panel:
+            points.extend((inner,inner.lerp(fold,.23),fold,edge,edge.lerp(outer,.53),outer))
         faces = []
-        for row in range(len(rows)-1):
-            for col in range(3):
-                i = row*4+col
-                face = [i,i+1,i+5,i+4]
-                material = 'cloak trim' if col == 2 else 'cloak'
+        for row in range(len(panel)-1):
+            for col in range(5):
+                i = row*6+col
+                face = [i,i+1,i+7,i+6]
+                if col==4 or row==len(panel)-2:
+                    material = 'cloak trim'
+                elif col==0 and row>=2:
+                    material = 'cloak lining'
+                else:
+                    material = 'cloak fold' if col==2 else 'cloak'
                 faces.append((face if side < 0 else face[::-1],material))
         armor.surface(points,faces,weights)
+
+    # Angle the sun crest along the upper back so it follows the same skin weights.
+    crest = []
+    for i in range(16):
+        angle=i*math.pi/8
+        radius=.061 if i%4==0 else .033
+        x=math.cos(angle)*radius
+        y=1.367+math.sin(angle)*radius
+        z=-.216+(y-1.367)*.73
+        crest.append((x,y,z))
+    armor.surface(crest,[(list(reversed(range(16))),'cloak crest')],weights)
 
 
 armor.MATERIALS.update({
     'rubber':('24202c',.65,0),'navy':('302b38',.55,0),'shadow':('15131b',.7,0),
-    'hood':('504958',.65,0),'cloak':('e9a017',.56,0),'cloak trim':('ffe27b',.38,.18),'blue':('48404f',.55,0),
+    'hood':('504958',.65,0),'cloak':('e6a327',.64,0),'cloak trim':('ffe289',.43,.22),
+    'cloak fold':('bf7518',.65,0),'cloak lining':('ffcf46',.54,.20),
+    'cloak crest':('fff4bd',.40,1.35),'blue':('48404f',.55,0),
     'silver':('f2e7de',.38,0),'silver edge':('948799',.45,0),
     'gold':('f6a519',.35,0),'gold edge':('ffe27b',.38,.18),
     'rift core':('fff5ba',.3,2.5),'rift light':('ffcf36',.38,1),
@@ -56,4 +78,5 @@ for bone,y,z,size in [('B_Head',1.87,.095,.055),('B_Pelvis',.978,.122,.04)]:
 armor.plate([(-.074,.95,.111),(.074,.95,.111),(.098,.50,.145),(0,.42,.159),(-.098,.50,.145)],
             'gold','gold edge','B_Pelvis',ridge=(0,.67,.165))
 armor.output(*map(Path,sys.argv[sys.argv.index('--')+1:]),name='Luxmancer',mesh_name='SolarVestments',
-             double_sided=('cloak','cloak trim','gold edge','rift core','rift light'))
+             double_sided=('cloak','cloak trim','cloak fold','cloak lining','cloak crest',
+                           'gold edge','rift core','rift light'))

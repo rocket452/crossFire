@@ -3,8 +3,9 @@ import fs from 'node:fs';
 import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.module.js';
 import {Luxmancer,LuxPlayer} from '../dist/luxmancer.js';
-import {traceImpact} from '../dist/combat-collision.js';
+import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
 import {HeroRoster} from '../dist/hero-roster.js';
+import {SpiderBruiser} from '../dist/spider-bruiser.js';
 registerHooks({resolve(name,context,next){
  return name==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(name,context);
 }});
@@ -192,3 +193,25 @@ assert.equal(hero.shots.length,1,'the slower comet stays in flight beyond the ol
 step(120);
 assert(hits.some(([unit,damage])=>unit===distant&&damage===115),'Light Volley still reaches the far end of lock range');
 console.log('PASS half-speed Light Volley and long-range impact');
+
+hero.reset();
+const spiderBytes=fs.readFileSync('dist/city-assets/licensed-robots/breaker-spider.glb');
+const spiderModel=await new GLTFLoader().parseAsync(
+ spiderBytes.buffer.slice(spiderBytes.byteOffset,spiderBytes.byteOffset+spiderBytes.byteLength),'');
+const combat=new UnitDamage(unit=>unit.entity.destroy());
+const bruiser=new SpiderBruiser(scene,combat,{spiderModel,spawnPosition:{x:0,y:.1,z:25},
+ getTargets:()=>[],visible:()=>true,trace:()=>null});
+bruiser.spawn();bruiser.root.rotation.y=0;bruiser.sync();
+targets.splice(0,targets.length,bruiser.combatUnit);
+const body=bruiser.combatUnit.shapes[0].center;
+camera.position.set(body.x,body.y,-5);camera.lookAt(body);
+let struckPart=null;
+hero.onHit=(hit,point,damage)=>{
+ struckPart=hit.part;combat.hurt(hit.unit,damage,point,hit.part);
+};
+assert.equal(bruiser.combatUnit.health,350);
+p.keys.add('Fire');step(90);p.keys.clear();step(30);
+assert.equal(struckPart,'hull','the shot hits the body');
+assert.equal(bruiser.combatUnit.alive,false,'a single charged Sunlance defeats a full-health Bruiser');
+assert.equal(combat.damageEvents,1);
+console.log('PASS charged Sunlance one-shot to the Bruiser hull');
