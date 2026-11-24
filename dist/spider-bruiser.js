@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=416';
+import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=419';
 import {SpiderRobotModel} from './spider-robot-model.js?v=wreck-occlusion-273';
 const angle=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 export const BRUISER_RANGE=Object.freeze({heroRange:RAIDER_COMBAT.heroRange*2.4,weaponRange:330,rocketRange:55});
@@ -7,13 +7,10 @@ export const BRUISER_RANGE=Object.freeze({heroRange:RAIDER_COMBAT.heroRange*2.4,
 const BURST_GAP_SECONDS=3;
 export class SpiderBruiser extends EvacRaider {
  constructor(scene,damage,options){if(!options.spiderModel)throw Error('Bruiser SpiderBot asset missing');super(scene,damage,{heroRange:BRUISER_RANGE.heroRange,weaponRange:BRUISER_RANGE.weaponRange,projectileLifetime:10,maxHealth:350,...options,enhancedModel:false});this.isRooftopHero=options.isRooftopHero??(()=>false);this.root.clear();this.root.scale.setScalar(1);this.spider=new SpiderRobotModel(this.root,options.spiderModel);this.parts={body:this.spider.hip,head:this.spider.head};this.bodyHeight=this.parts.body.position.y;const helper=(name,parent)=>{const n=new THREE.Group();n.name='Bruiser '+name+' attachment';parent.add(n);this.parts[name]=n;return n;};helper('reactor',this.parts.body);helper('arm_l',this.parts.head);const arm=helper('arm_r',this.parts.head);this.barrel=helper('barrel',arm);this.root.updateWorldMatrix(true,true);const eye=new THREE.Box3().setFromObject(this.spider.eye).getCenter(new THREE.Vector3());this.barrel.position.copy(this.parts.head.worldToLocal(eye));this.barrel.position.z+=.08;this.tracks={root:this.spider.body,reset:()=>{},update:()=>{},diagnostics:()=>({type:'spider-legs',count:4})};this.root.add(this.warning);this.restMaterials=[];const seen=new Set();this.spider.body.traverse(o=>{if(o.isMesh)for(const m of[].concat(o.material))if(m.emissive&&!seen.has(m)){seen.add(m);this.restMaterials.push({m,color:m.color.clone(),emissive:m.emissive.clone(),intensity:m.emissiveIntensity});}});this.reset();}
- reset(){super.reset();this.retaliation=null;this.spider?.reset();this.spider?.head.rotation.reorder('YXZ');this.recoil=0;this.headshotSeconds=0;}
- noticeDamageFrom(hero){
-  if(hero)this.retaliation={hero,until:this.age+8};
- }
+ reset(){super.reset();this.spider?.reset();this.spider?.head.rotation.reorder('YXZ');this.recoil=0;this.headshotSeconds=0;}
  canAcquireHero(unit,distance){
   const engaged=this.target&&this.target.entity===unit.entity;
-  const retaliating=this.retaliation&&this.retaliation.hero===unit.entity&&this.age<this.retaliation.until;
+  const retaliating=this.isAlertedTo(unit.entity);
   if(distance>this.weaponRange)return false;
   if(this.isRooftopHero(unit))return engaged||retaliating;
   if(engaged)return true;

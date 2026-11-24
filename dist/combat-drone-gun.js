@@ -35,16 +35,17 @@ export class DroneGun {
   const local=this.model.turret.parent.worldToLocal(point.clone()).sub(this.model.turret.position);
   return {yaw:Math.atan2(local.x,local.z),pitch:Math.atan2(-local.y,Math.hypot(local.x,local.z))};
  }
- select(targets){
+ select(targets,preferred){
   const origin=this.model.turret.getWorldPosition(new THREE.Vector3()),c=this.config;
   let next=null,best=c.range**2;
   for(const unit of targets){
    const point=unit.shapes[0]?.center;
-   if(!unit.alive||!point)continue;
+   if(!unit.alive||unit.dashPhased||!point)continue;
    const p=new THREE.Vector3().copy(point),range=origin.distanceToSquared(p);
-   if(range>best)continue;
+   if(range>c.range**2||(unit.entity!==preferred&&range>best))continue;
    const a=this.bearing(p);
    if(Math.abs(a.yaw)>rad(c.yawLimit)||a.pitch<0||a.pitch>rad(c.maxDown+5)||!this.options.visible(origin,p))continue;
+   if(preferred&&unit.entity===preferred)return unit;
    next=unit;best=range;
   }
   return next;
@@ -77,12 +78,12 @@ export class DroneGun {
   m.flash.visible=true;m.flash.rotation.z=number*.73;
   if(number%c.tracerEvery===1)o.sound('shot',.09);
  }
- update(dt,targets,enabled){
+ update(dt,targets,enabled,preferred){
   const c=this.config,m=this.model;
   m.flash.visible=false;
   if(!enabled)this.stop();
   if(enabled&&this.phase==='idle'){
-   this.target=this.select(targets);
+   this.target=this.select(targets,preferred);
    if(this.target){this.phase='acquisition';this.elapsed=0;}
   }
   if(this.target?.alive&&this.target.shapes[0]){

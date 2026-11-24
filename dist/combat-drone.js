@@ -1,9 +1,10 @@
+import {ELEVATED_ATTACK_ALERT} from './enemy-alert.js?v=419';
 import * as THREE from './vendor/three.module.js';
 import * as CANNON from './vendor/cannon-es.js';
 import {segmentBoxFraction} from './combat-collision.js';
 import {COMBAT_DRONE} from './combat-drone-config.js?v=397';
 import {DroneFlight} from './combat-drone-flight.js?v=396';
-import {DroneGun} from './combat-drone-gun.js?v=hazard-red-355';
+import {DroneGun} from './combat-drone-gun.js?v=419';
 import {buildCombatDrone} from './combat-drone-model.js?v=320';
 
 const vector=values=>new CANNON.Vec3(...values);
@@ -50,7 +51,7 @@ export class CombatDrone {
   this.fragments.length=0;
   this.damage.units=this.damage.units.filter(u=>u.entity!==this);
   this.combatUnit=null;this.root.visible=false;this.spawned=false;this.mode='inactive';
-  this.clock=0;this.wreckAt=Infinity;this.nextContact=0;this.stunRemaining=0;
+  this.retaliation=null;this.clock=0;this.wreckAt=Infinity;this.nextContact=0;this.stunRemaining=0;
   this.pendingContact=null;this.powerCut=false;this.contacted=false;this.severe=false;this.peakImpact=0;
   this.contacts=this.breaks=0;
   this.gun.reset();
@@ -117,6 +118,9 @@ export class CombatDrone {
   return closest?.center.clone()||this.root.position.clone();
  }
  recordHit(){}
+ noticeDamageFrom(hero){
+  if(hero&&this.mode==='flying')this.retaliation={hero,until:this.clock+ELEVATED_ATTACK_ALERT.seconds};
+ }
  stun(seconds){this.stunRemaining=Math.max(this.stunRemaining,seconds);this.gun.stop();}
  modifyDamage(power,point,part){
   const engine=this.engines.find(e=>e.id===part);
@@ -218,7 +222,7 @@ export class CombatDrone {
   gain.gain.exponentialRampToValueAtTime(.001,now+seconds);
   osc.connect(gain);gain.connect(audio.destination);osc.start(now);osc.stop(now+seconds);
  }
- plan(targets){
+ plan(targets,preferred){
   const c=this.config.flight;
   if(this.ingress){
    const offset=this.ingress.clone().sub(this.root.position);
@@ -231,9 +235,10 @@ export class CombatDrone {
    this.anchor.y=this.options.cruiseAltitude??this.ingress.y;
    this.ingress=null;
   }
-  const target=targets.reduce((best,u)=>{
+  const alertedTarget=preferred&&targets.find(u=>u.alive&&!u.dashPhased&&u.shapes[0]&&u.entity===preferred);
+  const target=alertedTarget||targets.reduce((best,u)=>{
    const center=u.shapes[0]?.center;
-   if(!u.alive||!center)return best;
+   if(!u.alive||u.dashPhased||!center)return best;
    return !best||this.root.position.distanceToSquared(center)<this.root.position.distanceToSquared(best.shapes[0].center)?u:best;
   },null);
   const near=target?.shapes[0].center;
@@ -269,8 +274,9 @@ export class CombatDrone {
  update(dt,targets){
   if(!this.spawned)return;
   this.clock+=dt;this.stunRemaining=Math.max(0,this.stunRemaining-dt);
-  if(this.mode==='flying')this.plan(targets);
-  this.gun.update(dt,targets,this.mode==='flying'&&this.stunRemaining<=0);
+  const preferred=this.clock<(this.retaliation?.until??0)?this.retaliation.hero:null;
+  if(this.mode==='flying')this.plan(targets,preferred);
+  this.gun.update(dt,targets,this.mode==='flying'&&this.stunRemaining<=0,preferred);
   for(const [index,e]of this.engines.entries()){
    const fraction=e.health/this.config.engineHealth,thrust=this.flight.forces[index];
    e.exhaust.visible=e.plume.visible=thrust>0;

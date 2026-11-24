@@ -103,3 +103,43 @@ for(const side of [-1,1]){
  assert(r.heroHits>0,'the mounted gun can aim sideways and up at the same time');
  console.log('PASS rooftop retaliation to the '+(side<0?'left':'right')+' of a Wave Defense lane');
 }
+
+{
+ const {alertEnemiesToAttacker,ELEVATED_ATTACK_ALERT}=await import('../dist/enemy-alert.js');
+ const {r:near,hero}=fixture(),{r:victim,damage}=fixture(),{r:far}=fixture(),{r:inactive}=fixture();
+ const heroActor={root:{position:new THREE.Vector3(0,30,30)}};
+ hero.entity=heroActor;
+ hero.shapes[0].center=heroActor.root.position.clone().add(new THREE.Vector3(0,1.4,0));
+ const actors=[victim,near,far,inactive];
+ for(const r of actors){r.isRooftopHero=()=>true;r.getTargets=()=>[hero];}
+ near.root.position.x=20;
+ far.root.position.x=ELEVATED_ATTACK_ALERT.radius+1;
+ inactive.spawned=false;
+ const units=actors.map(r=>r.combatUnit);
+ const ground=()=>0;
+ heroActor.root.position.y=0;
+ alertEnemiesToAttacker(victim.combatUnit,heroActor,units,ground);
+ assert.equal(near.retaliation,null,'street-level hits stay local');
+ heroActor.root.position.y=30;
+ damage.hurt(victim.combatUnit,1,victim.aimPoint(),'hull');
+ alertEnemiesToAttacker(victim.combatUnit,heroActor,units,ground);
+ assert.equal(near.retaliation.hero,heroActor,'a nonlethal hit alerts a neighboring Bruiser');
+ near.retaliation=null;
+ damage.hurt(victim.combatUnit,350,victim.aimPoint(),'hull');
+ assert.equal(victim.combatUnit.alive,false);
+ alertEnemiesToAttacker(victim.combatUnit,heroActor,units,ground);
+ assert.equal(near.retaliation.hero,heroActor,'a kill still alerts a neighboring Bruiser');
+ assert.equal(far.retaliation,null);
+ assert.equal(inactive.retaliation,null);
+ near.visible=()=>false;
+ near.selectTarget(near.aimPoint());
+ assert.equal(near.target,null,'the alert does not see through buildings');
+ near.visible=()=>true;
+ near.selectTarget(near.aimPoint());
+ assert.equal(near.target,hero);
+ near.target=null;
+ near.age+=ELEVATED_ATTACK_ALERT.seconds;
+ near.selectTarget(near.aimPoint());
+ assert.equal(near.target,null,'unused alert expires');
+ console.log('PASS elevated damage and kills alert only active nearby Bruisers, preserving cover and expiry');
+}

@@ -1,6 +1,6 @@
 import {COMBAT_DRONE} from './combat-drone-config.js?v=397';
-import {EvacRaiderSquad} from './evac-raider-squad.js?v=418';
-import {CombatDrone} from './combat-drone.js?v=401';
+import {EvacRaiderSquad} from './evac-raider-squad.js?v=419';
+import {CombatDrone} from './combat-drone.js?v=419';
 import {escortMovementBounds,ESCORT_APPROACH} from './evac-approach.js?v=315';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 

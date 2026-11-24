@@ -227,3 +227,18 @@ for(const [motors,y,wall,velocity] of [
  assert.equal(drone.goal.y,altitude);
  console.log('PASS drone altitude adjustment gives a firing angle on elevated heroes and respects the 40% climb cap');
 }
+
+{
+ const {drone,hero}=fixture();
+ hero.entity={};
+ const attacker={id:'elevated',kind:'hero',entity:{},alive:true,
+  shapes:[{center:new T.Vector3(0,10,25),half:{x:.55,y:1,z:.55}}]};
+ assert.equal(drone.gun.select([hero,attacker]),hero);
+ drone.noticeDamageFrom(attacker.entity);
+ drone.update(1/60,[hero,attacker]);
+ assert.equal(drone.gun.target,attacker);
+ drone.gun.stop();
+ attacker.dashPhased=true;
+ assert.equal(drone.gun.select([hero,attacker],attacker.entity),hero);
+ console.log('PASS alerted drone prefers its attacker among valid targets');
+}
