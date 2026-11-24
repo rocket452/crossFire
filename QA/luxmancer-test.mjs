@@ -155,3 +155,20 @@ const angle=bolt.v.angleTo(aim.sub(start));
 assert(angle<=Math.atan(.10)+1e-7,'Sunburst stays within the tighter half-angle');
 p.keys.clear();
 console.log('PASS Sunlance hold, cancellation, auto-fire, cost and rearm, plus tighter Sunburst spread');
+
+hero.reset();
+hero.root.position.set(0,.1,0);
+p.grounded=true;
+const distant={kind:'robot',alive:true,shapes:[{
+ center:new T.Vector3(0,1.5,135),half:new T.Vector3(1,1,1),rotation:new T.Quaternion()
+}]};
+targets.push(distant);
+p.keys.add('KeyE');step(21);
+assert.deepEqual(hero.locks,[distant]);
+p.keys.clear();step(1);
+assert(Math.abs(hero.shots[0].v.length()-33)<1e-6,'Light Volley flies at half speed');
+step(180);
+assert.equal(hero.shots.length,1,'the slower comet stays in flight beyond the old lifetime');
+step(120);
+assert(hits.some(([unit,damage])=>unit===distant&&damage===115),'Light Volley still reaches the far end of lock range');
+console.log('PASS half-speed Light Volley and long-range impact');

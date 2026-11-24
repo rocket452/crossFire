@@ -1,4 +1,4 @@
-import {Luxmancer,LuxPlayer} from './luxmancer.js?v=409';
+import {Luxmancer,LuxPlayer} from './luxmancer.js?v=410';
 import {RiftPlayer} from './rift-player.js?v=408';
 import {VioletPlayer} from './violet-player.js?v=395';
 import {DefenseTitle} from './defense-title.js?v=386';

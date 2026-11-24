@@ -7,7 +7,7 @@ import {RiftPlayer} from './rift-player.js?v=408';
 const spells={
  lance:{speed:205,life:1.8,damage:190,gap:.85,charge:1.5,length:3,width:.12,color:0xffdc53},
  spray:{speed:115,life:.85,damage:19,gap:.085,spread:.10,length:.95,width:.09,color:0xffae31},
- comet:{speed:66,life:3,damage:115,length:1.65,width:.24,color:0xffef90}
+ comet:{speed:33,life:6,damage:115,length:1.65,width:.24,color:0xffef90}
 };
 const lockTime=.35;
 const maxLocks=4;
