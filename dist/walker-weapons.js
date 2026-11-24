@@ -4,7 +4,7 @@ export const WALKER_WEAPON_HEALTH_SCALE=.1;
 export const WALKER_WEAPONS=Object.freeze([
  Object.freeze({id:'beam',part:'forearm_r',label:'BEAM CANNON',short:'BEAM',health:1800*WALKER_WEAPON_HEALTH_SCALE}),
  Object.freeze({id:'missiles',part:'rocket_pod',label:'ROCKET POD',short:'ROCKETS',health:1600*WALKER_WEAPON_HEALTH_SCALE}),
- Object.freeze({id:'plasma',part:'plasma_cannon',label:'PLASMA CANNON',short:'PLASMA',health:1800*WALKER_WEAPON_HEALTH_SCALE})
+ Object.freeze({id:'plasma',part:'plasma_cannon',label:'SNIPER CANNON',short:'SNIPER',health:1800*WALKER_WEAPON_HEALTH_SCALE})
 ]);
 export class WalkerWeapons {
  constructor({specs=WALKER_WEAPONS,healthMultiplier=1,onDestroyed=()=>{}}={}){this.specs=specs.map(s=>({...s,health:s.health*healthMultiplier}));this.onDestroyed=onDestroyed;this.reset();}

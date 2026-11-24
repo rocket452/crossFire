@@ -1,4 +1,4 @@
-import {WalkerWeapons} from './walker-weapons.js?v=city-walker-health-255';
+import {WalkerWeapons} from './walker-weapons.js?v=415';
 import {CannonTracking,CANNON_TRACKING} from './cannon-tracking.js?v=beam-tracking-150';
 import * as THREE from './vendor/three.module.js';
 import {trackedBeamWarningPlan} from './beam-aim.js?v=beam-tracking-61';
@@ -75,7 +75,7 @@ export class SiegeWalker {
   this.wrecks=[];this.detachedParts.clear();this.weapons.reset();this.staggerPose=null;this.stunRemaining=0;this.stunKind=null;this.stuns=0;this.dead=false;this.deathTime=0;this.broken=false;this.hits={shell:0,rocket:0,infantry:0};this.damageByTeam=[0,0];this.heroDamage=0;this.returnShots=0;this.target=null;this.aiming=false;this.lastSmoke=-1;this.targetIndex=0;this.flash=0;this.podRecoil=0;this.plasmaRecoil=0;this.plasmaCharging=false;this.plasmaAim=null;this.beamAllowed=true;this.podWarning={active:false,progress:0,pulse:false};
   this.cannonTracking.reset();this.weapon.reset();this.eyeTarget=null;this.gazeTarget=null;this.beamAim=null;this.beamSweepOrigin=null;this.onBeam(null);this.root.position.set(0,0,0);this.root.rotation.set(0,0,0);
   for(const [name,n]of Object.entries(this.nodes)){n.rotation.set(0,0,0);n.position.copy(this.restPositions[name]);}
-  if(this.nodes.rocket_pod)this.nodes.rocket_pod.rotation.x=-Math.PI/4;if(this.nodes.plasma_cannon)this.nodes.plasma_cannon.rotation.x=-Math.PI/4;
+  if(this.nodes.rocket_pod)this.nodes.rocket_pod.rotation.x=-Math.PI/4;if(this.nodes.plasma_cannon)this.nodes.plasma_cannon.rotation.x=0;
   this.walkPose=this.gait.reset(yaw);this.applyWalkPose(this.walkPose);
   for(const m of Object.values(this.meshes)){m.material.color.set('#ffffff');if(m.material.emissive)m.material.emissiveIntensity=m===this.meshes.reactor||m===this.meshes.visor?2:0;}
   this.root.updateMatrixWorld(true);
@@ -206,12 +206,35 @@ export class SiegeWalker {
   this.root.updateMatrixWorld(true);
  }
  aimPlasma(target){
-  this.plasmaAim={...target};const node=this.nodes.plasma_cannon;node.parent.updateWorldMatrix(true,false);
-  // Hold the gun above the torso's forward axis; aiming turns the robot, never the mount sideways.
-  const forward=new THREE.Vector3(0,0,1).transformDirection(node.parent.matrixWorld);forward.y=0;forward.normalize();const yaw=Math.atan2(forward.x,forward.z),world=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/4,yaw,0,'YXZ')),parent=node.parent.getWorldQuaternion(new THREE.Quaternion());node.quaternion.copy(parent.invert()).multiply(world);node.updateWorldMatrix(false,true);
-  const position=node.localToWorld(new THREE.Vector3(0,1.4,3.35)),direction=new THREE.Vector3(0,0,1).transformDirection(node.matrixWorld),to=new THREE.Vector3(target.x-position.x,0,target.z-position.z).normalize();return{position,direction,aligned:forward.dot(to)>=Math.cos(.012),alignmentSeconds:Math.max(0,Math.abs(angleDelta(Math.atan2(to.x,to.z),yaw))-.012)/WALKER_TURN_SPEED};
+  const node=this.nodes.plasma_cannon;
+  if(target)this.plasmaAim={...target};
+  node.parent.updateWorldMatrix(true,false);
+  const muzzleOffset=new THREE.Vector3(0,1.4,3.35);
+  if(!target)return {position:node.localToWorld(muzzleOffset)};
+  const pivot=node.getWorldPosition(new THREE.Vector3());
+  const to=new THREE.Vector3().copy(target).sub(pivot);
+  const forward=new THREE.Vector3(0,0,1).transformDirection(node.parent.matrixWorld);
+  const heading=Math.atan2(forward.x,forward.z);
+  const desiredYaw=Math.atan2(to.x,to.z);
+  const yaw=heading+THREE.MathUtils.clamp(angleDelta(desiredYaw,heading),-.22,.22);
+  const horizontal=Math.hypot(to.x,to.z);
+  const offset=Math.asin(THREE.MathUtils.clamp(muzzleOffset.y/Math.max(.1,to.length()),-.99,.99));
+  const desiredPitch=-Math.atan2(to.y,horizontal)+offset;
+  const pitch=THREE.MathUtils.clamp(desiredPitch,-1.25,1.4);
+  const world=new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
+  node.quaternion.copy(node.parent.getWorldQuaternion(new THREE.Quaternion()).invert()).multiply(world);
+  const position=node.localToWorld(muzzleOffset);
+  const direction=new THREE.Vector3(0,0,1).transformDirection(node.matrixWorld);
+  const aligned=direction.dot(new THREE.Vector3().copy(target).sub(position).normalize())>=Math.cos(.04);
+  return{position,direction,aligned};
  }
- updatePlasmaWarning(active,time=0){if(!this.isWeaponWorking('plasma'))return;this.plasmaCharging=active;const m=this.meshes.plasma_cannon?.material;if(m){m.emissive.set('#18f3a3');m.emissiveIntensity=active?(.45+.4*Math.sin(time*15)**2):0;}}
+ updatePlasmaWarning(active,time=0){
+  if(!this.isWeaponWorking('plasma'))return;
+  this.plasmaCharging=active;
+  if(!active)this.plasmaAim=null;
+  const material=this.meshes.plasma_cannon?.material;
+  if(material){material.emissive.set('#ff382f');material.emissiveIntensity=active?(.45+Math.sin(time*15)**2):0;}
+ }
  updatePodWarning(state){if(!this.isWeaponWorking('missiles'))return;this.podWarning={...state};const m=this.meshes.rocket_pod?.material;if(!m)return;m.emissive.set('#ff3b0c');m.emissiveIntensity=state.active?(state.pulse?4.2:.1):0;}
  trackHead(target,dt){
   const head=this.nodes.head;let yaw=0,pitch=0;

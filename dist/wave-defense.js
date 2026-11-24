@@ -138,10 +138,10 @@ export class WaveDefense extends MissionEnemyWaves {
   });
   return heroes.length?heroes:[this.relay];
  }
- walkerTargets(origin,heroRange,weapon,playerPosition){
+ walkerTargets(origin,heroRange,weapon,playerPosition,weaponRange=heroRange){
   const candidates=this.getTargets().filter(u=>u.alive&&u.shapes[0]?.center);
   const heroes=candidates.filter(u=>!u.dashPhased
-   &&origin.distanceTo(u.shapes[0].center)<=heroRange
+   &&origin.distanceTo(u.shapes[0].center)<=weaponRange
    &&this.options.visible(origin,u.shapes[0].center));
   if(heroes.length)return heroes;
   // A nearby player behind cover can still draw the Walker away from the relay.
