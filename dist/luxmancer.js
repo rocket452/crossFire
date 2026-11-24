@@ -1,12 +1,12 @@
 import * as T from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
-import {LuxEffects} from './luxmancer-effects.js?v=409';
+import {LuxEffects} from './luxmancer-effects.js?v=411';
 import {SOLAR_CONFIG,LuxSolarEffects} from './lux-solar.js?v=408';
 import {RiftPlayer} from './rift-player.js?v=408';
 
 const spells={
  lance:{speed:205,life:1.8,damage:190,gap:.85,charge:1.5,length:3,width:.12,color:0xffdc53},
- spray:{speed:115,life:.85,damage:19,gap:.085,spread:.10,length:.95,width:.09,color:0xffae31},
+ spray:{speed:115,life:.85,damage:19,gap:.0425,spread:Math.tan(Math.atan(.10)*.7),length:.95,width:.09,color:0xffae31},
  comet:{speed:33,life:6,damage:115,length:1.65,width:.24,color:0xffef90}
 };
 const lockTime=.35;
@@ -84,7 +84,7 @@ export class Luxmancer {
  }
  clearLance(){
   this.lanceCharge=0;this.lanceFired=false;
-  this.effects.lanceGather.visible=false;
+  this.effects.lanceGather.visible=false;this.effects.lanceSeal.visible=false;
  }
  chargeLance(held,dt){
   if(!held){this.clearLance();return false;}
@@ -213,20 +213,21 @@ export class LuxPlayer extends RiftPlayer {
   this.energyLabel.textContent=empty?'Depleted':h.lowEnergyTime>0?'Low energy · '+Math.ceil(h.energy):
    Math.ceil(h.energy)+' / '+SOLAR_CONFIG.capacity;
  }
- moveDisc(dt,landing){
+ moveDisc(dt,landing,allowInput=true){
   const p=this.hero.root.position,keys=this.keys;
   const f=Number(keys.has('KeyW'))-Number(keys.has('KeyS'))+this.stick.value.y;
   const r=Number(keys.has('KeyD'))-Number(keys.has('KeyA'))+this.stick.value.x;
   const vertical=Number(keys.has('Space'))-Number(keys.has('ShiftLeft')||keys.has('ShiftRight'));
   const speed=landing?SOLAR_CONFIG.glideSpeed:SOLAR_CONFIG.flightSpeed;
-  const motion=new T.Vector3(Math.sin(this.yaw)*f-Math.cos(this.yaw)*r,0,
+  const motion=new T.Vector3();
+  if(allowInput)motion.set(Math.sin(this.yaw)*f-Math.cos(this.yaw)*r,0,
    Math.cos(this.yaw)*f+Math.sin(this.yaw)*r).clampLength(0,1);
   this.walking=false;
   for(const axis of ['x','z']){
    const next=p.clone();next[axis]+=motion[axis]*speed*dt;this.clamp(next);
    if(!this.sweep(p,next))p.copy(next);
   }
-  this.vertical=landing?-SOLAR_CONFIG.landingSpeed:vertical*SOLAR_CONFIG.climbSpeed;
+  this.vertical=landing?-SOLAR_CONFIG.landingSpeed:allowInput?vertical*SOLAR_CONFIG.climbSpeed:0;
   const next=this.clamp(p.clone().addScaledVector(up,this.vertical*dt));
   if(this.vertical<0&&this.landOnDeck(p,next)){
    this.finishLanding();return;
@@ -244,7 +245,7 @@ export class LuxPlayer extends RiftPlayer {
   this.vertical=0;
   if(this.hero.solarMode==='landing')this.hero.solarMode=null;
  }
- solarMovement(dt){
+ solarMovement(dt,allowInput){
   const h=this.hero,c=SOLAR_CONFIG,held=this.keys;
   h.lowEnergyTime=Math.max(0,h.lowEnergyTime-dt);
   if(h.solarMode==='communion'&&!held.has('KeyR'))h.solarMode=null;
@@ -260,18 +261,18 @@ export class LuxPlayer extends RiftPlayer {
    if(dt-waiting>1e-8)h.energy=Math.min(c.capacity,h.energy+(dt-waiting)*c.recharge);
    return true;
   }
-  if(this.taps.has('KeyQ')){
+  if(allowInput&&this.taps.has('KeyQ')){
    if(h.solarMode==='flight')h.solarMode=this.grounded?null:'landing';
    else if(h.energy>0){h.solarMode='flight';this.platform=null;}
    else h.lowEnergyTime=.65;
   }
   if(h.solarMode==='flight'){
    const powered=Math.min(dt,h.energy/c.flightDrain);
-   this.moveDisc(powered,false);
+   this.moveDisc(powered,false,allowInput);
    h.spend(powered*c.flightDrain);
-   if(h.solarMode==='landing'&&dt>powered)this.moveDisc(dt-powered,true);
-  }else if(h.solarMode==='landing')this.moveDisc(dt,true);
-  else this.move(dt);
+   if(h.solarMode==='landing'&&dt>powered)this.moveDisc(dt-powered,true,allowInput);
+  }else if(h.solarMode==='landing')this.moveDisc(dt,true,allowInput);
+  else this.move(dt,allowInput);
   return false;
  }
  poseCast(kind,ray){
@@ -308,10 +309,14 @@ export class LuxPlayer extends RiftPlayer {
  update(dt){
   const h=this.hero;
   this.hurt.step(dt);
-  const channeling=this.solarMovement(dt);
+  const lanceHeld=this.keys.has('Fire')||this.keys.has('KeyF');
+  const channeling=this.solarMovement(dt,!lanceHeld);
   this.frame();
   h.solarEffects.update(dt,h.root.position,h.solarMode,h.windup);
-  for(const key of Object.keys(h.cool))h.cool[key]=Math.max(0,h.cool[key]-dt);
+  const sprayClock=h.cool.spray>0?h.cool.spray-dt:0;
+  h.cool.spray=Math.max(0,sprayClock);
+  h.cool.lance=Math.max(0,h.cool.lance-dt);
+  h.cool.comet=Math.max(0,h.cool.comet-dt);
   h.castRemaining=Math.max(0,h.castRemaining-dt);
   if(channeling){
    this.updateEnergyHud();
@@ -328,12 +333,11 @@ export class LuxPlayer extends RiftPlayer {
    return;
   }
   const down=k=>this.keys.has(k)||this.taps.has(k);
-  const lanceHeld=this.keys.has('Fire')||this.keys.has('KeyF');
   const lanceReady=h.chargeLance(lanceHeld,dt);
   const spray=down('Shield')||down('KeyG');
   const wantsVolley=this.keys.has('KeyE')&&!h.cool.comet;
   const pose=h.lanceCharge>0?'lance':wantsVolley||h.charging?'comet':spray?'spray':h.castRemaining?h.castKind:null;
-  this.face(dt,!!pose);
+  this.face(dt,!!pose||lanceHeld);
   const onDisc=h.solarMode==='flight'||h.solarMode==='landing';
   const clip=onDisc?'Idle':this.grounded?(this.walking?'Run':'Idle'):(this.vertical>0?'Jump':'Fall');
   h.character.update(clip,dt,{loop:this.grounded});
@@ -346,12 +350,18 @@ export class LuxPlayer extends RiftPlayer {
   if(lanceReady&&h.shoot('lance',origin,dir)){
    h.lanceCharge=0;h.lanceFired=true;h.cool.lance=spells.lance.gap;
   }
-  if(spray&&h.cool.spray<=0){
+  if(spray&&sprayClock<=0){
    const right=new T.Vector3().crossVectors(dir,up).normalize(),vertical=right.clone().cross(dir);
-   const angle=Math.random()*Math.PI*2,r=spells.spray.spread*Math.sqrt(Math.random());
-   const velocity=dir.clone().addScaledVector(right,r*Math.cos(angle))
-    .addScaledVector(vertical,r*Math.sin(angle)).normalize();
-   if(h.shoot('spray',origin,velocity))h.cool.spray=spells.spray.gap;
+   // Carry the remainder across frames so 30 and 60 FPS do not quantize the fire rate differently.
+   let nextShot=sprayClock;
+   while(nextShot<=0){
+    const angle=Math.random()*Math.PI*2,r=spells.spray.spread*Math.sqrt(Math.random());
+    const velocity=dir.clone().addScaledVector(right,r*Math.cos(angle))
+     .addScaledVector(vertical,r*Math.sin(angle)).normalize();
+    if(!h.shoot('spray',origin,velocity)){nextShot=0;break;}
+    nextShot+=spells.spray.gap;
+   }
+   h.cool.spray=nextShot;
   }
   if(wantsVolley){h.charging=true;h.lock(origin,ray,dt);}
   if(h.charging&&!this.keys.has('KeyE')){
@@ -367,7 +377,7 @@ export class LuxPlayer extends RiftPlayer {
   }
   const lanceProgress=h.lanceCharge/spells.lance.charge;
   h.effects.cast(pose,h.character.hand(pose==='comet'&&wantsVolley?'L':'R'),dir,
-   pose==='comet'?(h.locks.length+h.pendingTime/lockTime)/maxLocks:Math.min(1,h.castRemaining/.23),lanceProgress);
+   pose==='comet'?(h.locks.length+h.pendingTime/lockTime)/maxLocks:Math.min(1,h.castRemaining/.23),lanceProgress,this.camera.aspect,h.root.position);
   h.drawLocks(this.camera);
   this.updateEnergyHud();
   const progress=h.pendingTarget?' · Acquiring '+Math.floor(100*h.pendingTime/lockTime)+'%':'';
