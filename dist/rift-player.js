@@ -59,8 +59,8 @@ const RIFT={moveSpeed:14,jumpSpeed:10,blinkRange:28,returnWindow:4,blinkCooldown
 const ATTACK_PORTAL_CHARGES=3,ATTACK_PORTAL_RECHARGE=5;
 
 export class RiftPlayer extends ManualHeroControls {
- constructor(hero,options){
-  super(hero,options,{
+ constructor(hero,options,bindings){
+  super(hero,options,bindings??{
    hint:'WASD move · Space jump · LMB bolt · RMB blink / return · E place exit / entrance · R attack portal',
    actions:[['Jump','Space'],['Bolt','Fire'],['Blink','Shield'],['Redirect','KeyE'],['Attack Portal','KeyR']],
    codes:['KeyW','KeyS','KeyA','KeyD','Space','KeyF','KeyG','KeyE','KeyR']

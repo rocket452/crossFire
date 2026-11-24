@@ -1,6 +1,9 @@
-import {HEROES} from './hero-roster.js?v=evac-briefing-319';
+import {HEROES} from './hero-roster.js?v=404';
 
 const training={
+ lux:{tip:'Use the highway sightlines. Aim slightly above distant targets to account for Sunlance drop.',
+  controls:[['Move and jump','WASD · Space','Stick · Jump'],['Sunlance','Left click or F','Sunlance'],['Sunburst machine gun','Hold right click or G','Hold Sunburst'],['Lock and release light volley','Hold E, sweep across targets, then release','Hold Lock volley, aim, then release']],
+  bonus:'Gold rings mark up to four enemies. Each marked enemy draws one seeking light comet.'},
  volt:{
   tip:'Run to build charge. Hold the rescue dash through a civilian group and release in a clear spot closer to the Chinook.',
   controls:[
@@ -137,18 +140,18 @@ export class EvacuationBriefing {
    <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
  }
  choices(){
-  return `<div class="evac-briefing-heroes">${(this.defenseMode?['volt','ninja','violet','rift']:['volt','ninja']).map(id=>{
+  return `<div class="evac-briefing-heroes">${(this.defenseMode?['volt','ninja','violet','rift','lux']:['volt','ninja']).map(id=>{
    const hero=HEROES.find(entry=>entry.id===id);
    return `<button type="button" class="evac-briefing-hero" data-hero="${id}" style="--hero-accent:${hero.color}">
     <span class="evac-hero-icon" aria-hidden="true">${hero.icon}</span><strong>${hero.name}</strong>
-    <span>${id==='rift'?'Blink, return, and redirect incoming fire.':id==='violet'?'Fly, block incoming fire, and unleash a force beam.':this.combatOnly?(id==='volt'?'Build charge at high speed and strike with lightning.':'Throw a laser star and teleport to a charged shuriken.'):id==='volt'?'Carry civilians out of danger with a lightning dash.':'Shield civilians from damage with protective smoke.'}</span>
+    <span>${id==='lux'?'Snipe from cover and mark enemies for seeking light.':id==='rift'?'Blink, return, and redirect incoming fire.':id==='violet'?'Fly, block incoming fire, and unleash a force beam.':this.combatOnly?(id==='volt'?'Build charge at high speed and strike with lightning.':'Throw a laser star and teleport to a charged shuriken.'):id==='volt'?'Carry civilians out of danger with a lightning dash.':'Shield civilians from damage with protective smoke.'}</span>
    </button>`;
   }).join('')}</div>
   <footer><button type="button" class="secondary" data-back>Back</button></footer>`;
  }
  tutorial(){
   const lesson=training[this.hero];
-  const tip=this.hero==='violet'?lesson.tip:this.combatOnly?(this.hero==='volt'?'Run to build charge, then stop briefly to fire. Use buildings as cover when the Walker winds up.':'Use shuriken teleports and wall jumps to attack from rooftops. Smoke protects allies inside its dome.'):lesson.tip;
+  const tip=['lux','rift','violet'].includes(this.hero)?lesson.tip:this.combatOnly?(this.hero==='volt'?'Run to build charge, then stop briefly to fire. Use buildings as cover when the Walker winds up.':'Use shuriken teleports and wall jumps to attack from rooftops. Smoke protects allies inside its dome.'):lesson.tip;
   return `<p class="evac-briefing-lead">${tip}</p>
    <dl class="evac-briefing-controls">${this.controlRows()}</dl>
    <p class="evac-briefing-tip">${lesson.bonus}</p>

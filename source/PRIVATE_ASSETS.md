@@ -152,3 +152,7 @@ GLB under `dist/city-assets/licensed-characters/` in the private build only.
 Both Kage armor variants now include flexible hip, knee, and ankle seals from
 `source/rig_kage_armor.py`. Rebuild the regular and frog-base files with that
 script, then regenerate `kage-frog.glb` with `source/build_kage_frog.py`.
+
+## Luxmancer
+
+Generate the solar armor with `blender -b --python-exit-code 1 --python source/build_luxmancer.py -- /private/humanoid.glb /private/luxmancer.glb`. The game loads `dist/city-assets/licensed-characters/luxmancer.glb` from the private build. The model uses the shared skeleton and animation clips. Validate it with `node QA/luxmancer-test.mjs`.
