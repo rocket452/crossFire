@@ -7,6 +7,18 @@ import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
 const config=JSON.parse(fs.readFileSync('dist/ninja-shuriken-config.json'));
 function setup(){const units=[],sections=[],damage=new UnitDamage(),root=new THREE.Group(),events=[],h={root,yaw:0,shots:0,character:{hand:()=>new THREE.Vector3(0,1.2,0)},aim:()=>new THREE.Vector3(0,1.2,100),redirect:()=>null,shurikenEffects:{tone(){}},burst(){},getDashEnemies:()=>units,getAttackThreats:()=>[],getSections:()=>sections,hit:(hit,power)=>{events.push(hit);return hit.unit?damage.hurt(hit.unit,power,hit.point,hit.part):0;},traceWorld:(a,b,opts)=>traceImpact(a,b,{targets:units,sections,ground:false,radius:opts.radius})};h.shurikenWorld=new ShurikenWorld(config,{getSections:()=>sections,getEnemies:()=>units,getBounds:()=>({minX:-200,maxX:200,minZ:-200,maxZ:200})});const a=Object.create(KageAttacks.prototype);Object.assign(a,{hero:h,config,kunai:{},trails:{},arcRoot:{},render(){}});a.reset();const step=(seconds,held=false)=>{for(let i=0;i<Math.round(seconds*120);i++)a.update(1/120,{held,enabled:true});};const enemy=(x,z,health=1000)=>{const entity={root:new THREE.Group()},u=damage.add('enemy-'+units.length,'robot',entity,health);u.shapes=[{center:{x,y:1.2,z},half:{x:.4,y:1,z:.4},rotation:new THREE.Quaternion()}];units.push(u);return u;};return{a,h,units,sections,events,step,enemy};}
 let t=setup();t.enemy(0,10);t.step(1/120,true);t.step(.2);assert.equal(t.a.throws,1);assert.equal(t.units[0].health,945);t.step(1/120,true);t.step(.2);assert.equal(t.a.throws,1,'cooldown rejects another tap');t.step(1);t.step(1/120,true);t.step(.2);assert.equal(t.a.throws,2);
+t=setup();
+const distant=t.enemy(0,329);
+t.step(1/120,true);
+t.step(1.6);
+assert.equal(distant.health,945,'a kunai hits near the new 330 m limit');
+t=setup();
+const beyond=t.enemy(0,331);
+t.step(1,true);
+t.step(2);
+assert.equal(t.a.throws,5);
+assert.equal(beyond.health,1000,'stored kunai cannot reach past 330 m');
+assert.equal(t.a.bolts.length,0,'all kunai expire at the range limit');
 t=setup();t.enemy(0,10);t.enemy(0,20);t.step(2,true);assert.equal(t.a.stored,5);assert.equal(t.a.throws,0,'held kunai do not auto-fire');t.step(.45);assert.equal(t.a.throws,5);assert.equal(t.a.lastVolley,5);assert.equal(t.units[0].health,725);assert.equal(t.units[1].health,1000,'kunai stop at first enemy');assert.equal(t.a.bolts.length,0);
 t=setup();t.step(.25,true);assert.equal(t.a.stored,2);t.step(.25,true);assert.equal(t.a.stored,3);t.step(.5,true);assert.equal(t.a.stored,5);t.step(8,true);assert.equal(t.a.stored,5);t.h.aim=()=>new THREE.Vector3(100,1.2,0);t.step(1/120);assert.equal(t.a.queue.length,4);t.h.aim=()=>new THREE.Vector3(0,1.2,100);t.step(.35);assert.equal(t.a.throws,5);assert(t.a.bolts.every(b=>b.dir.x>.999&&Math.abs(b.position.z)<1e-8),'released volley stays in one straight line');
 t=setup();t.step(2,true);t.a.cancelInput();t.step(.2);assert.equal(t.a.throws,0,'pause/input loss discards stored kunai');

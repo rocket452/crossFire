@@ -104,7 +104,7 @@
     "maxStored": 5,
     "burstInterval": 0.075,
     "speed": 220,
-    "range": 110,
+    "range": 330,
     "damage": 55,
     "radius": 0.36,
     "trailLength": 4.5,
