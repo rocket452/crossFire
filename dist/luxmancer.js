@@ -7,10 +7,11 @@ import {RiftPlayer} from './rift-player.js?v=416';
 const spells={
  lance:{speed:205,life:1.8,damage:350,gap:.85,charge:1.5,length:3,width:.12,color:0xffdc53},
  spray:{speed:115,life:.85,damage:19,gap:.0425,spread:Math.tan(Math.atan(.10)*.7),length:.95,width:.09,color:0xffae31},
- comet:{speed:33,life:6,damage:115,length:1.65,width:.24,color:0xffef90}
+ comet:{speed:33,life:6,damage:115,gap:4,length:1.65,width:.24,color:0xffef90}
 };
 const lockTime=.35;
 const maxLocks=4;
+const volleyHoldWindow=1.4;
 const targetable=unit=>unit.alive&&unit.shapes.length>0;
 const up=new T.Vector3(0,1,0),forward=new T.Vector3(0,0,1);
 const gem=new T.OctahedronGeometry(1),ring=new T.TorusGeometry(1,.075,5,32);
@@ -84,12 +85,12 @@ export class Luxmancer {
   return true;
  }
  clearLance(){
-  this.lanceCharge=0;this.lanceFired=false;
+  this.lanceCharge=0;
   this.effects.lanceGather.visible=false;this.effects.lanceSeal.visible=false;
  }
  chargeLance(held,dt){
   if(!held){this.clearLance();return false;}
-  if(this.lanceFired||this.cool.lance>0)return false;
+  if(this.cool.lance>0)return false;
   if(this.energy+1e-8<SOLAR_CONFIG.attackCosts.lance){
    this.lanceCharge=0;this.lowEnergyTime=.65;
    return false;
@@ -98,7 +99,7 @@ export class Luxmancer {
   return this.lanceCharge>=spells.lance.charge-1e-8;
  }
  clearLocks(){
-  this.locks=[];this.charging=false;
+  this.locks=[];this.charging=false;this.volleyHold=0;
   this.pendingTarget=null;this.pendingTime=0;
   this.pendingMark.visible=false;
   this.marks.forEach(mark=>mark.visible=false);
@@ -174,7 +175,7 @@ export class Luxmancer {
 }
 export class LuxPlayer extends RiftPlayer {
  constructor(hero,options){
-  super(hero,options,{hint:'WASD move · Space jump · Hold LMB Sunlance · RMB Sunburst · E lock volley · Q Solar Disc · Space / Shift altitude · X Solar Blink / return · Hold R recharge',
+  super(hero,options,{hint:'WASD move · Space jump · Hold LMB Sunlance · RMB Sunburst · Hold E Light Volley · Q Solar Disc · Space / Shift altitude · X Solar Blink / return · Hold R recharge',
    actions:[['Jump / Up','Space'],['Hold Sunlance','Fire'],['Sunburst','Shield'],['Lock volley','KeyE'],['Disc','KeyQ'],['Down','ShiftLeft'],['Recharge','KeyR'],['Solar Blink','KeyX']],
    roofColor:'#ffdb65',
    codes:['KeyW','KeyA','KeyS','KeyD','Space','KeyE','KeyF','KeyG','KeyQ','KeyR','KeyX','ShiftLeft','ShiftRight']});
@@ -314,7 +315,7 @@ export class LuxPlayer extends RiftPlayer {
    const guard=c.world('B_L_UpperArm').addScaledVector(aim,.32).addScaledVector(up,-.23);
    c.arm('L',c.hand('L').lerp(guard,weight));
   }else{
-   const release=!this.keys.has('KeyE');
+   const release=!this.keys.has('KeyE')||h.cool.comet>0;
    const extend=release?.71:.50+(.09*(h.locks.length/maxLocks));
    right.addScaledVector(aim,extend).addScaledVector(side,.11).addScaledVector(up,-.08);
    const focus=c.world('B_L_UpperArm').addScaledVector(aim,release?.40:.57)
@@ -338,6 +339,7 @@ export class LuxPlayer extends RiftPlayer {
   h.solarEffects.update(dt,h.root.position,h.solarMode,h.windup);
   const sprayClock=h.cool.spray>0?h.cool.spray-dt:0;
   h.cool.spray=Math.max(0,sprayClock);
+  const lanceTime=Math.max(0,dt-h.cool.lance),volleyTime=Math.max(0,dt-h.cool.comet);
   h.cool.lance=Math.max(0,h.cool.lance-dt);
   h.cool.comet=Math.max(0,h.cool.comet-dt);
   h.castRemaining=Math.max(0,h.castRemaining-dt);
@@ -356,9 +358,12 @@ export class LuxPlayer extends RiftPlayer {
    return;
   }
   const down=k=>this.keys.has(k)||this.taps.has(k);
-  const lanceReady=h.chargeLance(lanceHeld,dt);
+  const lanceReady=h.chargeLance(lanceHeld,lanceTime);
   const spray=down('Shield')||down('KeyG');
-  const wantsVolley=this.keys.has('KeyE')&&!h.cool.comet;
+  const volleyHeld=this.keys.has('KeyE');
+  const canPayForComet=h.energy+1e-8>=SOLAR_CONFIG.attackCosts.comet;
+  const wantsVolley=volleyHeld&&!h.cool.comet&&(canPayForComet||h.charging);
+  if(volleyHeld&&!h.cool.comet&&!canPayForComet)h.lowEnergyTime=.65;
   const pose=h.lanceCharge>0?'lance':wantsVolley||h.charging?'comet':spray?'spray':h.castRemaining?h.castKind:null;
   this.face(dt,!!pose||lanceHeld);
   const onDisc=h.solarMode==='flight'||h.solarMode==='landing';
@@ -371,7 +376,7 @@ export class LuxPlayer extends RiftPlayer {
   if(h.poseWeight>.01)this.poseCast(h.poseKind,ray);
   const origin=h.character.hand('R'),dir=new T.Vector3().copy(aim).sub(origin).normalize();
   if(lanceReady&&h.shoot('lance',origin,dir)){
-   h.lanceCharge=0;h.lanceFired=true;h.cool.lance=spells.lance.gap;
+   h.lanceCharge=0;h.cool.lance=spells.lance.gap;
   }
   if(spray&&sprayClock<=0){
    const right=new T.Vector3().crossVectors(dir,up).normalize(),vertical=right.clone().cross(dir);
@@ -386,8 +391,14 @@ export class LuxPlayer extends RiftPlayer {
    }
    h.cool.spray=nextShot;
   }
-  if(wantsVolley){h.charging=true;h.lock(origin,ray,dt);}
-  if(h.charging&&!this.keys.has('KeyE')){
+  if(wantsVolley){
+   h.charging=true;
+   const hadLock=h.locks.some(targetable);
+   h.lock(origin,ray,volleyTime);
+   h.volleyHold=hadLock&&h.locks.length?h.volleyHold+volleyTime:0;
+  }
+  const volleyReady=h.locks.length>=maxLocks||h.volleyHold>=volleyHoldWindow-1e-8;
+  if(h.charging&&(!volleyHeld||volleyReady)){
    const locked=h.locks.filter(targetable);
    const size=Math.min(locked.length,Math.floor((h.energy+1e-8)/SOLAR_CONFIG.attackCosts.comet));
    if(size<locked.length)h.lowEnergyTime=.65;
@@ -395,7 +406,7 @@ export class LuxPlayer extends RiftPlayer {
     const fan=dir.clone().applyAxisAngle(up,(i-(size-1)/2)*.28);
     h.shoot('comet',origin,fan.addScaledVector(up,.4).normalize(),u);
    }
-   if(size){h.effects.burst('comet',origin,dir,false);h.cool.comet=4;}
+   if(size){h.effects.burst('comet',origin,dir,false);h.cool.comet=spells.comet.gap;}
    h.clearLocks();
   }
   const lanceProgress=h.lanceCharge/spells.lance.charge;
@@ -406,6 +417,7 @@ export class LuxPlayer extends RiftPlayer {
   const progress=h.pendingTarget?' · Acquiring '+Math.floor(100*h.pendingTime/lockTime)+'%':'';
   const spellStatus=lanceProgress?'Sunlance · Charging '+Math.floor(lanceProgress*100)+'%':
    h.charging?'Targets locked '+h.locks.length+' / '+maxLocks+progress:
+   lanceHeld&&h.cool.lance?'Sunlance · '+h.cool.lance.toFixed(1)+'s':
    h.solarMode==='landing'?'Solar Disc · Landing':h.solarMode==='flight'?'Solar Disc · Flying':
    h.cool.comet?'Light volley '+h.cool.comet.toFixed(1)+'s':'Light volley ready';
   this.output.textContent=this.roofMarker?spellStatus+' · '+this.blinkStatus('Solar Blink'):spellStatus;
