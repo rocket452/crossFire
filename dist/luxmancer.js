@@ -1,12 +1,12 @@
 import * as T from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
-import {LuxEffects} from './luxmancer-effects.js?v=407';
+import {LuxEffects} from './luxmancer-effects.js?v=409';
 import {SOLAR_CONFIG,LuxSolarEffects} from './lux-solar.js?v=408';
 import {RiftPlayer} from './rift-player.js?v=408';
 
 const spells={
- lance:{speed:205,life:1.8,damage:190,gap:.85,length:3,width:.12,color:0xffdc53},
- spray:{speed:115,life:.85,damage:19,gap:.085,length:.95,width:.09,color:0xffae31},
+ lance:{speed:205,life:1.8,damage:190,gap:.85,charge:1.5,length:3,width:.12,color:0xffdc53},
+ spray:{speed:115,life:.85,damage:19,gap:.085,spread:.10,length:.95,width:.09,color:0xffae31},
  comet:{speed:66,life:3,damage:115,length:1.65,width:.24,color:0xffef90}
 };
 const lockTime=.35;
@@ -44,7 +44,7 @@ export class Luxmancer {
   this.solarMode=null;this.windup=0;this.lowEnergyTime=0;this.solarEffects.reset();
   for(const shot of this.shots)this.recycle(shot);
   this.shots.length=0;
-  this.effects.reset();this.clearLocks();
+  this.effects.reset();this.clearLocks();this.clearLance();
   this.cool={lance:0,spray:0,comet:0};this.castRemaining=0;this.castKind=null;this.poseKind=null;this.poseWeight=0;this.character.reset();
  }
  setEnabled(value){this.enabled=value;this.root.visible=value;if(!value){this.player?.exit();this.reset(false);}}
@@ -81,6 +81,20 @@ export class Luxmancer {
   this.castKind=kind;this.castRemaining=kind==='comet'?.36:.23;
   if(kind!=='comet')this.effects.burst(kind,origin,direction,false);
   return true;
+ }
+ clearLance(){
+  this.lanceCharge=0;this.lanceFired=false;
+  this.effects.lanceGather.visible=false;
+ }
+ chargeLance(held,dt){
+  if(!held){this.clearLance();return false;}
+  if(this.lanceFired||this.cool.lance>0)return false;
+  if(this.energy+1e-8<SOLAR_CONFIG.attackCosts.lance){
+   this.lanceCharge=0;this.lowEnergyTime=.65;
+   return false;
+  }
+  this.lanceCharge=Math.min(spells.lance.charge,this.lanceCharge+dt);
+  return this.lanceCharge>=spells.lance.charge-1e-8;
  }
  clearLocks(){
   this.locks=[];this.charging=false;
@@ -159,8 +173,8 @@ export class Luxmancer {
 }
 export class LuxPlayer extends RiftPlayer {
  constructor(hero,options){
-  super(hero,options,{hint:'WASD move · Space jump · LMB Sunlance · RMB Sunburst · E lock volley · Q Solar Disc · Space / Shift altitude · Hold R recharge',
-   actions:[['Jump / Up','Space'],['Sunlance','Fire'],['Sunburst','Shield'],['Lock volley','KeyE'],['Disc','KeyQ'],['Down','ShiftLeft'],['Recharge','KeyR']],
+  super(hero,options,{hint:'WASD move · Space jump · Hold LMB Sunlance · RMB Sunburst · E lock volley · Q Solar Disc · Space / Shift altitude · Hold R recharge',
+   actions:[['Jump / Up','Space'],['Hold Sunlance','Fire'],['Sunburst','Shield'],['Lock volley','KeyE'],['Disc','KeyQ'],['Down','ShiftLeft'],['Recharge','KeyR']],
    codes:['KeyW','KeyA','KeyS','KeyD','Space','KeyE','KeyF','KeyG','KeyQ','KeyR','ShiftLeft','ShiftRight']});
   this.hud.classList.add('lux-player');
   const meter=document.createElement('div');
@@ -184,7 +198,7 @@ export class LuxPlayer extends RiftPlayer {
   this.hero.energy=energy;
  }
  clear(){
-  super.clear();this.hero.clearLocks();
+  super.clear();this.hero.clearLocks();this.hero.clearLance();
   if(this.hero.solarMode==='communion'){
    this.hero.solarMode=null;this.hero.solarEffects.pillar.visible=false;
   }
@@ -235,7 +249,7 @@ export class LuxPlayer extends RiftPlayer {
   h.lowEnergyTime=Math.max(0,h.lowEnergyTime-dt);
   if(h.solarMode==='communion'&&!held.has('KeyR'))h.solarMode=null;
   if(!h.solarMode&&this.grounded&&held.has('KeyR')){
-   h.solarMode='communion';h.windup=c.windup;h.clearLocks();
+   h.solarMode='communion';h.windup=c.windup;h.clearLocks();h.clearLance();
    h.castRemaining=0;h.poseWeight=0;h.effects.cast(null);
   }
   if(h.solarMode==='communion'){
@@ -270,7 +284,9 @@ export class LuxPlayer extends RiftPlayer {
   const recoil=h.castKind===kind?T.MathUtils.clamp(h.castRemaining/.23,0,1):0;
   const right=c.world('B_R_UpperArm');
   if(kind==='lance'){
-   right.addScaledVector(aim,.70-.27*recoil).addScaledVector(up,.13*recoil-.035);
+   const gather=h.lanceCharge/spells.lance.charge;
+   right.addScaledVector(aim,.70-.27*recoil-.24*Math.sin(gather*Math.PI))
+    .addScaledVector(up,.13*recoil-.035);
    const support=c.world('B_L_UpperArm').lerp(right,.68).addScaledVector(up,-.08);
    c.arm('L',c.hand('L').lerp(support,weight));
   }else if(kind==='spray'){
@@ -312,9 +328,11 @@ export class LuxPlayer extends RiftPlayer {
    return;
   }
   const down=k=>this.keys.has(k)||this.taps.has(k);
-  const lance=down('Fire')||down('KeyF'),spray=down('Shield')||down('KeyG');
+  const lanceHeld=this.keys.has('Fire')||this.keys.has('KeyF');
+  const lanceReady=h.chargeLance(lanceHeld,dt);
+  const spray=down('Shield')||down('KeyG');
   const wantsVolley=this.keys.has('KeyE')&&!h.cool.comet;
-  const pose=wantsVolley||h.charging?'comet':lance?'lance':spray?'spray':h.castRemaining?h.castKind:null;
+  const pose=h.lanceCharge>0?'lance':wantsVolley||h.charging?'comet':spray?'spray':h.castRemaining?h.castKind:null;
   this.face(dt,!!pose);
   const onDisc=h.solarMode==='flight'||h.solarMode==='landing';
   const clip=onDisc?'Idle':this.grounded?(this.walking?'Run':'Idle'):(this.vertical>0?'Jump':'Fall');
@@ -325,15 +343,15 @@ export class LuxPlayer extends RiftPlayer {
   h.poseWeight=T.MathUtils.damp(h.poseWeight,pose?1:0,pose?40:18,dt);
   if(h.poseWeight>.01)this.poseCast(h.poseKind,ray);
   const origin=h.character.hand('R'),dir=new T.Vector3().copy(aim).sub(origin).normalize();
-  for(const kind of ['lance','spray']){
-   if(!(kind==='lance'?lance:spray)||h.cool[kind]>0)continue;
-   const velocity=dir.clone();
-   if(kind==='spray'){
-    const right=new T.Vector3().crossVectors(dir,up).normalize(),vertical=right.clone().cross(dir);
-    const angle=Math.random()*Math.PI*2,r=.21*Math.sqrt(Math.random());
-    velocity.addScaledVector(right,r*Math.cos(angle)).addScaledVector(vertical,r*Math.sin(angle)).normalize();
-   }
-   if(h.shoot(kind,origin,velocity))h.cool[kind]=spells[kind].gap;
+  if(lanceReady&&h.shoot('lance',origin,dir)){
+   h.lanceCharge=0;h.lanceFired=true;h.cool.lance=spells.lance.gap;
+  }
+  if(spray&&h.cool.spray<=0){
+   const right=new T.Vector3().crossVectors(dir,up).normalize(),vertical=right.clone().cross(dir);
+   const angle=Math.random()*Math.PI*2,r=spells.spray.spread*Math.sqrt(Math.random());
+   const velocity=dir.clone().addScaledVector(right,r*Math.cos(angle))
+    .addScaledVector(vertical,r*Math.sin(angle)).normalize();
+   if(h.shoot('spray',origin,velocity))h.cool.spray=spells.spray.gap;
   }
   if(wantsVolley){h.charging=true;h.lock(origin,ray,dt);}
   if(h.charging&&!this.keys.has('KeyE')){
@@ -347,12 +365,14 @@ export class LuxPlayer extends RiftPlayer {
    if(size){h.effects.burst('comet',origin,dir,false);h.cool.comet=4;}
    h.clearLocks();
   }
+  const lanceProgress=h.lanceCharge/spells.lance.charge;
   h.effects.cast(pose,h.character.hand(pose==='comet'&&wantsVolley?'L':'R'),dir,
-   pose==='comet'?(h.locks.length+h.pendingTime/lockTime)/maxLocks:Math.min(1,h.castRemaining/.23));
+   pose==='comet'?(h.locks.length+h.pendingTime/lockTime)/maxLocks:Math.min(1,h.castRemaining/.23),lanceProgress);
   h.drawLocks(this.camera);
   this.updateEnergyHud();
   const progress=h.pendingTarget?' · Acquiring '+Math.floor(100*h.pendingTime/lockTime)+'%':'';
-  this.output.textContent=h.charging?'Targets locked '+h.locks.length+' / '+maxLocks+progress:
+  this.output.textContent=lanceProgress?'Sunlance · Charging '+Math.floor(lanceProgress*100)+'%':
+   h.charging?'Targets locked '+h.locks.length+' / '+maxLocks+progress:
    h.solarMode==='landing'?'Solar Disc · Landing':h.solarMode==='flight'?'Solar Disc · Flying':
    h.cool.comet?'Light volley '+h.cool.comet.toFixed(1)+'s':'Light volley ready';
   this.taps.clear();

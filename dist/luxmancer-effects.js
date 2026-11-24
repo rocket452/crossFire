@@ -36,22 +36,42 @@ export class LuxEffects {
    ray.scale.set(.22,.055,.075);ray.rotation.z=angle;
    this.sigil.add(ray);
   }
-  scene.add(this.sigil);
+  this.lanceGather=new T.Group();
+  this.lanceCore=new T.Mesh(spark,light(0xfff3b8,.96));
+  this.lanceGather.add(this.lanceCore);
+  const moteMaterial=light(0xffcc65,.9);
+  this.lanceMotes=Array.from({length:9},()=>{
+   const mote=new T.Mesh(spark,moteMaterial);
+   this.lanceGather.add(mote);return mote;
+  });
+  this.sigil.add(this.lanceGather);scene.add(this.sigil);
   this.clock=0;this.reset();
  }
  reset(){
   for(const b of this.bursts)if(b.ring)this.recycleRing(b.ring);
-  this.bursts.length=0;this.streaks.count=0;this.sparks.count=0;this.sigil.visible=false;
+  this.bursts.length=0;this.streaks.count=0;this.sparks.count=0;this.sigil.visible=false;this.lanceGather.visible=false;
  }
  recycleRing(ring){ring.visible=false;this.freeRings.push(ring);}
- cast(kind,hand,direction,power){
+ cast(kind,hand,direction,power,charge=0){
   this.sigil.visible=!!kind;
+  this.lanceGather.visible=kind==='lance'&&charge>0;
   if(!kind)return;
   this.sigil.position.copy(hand).addScaledVector(direction,.22);
   this.sigil.quaternion.setFromUnitVectors(forward,direction);
   this.sigil.rotateZ(this.clock*(kind==='comet'?2.4:kind==='spray'?12:4));
   const base=kind==='comet'?.30:kind==='spray'?.16:.19;
-  this.sigil.scale.setScalar(base*(.8+.65*power+.08*Math.sin(this.clock*20)));
+  this.sigil.scale.setScalar(base*(.8+.65*power+.45*charge+.08*Math.sin(this.clock*20)));
+  if(!this.lanceGather.visible)return;
+  this.lanceCore.scale.setScalar(.22+.70*charge);
+  this.lanceCore.rotation.y=this.clock*7;
+  for(const [i,mote] of this.lanceMotes.entries()){
+   const phase=(i/this.lanceMotes.length+this.clock*(1+charge))%1;
+   const angle=i*2.4+this.clock*(2+charge*3);
+   const radius=(.40+phase*2.5)*(1-.45*charge);
+   mote.position.set(Math.cos(angle)*radius,Math.sin(angle)*radius,(phase-.5)*1.4);
+   mote.rotation.z=angle;
+   mote.scale.set(.19,.08,.14).multiplyScalar(Math.sin(Math.PI*phase));
+  }
  }
  burst(kind,point,normal,impact){
   const style=styles[kind];
