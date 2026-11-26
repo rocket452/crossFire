@@ -6,6 +6,34 @@ import {trackedBeamWarningPlan} from './beam-aim.js?v=beam-tracking-61';
 import {BeamCycle} from './beam-cycle.js?v=384';
 import {WalkerGait,solveLegKnee,angleDelta,WALKER_TURN_SPEED} from './walker-gait.js?v=384';
 
+const SNIPER_BARREL_Y=1.4;
+const SNIPER_BARREL_BASE=2.4;
+const SNIPER_MUZZLE_Z=8.85;
+
+function addSniperBarrel(receiver,cyberpunk){
+ const steel=new THREE.MeshStandardMaterial({color:cyberpunk?0x566381:0x5b6269,metalness:.65,roughness:.42});
+ const jacket=new THREE.MeshStandardMaterial({color:cyberpunk?0x292b49:0x262b30,metalness:.5,roughness:.52});
+ const bore=new THREE.MeshStandardMaterial({color:0x0d1018,roughness:1,side:THREE.BackSide});
+ const attach=(name,geometry,material,z)=>{
+  const part=new THREE.Mesh(geometry,material);
+  part.name=name;
+  part.position.set(0,SNIPER_BARREL_Y,z);
+  part.castShadow=part.receiveShadow=true;
+  receiver.add(part);
+ };
+ const tube=(name,frontRadius,backRadius,back,front,material,open=false)=>{
+  const geometry=new THREE.CylinderGeometry(frontRadius,backRadius,front-back,8,1,open).rotateX(Math.PI/2);
+  attach(name,geometry,material,(back+front)/2);
+ };
+ tube('Sniper barrel shroud',.47,.87,SNIPER_BARREL_BASE,4.28,jacket);
+ tube('Sniper barrel',.32,.46,4.12,8.15,steel);
+ tube('Sniper barrel collar',.52,.52,4.35,4.68,jacket);
+ tube('Sniper muzzle housing',.61,.51,7.95,SNIPER_MUZZLE_Z,jacket,true);
+ tube('Sniper bore',.25,.25,8.02,SNIPER_MUZZLE_Z,bore,true);
+ attach('Sniper muzzle face',new THREE.RingGeometry(.25,.61,8),steel,SNIPER_MUZZLE_Z);
+ attach('Recessed bore cap',new THREE.CircleGeometry(.25,8),jacket,8.02);
+}
+
 // The cannon mount sits on the right shoulder. Leave the torso to aim across
 // the Walker's centerline instead of swinging the gun through the chest.
 export function constrainWalkerCannon(localDirection){
@@ -50,6 +78,13 @@ export class SiegeWalker {
    this.restPositions[p.name]=node.position.clone();this.nodes[p.name]=node;this.meshes[p.name]=mesh;
    const b=geometry.boundingBox;this.boxes[p.name]={center:b.getCenter(new THREE.Vector3()),size:b.getSize(new THREE.Vector3())};
   }
+  if(this.meshes.plasma_cannon){
+   addSniperBarrel(this.meshes.plasma_cannon,!!spec.appearance);
+   this.sniperBarrelBox={
+    center:new THREE.Vector3(0,SNIPER_BARREL_Y,(SNIPER_BARREL_BASE+SNIPER_MUZZLE_Z)/2),
+    size:new THREE.Vector3(1.74,1.74,SNIPER_MUZZLE_Z-SNIPER_BARREL_BASE)
+   };
+  }
   this.detachedParts=new Set();
   this.decks=['chest','head','foot_l','foot_r'].filter(name=>this.meshes[name]).map(name=>{
    const box=this.boxes[name],center=box.center.clone();
@@ -93,7 +128,7 @@ export class SiegeWalker {
   // module if its impact is actually beside that module; global/core bursts have no point.
   if(!part&&point){
    this.root.updateMatrixWorld(true);
-   for(const m of this.weapons.modules){if(m.destroyed)continue;const b=this.boxes[m.part],p=this.meshes[m.part].worldToLocal(new THREE.Vector3(point.x,point.y,point.z)).sub(b.center);if(['x','y','z'].every(a=>Math.abs(p[a])<=b.size[a]/2+.4)){part=m.part;break;}}
+   for(const m of this.weapons.modules){if(m.destroyed)continue;const p=this.meshes[m.part].worldToLocal(new THREE.Vector3(point.x,point.y,point.z));if(this.hitBoxes(m.part).some(b=>['x','y','z'].every(a=>Math.abs(p[a]-b.center[a])<=b.size[a]/2+.4))){part=m.part;break;}}
   }
   const damage=this.weapons.hurt(part,power);if(damage>0)this.lastWeaponHitPart=part;return damage;
  }
@@ -212,7 +247,7 @@ export class SiegeWalker {
   const node=this.nodes.plasma_cannon;
   if(target)this.plasmaAim={...target};
   node.parent.updateWorldMatrix(true,false);
-  const muzzleOffset=new THREE.Vector3(0,1.4,3.35);
+  const muzzleOffset=new THREE.Vector3(0,SNIPER_BARREL_Y,SNIPER_MUZZLE_Z+.03);
   if(!target)return {position:node.localToWorld(muzzleOffset)};
   const pivot=node.getWorldPosition(new THREE.Vector3());
   const to=new THREE.Vector3().copy(target).sub(pivot);
@@ -292,10 +327,20 @@ export class SiegeWalker {
   this.onDeath(this.root.position.clone().add(new THREE.Vector3(0,11,0)),{large:true,secondary:true});
   for(const p of this.spec.parts)this.detachPart(p.name);
  }
+ hitBoxes(name){
+  return name==='plasma_cannon'?[this.boxes[name],this.sniperBarrelBox]:[this.boxes[name]];
+ }
  detachPart(name){
   if(this.detachedParts.has(name))return null;
   const signal=this.signalMeshes.get(name);if(signal)signal.visible=false;
-  this.root.updateMatrixWorld(true);const mesh=this.meshes[name],box=this.boxes[name],center=mesh.localToWorld(box.center.clone()),rotation=mesh.getWorldQuaternion(new THREE.Quaternion());
+  this.root.updateMatrixWorld(true);
+  const mesh=this.meshes[name],bounds=mesh.geometry.boundingBox.clone();
+  if(name==='plasma_cannon'){
+   const {center,size}=this.sniperBarrelBox;
+   bounds.union(new THREE.Box3().setFromCenterAndSize(center,size));
+  }
+  const box={center:bounds.getCenter(new THREE.Vector3()),size:bounds.getSize(new THREE.Vector3())};
+  const center=mesh.localToWorld(box.center.clone()),rotation=mesh.getWorldQuaternion(new THREE.Quaternion());
   const group=new THREE.Group();group.position.copy(center);group.quaternion.copy(rotation);this.scene.add(group);
   mesh.removeFromParent();mesh.position.copy(box.center).negate();group.add(mesh);this.detachedParts.add(name);
   const body=this.onDebris({position:center,quaternion:rotation,size:box.size.toArray().map(v=>Math.max(.18,v*.93)),mass:Math.max(40,box.size.x*box.size.y*box.size.z*110)});
@@ -308,10 +353,12 @@ export class SiegeWalker {
   this.root.updateMatrixWorld(true);this.syncDecks();const result=[];
   for(const [name,mesh]of Object.entries(this.meshes)){
    if(name==='reactor'||name==='visor'||!this.isPartAvailable(name))continue;
-   const b=this.boxes[name],local=b.center.clone();
    // The visor is visual only; the surrounding head remains ordinary armor.
-   const c=mesh.localToWorld(local),q=mesh.getWorldQuaternion(new THREE.Quaternion());
-   result.push({part:name,center:{x:c.x,y:c.y,z:c.z},half:{x:b.size.x/2,y:b.size.y/2,z:b.size.z/2},rotation:{x:q.x,y:q.y,z:q.z,w:q.w}});
+   const q=mesh.getWorldQuaternion(new THREE.Quaternion());
+   for(const [index,b] of this.hitBoxes(name).entries()){
+    const c=mesh.localToWorld(b.center.clone());
+    result.push({part:name,colliderId:index?name+'-barrel':name,center:{x:c.x,y:c.y,z:c.z},half:{x:b.size.x/2,y:b.size.y/2,z:b.size.z/2},rotation:{x:q.x,y:q.y,z:q.z,w:q.w}});
+   }
   }return result;
  }
  plasmaForwardError(){const node=this.nodes.plasma_cannon;if(!node)return null;const a=new THREE.Vector3(0,0,1).transformDirection(node.matrixWorld),b=new THREE.Vector3(0,0,1).transformDirection(node.parent.matrixWorld);a.y=b.y=0;a.normalize();b.normalize();return THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp(a.dot(b),-1,1)));}

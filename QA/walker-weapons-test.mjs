@@ -30,7 +30,16 @@ for(const dt of[1/30,1/60,1/120]){
  for(const m of WALKER_WEAPONS){
   boss.shapes=robot.shapes();const shape=boss.shapes.find(s=>s.part===m.part);assert(shape,'each of the three heavy weapons has real hit geometry');
   const q=new THREE.Quaternion().copy(shape.rotation),c=new THREE.Vector3().copy(shape.center),axis=new THREE.Vector3(0,0,1).applyQuaternion(q),from=c.clone().addScaledVector(axis,20),hit=traceImpact(from,c,{targets:[{...boss,shapes:[shape]}],ground:false,radius:.1});assert.equal(hit.part,m.part);
-  damage.blast(hit.point,{direct:boss,directPart:hit.part,power:m.health*.25,radius:.2});assert.equal(robot.weapons.forPart(m.part).health,m.health*.75);
+  let impact=hit;
+  if(m.id==='plasma'){
+   const muzzle=robot.aimPlasma().position;
+   const muzzleFace=robot.meshes[m.part].getObjectByName('Sniper muzzle face');
+   assert(Math.abs(muzzle.distanceTo(muzzleFace.getWorldPosition(new THREE.Vector3()))-.03)<1e-6);
+   impact=traceImpact(muzzle.clone().addScaledVector(axis,2),muzzle.clone().addScaledVector(axis,-.4),{targets:[boss],ground:false,radius:0});
+   assert.equal(impact.part,m.part);
+   assert(Math.abs(muzzle.distanceTo(new THREE.Vector3().copy(impact.point))-.03)<1e-6);
+  }
+  damage.blast(impact.point,{direct:boss,directPart:impact.part,power:m.health*.25,radius:.2});assert.equal(robot.weapons.forPart(m.part).health,m.health*.75);
   if(m.id==='beam'){arsenal.phase='beam';robot.weapon.phase='firing';}
   if(m.id==='missiles'){arsenal.phase='salvo';pod.pending=5;pod.missiles=[{alive:true}];}
   if(m.id==='plasma'){arsenal.phase='plasma-clear';artillery.shells=[{state:'warning'},{state:'flying'}];artillery.muzzleGlow.visible=true;}
@@ -44,7 +53,7 @@ for(const dt of[1/30,1/60,1/120]){
  for(let i=0;i<Math.ceil(6/dt);i++){arsenal.beforeBeam(robot,pod,artillery);robot.update(dt,i*dt,[]);arsenal.update(dt,robot,pod,artillery);physics.step(dt);robot.syncWrecks();fx.update(dt);}
  assert.equal(arsenal.phase,'off');assert(!boss.alive);assert.equal(physics.wrecks.length,18);assert(fx.smoke.count>0);assert([...robot.signalMeshes.values()].every(signal=>!signal.visible));for(const m of WALKER_WEAPONS)assert.equal(robot.meshes[m.part].material.emissiveIntensity,0);
 damage.hurt(boss,14400);for(let i=0;i<Math.ceil(2/dt);i++)robot.update(dt,i*dt,[]);assert(robot.broken);assert.equal(robot.wrecks.length,18);assert.equal(physics.wrecks.length,18,'detached weapons never duplicate on boss death');robot.breakApart();assert.equal(physics.wrecks.length,18);
- fx.reset();robot.reset();damage.reset();assert.equal(physics.wrecks.length,0);for(const m of WALKER_WEAPONS){assert(robot.isWeaponWorking(m.id));assert.equal(robot.meshes[m.part].parent,robot.nodes[m.part]);assert.equal(robot.weapons.forPart(m.part).health,m.health);}assert.equal(robot.shapes().length,16);assert([...robot.signalMeshes.values()].every(signal=>signal.visible));
+ fx.reset();robot.reset();damage.reset();assert.equal(physics.wrecks.length,0);for(const m of WALKER_WEAPONS){assert(robot.isWeaponWorking(m.id));assert.equal(robot.meshes[m.part].parent,robot.nodes[m.part]);assert.equal(robot.weapons.forPart(m.part).health,m.health);}assert.equal(robot.shapes().length,17);assert([...robot.signalMeshes.values()].every(signal=>signal.visible));
  console.log('PASS',dt,'real-model part collision, direct/blast durability, armored hull, automatic defeat on final weapon, airborne ordnance, 18 total death parts and full rebuild');
 }
 // Every remaining-weapon combination must keep cycling, including a completely disarmed boss.
