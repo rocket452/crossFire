@@ -17,3 +17,12 @@
 .liberation-panel footer{flex-wrap:wrap}
 .viewer.is-liberation .boss-health-hud{top:66px}
 @media(max-width:650px){.liberation-hud{top:4px;font-size:.75rem;max-width:65%;white-space:normal}}
+.liberation-access{position:absolute;z-index:7;top:66px;left:50%;transform:translateX(-50%);display:flex;gap:4px}
+.liberation-access[hidden]{display:none}
+.liberation-access button{background:#142637ed;color:#9affe0;font:600 11px system-ui;border:1px solid #527e86;border-radius:4px;padding:5px 8px;white-space:nowrap}
+.liberation-access button:disabled{opacity:.85}
+.viewer.is-liberation .boss-health-hud{top:100px}
+.liberation-panel .evac-briefing-inner{max-height:85dvh;overflow:auto}
+.liberation-cards [data-rarity=legendary] small{color:#ffcf75}
+.liberation-cards button:disabled{opacity:.6}
+.liberation-inventory{font-size:.8rem;line-height:1.55;margin-block:10px;max-height:20vh;overflow:auto}

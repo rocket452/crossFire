@@ -2,7 +2,7 @@ import {VOLT_CRITICAL_MASS_ENABLED,VOLT_OVERLOAD_ENABLED,VOLT_RESCUE_DASH_ENABLE
 import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=395';
 import {stepAttackMovement} from './runner-attack-stop.js?v=beam-slide-370';
 import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
-import {RunnerStorm,VOLT_STORM} from './runner-storm.js?v=424';
+import {RunnerStorm,VOLT_STORM} from './runner-storm.js?v=435';
 import {RunnerStormFX} from './runner-storm-fx.js?v=424';
 import {CriticalMass,CRITICAL_MASS} from './critical-mass.js?v=mass-charge-369';
 import {CriticalMassFX} from './critical-mass-fx.js?v=mass-charge-369';
@@ -11,7 +11,7 @@ import {RunnerWelder,WELDING_BEAM,weldAimPoint} from './runner-welder.js?v=volt-
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import * as THREE from './vendor/three.module.js';
 import {VOLT_STUN} from './hero-powers.js?v=428';
-import {RunnerEnergy,RUNNER_ENERGY} from './runner-energy.js?v=346';
+import {RunnerEnergy,RUNNER_ENERGY} from './runner-energy.js?v=435';
 import {RunnerHeading} from './runner-heading.js?v=runner-camera-27';
 import {RunnerMotion,terrainHeight} from './runner-motion.js?v=424';
 import {RunnerAnimator} from './runner-animation.js?v=runner-ai-7';
@@ -73,7 +73,7 @@ export class Speedster {
   const endLook=e=>{if(e.type==='pointercancel'){if(this.active)this.clearInput();return;}if(e.pointerType!=='mouse'&&this.pointer?.id===e.pointerId)this.pointer=null;};
   for(const name of ['pointerup','pointercancel'])window.addEventListener(name,endLook);
   this.canvas.addEventListener('lostpointercapture',e=>{if(this.pointer?.id===e.pointerId)this.pointer=null;});
-  this.mouseLocked=false;this.lockPending=false;document.addEventListener('pointerlockchange',()=>{const locked=this.active&&document.pointerLockElement===this.canvas;this.lockPending=false;if(this.mouseLocked&&!locked)this.clearInput();this.mouseLocked=locked;if(locked&&(!this.active||!inputMode.desktop||this.settingsOpen))document.exitPointerLock();});
+  this.mouseLocked=false;this.lockPending=false;document.addEventListener('pointerlockchange',()=>{const locked=this.active&&document.pointerLockElement===this.canvas;this.lockPending=false;if(this.mouseLocked&&!locked&&!this.liberation?.run.upgradePending)this.clearInput();this.mouseLocked=locked;if(locked&&(!this.active||!inputMode.desktop||this.settingsOpen))document.exitPointerLock();});
   document.addEventListener('pointerlockerror',()=>{this.lockPending=false;});
   inputMode.subscribe(mode=>{this.touchAim=mode==='touch';if(this.active)this.clearInput();if(mode==='touch'&&document.pointerLockElement===this.canvas)document.exitPointerLock();});
   this.moveStick=new TouchStick(document.getElementById('runner-stick'),document.getElementById('runner-thumb'),{enabled:()=>this.active&&!this.settingsOpen&&!inputMode.desktop});this.stick=this.moveStick.value;
@@ -154,11 +154,12 @@ export class Speedster {
   const beamCoast=this.active&&primaryHeld&&!weldHeld;
   if(this.dash.active&&!this.active)this.yaw=Math.atan2(this.dash.active.direction.x,this.dash.active.direction.z);const oldMode=this.motion.mode,oldPosition={...this.motion.position},wasReady=this.active?this.energy.beamReady:this.energy.ready;this.motion.yaw=this.active?this.heading.movementYaw(this.yaw,input,this.motion.mode):this.yaw;const dashing=this.dash.update(dt,this.motion);if(dashing){if(!this.active){this.yaw=Math.atan2(this.dash.active?.direction.x??Math.sin(this.yaw),this.dash.active?.direction.z??Math.cos(this.yaw));this.ai.mode='rescue-dash';}}else stepAttackMovement(this.motion,{...input,player:this.active},dt,this.getSections(),this.attackMovementLocked,beamCoast);this.jumpPending=false;const traveled=Math.hypot(this.motion.position.x-oldPosition.x,this.motion.position.y-oldPosition.y,this.motion.position.z-oldPosition.z);this.energy.earn(traveled,dt,{surface:oldMode!=='air'&&this.motion.mode!=='air',moving:!this.attackMovementLocked&&Math.hypot(input.forward||0,input.strafe||0)>.08,dashing,dashMultiplier:this.active?this.dashChargeMultiplier():0});if(!wasReady&&(this.active?this.energy.beamReady:this.energy.ready)&&!(this.active&&(this.heldFire||this.mouseFire||k.has('f')||this.pulse>0))){this.energyReadySeconds=.65;if(this.active)this.feedback.ready(this.preferences.sound);}
   if(oldMode!=='wall'&&this.motion.mode==='wall')this.wallYaw=0;if(oldMode==='wall'&&this.motion.mode==='ground'){if(!this.active)this.yaw=this.motion.yaw;this.wallYaw=0;}
-  const weldRequested=this.active&&!dashing&&!dialog&&this.stunFlash<=0&&!this.critical.charging&&(k.has('r')||this.weldPointer!=null||this.weldButtonHeld);this.welder.step(dt,weldRequested,this.energy);if(this.welder.active){this.charge.cancel();this.playerBeam.cancel();this.pulse=0;if(time>=this.weldSoundAt){this.feedback.electricalCue(this.preferences.sound,850,200,.012);this.weldSoundAt=time+.1;}}
+  const weldRequested=this.active&&!dashing&&!dialog&&this.stunFlash<=0&&!this.critical.charging&&(k.has('r')||this.weldPointer!=null||this.weldButtonHeld);const wasWelding=this.welder.active;this.welder.step(dt,weldRequested,this.energy);
+  if(this.welder.active&&!wasWelding)this.liberation?.cast('welding',120);if(this.welder.active){this.charge.cancel();this.playerBeam.cancel();this.pulse=0;if(time>=this.weldSoundAt){this.feedback.electricalCue(this.preferences.sound,850,200,.012);this.weldSoundAt=time+.1;}}
   if(VOLT_OVERLOAD_ENABLED&&!this.welder.active&&!dashing&&!dialog&&(this.active?this.stunPending:this.robotPreparing()))this.tryStun();this.stunPending=false;
   // Primary clicks fire immediately and suppress voluntary movement while held.
   const requested=!this.welder.active&&this.stunFlash<=0&&(this.active?!dialog&&(this.heldFire||this.mouseFire||k.has('f')||this.pulse>0):!!cpu?.fire);
-  const manualDt=this.heldFire||this.mouseFire||k.has('f')?dt:Math.min(dt,this.pulse);this.pulse=Math.max(0,this.pulse-dt);const charge=this.active?this.playerBeam.step(manualDt,requested&&!dashing,this.energy):this.charge.step(dt,requested&&!dashing,this.energy);this.charging=false;this.firing=charge.phase==='firing';
+  const manualDt=this.heldFire||this.mouseFire||k.has('f')?dt:Math.min(dt,this.pulse);this.pulse=Math.max(0,this.pulse-dt);const charge=this.active?this.playerBeam.step(manualDt,requested&&!dashing,this.energy):this.charge.step(dt,requested&&!dashing,this.energy);this.charging=false;if(!this.firing&&charge.phase==='firing')this.liberation?.cast('electric',75);this.firing=charge.phase==='firing';
   this.pose(dt);this.root.visible=this.enabled!==false&&!this.dash.active;if(this.active)this.yaw=this.heading.follow(this.yaw,dt,{input,mode:this.motion.mode,velocity:this.motion.velocity,heading:Math.atan2(this.bodyForward.x,this.bodyForward.z),aiming:requested||this.charging||this.firing||this.mouseLocked,blocked:dialog||dashing});if(dashing){this.nodes.chest.rotation.x+=.2;this.nodes.upperarm_l.rotation.x=.5;this.nodes.upperarm_r.rotation.x=.5;}let beam=null;
   if(this.firing){
    let target;

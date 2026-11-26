@@ -102,9 +102,9 @@ export class LaserShuriken {
   }
   if(this.state==='ready')return;
   if(this.state==='charging'){
-   p.copy(this.holdPosition(SPAWN_HAND_OFFSET));this.charge=Math.min(c.chargeSeconds,this.charge+dt);
+   p.copy(this.holdPosition(SPAWN_HAND_OFFSET));this.charge=Math.min(c.chargeSeconds,this.charge+dt*(1+(h.liberation?.v('Overclock Chip')||0)/100));
    if(released){
-    this.direction.copy(h.aim()).sub(p).normalize();this.state='flying';this.travel=0;
+    this.direction.copy(h.aim()).sub(p).normalize();this.state='flying';this.travel=0;h.liberation?.cast('laser-grind',this.c.grindDamage||65,p);
     this.grace=0;this.seen.clear();this.host=this.recent=null;h.throwPose=.18;
    }
   }

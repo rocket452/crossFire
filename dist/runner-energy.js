@@ -8,7 +8,9 @@ export class RunnerEnergy {
   // Count real surface travel; reject teleports, passive falls and wall pushing.
   if(!surface||dt<=0||!Number.isFinite(distance)||distance<=0)return 0;
   if(dashing?dashMultiplier<=0:!moving||distance>48*dt+.02)return 0;
-  let next=Math.min(RUNNER_ENERGY.capacity,this.amount+distance*RUNNER_ENERGY.perMetre*(dashing?dashMultiplier:1));if(RUNNER_ENERGY.capacity-next<1e-8)next=RUNNER_ENERGY.capacity;const gain=next-this.amount;this.amount=next;this.gained+=gain;return gain;
+  let next=Math.min(RUNNER_ENERGY.capacity,this.amount+distance*RUNNER_ENERGY.perMetre*(dashing?dashMultiplier:1));if(RUNNER_ENERGY.capacity-next<1e-8)next=RUNNER_ENERGY.capacity;const gain=next-this.amount;
+  this.liberation?.overflow(distance*RUNNER_ENERGY.perMetre*(dashing?dashMultiplier:1)-gain);
+  this.amount=next;this.gained+=gain;return gain;
  }
  spend(cost=RUNNER_ENERGY.attackCost){if(!Number.isFinite(cost)||cost<=0||this.amount<cost-1e-8)return false;this.amount=Math.max(0,this.amount-cost);this.spent+=cost;this.discharges++;return true;}
  drainBeam(cost){if(!Number.isFinite(cost)||cost<=0)return 0;const spent=Math.min(this.amount,cost);this.amount=Math.max(0,this.amount-spent);if(this.amount<1e-8)this.amount=0;this.spent+=spent;this.beamSpent+=spent;return spent;}

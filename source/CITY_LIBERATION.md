@@ -1,53 +1,37 @@
-# City Liberation
+# City Liberation (ROR)
 
-Select **City Liberation** from the map menu, choose Volt Rush or Kage, then start. Fight across the destructible cyberpunk city. Your hero starts with 120 HP. Volt carries 75 energy into the first engagement. The run ends when the hero falls or the Bastion is defeated.
+Select City Liberation from the scene dropdown and deploy Volt Rush, Kage, or Luxmancer. Defeat the Siege Walker in the first district and Bastion in the second. The squad director keeps spawning ordinary enemies from street entrances during both battles.
 
-## Encounters and rewards
+## Progression and economy
 
-The opening pair of Bruisers deploys after one second. Reinforcements enter on open streets 18–65 metres from the player, with preference for a visible approach about 30 metres away. The first stage cycles through two Bruisers, a Bruiser and a drone, then two Bruisers and a drone. The second stage fields larger mixed packs. The active-enemy cap rises from seven to twelve. Enemies continue arriving during a boss encounter at a slower cadence.
+Robots award both XP and credits. Bruisers grant 7 XP and 4 credits. Drones grant 10 XP and 6 credits on defeat, including disabling their flight. A district boss grants 60 credits. The first level costs 24 XP and each subsequent threshold increases by 12. Each level pauses the simulation for three distinct evolutions for the selected hero. Matching an owned synergy tag makes an eligible card 1.7 times as likely to be drawn. Sun consumers require Second Sun or Flashpoint. Late drafts offer the remaining eligible cards as the unique pool runs out.
 
-The Siege Walker enters at 1:55. Breaking all three heavy weapons advances the run, restores up to 35 HP, grants 35 credits and opens a draft with a guaranteed epic choice while one is available. The Bastion dropship arrives 2:15 into stage two. Both bosses use their existing telegraphs, hitboxes, armor and stun rules. Matching the final boss kill to its death sequence leaves five seconds before the result screen. Victory also awards 12 starting credits for the next run on this browser. The reward is consumed once.
+The supply depot stands at the central street intersection. Follow its mint beacon and the distance on the HUD. Within 10 m press **B** or click the depot button. **I** opens inventory anywhere. Combat, projectiles, cooldowns and district timers pause while a menu is open. Leaving the menu restores play. Standing at the depot during combat gives ordinary damage protection only.
 
-Bruisers give 7 XP and 4 credits. Drones give 10 XP and 6 credits when their hull or an engine fails. Shooting the falling aircraft gives no second reward. The first level takes 14 XP. Each subsequent level costs 6 more XP than the previous level. At each level combat pauses for a choice of three distinct upgrades. During a draft, 8 credits buy a reroll and 12 buy 30 HP. Credits, XP and equipped upgrades are specific to the run.
+Five distinct items are drawn per shop. Common, rare and legendary items cost 25, 45 and 70 credits. A purchased slot stays sold out until the next refresh. A refresh costs 10 credits initially and each paid refresh raises that price by 5. The next district gets a fresh shop and the starting refresh price. Defeating the Walker also opens a three-relic draft. All holdings carry forward. Starting a new mission clears them.
 
-## Upgrade pool
+## Builds and tuning
 
-Values below are per rank. Numerical upgrades add together up to the rank cap. The listed percentage bonuses on direct attacks add before the target processes armor, headshots or weak points. The first draft includes a choice that changes the hero's actions or adds an attack. Later drafts weight common, rare and epic choices 5:3:1. Drafts exclude other heroes’ upgrades and capped ranks.
+The complete card definitions, descriptions, prices, rarity and stacking formulas live in `dist/liberation-catalog.js`. The roster totals 12 Volt evolutions, 13 Kage evolutions, 14 Luxmancer evolutions, 25 items and 5 relics. Evolutions and relics are unique. For items, the card gives the total benefit at the next rank. Chance effects cap at certainty before applying their proc coefficient. All heroes start with 5% base critical chance. Critical hits deal double damage.
 
-| Upgrade | Rarity | Max rank | Effect per rank |
-| --- | --- | ---: | --- |
-| Power amplifier | Common | 3 | +15% direct damage |
-| Execution circuit | Rare | 3 | +40% damage against a target below half hull HP |
-| Precision lens | Rare | 3 | +25% on head, engine and vulnerable boss-part hits |
-| Breach rounds | Common | 3 | +30% damage within 12 m |
-| Slipstream | Rare | 3 | +30% damage while moving faster than 12 m/s |
-| Hot core | Rare | 2 | +35% damage for four seconds after taking damage |
-| Arc relay | Epic | 3 | An attack arcs to another visible robot within 20 m for 48 damage, once per 1.2 s |
-| Reactor cascade | Epic | 3 | Defeated robots deal 90 damage to nearby robots within 12 m |
-| Field extender | Rare | 3 | +5 m to Arc relay, Reactor cascade and Shockstep. Offered after owning one of these |
-| Shockstep | Rare | 3 | Dash activation deals 72 damage within 10 m |
-| Emergency cell | Common | 3 | +25 maximum HP and immediately heal 25 |
-| Impact weave | Common | 3 | Reduce incoming damage by 12% |
-| Field medic | Common | 3 | Recover 5 HP per ordinary enemy defeated |
-| Quiet current | Common | 3 | Recover 2 HP/s after five seconds without damage |
-| Phase buffer | Epic | 1 | Block a hit, then recharge for 18 s |
-| Dash recycler | Common | 3 | Dash cooldown recovers 30% faster |
-| Afterimage | Rare | 2 | Finishing a dash protects the hero for 0.8 s |
-| Bounty chip | Common | 3 | +3 credits per ordinary kill |
-| Combat telemetry | Common | 3 | +25% XP per ordinary kill |
-| Plasma cutter · Volt | Rare | 3 | +55% welding beam damage |
-| Kinetic dynamo · Volt | Rare | 1 | Earn charge during lightning dash at 130% of the normal travel rate |
-| Storm lens · Volt | Epic | 3 | +40% Sky Strike and Critical Mass damage |
-| Air step · Kage | Rare | 1 | Gain a second midair jump |
-| Crosscut reserve · Kage | Epic | 1 | A gold Crosscut backstab banks a dash |
-| Honed edge · Kage | Rare | 3 | +40% slash, dash strike and arrival-strike damage |
+- **Living Power Grid.** Beam a robot within 26 m of an orb. Power Grid supplies energy, Mitosis splits a full recharge, and Orbital Current damages enemies between linked orbs. A Sky Strike can discharge the whole network. Feedback Circuit restores energy on critical hits.
+- **Blade Factory.** Stop a Laser Star in a lane, then throw blades through it. Blade Foundry redirects copies. Grinding Singularity gathers small enemies. Dash through the star with Crosscut to send grinding fields in opposite directions. Projectile splitting, piercing and critical fragments extend the attack.
+- **Solar Apocalypse.** Cast Sunlance from a Consecration field. An impact seeds a miniature sun. Thread a later lance through the sun for extra size and damage. Judgment and Overflow Reactor convert overkill into separate blasts. Volatile Core adds a max-health explosion. Secondary Amplifier increases the item damage.
 
-For example, Shockstep can finish a damaged Bruiser and trigger Reactor cascade. Field extender widens both effects. Chain effects respect building cover, target ordinary enemies and credit each defeat once. The game renders expanding rings at the field radius and a tracer to the secondary arc target. Short-lived impact rings grow with the equipped build, with a fixed effect pool and throttled hit feedback.
+`liberation-build.js` owns purchases, draft eligibility, XP and inventory. `liberation-events.js` defines run-local event dispatch and attack classification. `liberation-combat.js` routes tagged activations, native and generated hits, crits, kills, status events and movement into item mechanics. `liberation-evolutions.js` binds those events to hero-specific mechanics. The native hero controllers report casts and projectile contacts. The damage router still applies the existing boss component and armor rules. Area effects select at most one contact per boss. Chain effects may separately hit exposed weapons. Execution Engine applies to ordinary enemies.
 
-## Implementation and verification
+## Initial balance and implementation limits
 
-The mode reuses the Mission 1 district, hero briefing and controls, mission enemy pools, UnitDamage, Siege Walker arsenal, and the Bastion transport and combat adapter. The stage director and combat integration live in `dist/city-liberation.js`. The upgrade catalog, conditions, ranks, rarity weights and currency rules live in `dist/liberation-build.js`. The HUD and draft live in `dist/liberation-ui.js`. Balancing constants use simulation seconds.
+The Walker enters at 7:05 of district combat time. Bastion arrives 8:10 into the second district. Boss fights, menu time and travel make actual run length variable. Enemy pressure follows district time and squad caps. Hero damage output never adjusts enemy health. A scripted run with one kill opportunity every eight seconds reached its first evolution at 33 seconds and level 6 by five minutes.
 
-Run `node QA/city-liberation-test.mjs` in the checkout with the private Bruiser runtime mesh. The test exercises real Bruiser and drone actors, Cannon physics, Walker weapon damage, upgrade conditions, draft eligibility, economy, both stage transitions and replay. A scripted five-minute pacing probe kills one ordinary enemy every eight seconds and defeats the Walker 50 seconds after it appears. It reached the first draft at 17 s and level 9 with nine upgrade picks by five minutes. This measures progression under a fixed kill rate. A human playthrough and on-device frame timing remain pending.
+Generated effects have a five-generation ancestry limit, a 160 generated-hit budget per simulation update, 64 homing projectiles, 24 persistent fields, and at most seven satellite orbs beside the original orb. A generated effect cannot re-enter its own ancestry. Repeated Luxmancer shots use the regular projectile controller. Echoed melee and sustained beams use a single spectral sweep. Echoed dashes leave the player in place. Stored kunai copies and fragments home toward visible targets. Miniature suns and satellite orbs use pooled lightweight visuals. Closed Circuit tests the enclosed horizontal polygon. The model does not simulate electrical conduction through terrain.
 
-The slice contains two heroes and two stages on one map. Runs restart from hero selection. Mid-run saving, additional districts and additional hero upgrade pools remain outside the slice. Prioritize desktop and touch playtests of first-upgrade timing, boss pressure, and the readability of stacked arc and blast effects before expanding the pool.
+## Verification
+
+- `node QA/liberation-synergy-test.mjs` exercises the three combined builds, resource feedback, relic triggers, recursion limits and boss damage routes for two loadouts per hero.
+- `node QA/city-liberation-test.mjs` uses the actual enemy pools, drone physics, district director and Walker components to cover spawns, pacing, menus, boss transitions and reset.
+- `node QA/luxmancer-test.mjs` covers native casts, Solar Blink, sustained inputs, repeated locks and Communion reserves.
+- `node QA/liberation-browser.cjs` selects each hero in Chromium, opens the run inventory and depot, buys, refreshes and chooses an evolution. Serve the game locally and set `GAME_URL` if the server is elsewhere than port 8234.
+- Wave Defense, kunai, Laser Star, Ball Lightning and boss suites remain independent regression checks.
+
+Instrumented encounters verify damage routing. Human 15–25 minute runs, late-run handheld frame times, and the frequency of affordable shop visits need playtesting.

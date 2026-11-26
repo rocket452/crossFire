@@ -1,18 +1,18 @@
 import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=395';
-import {LaserShuriken} from './laser-shuriken.js?v=424';
+import {LaserShuriken} from './laser-shuriken.js?v=435';
 import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
 import {KageSmoke,guardHeroInSmoke} from './kage-smoke.js?v=390';
 import {KageBombs} from './kage-bombs.js?v=smoke-projectile-219';
 import {KAGE_BOMB_ABILITIES_ENABLED} from './kage-ability-config.js?v=433';
-import {KageAttacks,kageHitPower} from './kage-attacks.js?v=427';
-import {ChargedShuriken} from './charged-shuriken.js?v=352';
+import {KageAttacks,kageHitPower} from './kage-attacks.js?v=435';
+import {ChargedShuriken} from './charged-shuriken.js?v=435';
 import {ShurikenWorld} from './shuriken-world.js?v=424';
 import {ShurikenEffects} from './shuriken-effects.js?v=434';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 import {HeroHurt} from './hero-hurt.js?v=hero-hurt-118';
 import * as THREE from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=kage-armor-323';
-import {NinjaMotion,NINJA} from './ninja-motion.js?v=424';
+import {NinjaMotion,NINJA} from './ninja-motion.js?v=435';
 import {terrainHeight} from './runner-motion.js?v=424';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
 import {inputMode} from './input-mode.js?v=device-controls-59';
@@ -111,7 +111,7 @@ export class NinjaHero {
   }
   window.addEventListener('keydown',e=>{if(!this.active||document.querySelector('dialog[open]')||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;const k=e.key.toLowerCase();if(k==='escape'){e.preventDefault();if(this.locked())document.exitPointerLock();else this.exit();return;}if(!this.canInput())return;if(k===this.shurikenConfig.input.teleportKey&&!e.repeat){e.preventDefault();this.teleportPending=true;}if(k===this.shurikenConfig.input.cancelKey&&!e.repeat){e.preventDefault();this.cancelStarPending=true;}if(e.code===this.shurikenConfig.input.debugKey&&!e.repeat){e.preventDefault();this.shurikenEffects.debug=!this.shurikenEffects.debug;}if(actionKeys.includes(k)){e.preventDefault();this.keys.add(k);if(k===' '&&!e.repeat)this.jumpPending=true;if(k==='shift'&&!e.repeat)this.dashPending=true;if(k==='f'&&!e.repeat)this.tapFire=true;if(k==='g'&&!e.repeat)this.tapLaser=true;if(k==='e'&&!e.repeat)this.tapShuriken=true;if(k==='r'&&!e.repeat)this.slashPending=true;if(KAGE_BOMB_ABILITIES_ENABLED&&!e.repeat){if(k==='c')this.bombPending=true;if(k===this.smoke.config.key)this.smokePending=true;}}});
   window.addEventListener('keyup',e=>this.keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{this.clearInput();if(this.active&&this.locked())document.exitPointerLock();});document.addEventListener('visibilitychange',()=>{if(document.hidden)this.clearInput();});
-  document.addEventListener('pointerlockchange',()=>{if(this.active){if(!this.locked())this.clearInput();this.updateHUD();}});inputMode.subscribe(()=>{if(this.active){this.clearInput();if(!inputMode.desktop&&this.locked())document.exitPointerLock();this.updateHUD();}});
+  document.addEventListener('pointerlockchange',()=>{if(this.active){if(!this.locked()&&!this.liberation?.run.upgradePending)this.clearInput();this.updateHUD();}});inputMode.subscribe(()=>{if(this.active){this.clearInput();if(!inputMode.desktop&&this.locked())document.exitPointerLock();this.updateHUD();}});
   this.canvas.addEventListener('contextmenu',e=>{if(this.active)e.preventDefault();});this.canvas.addEventListener('mousedown',e=>{if(!this.active||!inputMode.desktop||this.isPaused()||document.querySelector('dialog[open]'))return;if(!this.locked()){if(e.button===0)this.requestLock();return;}if(e.button===0){this.shurikenEffects.unlock();this.heldFire=true;this.tapFire=true;}if(e.button===2){e.preventDefault();this.shurikenEffects.unlock();this.heldLaser=true;this.tapLaser=true;}});window.addEventListener('mouseup',e=>{if(e.button===0)this.heldFire=false;if(e.button===2)this.heldLaser=false;});window.addEventListener('mousemove',e=>{if(this.canInput()&&inputMode.desktop)look(e.movementX,e.movementY);});
   this.canvas.addEventListener('pointerdown',e=>{if(!this.active||inputMode.desktop||this.isPaused())return;this.lookPointer={id:e.pointerId,x:e.clientX,y:e.clientY};this.canvas.setPointerCapture(e.pointerId);});this.canvas.addEventListener('pointermove',e=>{const p=this.lookPointer;if(!p||p.id!==e.pointerId||!this.canInput())return;look(e.clientX-p.x,e.clientY-p.y);p.x=e.clientX;p.y=e.clientY;});for(const event of['pointerup','pointercancel','lostpointercapture'])this.canvas.addEventListener(event,e=>{if(this.lookPointer?.id===e.pointerId)this.lookPointer=null;});
   for(const[id,key]of actionButtons){$(id).onpointerdown=e=>{e.preventDefault();if(this.canInput())this[key]=true;};$(id).onclick=e=>{if(e.detail===0&&this.canInput())this[key]=true;};}
@@ -125,7 +125,7 @@ export class NinjaHero {
  dashSections(sections){const dash=this.motion.dash;if(!dash)return sections;dash.phasedSections??=new Set();for(const u of this.getDashEnemies())for(const s of u.entity?.sections||[])dash.phasedSections.add(s);return sections.filter(s=>!dash.phasedSections.has(s));}
  traceDash(a,b,grounded=false){let nearest=null;const rays=(grounded?[.85,1.55,2.25]:[.42,1.3,2]).map(y=>[new THREE.Vector3(a.x,a.y+y,a.z),new THREE.Vector3(b.x,b.y+y,b.z)]);
   const sections=this.dashSections(this.getSections?.()||[]);for(const[from,to]of rays){let hit=this.traceWorld(from,to,{allied:true,radius:.32,moving:true,ignoreEnemies:true});if(hit?.unit?.kind==='robot'||hit?.section&&!sections.includes(hit.section))hit=traceImpact(from,to,{sections,ground:false,radius:.32});if(hit&&(!nearest||hit.t<nearest.t))nearest=hit;}
-  const contacts=[];for(const unit of this.getDashEnemies()){if(!unit.alive||unit.dashPhased||this.motion.dash?.hitUnits.has(unit))continue;let contact=null;for(const[from,to]of rays){const hit=traceImpact(from,to,{targets:[unit],ground:false,radius:.32,movingTargets:true});if(hit&&(!contact||hit.t<contact.t))contact=hit;}if(contact&&contact.t<=(nearest?.t??1))contacts.push(contact);}
+  const contacts=[];for(const unit of this.getDashEnemies()){if(!unit.alive||unit.dashPhased||this.motion.dash?.hitUnits.has(unit))continue;let contact=null;for(const[from,to]of rays){const hit=traceImpact(from,to,{targets:[unit],ground:false,radius:.32+(this.liberation?.spree||0)*.25,movingTargets:true});if(hit&&(!contact||hit.t<contact.t))contact=hit;}if(contact&&contact.t<=(nearest?.t??1))contacts.push(contact);}
   contacts.sort((a,b)=>a.t-b.t);return nearest?{...nearest,contacts}:contacts.length?{blocking:false,t:1,contacts}:null;
  }
  hit(hit,power,kind){power=kageHitPower(hit,power,kind);const result=this.onHit(hit,power,kind,this.active)||{damage:0,killed:false};this.damage+=result.damage||0;this.hitCount++;this.lastHit=hit.missile?'missile':hit.unit?.kind||hit.kind;if(result.killed){if(hit.missile)this.missileKills++;else this.kills++;}this.burst(hit.point||this.root.position,kind==='ninja-dash'?22:7);return result;}

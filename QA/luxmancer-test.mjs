@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {registerHooks} from 'node:module';
 import * as T from '../dist/vendor/three.module.js';
+import {LUX_SOLAR_DISC_ENABLED} from '../dist/hero-ability-config.js';
 import {Luxmancer,LuxPlayer} from '../dist/luxmancer.js';
 import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
 import {HeroRoster} from '../dist/hero-roster.js';
@@ -109,6 +110,7 @@ p.keys.clear();step(1);
 assert.equal(hero.solarMode,null);
 assert(!hero.solarEffects.pillar.visible);
 
+if(LUX_SOLAR_DISC_ENABLED){
 hero.energy=4;
 p.taps.add('KeyQ');p.keys.add('Space');p.keys.add('KeyW');step(60);p.keys.clear();
 assert(hero.solarEffects.disc.visible);
@@ -127,8 +129,11 @@ assert(p.grounded&&!hero.solarEffects.disc.visible);
 assert(Math.abs(hero.root.position.y-.1)<.001,'automatic descent ends at terrain height');
 assert.equal(hero.energy,0);
 
+}else{
+ p.taps.add('KeyQ');step(1);assert.equal(hero.solarMode,null);assert(!hero.solarEffects.disc.visible);
+}
 hero.energy=4;
-hero.locks=[0,1,2].map(()=>({alive:true,shapes:[{center:new T.Vector3(0,8,60)}]}));
+hero.reset(false);hero.locks=[0,1,2].map(()=>({alive:true,shapes:[{center:new T.Vector3(0,8,60)}]}));
 hero.charging=true;step(1);
 assert.equal(hero.shots.length,1,'Light Volley fires as many complete locks as the available energy pays for');
 assert.equal(hero.energy,1);
@@ -330,3 +335,24 @@ assert.equal(hero.lanceChargeTime,1.5);
 assert.equal(hero.lockAcquireTime,.35);
 assert.equal(hero.solarRecharge,25);
 console.log('PASS Luxmancer upgrades change charge, lock and recovery timing and revert with run upgrades');
+
+// City Liberation uses the regular lock and Communion controllers with run-owned mechanics.
+const {LiberationBuild}=await import('../dist/liberation-build.js');
+const {HeroEvolutionCombat}=await import('../dist/liberation-evolutions.js');
+const {EVOLUTIONS}=await import('../dist/liberation-catalog.js');
+const build=new LiberationBuild('lux');
+const runtime=new HeroEvolutionCombat({hero,build,actors:[],nearby:()=>[],options:{ring(){},arc(){}}});
+hero.liberation=runtime;
+for(const name of ['Constellation','Solar Reservoir','Consecration','Prismatic Lance'])
+ build.grant(EVOLUTIONS.find(e=>e.name===name));
+hero.reset();p.keys.clear();p.grounded=true;
+targets.splice(0,targets.length,lockTarget);
+for(let i=0;i<4;i++)hero.lock(origin,ray,.35);
+assert.deepEqual(hero.locks,[lockTarget,lockTarget,lockTarget,lockTarget]);
+targets.length=0;
+p.keys.add('KeyR');step(180);assert.equal(hero.energy,150);
+assert(runtime.inField('consecration',hero.root.position));
+p.keys.clear();step(1);assert(hero.shoot('lance',hero.root.position,ray));
+assert.equal(hero.shots.at(-1).pierce,8);
+assert.equal(hero.shots.at(-1).cast.factor,1.5);
+console.log('PASS sequential repeated target locks, Communion reserve, empowered cast and penetrating Sunlance');

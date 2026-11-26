@@ -3,7 +3,7 @@ import * as T from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 import {LuxEffects} from './luxmancer-effects.js?v=411';
 import {SOLAR_CONFIG,LUX_UPGRADES,LuxSolarEffects} from './lux-solar.js?v=423';
-import {RiftPlayer} from './rift-player.js?v=422';
+import {RiftPlayer} from './rift-player.js?v=435';
 
 const spells={
  lance:{speed:205,life:1.8,damage:350,gap:.85,charge:1.5,length:3,width:.12,color:0xffdc53},
@@ -60,19 +60,20 @@ export class Luxmancer {
   this.cool={lance:0,spray:0,comet:0};this.castRemaining=0;this.castKind=null;this.poseKind=null;this.poseWeight=0;this.character.reset();
  }
  setEnabled(value){this.enabled=value;this.root.visible=value;if(!value){this.player?.exit();this.reset(false);}}
- receiveEyeHit(){if(this.active)this.player.hurt.hit();}
+ receiveEyeHit(point,power){if(this.liberation&&this.liberation.run.hitHero(power)===false)return;if(this.active)this.player.hurt.hit();}
  recycle(shot){shot.mesh.visible=false;this.free[shot.kind].push(shot.mesh);}
  spend(cost){
   if(this.energy+1e-8<cost){this.lowEnergyTime=.65;return false;}
-  this.energy=Math.max(0,this.energy-cost);
+  this.energy=Math.max(0,this.energy-cost);this.liberation?.expend(cost);
   if(this.energy<1e-8){
    this.energy=0;
    if(this.solarMode==='flight')this.solarMode='landing';
   }
   return true;
  }
- shoot(kind,origin,direction,target=null){
-  if(!this.spend(SOLAR_CONFIG.attackCosts[kind]))return false;
+ shoot(kind,origin,direction,target=null,options={}){
+  if(options.free&&this.shots.length>=64)return false;
+  if(!options.free&&!this.spend(SOLAR_CONFIG.attackCosts[kind]))return false;
   const s=spells[kind];let mesh=this.free[kind].pop();
   if(!mesh){
    mesh=new T.Mesh(gem,s.material);
@@ -89,7 +90,10 @@ export class Luxmancer {
   mesh.position.copy(origin);mesh.quaternion.setFromUnitVectors(forward,direction);
   const velocity=direction.clone().multiplyScalar(s.speed);
   if(kind==='lance')velocity.y+=4;
-  this.shots.push({mesh,kind,target,v:velocity,life:s.life,trail:[],sampleTime:0});
+  const cast=options.cast||this.liberation?.cast(kind,s.damage,origin);
+  this.liberation?.projectile(kind,origin,s.damage,cast);
+  this.shots.push({mesh,kind,target,v:velocity,life:s.life,trail:[],sampleTime:0,cast,power:s.damage*(options.scale||1),
+   pierced:new Set(),pierce:(this.liberation?.v('Phase Ammunition')||0)+(kind==='lance'&&this.liberation?.v('Prismatic Lance')?8:0)});
   this.castKind=kind;this.castRemaining=kind==='comet'?.36:.23;
   if(kind!=='comet')this.effects.burst(kind,origin,direction,false);
   return true;
@@ -105,7 +109,7 @@ export class Luxmancer {
    this.lanceCharge=0;this.lowEnergyTime=.65;
    return false;
   }
-  this.lanceCharge=Math.min(this.lanceChargeTime,this.lanceCharge+dt);
+  this.lanceCharge=Math.min(this.lanceChargeTime,this.lanceCharge+dt*(1+(this.liberation?.v('Overclock Chip')||0)/100));
   return this.lanceCharge>=this.lanceChargeTime-1e-8;
  }
  clearLocks(){
@@ -119,8 +123,8 @@ export class Luxmancer {
   if(this.locks.length>=maxLocks)return;
   let best=null,bestAlignment=.90;
   const delta=new T.Vector3();
-  for(const unit of this.getUnits()){
-   if(unit.kind!=='robot'||!targetable(unit)||this.locks.includes(unit))continue;
+  for(const unit of this.liberation?.lockUnits(this.getUnits())||this.getUnits()){
+   if(unit.kind!=='robot'||!targetable(unit)||(!this.liberation?.v('Constellation')&&this.locks.includes(unit)))continue;
    const center=unit.shapes[0].center;
    const distance=delta.copy(center).sub(origin).length();
    if(distance>140||distance<.1)continue;
@@ -131,7 +135,7 @@ export class Luxmancer {
   }
   if(best!==this.pendingTarget){this.pendingTarget=best;this.pendingTime=0;}
   if(!best)return;
-  this.pendingTime+=dt;
+  this.pendingTime+=dt*(1+(this.liberation?.v('Overclock Chip')||0)/100);
   if(this.pendingTime>=this.lockAcquireTime-1e-8){
    this.locks.push(best);this.pendingTarget=null;this.pendingTime=0;
   }
@@ -161,13 +165,16 @@ export class Luxmancer {
     const toward=new T.Vector3().copy(shot.target.shapes[0].center).sub(p).normalize();
     shot.v.lerp(toward.multiplyScalar(s.speed),1-Math.exp(-8*step)).normalize().multiplyScalar(s.speed);
    }
-   const end=p.clone().addScaledVector(shot.v,step),hit=this.traceBolt(p,end);
+   const end=p.clone().addScaledVector(shot.v,step),hit=this.traceBolt(p,end,shot.pierced);
+   this.liberation?.sunTransit(shot,p,hit?.point||end);
    shot.life-=step;
    if(hit){
-    this.onHit(hit,new T.Vector3().copy(hit.point),s.damage);
+    hit.cast=shot.cast;this.onHit(hit,new T.Vector3().copy(hit.point),shot.power,shot.kind);
+    this.liberation?.solarImpact(shot,hit);
     this.effects.burst(shot.kind,hit.point,shot.v,true);
    }
-   if(hit||shot.life<=0){this.recycle(shot);this.shots.splice(i,1);continue;}
+   if(hit?.unit&&shot.pierce>0){this.liberation?.events.emit('penetration',{shot,hit});shot.pierce--;shot.pierced.add(hit.unit);p.copy(hit.point);continue;}
+   if(hit||shot.life<=0){this.liberation?.events.emit('projectileExpired',{shot,hit});this.recycle(shot);this.shots.splice(i,1);continue;}
    shot.sampleTime+=step;
    if(shot.sampleTime>=.018||!shot.trail.length){
     const point=shot.trail.length>=8?shot.trail.pop():new T.Vector3();
@@ -219,7 +226,7 @@ export class LuxPlayer extends RiftPlayer {
  blinkTime(){return this.hero.solarEffects.clock;}
  canStartBlink(){return true;}
  createBlinkAnchor(){return {};}
- showBlink(from,to){this.hero.solarEffects.blink(from,to);this.frame();}
+ showBlink(from,to,direction,returning){this.hero.liberation?.blink(from,to,returning);this.hero.solarEffects.blink(from,to);this.frame();}
  updateSolarBlink(dt,allowed,standingBuilding){
   this.tickBlink(dt);
   if(allowed){
@@ -238,7 +245,7 @@ export class LuxPlayer extends RiftPlayer {
   const empty=h.energy===0;
   this.energyMeter.toggleAttribute('data-empty',empty);
   this.energyMeter.toggleAttribute('data-insufficient',h.lowEnergyTime>0&&!empty);
-  this.energyBar.max=SOLAR_CONFIG.capacity;this.energyBar.value=h.energy;
+  this.energyBar.max=Math.max(SOLAR_CONFIG.capacity,h.energy);this.energyBar.value=h.energy;
   this.energyLabel.textContent=empty?'Depleted':h.lowEnergyTime>0?'Low energy · '+Math.ceil(h.energy):
    Math.ceil(h.energy)+' / '+SOLAR_CONFIG.capacity;
  }
@@ -287,7 +294,8 @@ export class LuxPlayer extends RiftPlayer {
    if(!this.grounded){h.solarMode=null;return true;}
    const waiting=Math.min(dt,h.windup);
    h.windup-=waiting;
-   if(dt-waiting>1e-8)h.energy=Math.min(c.capacity,h.energy+(dt-waiting)*h.solarRecharge);
+   if(dt-waiting>1e-8){const gain=(dt-waiting)*h.solarRecharge,max=c.capacity+(h.liberation?.v('Solar Reservoir')?50:0);
+    h.liberation?.overflow(Math.max(0,h.energy+gain-max));h.energy=Math.min(max,h.energy+gain);h.liberation?.communion(dt-waiting);}
    return true;
   }
   if(LUX_SOLAR_DISC_ENABLED&&allowInput&&!sprinting&&this.taps.has('KeyQ')){
@@ -425,11 +433,12 @@ export class LuxPlayer extends RiftPlayer {
    const locked=h.locks.filter(targetable);
    const size=Math.min(locked.length,Math.floor((h.energy+1e-8)/SOLAR_CONFIG.attackCosts.comet));
    if(size<locked.length)h.lowEnergyTime=.65;
+   const cast=size?h.liberation?.cast('comet',spells.comet.damage,origin):null;
    for(const [i,u] of locked.slice(0,size).entries()){
     const fan=dir.clone().applyAxisAngle(up,(i-(size-1)/2)*.28);
-    h.shoot('comet',origin,fan.addScaledVector(up,.4).normalize(),u);
+    h.shoot('comet',origin,fan.addScaledVector(up,.4).normalize(),u,{cast});
    }
-   if(size){h.effects.burst('comet',origin,dir,false);h.cool.comet=spells.comet.gap;}
+   if(size){h.liberation?.nursery(locked[0],cast);h.effects.burst('comet',origin,dir,false);h.cool.comet=spells.comet.gap;}
    h.clearLocks();
   }
   const lanceProgress=h.lanceCharge/h.lanceChargeTime;

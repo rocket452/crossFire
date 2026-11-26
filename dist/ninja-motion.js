@@ -21,7 +21,7 @@ export class NinjaMotion {
     ||{x:Math.sin(this.body.yaw),y:0,z:Math.cos(this.body.yaw)};
   }
   if(!direction)return false;
-  this.fallingCut=null;this.dash={direction,grounded,remaining:NINJA.dashRange,origin:{...p},hitUnits:new Set()};this.cooldown=this.backstabDashReady?0:NINJA.dashCooldown;
+  this.liberation?.dashStart(p);this.fallingCut=null;this.dash={direction,grounded,remaining:NINJA.dashRange,origin:{...p},hitUnits:new Set()};this.cooldown=this.backstabDashReady?0:NINJA.dashCooldown;
   this.backstabDashReady=false;
   this.slowFall=0;this.jumpBuffer=this.coyote=0;this.dashes++;if(!grounded){this.body.support=null;this.body.departedSupportY=null;this.body.mode='air';}return true;
  }
@@ -34,7 +34,7 @@ export class NinjaMotion {
   if(!best)return false;
   this.wallNormal={...best.normal};this.body.mode='air';this.body.support=null;this.body.normal={x:0,y:1,z:0};this.body.velocity={x:best.normal.x*NINJA.wallPushSpeed,y:NINJA.wallJumpSpeed,z:best.normal.z*NINJA.wallPushSpeed};this.jumps=Math.max(1,this.jumps);this.jumpCount++;this.wallJumps++;this.wallKick=.22;this.wallJumpLock=.35;this.airAge=0;return true;
  }
- finishDash(){if(!this.dash)return;const groundDash=this.dash.grounded;this.dash=null;this.slowFall=this.mode==='air'?NINJA.slowFallSeconds:0;this.body.velocity={x:0,y:groundDash&&this.mode==='air'?Math.min(0,this.velocity.y)*NINJA.slowFallSpeedScale:0,z:0};this.onDashEnd({...this.position});}
+ finishDash(){if(!this.dash)return;const groundDash=this.dash.grounded;this.dash=null;this.slowFall=this.mode==='air'?NINJA.slowFallSeconds:0;this.body.velocity={x:0,y:groundDash&&this.mode==='air'?Math.min(0,this.velocity.y)*NINJA.slowFallSpeedScale:0,z:0};this.liberation?.dashEnd(this.position);this.onDashEnd({...this.position});}
  applyDashHit(hit){const key=hit.unit||hit.missile;if(key&&this.dash?.hitUnits.has(key))return;if(key)this.dash?.hitUnits.add(key);this.lastResult=this.onHit(hit)||{};if(this.lastResult.killed){this.cooldown=0;this.resets++;}}
  applyDashContacts(sweep,fraction){for(const hit of sweep?.contacts||[])if(hit.t<=fraction+1e-8)this.applyDashHit(hit);}
  stepGroundDash(dt,sections){
@@ -67,7 +67,7 @@ export class NinjaMotion {
   if(connected){
    this.body.mode='air';this.body.support=null;
    this.body.velocity={x:0,y:Math.sqrt(2*NINJA.gravity*config.reboundHeight),z:0};
-   this.airAge=0;this.fallingCut=null;
+   this.airAge=0;this.fallingCut=null;this.liberation?.rebound();
   }else if(cut.remaining<1e-6||this.mode==='ground'||this.body.speed<config.speed*.95){
    this.velocity.x=this.velocity.z=0;this.fallingCut=null;
   }

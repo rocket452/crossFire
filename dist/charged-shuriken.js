@@ -7,8 +7,9 @@ export class ChargedShuriken {
  cancel(){if(this.anchor)this.remove(this.anchor);this.cancelCharge();this.emit('cancel');}
  remove(star){this.stars=this.stars.filter(s=>s!==star);if(this.anchor===star)this.anchor=null;}
  begin(){this.resolution=null;this.failure=0;if(this.anchor)this.remove(this.anchor);this.charging=true;this.charge=0;this.full=false;this.previewClock=0;this.emit('charge');}
- throw(){if(!this.charging)return;const tier=this.full&&this.cooldown<=0?'full':'early',c=this.config[tier],position=this.origin().clone(),dir=this.aim().clone().sub(position).normalize();this.charging=false;this.preview=null;if(tier==='early'&&this.stars.filter(s=>s.tier==='early').length>=this.config.collision.maxEarlyStars)this.remove(this.stars.find(s=>s.tier==='early'));const star={id:++this.sequence,tier,position,origin:position.clone(),dir,travelled:0,age:0,stationaryAge:0,state:'flying',radius:c.radius,passed:new Set(),surface:null};this.stars.push(star);if(tier==='full')this.anchor=star;this.throws++;this.emit('throw',{star,tier});}
- input(held,dt,dashing=false){if(!held)this.suppressed=false;if(dashing&&this.config.charge.dashCancels&&this.charging)this.cancelCharge();if(held&&!this.held&&!this.suppressed)this.begin();if(held&&this.charging){this.charge=Math.min(this.config.charge.fullSeconds,this.charge+dt);if(!this.full&&this.charge>=this.config.charge.fullSeconds&&this.cooldown<=0){this.full=true;this.flash=this.config.feedback.flashSeconds;this.emit('full');}}if(!held&&this.held&&this.charging)this.throw();this.held=held;}
+ throw(){if(!this.charging)return;const tier=this.full&&this.cooldown<=0?'full':'early',c=this.config[tier],position=this.origin().clone(),dir=this.aim().clone().sub(position).normalize();this.charging=false;this.preview=null;if(tier==='early'&&this.stars.filter(s=>s.tier==='early').length>=this.config.collision.maxEarlyStars)this.remove(this.stars.find(s=>s.tier==='early'));const star={id:++this.sequence,tier,position,origin:position.clone(),dir,travelled:0,age:0,stationaryAge:0,state:'flying',radius:c.radius,passed:new Set(),surface:null};star.cast=this.liberation?.cast('charged-shuriken',c.damage||c.pierceDamage,position);
+  this.liberation?.projectile('charged-shuriken',position,c.damage||c.pierceDamage,star.cast);this.stars.push(star);if(tier==='full')this.anchor=star;this.throws++;this.emit('throw',{star,tier});}
+ input(held,dt,dashing=false){if(!held)this.suppressed=false;if(dashing&&this.config.charge.dashCancels&&this.charging)this.cancelCharge();if(held&&!this.held&&!this.suppressed)this.begin();if(held&&this.charging){this.charge=Math.min(this.config.charge.fullSeconds,this.charge+dt*(1+(this.liberation?.v('Overclock Chip')||0)/100));if(!this.full&&this.charge>=this.config.charge.fullSeconds&&this.cooldown<=0){this.full=true;this.flash=this.config.feedback.flashSeconds;this.emit('full');}}if(!held&&this.held&&this.charging)this.throw();this.held=held;}
  predict(){
   const from=this.origin().clone(),c=this.full?this.config.full:this.config.early;
   const dir=this.aim().clone().sub(from).normalize(),far=from.clone().addScaledVector(dir,c.range);
@@ -32,14 +33,15 @@ export class ChargedShuriken {
    }
    if(star.state==='stationary'){star.stationaryAge+=dt;if(star.stationaryAge>=c.stickSeconds){this.emit('expired',{star});this.remove(star);}continue;}if(star.tier==='full'&&star.age>=c.flightSeconds){this.emit('expired',{star});this.remove(star);continue;}
    const distance=Math.min(c.speed*dt,c.range-star.travelled),to=star.position.clone().addScaledVector(star.dir,Math.max(0,distance)),solid=this.world.flightSolid(star.position,to,c.radius,star.tier==='full'||c.pierces),limit=solid?.t??1,hits=[...this.world.enemies(star.position,to,c.radius),this.world.traceThreat?.(star.position,to,c.radius)].filter(Boolean).sort((a,b)=>a.t-b.t);let stopped=false;
-   for(const hit of hits){if(hit.t>limit+1e-7||hit.unit&&star.passed.has(hit.unit))continue;if(hit.unit)star.passed.add(hit.unit);this.hit(hit,c.pierces?c.pierceDamage:c.damage,'charged-shuriken');
+   if(star.tier==='early')this.liberation?.foundry(star,star.position,solid?.point||to,c.damage);
+   for(const hit of hits){hit.cast=star.cast;if(hit.t>limit+1e-7||hit.unit&&star.passed.has(hit.unit))continue;if(hit.unit)star.passed.add(hit.unit);this.hit(hit,c.pierces?c.pierceDamage:c.damage,'charged-shuriken');
     if(star.tier==='full'&&hit.unit){
      star.position.copy(hit.point);star.state='lodged';star.host=hit.unit;
      star.localPoint=hit.unit.entity.root.worldToLocal(star.position.clone());
      if(hit.unit.alive)this.emit('lodged',{star});else this.remove(star);
      stopped=true;break;
     }
-    if(star.tier==='early'&&!c.pierces){star.travelled+=star.position.distanceTo(hit.point);star.position.copy(hit.point);if(star.tier==='full'){star.state='stationary';star.stationaryAge=0;this.emit('stationary',{star});}else this.remove(star);stopped=true;break;}}if(stopped)continue;
+    if(star.tier==='early'&&!c.pierces&&!(hit.unit&&star.passed.size<=(this.liberation?.v('Phase Ammunition')||0))){star.travelled+=star.position.distanceTo(hit.point);star.position.copy(hit.point);if(star.tier==='full'){star.state='stationary';star.stationaryAge=0;this.emit('stationary',{star});}else this.remove(star);stopped=true;break;}}if(stopped)continue;
    const endpoint=solid?new THREE.Vector3().copy(solid.point):to;star.travelled+=star.position.distanceTo(endpoint);star.position.copy(endpoint);if(solid||star.travelled>=c.range-1e-6){if(solid)this.hit(solid,c.damage,'shuriken');if(star.tier==='early'){this.remove(star);continue;}if(this.world.forbidden(solid)){this.failure=this.config.feedback.failSeconds;this.resolution={valid:false,point:star.position.clone(),reason:'unteleportable surface',samples:[]};this.emit('blocked',{star});this.remove(star);continue;}star.state='stationary';star.surface=solid||null;star.stationaryAge=0;this.emit('stationary',{star});}
   }
  }
@@ -47,7 +49,7 @@ export class ChargedShuriken {
   if(star.host)star.host.entity.root.localToWorld(star.position.copy(star.localPoint));
   const result=star.host?this.world.rearLanding(star.host,star.position):this.world.resolve(star);this.resolution=result;if(!result.valid){this.failure=this.config.feedback.failSeconds;this.failures++;this.emit('failed',{point:result.point,reason:result.reason});return false;}
   const from=this.onTeleport(result.point.clone(),this.config.arrival);this.cooldown=this.config.cooldownSeconds;this.teleports++;this.remove(star);this.emit('teleport',{from,to:result.point.clone()});
-  this.crosscutTarget=star.host||null;
+  this.crosscutTarget=star.host||null;this.liberation?.teleport(from,result.point,star);
   if(star.host)this.emit('behind',{target:star.host.entity.root.getWorldPosition(new THREE.Vector3()).setY(star.position.y)});
   return true;
  }

@@ -1,12 +1,13 @@
 import * as THREE from './vendor/three.module.js';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
-import {LiberationBuild} from './liberation-build.js?v=434';
+import {HeroEvolutionCombat} from './liberation-evolutions.js';
+import {LiberationBuild} from './liberation-build.js?v=435';
 import {EvacuationNavigation} from './evacuation-navigation.js?v=evacuation-57';
 import {escortMovementBounds} from './evac-approach.js?v=315';
 
 export const DISTRICTS=[
- {seconds:115,gap:13,cap:7,packs:['BB','BD','BBD'],boss:'Siege Walker'},
- {seconds:135,gap:9,cap:12,packs:['BDD','BBBD','BBDD'],boss:'Bastion'}
+ {seconds:425,gap:16,cap:8,packs:['BB','BD','BBD'],boss:'Siege Walker'},
+ {seconds:490,gap:12,cap:15,packs:['BDD','BBBD','BBDD'],boss:'Bastion'}
 ];
 const position=p=>new THREE.Vector3().copy(p);
 const streetStep=24;
@@ -18,14 +19,12 @@ const streetAxis=(min,max)=>Array.from(
 const streetX=streetAxis(entryBounds.minX,entryBounds.maxX);
 const streetZ=streetAxis(entryBounds.minZ,entryBounds.maxZ);
 const walkerHomeZ=48;
-const clearanceKey='zero-hour.city-liberation.clearance';
-export const CLEARANCE_CREDITS=12;
+
 
 export class CityLiberation extends MissionEnemyWaves {
  constructor(scene,damage,options){
   super(scene,damage,{...options,formationSize:8});
-  this.options=options;this.damage=damage;this.clearance=false;
-  try{this.clearance=options.storage?.getItem(clearanceKey)==='1';}catch{}
+  this.options=options;this.damage=damage;
   this.actors=[...this.members,...this.flightDrones];
   this.navigation=new EvacuationNavigation({isClear:(a,b)=>options.bruiser.isPathClear(
    new THREE.Vector3(a.x,.12,a.z),new THREE.Vector3(b.x,.12,b.z)
@@ -34,71 +33,80 @@ export class CityLiberation extends MissionEnemyWaves {
   this.reset();
  }
  reset(){
+  if(this.hero)for(const object of [this.hero,this.hero.motion,this.hero.storm,this.hero.shuriken,this.hero.energy])if(object&&typeof object==='object')delete object.liberation;
+  this.combat=null;this.menu=null;
   super.reset();
   this.stage=0;this.elapsed=0;this.stageTime=0;this.nextPack=1;this.pack=0;this.phase='briefing';
-  this.hero=null;this.build=null;this.nextHitFX=0;this.retired=new Map();this.lastDash=0;this.wasDashing=false;
+  this.hero=null;this.build=null;this.retired=new Map();
   const walker=this.options.walker;
   walker.dead=true;walker.root.visible=false;walker.combatUnit.alive=false;walker.combatUnit.shapes=[];
   this.nextScan=0;this.stragglers=new Map();this.options.ui.reset();
  }
  start(id,hero){
   this.hero=hero;this.build=new LiberationBuild(id);this.phase='streets';
-  if(this.clearance){
-   this.build.credits=CLEARANCE_CREDITS;this.clearance=false;
-   try{this.options.storage?.removeItem(clearanceKey);}catch{}
-  }
   if(id==='volt')hero.energy.amount=75;
-  this.lastDash=this.dash.dashes;
+  this.combat=new HeroEvolutionCombat(this);
+  for(const object of [hero,hero.motion,hero.storm,hero.shuriken,hero.energy])if(object&&typeof object==='object')object.liberation=this.combat;
+  this.options.ui.bind?.(this);
   this.options.ui.sync(this);
  }
- get dash(){return this.hero.dash||this.hero.motion;}
  get ended(){return this.phase==='lost'||this.phase==='won';}
- get upgradePending(){return !!this.build?.rewards.length&&!this.ended;}
+ get upgradePending(){return !!(this.menu||this.build?.rewards.length)&&!this.ended;}
  get district(){return DISTRICTS[this.stage];}
  hitHero(power){
   if(!this.hero||this.ended||this.phase==='cleared'||this.upgradePending)return false;
   const result=this.build.hurt(Math.min(45,power??12));
-  if(result==='ward')this.options.ring(this.hero.root.position,3,'#9eeeff');
+  if(result)this.combat.events.emit(result==='ward'?'shielded':'damageReceived',{power,result});
+  if(result==='ward'){
+   const p=this.hero.root.position;this.options.ring(p,3,'#9eeeff');
+   for(const target of this.nearby(p,36).slice(0,4))this.combat.bolt(p,target,80,null,'Phase Buffer');
+  }
   if(this.build.hp<=0){this.phase='lost';this.options.ui.sync(this);}
   return result===true;
  }
- attackPower(hit,power,kind){
-  if(!this.hero||!hit.unit||!hit.point)return power;
-  const motion=this.hero.motion.body||this.hero.motion;
-  return power*this.build.multiplier({distance:this.hero.root.position.distanceTo(hit.point),speed:motion.speed,
-   healthFraction:hit.unit.health/hit.unit.maxHealth,part:hit.part,kind});
- }
+ attackPower(hit,power,kind){return this.combat?.before(hit,power,kind)??power;}
+ onHit(hit,amount){this.combat?.after(hit,amount);}
  nearby(origin,radius,exclude){
-  return this.actors.filter(a=>a!==exclude&&a.combatUnit?.alive&&!a.dead)
-   .map(actor=>({actor,point:actor.combatUnit.shapes[0]?.center}))
-   .filter(t=>t.point&&origin.distanceToSquared(t.point)<=radius*radius&&this.options.visible(origin,t.point))
-   .sort((a,b)=>origin.distanceToSquared(a.point)-origin.distanceToSquared(b.point));
- }
- field(origin,radius,power,exclude,color){
-  this.options.ring(origin,radius,color);
-  for(const {actor,point} of this.nearby(origin,radius,exclude))this.damage.hurt(actor.combatUnit,power,point,'hull');
- }
- onHit(hit,amount){
-  const b=this.build;
-  if(!b||!hit.unit||amount<=0)return;
-  if(b.ranks.size&&b.time>=this.nextHitFX){
-   const radius=Math.min(3,.7+b.ranks.size*.18+amount*.006);
-   this.options.ring(hit.point,radius,'#95eaff');
-   this.nextHitFX=b.time+.26;
+  const units=[...this.actors.map(a=>a.combatUnit),...(this.options.bossUnits?.()||[])];
+  const hits=[];
+  for(const unit of new Set(units)){
+   if(!unit?.alive||unit.entity===exclude||unit.hidden||unit.entity.dead)continue;
+   let best=null;
+   for(const shape of unit.shapes){
+    const point=position(shape.center),distance=point.distanceToSquared(origin);
+    if(distance>radius*radius||best&&distance>=best.distance)continue;
+    if(unit.entity.armsHealth&&shape.part!=='chest'&&!(this.combat.partHP({unit,part:shape.part})>0))continue;
+    const weapon=unit.entity.weapons?.forPart(shape.part);
+    if(unit.entity.weapons&&(!weapon||weapon.destroyed))continue;
+    if(!this.options.visible(origin,point))continue;
+    best={unit,actor:unit.entity,point,part:shape.part,distance};
+   }
+   if(best)hits.push(best);
   }
-  if(!b.value('echo')||b.time<b.arcAt)return;
-  const origin=position(hit.point),target=this.nearby(origin,20+b.value('reach'),hit.unit.entity)[0];
-  if(!target)return;
-  b.arcAt=b.time+1.2;
-  this.damage.hurt(target.actor.combatUnit,b.value('echo'),target.point,'hull');
-  this.options.arc(origin,target.point);
+  return hits.sort((a,b)=>a.distance-b.distance);
+ }
+ chainTargets(origin,radius,hit){
+  const normal=this.nearby(origin,radius,hit.unit.entity);
+  const e=hit.unit.entity;
+  if(!e.weapons&&!e.armsHealth&&!e.engines)return normal;
+  const parts=new Map();
+  for(const shape of hit.unit.shapes){
+   if(!shape.part||shape.part===hit.part||this.combat.partHP({unit:hit.unit,part:shape.part})<=0||
+    this.combat.partHP({unit:hit.unit,part:shape.part})===undefined)continue;
+   const point=position(shape.center),distance=point.distanceToSquared(origin);
+   if(distance<=radius*radius&&(!parts.has(shape.part)||parts.get(shape.part).distance>distance)&&this.options.visible(origin,point))
+    parts.set(shape.part,{unit:hit.unit,actor:e,part:shape.part,point,distance});
+  }
+  return normal.concat([...parts.values()]).sort((a,b)=>a.distance-b.distance);
  }
  collect(){
   for(const actor of this.actors){
    const u=actor.combatUnit;
    if(!u||!actor.spawned||this.retired.has(actor)||(!actor.dead&&u.alive))continue;
-   this.retired.set(actor,this.elapsed);this.build.reward(this.flightDrones.includes(actor));
-   if(this.build.value('burst'))this.field(actor.root.position,12+this.build.value('reach'),this.build.value('burst'),actor,'#78ffd8');
+   this.retired.set(actor,this.elapsed);const hp=this.build.hp,shield=this.build.shield;this.build.reward(this.flightDrones.includes(actor));
+   if(this.build.hp>hp)this.combat.events.emit('heal',{amount:this.build.hp-hp});
+   if(this.build.shield>shield)this.combat.events.emit('shieldGained',{amount:this.build.shield-shield});
+
   }
  }
  streetSpawns(){
@@ -181,7 +189,7 @@ export class CityLiberation extends MissionEnemyWaves {
     while(p&&!(approach=this.groundApproach(actor,p,rally)))p=streets.shift();
    }
    if(!p)break;
-   this.retired.delete(actor);
+   this.retired.delete(actor);this.combat.status.delete(actor.combatUnit);
    if(air){
     const altitude=this.drones.find(d=>d.actor===actor).start.y;
     const ingress=this.droneIngress(p,rally,altitude);
@@ -219,14 +227,7 @@ export class CityLiberation extends MissionEnemyWaves {
    if(this.elapsed-this.clearedAt>=5)this.phase='won';
    this.options.ui.sync(this);return;
   }
-  const b=this.build,dash=this.dash;b.tick(dt);
-  if(this.wasDashing&&!dash.active)b.safeUntil=Math.max(b.safeUntil,b.time+b.value('afterimage'));
-  this.wasDashing=!!dash.active;
-  dash.cooldown=Math.max(0,dash.cooldown-dt*b.value('recovery'));
-  if(dash.dashes!==this.lastDash){
-   this.lastDash=dash.dashes;
-   if(b.value('pulse'))this.field(this.hero.root.position.clone().add(new THREE.Vector3(0,1,0)),10+b.value('reach'),b.value('pulse'),null,'#79dfff');
-  }
+  const b=this.build;b.tick(dt);this.combat.step(dt);
   this.bruisers.update(dt,time);
   const targets=this.getTargets();
   for(const actor of this.flightDrones)if(actor.spawned)actor.update(dt,targets);
@@ -240,8 +241,8 @@ export class CityLiberation extends MissionEnemyWaves {
   if(this.phase==='boss'&&(this.stage===0?this.options.walker.dead:this.options.finalBossDefeated())){
    b.bossReward(this.stage===1);
    if(this.stage===1){
-    this.clearedAt=this.elapsed;this.phase='cleared';this.clearance=true;
-    try{this.options.storage?.setItem(clearanceKey,'1');}catch{}
+    this.clearedAt=this.elapsed;this.phase='cleared';
+
    }
    else{this.stage++;this.stageTime=0;this.pack=0;this.phase='streets';this.nextPack=this.elapsed+4;}
   }

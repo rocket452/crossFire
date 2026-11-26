@@ -4,60 +4,31 @@ import {registerHooks} from 'node:module';
 import * as THREE from '../dist/vendor/three.module.js';
 import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
 import {DestructionWorld} from '../dist/destruction.js';
-import {VOLT_RESCUE_DASH_ENABLED} from '../dist/hero-ability-config.js';
-import {LiberationBuild,UPGRADES} from '../dist/liberation-build.js';
+import {LiberationBuild} from '../dist/liberation-build.js';
+import {EVOLUTIONS,RELICS} from '../dist/liberation-catalog.js';
 import {escortMovementBounds} from '../dist/evac-approach.js';
 import {CityLiberation,DISTRICTS} from '../dist/city-liberation.js';
 import {SiegeWalker} from '../dist/siege-walker.js';
 import {spec,gltfModel} from './walker-fixture.mjs';
-import {RunnerEnergy} from '../dist/runner-energy.js';
 import {NinjaMotion} from '../dist/ninja-motion.js';
 import {mission1CityBuildings} from '../dist/evac-city-map.js';
 
 let seed=0x5badcafe;
 Math.random=()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/2**32;};
-function equip(build,id){
- const upgrade=UPGRADES.find(u=>u.id===id);
- build.rewards.push('level');build.cards=[upgrade];
- assert(build.choose(id));assert(!build.choose(id));
-}
-const profile={distance:30,speed:0,healthFraction:1,part:'hull',kind:'electric'};
-const checks=[
- ['amplifier',{},.15],['execution',{healthFraction:.4},.4],['precision',{part:'front-right'},.25],
- ['pointBlank',{distance:8},.3],['momentum',{speed:20},.3],['weld',{kind:'welding'},.55],
- ['storm',{kind:'sky-strike'},.4],['blade',{kind:'arrival-strike'},.4]
-];
-for(const [id,condition,bonus] of checks){
- const b=new LiberationBuild('volt');equip(b,id);equip(b,id);
- assert.equal(b.multiplier({...profile,...condition}),1+2*bonus);
- if(id!=='amplifier')assert.equal(b.multiplier(profile),1);
-}
-const b=new LiberationBuild('ninja',()=>.4);
-for(const id of ['armor','regen','vengeance','ward','capacitor','learning','salvage','bounty'])equip(b,id);
-assert.equal(b.hp,145);assert.equal(b.hurt(50),'ward');b.tick(.4);b.hurt(50);assert.equal(b.hp,101);
-assert.equal(b.multiplier(profile),1.35);assert.equal(b.hurt(10),false);b.tick(5);assert.equal(b.multiplier(profile),1);
-const lastHP=b.hp;b.reward(false);assert.equal(b.hp,lastHP+5);assert.equal(b.credits,7);assert.equal(b.xp,8.75);
-b.reward(true);assert.equal(b.level,2);assert.equal(b.credits,16);b.draft();assert(b.spend('repair'));assert.equal(b.credits,4);
-assert(!b.spend('reroll'));b.bossReward();const bossCards=b.draft();
-assert.equal(bossCards[0].rarity,'epic');assert(b.spend('reroll'));assert.equal(b.credits,31);
-assert(b.choose(b.cards[0].id));
-for(const hero of ['ninja','volt']){
- const build=new LiberationBuild(hero);const seen=new Set();
- for(let i=0;i<150;i++){
-  build.rewards.push('level');const cards=build.draft();
-  assert(cards.every(u=>!u.hero||u.hero===hero));assert.equal(new Set(cards.map(c=>c.id)).size,cards.length);
-  if(cards.length){seen.add(cards[0].id);build.choose(cards[0].id);}
+for(const heroId of ['volt','ninja','lux']){
+ const build=new LiberationBuild(heroId);
+ const wanted=EVOLUTIONS.filter(e=>e.hero===heroId);
+ while(build.ranks.size<wanted.length){
+  build.rewards.push('level');const draft=build.draft();
+  assert(draft.length&&draft.length<=3);
+  for(const card of draft){assert.equal(card.hero,heroId);assert(!build.value(card.id));if(card.requires)assert(build.value('Flashpoint')||build.value('Second Sun'));}
+  assert(build.choose(draft[0].id));
  }
- const unavailable=hero==='volt'&&!VOLT_RESCUE_DASH_ENABLED?['pulse','recovery','afterimage','dynamo']:[];
- const expected=UPGRADES.filter(u=>(!u.hero||u.hero===hero)&&!unavailable.includes(u.id));
- assert.deepEqual([...seen].sort(),expected.map(u=>u.id).sort());
- for(const {upgrade,rank} of build.ranks.values())assert.equal(rank,upgrade.max);
+ const xp=build.xp;build.credits=300;const card=build.stock[0].card;
+ assert(build.buy(card.id));assert(!build.buy(card.id));assert.equal(build.xp,xp);
+ assert(build.refresh());assert.equal(build.refreshPrice,15);assert.equal(build.stock.length,5);
+ build.bossReward();assert.equal(build.refreshPrice,10);assert(build.draft().every(c=>RELICS.includes(c)));
 }
-const energy=new RunnerEnergy();equip(b,'dynamo');
-assert(energy.earn(5,1,{dashing:true,dashMultiplier:b.value('dynamo')})>0);
-equip(b,'airJump');equip(b,'backstab');
-assert.equal(new NinjaMotion({hasExtraAirJump:()=>b.value('airJump')}).maxAirJumps,2);
-
 registerHooks({resolve(name,ctx,next){return name==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(name,ctx);}});
 const {GLTFLoader}=await import('../dist/vendor/GLTFLoader.js');
 const bytes=fs.readFileSync(new URL('../dist/city-assets/licensed-robots/breaker-spider.glb',import.meta.url));
@@ -97,9 +68,8 @@ assert(first.every(actor=>onEdge(actor.spawnPosition)&&actor.root.position.dista
 for(const actor of first)if(actor.shots)firstAttackAt=t;
 assert(firstAttackAt,'first pack has opened fire by ten seconds');
 const kill=a=>damage.hurt(a.combatUnit,1e6,a.root.position,'hull');
-first.forEach(kill);tick(.1);assert.equal(run.build.kills,2);assert(run.upgradePending);
-const frozen=run.elapsed;tick(1);assert.equal(run.elapsed,frozen);run.build.choose(run.build.cards[0].id);
-tick(7);const active=run.actors.filter(a=>a.combatUnit?.alive);
+first.forEach(kill);tick(.1);assert.equal(run.build.kills,2);assert(!run.upgradePending);
+tick(8);const active=run.actors.filter(a=>a.combatUnit?.alive);
 assert(active.some(a=>run.flightDrones.includes(a)));
 const drone=active.find(a=>run.flightDrones.includes(a));
 assert(onEdge(drone.anchor)&&drone.options.ingress,'the drone starts on a perimeter and has a route into the district');
@@ -109,16 +79,8 @@ tick(.1);assert.equal(run.build.kills,3);tick(1);assert.equal(run.build.kills,3)
 while(run.upgradePending){run.build.draft();run.build.choose(run.build.cards[0].id);}
 const ground=run.members.find(a=>a.combatUnit?.alive);
 ground.root.position.copy(hero.root.position).x+=4;ground.sync();
-equip(run.build,'echo');equip(run.build,'reach');
-run.onHit({unit:drone.combatUnit,point:ground.root.position},20);assert.equal(arcs,1);
-run.onHit({unit:drone.combatUnit,point:ground.root.position},20);assert.equal(arcs,1);
-equip(run.build,'pulse');equip(run.build,'recovery');equip(run.build,'afterimage');
-const before=ground.combatUnit.health;hero.motion.dashes++;hero.motion.cooldown=2;hero.motion.dash={};
-tick(.1);assert(ground.combatUnit.health<before);assert(hero.motion.cooldown<2);
-hero.motion.dash=null;tick(.1);assert.equal(run.build.hurt(20),false);
-equip(run.build,'burst');const extra=run.members.find(a=>!a.spawned);
-extra.spawnPosition=ground.root.position.clone().add(new THREE.Vector3(0,0,3));extra.reset();extra.spawn();
-const extraHP=extra.combatUnit.health;kill(ground);tick(.1);assert(extra.combatUnit.health<extraHP);
+while(!run.upgradePending)run.build.reward(false);
+const frozen=run.elapsed;tick(1);assert.equal(run.elapsed,frozen);
 function pick(){while(run.upgradePending){run.build.draft();run.build.choose(run.build.cards[0].id);}}
 pick();run.stageTime=DISTRICTS[0].seconds;tick(.1);assert.equal(arsenal,1);assert(walker.root.visible);assert.equal(walker.root.position.z,edges.maxZ);assert(walker.spawnOrigin.z<edges.maxZ);
 assert.equal(damage.hurt(walker.combatUnit,1e6,walker.root.position,'head'),0);
@@ -127,7 +89,7 @@ tick(.1);assert(walker.dead);assert.equal(run.stage,1);assert.equal(run.build.re
 run.stageTime=DISTRICTS[1].seconds;tick(.1);assert.equal(run.phase,'boss');finalDead=true;tick(.1);assert.equal(run.phase,'cleared');tick(5.1);assert.equal(run.phase,'won');
 run.reset();assert.equal(run.hero,null);assert(!run.actors.some(a=>a.spawned));
 run.start('volt',{...hero,dash:{dashes:0,cooldown:0},energy:{}});
-assert.equal(run.build.ranks.size,0);assert.equal(run.build.credits,12);assert.equal(run.build.hp,120);
+assert.equal(run.build.ranks.size,0);assert.equal(run.build.credits,0);assert.equal(run.build.hp,120);
 for(let i=0;i<4;i++){run.hitHero(45);run.build.tick(.4);}
 assert.equal(run.phase,'lost');
 run.reset();run.start('ninja',hero);assert.equal(run.build.credits,0,'victory bonus is consumed once');
@@ -142,10 +104,10 @@ for(let seconds=1;seconds<=300;seconds++){
   const target=run.actors.find(a=>a.combatUnit?.alive&&!a.dead);
   if(target)kill(target);
  }
- if(seconds===165){
+ if(seconds===465){
   for(const m of walker.weapons.modules)damage.hurt(walker.combatUnit,1e6,walker.root.position,m.part);
  }
 }
-assert(firstDraftAt<=120);assert(run.build.level>=6);assert.equal(run.stage,1);
+assert(firstDraftAt<=120);assert(run.build.level>=6);assert.equal(run.stage,0);
 console.log('Five-minute script:',{firstDraftAt,level:run.build.level,kills:run.build.kills,upgrades:[...run.build.ranks.values()].reduce((n,u)=>n+u.rank,0)});
-console.log('City Liberation passed: '+UPGRADES.length+' upgrades, first pack fires by '+Math.round(firstAttackAt)+'s, first draft after two kills, two stages, weak points, win/loss and replay.');
+console.log('City Liberation passed: edge spawns, weak points, district and relic progression, pause, win, loss, replay and five-minute pacing.');

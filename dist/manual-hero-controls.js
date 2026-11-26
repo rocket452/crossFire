@@ -56,7 +56,7 @@ export class ManualHeroControls {
   });
   window.addEventListener('pointerup',e=>{if(this.drag===e.pointerId)this.drag=null;});
   this.canvas.addEventListener('pointercancel',()=>this.clear());
-  document.addEventListener('pointerlockchange',()=>{if(this.hero.active&&!document.pointerLockElement)this.clear();});
+  document.addEventListener('pointerlockchange',()=>{if(this.hero.active&&!document.pointerLockElement&&!this.hero.liberation?.run.upgradePending)this.clear();});
   document.addEventListener('pointermove',e=>{
    if(!this.available()||(document.pointerLockElement!==this.canvas&&this.drag!==e.pointerId))return;
    const dx=e.pointerType==='touch'?e.clientX-this.lastX:e.movementX,dy=e.pointerType==='touch'?e.clientY-this.lastY:e.movementY;

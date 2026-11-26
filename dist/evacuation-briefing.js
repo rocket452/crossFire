@@ -129,7 +129,7 @@ export class EvacuationBriefing {
  }
  objective(){
   if(this.liberationMode)return `<p class="evac-briefing-lead">Clear two occupied districts and defeat the Siege Walker and Bastion.</p>
-   <ul class="evac-objectives"><li>Hunt Bruisers and drones for XP and credits. Each level lets you choose an upgrade.</li><li>Spend credits to heal or reroll your choices. Your build carries into the next district.</li><li>If your hero falls, the run ends.</li></ul>
+   <ul class="evac-objectives"><li>Hunt Bruisers and drones for XP and credits. Each level lets you choose an upgrade.</li><li>Spend credits at the central supply beacon. Press B at the depot to shop, or I anywhere to inspect your build. Your build carries into the next district.</li><li>If your hero falls, the run ends.</li></ul>
    <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
   if(this.defenseMode)return `<p class="evac-briefing-lead">Protect the evacuation rocket while it prepares for liftoff.</p>
    <ul class="evac-objectives"><li>Clear the first two waves and defeat the Siege Walker to launch the rocket.</li><li>Enemies engage nearby heroes. Choose an upgrade between waves. Defeat the Bastion if reinforcements arrive.</li><li>If the relay falls, the mission ends.</li></ul>
@@ -146,7 +146,7 @@ export class EvacuationBriefing {
    <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
  }
  choices(){
-  return `<div class="evac-briefing-heroes">${(this.defenseMode?['volt','ninja','violet','rift','lux']:['volt','ninja']).map(id=>{
+  return `<div class="evac-briefing-heroes">${(this.defenseMode?['volt','ninja','violet','rift','lux']:this.liberationMode?['volt','ninja','lux']:['volt','ninja']).map(id=>{
    const hero=HEROES.find(entry=>entry.id===id);
    return `<button type="button" class="evac-briefing-hero" data-hero="${id}" style="--hero-accent:${hero.color}">
     <span class="evac-hero-icon" aria-hidden="true">${hero.icon}</span><strong>${hero.name}</strong>
