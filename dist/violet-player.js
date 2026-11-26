@@ -2,20 +2,20 @@ import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
 import {Vector3,MathUtils} from './vendor/three.module.js';
 import {ManualHeroControls} from './manual-hero-controls.js?v=395';
 import {SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
-import {VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_PULSE} from './hero-powers.js?v=388';
+import {VIOLET_BEAM,VIOLET_OVERLOAD} from './hero-powers.js?v=428';
 import {VIOLET_TUNING} from './violet-flight.js?v=387';
 
 export class VioletPlayer extends ManualHeroControls {
  constructor(hero,options){
   super(hero,{...options,cameraDistance:6.5,cameraHeight:2.94*HERO_CAMERA.heightMultiplier*1.62},{
-   hint:'WASD fly · Space rise · Shift descend · Hold LMB orb · RMB barrier · E pulse · R beam',
-   actions:[['Rise','Space'],['Down','ShiftLeft'],['Orb','Fire'],['Barrier','Shield'],['Pulse','KeyE'],['Beam','KeyR']],
-   codes:['KeyW','KeyS','KeyA','KeyD','Space','ShiftLeft','ShiftRight','KeyF','KeyG','KeyE','KeyR']
+   hint:'WASD fly · Space rise · Shift descend · Hold LMB orb · RMB barrier · R beam',
+   actions:[['Rise','Space'],['Down','ShiftLeft'],['Orb','Fire'],['Barrier','Shield'],['Beam','KeyR']],
+   codes:['KeyW','KeyS','KeyA','KeyD','Space','ShiftLeft','ShiftRight','KeyF','KeyG','KeyR']
   });
  }
- clear(){super.clear();this.fireTap=this.beamTap=this.pulseTap=false;if(this.hero.active)this.cancelOrb();}
+ clear(){super.clear();this.fireTap=this.beamTap=false;if(this.hero.active)this.cancelOrb();}
  cancelOrb(){this.hero.charging=false;this.hero.chargeTime=0;this.hero.chargeOrb.visible=false;}
- press(key){this.keys.add(key);if(key==='Fire'||key==='KeyF')this.fireTap=true;if(key==='KeyR')this.beamTap=true;if(key==='KeyE')this.pulseTap=true;}
+ press(key){this.keys.add(key);if(key==='Fire'||key==='KeyF')this.fireTap=true;if(key==='KeyR')this.beamTap=true;}
  enter(intro,respawn=true){
   this.clear();this.platform=null;
   if(!this.hero.active)this.savedLens={fov:this.camera.fov,near:this.camera.near};
@@ -71,7 +71,6 @@ export class VioletPlayer extends ManualHeroControls {
   if(c.overloadRemaining>0)c.step(dt);
   if(this.beamTap&&c.start())this.cancelOrb();
   this.beamTap=false;
-  const pulse=this.pulseTap;this.pulseTap=false;
   if(c.remaining>0){h.updatePowerBeam(dt,time,null,this.aim(VIOLET_BEAM.range+this.cameraDistance));this.status();return;}
   const shielding=(this.keys.has('Shield')||this.keys.has('KeyG'))&&c.overloadRemaining<=0&&h.shieldEnergy>0;
   h.mode=shielding?'blocking':'patrol';h.root.rotation.set(0,this.yaw,0);
@@ -88,11 +87,6 @@ export class VioletPlayer extends ManualHeroControls {
   h.shieldMaterial.uniforms.time.value=time;h.shieldMaterial.uniforms.hit.value=h.hitGlow;h.shieldMaterial.uniforms.risk.value=c.overloadProgress;
   h.contact.visible=h.hitGlow>0&&shielding;
   if(!shielding)h.shieldEnergy=Math.min(3000,h.shieldEnergy+250*dt);
-  if(pulse&&c.spend(VIOLET_PULSE.cost)){
-   this.onPulse(center);
-   h.orbEffects.impact(center,h.zAxis,VIOLET_PULSE.radius);
-   h.emit(center,28,5);
-  }
   h.flightPose.step(dt,h.velocity,this.yaw,{raised:h.charging||shielding,blocking:shielding});h.flightPose.applyVisual(h.root,h.visual,time);h.pose(time);h.flightPose.applyCharacter(h.character,h.nodes,dt,-this.pitch);this.hurt.applyPose();h.root.updateMatrixWorld(true);
   h.chargeOrb.visible=h.charging;
   if(h.charging){
@@ -113,6 +107,6 @@ export class VioletPlayer extends ManualHeroControls {
   const stored=c.amount+c.overloadDamage;
   const charge=Math.floor(stored/(VIOLET_BEAM.required+VIOLET_OVERLOAD.extraDamage)*100);
   const barrier=c.overloadRemaining>0?'SHIELD OVERLOAD':c.remaining>0?'Force beam '+c.phase:'Shield '+charge+'%'+(c.ready?' · Beam ready':'');
-  this.output.textContent=orb+' · '+barrier+(stored>=VIOLET_PULSE.cost?' · Pulse ready':'');
+  this.output.textContent=orb+' · '+barrier;
  }
 }

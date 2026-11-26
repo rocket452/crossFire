@@ -1,7 +1,7 @@
 import {alertEnemiesToAttacker,inFrontOfEnemy} from './enemy-alert.js?v=421';
 import {Luxmancer,LuxPlayer} from './luxmancer.js?v=423';
 import {RiftPlayer} from './rift-player.js?v=422';
-import {VioletPlayer} from './violet-player.js?v=395';
+import {VioletPlayer} from './violet-player.js?v=428';
 import {DefenseTitle} from './defense-title.js?v=413';
 import {kageDashCanFinish} from './kage-attacks.js?v=427';
 import {NINJA} from './ninja-motion.js?v=424';
@@ -52,7 +52,7 @@ import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {EvacRaiderWaves} from './evac-raider-waves.js?v=421';
 import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-approach.js?v=393';
 import {MochiHero,MOCHI} from './mochi-hero.js?v=overall-performance-238';
-import {VOLT_STUN,VIOLET_BEAM,VIOLET_ORB,VIOLET_PULSE} from './hero-powers.js?v=388';
+import {VOLT_STUN,VIOLET_BEAM,VIOLET_ORB} from './hero-powers.js?v=428';
 import {RobotStunEffect} from './hero-power-effects.js?v=mochi-56';
 import {EvacuationScene,districtHeroUnits} from './evacuation.js?v=415';
 import * as THREE from 'three';
@@ -67,14 +67,14 @@ import {SiegeWalker} from './siege-walker.js?v=427';
 import {WalkerBeamImpact} from './walker-beam-impact.js?v=392';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=393';
-import {VioletHero} from './violet-hero.js?v=393';
-import {Speedster} from './speedster.js?v=424';
+import {VioletHero} from './violet-hero.js?v=428';
+import {Speedster} from './speedster.js?v=428';
 import {RobotMissiles,WALKER_SALVO_SIZE,WALKER_MISSILE_BLAST_RADIUS,WALKER_MISSILE_UNIT_BLAST_RADIUS} from './robot-missiles.js?v=424';
 import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';
 import {PortalHero} from './portal-hero.js?v=397';
 import {SolaraHero} from './solara-hero.js?v=rainbow-full-solara-290';
 import {HeroRoster} from './hero-roster.js?v=404';
-import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=423';
+import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=428';
 import {segmentBoxFraction} from './combat-collision.js?v=evac-performance-233';
 import {WalkerSniper,WALKER_SNIPER} from './walker-sniper.js?v=415';
 import {RobotEyeBeams} from './robot-eye-beams.js?v=charged-shuriken-130';
@@ -591,18 +591,6 @@ function violetPowerHit(hit,point,power){
  return before-section.hp;
 }
 
-function violetBarrierPulse(origin){
- for(const target of violetSplash(origin,VIOLET_PULSE.radius)){
-  const enemy=target.unit.entity;
-  if(enemy===robot||enemy===argus||enemy===bastionTest()?.boss)continue;
-  const damage=damageRobotHit(target,VIOLET_PULSE.damage,'barrier-pulse',true);
-  if(damage<=0||!target.unit.alive)continue;
-  if(enemy.interrupt)enemy.interrupt(VIOLET_PULSE.stunSeconds);
-  else enemy.stun?.(VIOLET_PULSE.stunSeconds,'barrier-pulse');
-  emitParticle('spark',target.point,8,1);
- }
-}
-
 function criticalMassBurst(origin,power){
  runner?.storm?.rechargeBlast(origin,power.radius,power.damage);const hits=[];for(const contact of massContacts(origin,unitDamage.units,power.radius)){
   const point=contact.point,direction=point.clone().sub(origin),start=origin.clone().addScaledVector(direction.clone().normalize(),.04);if(traceImpact(start,point,{sections:physics.chunks,ground:false,radius:.02}))continue;
@@ -958,7 +946,7 @@ if(defenseMode){
   blocked:(a,b,radius)=>traceImpact(a,b,{sections:physics.chunks,ground:false,radius}),
   paused:()=>paused||missionRaiders.ended||missionRaiders.upgradePending
  };
- hero.player=new VioletPlayer(hero,{...manualOptions,onPulse:violetBarrierPulse});
+ hero.player=new VioletPlayer(hero,manualOptions);
  const groundOptions={...manualOptions,buildings:layout.buildings,getBuilding:id=>buildingRecords.get(id),roofBelow:(x,z,top,bottom)=>{
   const a={x,y:top,z},b={x,y:bottom,z};
   const sections=physics.chunks.querySegment(a,b,0).filter(c=>c.type==='slab'&&c.state==='intact'&&!c.hasDetached);

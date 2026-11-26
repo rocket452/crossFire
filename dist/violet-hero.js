@@ -1,6 +1,6 @@
 import {VioletOrbEffects} from './violet-orb-effects.js?v=violet-charge-380';
 import * as THREE from './vendor/three.module.js';
-import {BarrierCapacitor,VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_ORB,VIOLET_SHIELD_CHARGE_RATE,violetOrbPower} from './hero-powers.js?v=388';
+import {BarrierCapacitor,VIOLET_BEAM,VIOLET_OVERLOAD,VIOLET_ORB,VIOLET_SHIELD_CHARGE_RATE,violetOrbPower} from './hero-powers.js?v=428';
 import {violetBeamEffect} from './hero-power-effects.js?v=powers-48';
 import {ShieldShake,SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
 import {advanceVioletFlight,VIOLET_TUNING} from './violet-flight.js?v=387';

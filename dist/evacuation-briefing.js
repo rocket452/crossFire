@@ -28,10 +28,9 @@ const training={
    ['Ascend / descend','Space / Shift','Rise / Down'],
    ['Charge and release force orb','Hold left click or F','Hold Orb'],
    ['Hold barrier','Right click or G','Hold Barrier'],
-   ['Barrier pulse','E','Pulse'],
    ['Release charged beam','R','Beam']
   ],
-  bonus:'Longer orb charges hit harder and wider. Barrier Pulse spends 10% shield charge to stun nearby raiders. At 100%, the barrier bursts and hurts Violet.'
+  bonus:'Longer orb charges hit harder and wider. At 100%, the barrier bursts and hurts Violet.'
  },
  rift:{
   tip:'Blink up to rooftops or past an enemy’s flank. Press Blink again within four seconds to return to your starting point.',
