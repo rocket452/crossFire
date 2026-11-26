@@ -8,7 +8,9 @@ const unit=v=>{const l=length(v)||1;return{x:v.x/l,y:v.y/l,z:v.z/l};};
 const dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;
 const cross=(a,b)=>({x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x});
 function rotate(v,q,inverse=false){const x=inverse?-q.x:q.x,y=inverse?-q.y:q.y,z=inverse?-q.z:q.z,w=q.w,tx=2*(y*v.z-z*v.y),ty=2*(z*v.x-x*v.z),tz=2*(x*v.y-y*v.x);return{x:v.x+w*tx+y*tz-z*ty,y:v.y+w*ty+z*tx-x*tz,z:v.z+w*tz+x*ty-y*tx};}
-export function terrainHeight(x,z){return .08+Math.max(0,3.8-.6*Math.abs(x-50)-.28*Math.abs(z-39),3.2-.55*Math.abs(x+50)-.27*Math.abs(z+39));}
+let terrainMoundsEnabled=true;
+export function setTerrainMoundsEnabled(enabled){terrainMoundsEnabled=enabled;}
+export function terrainHeight(x,z){if(!terrainMoundsEnabled)return .08;return .08+Math.max(0,3.8-.6*Math.abs(x-50)-.28*Math.abs(z-39),3.2-.55*Math.abs(x+50)-.27*Math.abs(z+39));}
 export function terrainNormal(x,z){const e=.02;return unit({x:(terrainHeight(x-e,z)-terrainHeight(x+e,z))/(2*e),y:1,z:(terrainHeight(x,z-e)-terrainHeight(x,z+e))/(2*e)});}
 function faceNormal(c,p,radius=0,prefer=null){
  const q=c.body?.quaternion||{x:0,y:0,z:0,w:1},center=c.body?.position||c,local=rotate({x:p.x-center.x,y:p.y-center.y,z:p.z-center.z},q,true);let best=Infinity,result;

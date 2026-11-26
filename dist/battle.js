@@ -4,14 +4,14 @@ import {RiftPlayer} from './rift-player.js?v=422';
 import {VioletPlayer} from './violet-player.js?v=395';
 import {DefenseTitle} from './defense-title.js?v=413';
 import {kageDashCanFinish} from './kage-attacks.js?v=393';
-import {NINJA} from './ninja-motion.js?v=393';
+import {NINJA} from './ninja-motion.js?v=424';
 import {AssetCityLighting} from './asset-city-lighting.js?v=315';
 import {ASSET_CITY} from './asset-city-config.js?v=311';
 import {AssetCity} from './asset-city.js?v=347';
 import {setupRoninModelChoice} from './ronin-model-choice.js?v=310';
 import {RUNNER_BEAM} from './runner-beam.js?v=lightning-range-298';
 import {WELDING_BEAM,weldStun} from './runner-welder.js?v=volt-abilities-371';
-import {VOLT_STORM} from './runner-storm.js?v=392';
+import {VOLT_STORM} from './runner-storm.js?v=424';
 import {massContacts,CRITICAL_MASS} from './critical-mass.js?v=mass-charge-369';
 import {WALKER_WEAPON_HEALTH_SCALE} from './walker-weapons.js?v=415';
 import {EmbercatHero,EMBERCAT} from './embercat-hero.js?v=firecat-flight-254';
@@ -39,7 +39,7 @@ import {CombatTesting} from './combat-testing.js?v=421';
 import {ActorSilhouettes} from './actor-silhouettes.js?v=shogun-skin-310';
 import {RAIDER_COMBAT} from './evac-raider.js?v=421';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=415';
-import {NinjaHero} from './ninja-hero.js?v=398';
+import {NinjaHero} from './ninja-hero.js?v=424';
 import {RobotDeathEffects} from './robot-death-effects.js?v=enemy-low-health-smoke-291';
 import {shieldBeamIntersection,frontBarrierHit,absorbDirectionalBarrier} from './hero-defense.js?v=390';
 import {EnemyDamageFlash} from './enemy-damage-flash.js?v=393';
@@ -67,8 +67,8 @@ import {WalkerBeamImpact} from './walker-beam-impact.js?v=392';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=393';
 import {VioletHero} from './violet-hero.js?v=393';
-import {Speedster} from './speedster.js?v=398';
-import {RobotMissiles,WALKER_SALVO_SIZE,WALKER_MISSILE_BLAST_RADIUS,WALKER_MISSILE_UNIT_BLAST_RADIUS} from './robot-missiles.js?v=393';
+import {Speedster} from './speedster.js?v=424';
+import {RobotMissiles,WALKER_SALVO_SIZE,WALKER_MISSILE_BLAST_RADIUS,WALKER_MISSILE_UNIT_BLAST_RADIUS} from './robot-missiles.js?v=424';
 import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';
 import {PortalHero} from './portal-hero.js?v=397';
 import {SolaraHero} from './solara-hero.js?v=rainbow-full-solara-290';
@@ -78,7 +78,7 @@ import {segmentBoxFraction} from './combat-collision.js?v=evac-performance-233';
 import {WalkerSniper,WALKER_SNIPER} from './walker-sniper.js?v=415';
 import {RobotEyeBeams} from './robot-eye-beams.js?v=charged-shuriken-130';
 import {RobotArsenal} from './robot-arsenal.js?v=relay-targeting-385';
-import {terrainHeight,traceTerrain} from './runner-motion.js?v=390';
+import {setTerrainMoundsEnabled,terrainHeight,traceTerrain} from './runner-motion.js?v=424';
 const assetCityMode=new URLSearchParams(location.search).get('scene')==='city-test';
 const testingMode=assetCityMode||new URLSearchParams(location.search).get('scene')==='testing';let testingArena=null,assetCity=null;
 function activeRaiders(){return testingArena||evacuation?.raider||missionRaiders;}
@@ -91,6 +91,7 @@ const {LiberationUI}=liberationMode?await import('./liberation-ui.js?v=398'):{};
 const defenseMode=new URLSearchParams(location.search).get('scene')==='wave-defense';
 const mission1Mode=liberationMode||defenseMode||new URLSearchParams(location.search).get('scene')==='mission-1';
 const districtMode=evacuationMode||mission1Mode;
+setTerrainMoundsEnabled(!defenseMode);
 const districtHeroStart=defenseMode?WAVE_DEFENSE_HERO_START:MISSION1_HERO_START;
 const districtBounds=defenseMode?WAVE_DEFENSE_BOUNDS:ESCORT_APPROACH;
 function districtMovementBounds(inset=4){
@@ -285,6 +286,7 @@ function addProps(){const cars=[];for(const b of layout.buildings){if(rand()>.55
  const blocks=[];for(const side of [-1,1])for(let i=0;i<5;i++)blocks.push({p:[side*8,.5,(i-2)*1.8],s:[.6,1,1.35],yaw:.1*side});if(!convoyMode)instanced(unitBox,simple('#7c8475'),blocks);
 }
 function addTerrain(){
+ if(defenseMode)return;
  physics.addTerrainPyramid({x:50,z:39,height:3.8,slopeX:.6,slopeZ:.28});physics.addTerrainPyramid({x:-50,z:-39,height:3.2,slopeX:.55,slopeZ:.27});
  for(const sign of [-1,1]){const positions=[],colors=[],indices=[],xs=[];for(let x=43;x<=57;x++)xs.push(sign*x);const zs=[];for(let z=25;z<=53;z++)zs.push(sign*z);for(let j=0;j<zs.length;j++)for(let i=0;i<xs.length;i++){const x=xs[i],z=zs[j],y=terrainHeight(x,z);positions.push(x,y,z);const c=new THREE.Color(y>.5?'#849378':'#79887c');colors.push(c.r,c.g,c.b);if(i<xs.length-1&&j<zs.length-1){const n=j*xs.length+i;indices.push(n,n+xs.length,n+1,n+1,n+xs.length,n+xs.length+1);}}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geo.setIndex(indices);geo.computeVertexNormals();const o=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,side:THREE.DoubleSide,flatShading:true}));o.receiveShadow=true;scene.add(o);}
 }

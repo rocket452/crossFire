@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {VOLT_STORM as C} from './runner-storm.js?v=392';
+import {VOLT_STORM as C} from './runner-storm.js?v=424';
 export const SKY_STRIKE_ART=Object.freeze({life:1.5,segments:320,sparks:64,boltHeight:C.strikeHeight});
 const UP=new THREE.Vector3(0,1,0);
 export class SkyStrikeFX {

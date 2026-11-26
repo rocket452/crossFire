@@ -1,8 +1,8 @@
 import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=395';
 import {stepAttackMovement} from './runner-attack-stop.js?v=beam-slide-370';
 import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
-import {RunnerStorm,VOLT_STORM} from './runner-storm.js?v=392';
-import {RunnerStormFX} from './runner-storm-fx.js?v=392';
+import {RunnerStorm,VOLT_STORM} from './runner-storm.js?v=424';
+import {RunnerStormFX} from './runner-storm-fx.js?v=424';
 import {CriticalMass,CRITICAL_MASS} from './critical-mass.js?v=mass-charge-369';
 import {CriticalMassFX} from './critical-mass-fx.js?v=mass-charge-369';
 import {HeroHurt} from './hero-hurt.js?v=hero-hurt-118';
@@ -12,14 +12,14 @@ import * as THREE from './vendor/three.module.js';
 import {VOLT_STUN} from './hero-powers.js?v=combat-hud-102';
 import {RunnerEnergy,RUNNER_ENERGY} from './runner-energy.js?v=346';
 import {RunnerHeading} from './runner-heading.js?v=runner-camera-27';
-import {RunnerMotion,terrainHeight} from './runner-motion.js?v=drone-decks-385';
+import {RunnerMotion,terrainHeight} from './runner-motion.js?v=424';
 import {RunnerAnimator} from './runner-animation.js?v=runner-ai-7';
 import {RunnerLookPose} from './runner-look-pose.js?v=torso-look-75';
 import {RunnerAI} from './runner-ai.js?v=robot-experiments-108';
 import {RunnerElectric} from './runner-electric.js?v=346';
 import {RunnerBeam,RUNNER_BEAM} from './runner-beam.js?v=lightning-range-298';
 import {RunnerCharge} from './runner-charge.js?v=instant-lightning-63';
-import {RunnerDash,DASH} from './runner-dash.js?v=392';
+import {RunnerDash,DASH} from './runner-dash.js?v=424';
 import {TouchStick} from './touch-stick.js?v=twin-stick-22';
 import {selectRunnerAim} from './runner-aim.js?v=lightning-range-298';
 import {RunnerFeedback} from './runner-feedback.js?v=volt-abilities-371';
@@ -184,8 +184,12 @@ export class Speedster {
    return result;
   }});
  }
- activateStorm(){if(!this.active||this.settingsOpen||this.isPaused()||this.critical.stunned){this.strikePending=this.orbPending=false;return;}if(this.strikePending){this.updateCamera(0);const point=this.getStormTarget(this.camera.position,this.camera.getWorldDirection(new THREE.Vector3()));if(!this.storm.callStrike(point))this.feedback.message(this.storm.strikeCooldown>0?'SKY STRIKE RECHARGING':'AIM AT OPEN GROUND');}if(this.orbPending){this.storm.bounds=this.motion.bounds;const from=this.character?this.character.hand('R'):this.massOrigin();if(!this.storm.beginCast(from,this.aimDirection(),this.energy))this.feedback.message(this.energy.amount<VOLT_STORM.ultimateCost?'BALL LIGHTNING NEEDS '+VOLT_STORM.ultimateCost.toFixed(1)+' CHARGE':'ORB NOT READY OR LAUNCH BLOCKED');}this.strikePending=this.orbPending=false;}
- updateStormHud(){if(!this.active)return;const s=this.storm,c=VOLT_STORM,blocked=this.critical.stunned||this.isPaused(),strike=document.getElementById('runner-strike'),orb=document.getElementById('runner-orb');strike.disabled=blocked||s.strikeCooldown>0;strike.textContent=s.strike?'STRIKE '+s.strike.remaining.toFixed(1)+'s':s.strikeCooldown>0?'STRIKE '+s.strikeCooldown.toFixed(1)+'s':'STRIKE · Z';orb.disabled=blocked||!!s.cast||s.ultimateCooldown>0||this.energy.amount<c.ultimateCost;orb.textContent=s.cast?'CASTING '+s.cast.remaining.toFixed(1)+'s':s.ultimateCooldown>0?'ORB '+s.ultimateCooldown.toFixed(1)+'s':s.orb?'RECAST · V':'ORB · V';const amount=s.orb?.energy||0;document.getElementById('runner-orb-fill').style.width=(amount/c.orbEnergy*100)+'%';document.getElementById('runner-orb-value').textContent=s.orb?Math.ceil(amount)+' / '+c.orbEnergy:'ULTIMATE · '+c.ultimateCost.toFixed(1)+' CHARGE';document.getElementById('runner-storm-status').textContent=s.cast?'GATHERING BALL LIGHTNING':s.strike?'LIGHTNING IN '+s.strike.remaining.toFixed(1)+'s':s.orb?'SHOOT THE ORB TO RECHARGE':'Z: SKY STRIKE · V: BALL LIGHTNING';}
+ activateStorm(){if(!this.active||this.settingsOpen||this.isPaused()||this.critical.stunned){this.strikePending=this.orbPending=false;return;}if(this.strikePending){this.updateCamera(0);const point=this.getStormTarget(this.camera.position,this.camera.getWorldDirection(new THREE.Vector3()));if(!this.storm.callStrike(point,this.energy)){
+   const message=this.storm.strikeCooldown>0?'SKY STRIKE RECHARGING':
+    !point?'AIM AT OPEN GROUND':'SKY STRIKE NEEDS '+VOLT_STORM.strikeCost+' CHARGE';
+   this.feedback.message(message);
+  }}if(this.orbPending){this.storm.bounds=this.motion.bounds;const from=this.character?this.character.hand('R'):this.massOrigin();if(!this.storm.beginCast(from,this.aimDirection(),this.energy))this.feedback.message(this.energy.amount<VOLT_STORM.ultimateCost?'BALL LIGHTNING NEEDS '+VOLT_STORM.ultimateCost.toFixed(1)+' CHARGE':'ORB NOT READY OR LAUNCH BLOCKED');}this.strikePending=this.orbPending=false;}
+ updateStormHud(){if(!this.active)return;const s=this.storm,c=VOLT_STORM,blocked=this.critical.stunned||this.isPaused(),strike=document.getElementById('runner-strike'),orb=document.getElementById('runner-orb');strike.disabled=blocked||s.strikeCooldown>0||this.energy.amount<c.strikeCost-1e-8;strike.textContent=s.strike?'STRIKE '+s.strike.remaining.toFixed(1)+'s':s.strikeCooldown>0?'STRIKE '+s.strikeCooldown.toFixed(1)+'s':'STRIKE '+c.strikeCost+' · Z';orb.disabled=blocked||!!s.cast||s.ultimateCooldown>0||this.energy.amount<c.ultimateCost;orb.textContent=s.cast?'CASTING '+s.cast.remaining.toFixed(1)+'s':s.ultimateCooldown>0?'ORB '+s.ultimateCooldown.toFixed(1)+'s':s.orb?'RECAST · V':'ORB · V';const amount=s.orb?.energy||0;document.getElementById('runner-orb-fill').style.width=(amount/c.orbEnergy*100)+'%';document.getElementById('runner-orb-value').textContent=s.orb?Math.ceil(amount)+' / '+c.orbEnergy:'ULTIMATE · '+c.ultimateCost.toFixed(1)+' CHARGE';document.getElementById('runner-storm-status').textContent=s.cast?'GATHERING BALL LIGHTNING':s.strike?'LIGHTNING IN '+s.strike.remaining.toFixed(1)+'s':s.orb?'SHOOT THE ORB TO RECHARGE':'Z: SKY STRIKE · V: BALL LIGHTNING';}
 
  massOrigin(){return new THREE.Vector3().copy(this.motion.position).addScaledVector(this.bodyUp,1.15);}
  releaseMass(power){if(!this.active||this.isPaused())return;const origin=this.massOrigin(),hits=this.onCriticalMass(origin,power)||[];this.damage+=hits.reduce((s,h)=>s+h.damage,0);this.massFX.discharge(origin,power,hits);this.massFX.sound(this.preferences.sound?this.feedback.audio:null,'burst',power.level);}

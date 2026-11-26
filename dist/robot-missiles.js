@@ -3,7 +3,7 @@ import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shurike
 import * as THREE from './vendor/three.module.js';
 import {segmentBoxFraction} from './combat-collision.js?v=robot-experiments-108';
 
-import {terrainHeight} from './runner-motion.js?v=overall-performance-238';
+import {terrainHeight} from './runner-motion.js?v=424';
 
 export const WALKER_SALVO_SIZE=12;
 export const WALKER_MISSILE_BLAST_RADIUS=7.6;

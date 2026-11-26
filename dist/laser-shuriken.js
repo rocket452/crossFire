@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {terrainHeight} from './runner-motion.js?v=overall-performance-238';
+import {terrainHeight} from './runner-motion.js?v=424';
 
 const RING_TUBE_RADIUS=.045;
 const HAND_OFFSET=.22;
