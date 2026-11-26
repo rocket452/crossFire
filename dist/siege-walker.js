@@ -8,7 +8,7 @@ import {WalkerGait,solveLegKnee,angleDelta,WALKER_TURN_SPEED} from './walker-gai
 
 const SNIPER_BARREL_Y=1.4;
 const SNIPER_BARREL_BASE=1.9;
-const SNIPER_MOUNT_OFFSET=2;
+const SNIPER_MOUNT_OFFSET=1;
 const SNIPER_YAW_LIMIT=THREE.MathUtils.degToRad(62);
 const SNIPER_HEAD_CLEARANCE=.08;
 
@@ -101,7 +101,7 @@ export class SiegeWalker {
    const parent=p.parent?this.nodes[p.parent]:this.root;
    const parentPivot=p.parent?new THREE.Vector3(...spec.parts.find(q=>q.name===p.parent).pivot):new THREE.Vector3();
    node.position.copy(pivot).sub(parentPivot);
-   if(p.name==='plasma_cannon')node.position.x+=SNIPER_MOUNT_OFFSET;
+   if(p.name==='plasma_cannon')node.position.add(new THREE.Vector3(SNIPER_MOUNT_OFFSET,.5,.3));
    parent.add(node);
    this.restPositions[p.name]=node.position.clone();this.nodes[p.name]=node;this.meshes[p.name]=mesh;
    const b=geometry.boundingBox;this.boxes[p.name]={center:b.getCenter(new THREE.Vector3()),size:b.getSize(new THREE.Vector3())};
@@ -112,9 +112,9 @@ export class SiegeWalker {
     color:spec.appearance?0x373e58:0x3e444a,metalness:.55,roughness:.55
    });
    const mount=this.nodes.plasma_cannon.position;
-   const arm=new THREE.Mesh(new THREE.BoxGeometry(SNIPER_MOUNT_OFFSET+.8,1.04,1.38),supportMaterial);
+   const arm=new THREE.Mesh(new THREE.BoxGeometry(SNIPER_MOUNT_OFFSET+.8,1.54,1.38),supportMaterial);
    arm.name='Sniper traverse arm';
-   arm.position.set(mount.x-SNIPER_MOUNT_OFFSET*.55,mount.y-.5,mount.z);
+   arm.position.set(mount.x-SNIPER_MOUNT_OFFSET*.55,mount.y-.75,mount.z-.15);
    arm.castShadow=arm.receiveShadow=true;
    const socket=new THREE.Mesh(new THREE.CylinderGeometry(.68,.61,.65,8),supportMaterial);
    socket.name='Sniper pivot socket';
@@ -280,6 +280,7 @@ export class SiegeWalker {
    if(name==='reactor'||name==='visor'){m.material.emissive.set(state.phase==='charging'||state.phase==='firing'?this.chargeGlow:this.idleGlow);m.material.emissiveIntensity=(1.5+Math.sin(time*4)*.4)*(hp<.3?1.8:1)+state.charge*3;}
   }
   if(this.plasmaAim)this.aimPlasma(this.plasmaAim);
+  else this.parkSniper();
   if(hp<.4&&Math.floor(time*3)!==this.lastSmoke){this.lastSmoke=Math.floor(time*3);this.onEffect(this.root.localToWorld(new THREE.Vector3(1,15,1)),true);}
   this.root.updateMatrixWorld(true);
  }
@@ -327,7 +328,13 @@ export class SiegeWalker {
     &&!transformedBoxIntersects(muzzleBounds,transform,headBounds,corners,triangle,bounds);
   };
   if(clear(desired))return desired;
-  if(!clear(neutral))neutral.identity();
+  if(!clear(neutral)){
+   neutral.identity();
+   if(!clear(neutral)){
+    // Park the muzzle outboard if the moving head blocks the forward rest pose.
+    neutral.setFromEuler(new THREE.Euler(1.25,1,0,'YXZ'));
+   }
+  }
   const fitted=neutral.clone();
   let low=0,high=1;
   for(let i=0;i<9;i++){
@@ -337,12 +344,17 @@ export class SiegeWalker {
   }
   return fitted.copy(neutral).slerp(desired,low);
  }
+ parkSniper(){
+  if(!this.isWeaponWorking('plasma'))return;
+  const rest=new THREE.Quaternion();
+  this.nodes.plasma_cannon.quaternion.copy(this.clearSniperHead(rest,rest.clone()));
+ }
  updatePlasmaWarning(active,time=0){
   if(!this.isWeaponWorking('plasma'))return;
   this.plasmaCharging=active;
   if(!active&&this.plasmaAim){
    this.plasmaAim=null;
-   this.nodes.plasma_cannon.quaternion.identity();
+   this.parkSniper();
   }
   const material=this.meshes.plasma_cannon?.material;
   if(material){material.emissive.set('#ff382f');material.emissiveIntensity=active?(.45+Math.sin(time*15)**2):0;}

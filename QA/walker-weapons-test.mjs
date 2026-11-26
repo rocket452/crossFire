@@ -24,6 +24,7 @@ for(const dt of[1/30,1/60,1/120]){
   for(const {part} of WALKER_WEAPONS)assert.equal(robot.signalMeshes.get(part).parent,robot.meshes[part]);
  }
  const mount=robot.nodes.plasma_cannon,head=robot.nodes.head;
+ assert(Math.abs(mount.position.x-robot.nodes.upperarm_r.position.x-1)<1e-8);
  const base=robot.meshes.plasma_cannon.geometry.boundingBox;
  const barrelBounds=new THREE.Box3().setFromCenterAndSize(robot.sniperBarrelBox.center,robot.sniperBarrelBox.size);
  const convex=box=>new PhysicsBox(new Vec3().copy(box.getSize(new THREE.Vector3()).multiplyScalar(.5))).convexPolyhedronRepresentation;
@@ -40,8 +41,9 @@ for(const dt of[1/30,1/60,1/120]){
   head.rotation.set(headPitch,headYaw,0,'YXZ');
   const right=aim(Math.PI*55/180,1.4);
   if(headYaw===0&&headPitch===0)assert(right.aligned&&Math.atan2(right.direction.x,right.direction.z)>.9,'sniper can track more than 50° outboard');
-  for(const yaw of [-1,-.6,-.3,0,.6,1])for(const height of [-60,1.4,60]){
-   aim(yaw,height);
+  for(const yaw of [null,-1,-.6,-.3,0,.6,1])for(const height of [-60,1.4,60]){
+   if(yaw===null){robot.parkSniper();mount.updateMatrix();}
+   else aim(yaw,height);
    const toHead=head.matrix.clone().invert().multiply(mount.matrix);
    const rotation=new PhysicsQuaternion().copy(new THREE.Quaternion().setFromRotationMatrix(toHead));
    for(const {hull,center} of gunVolumes){
