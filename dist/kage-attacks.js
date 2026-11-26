@@ -17,27 +17,36 @@ export class KageAttacks {
   this.arcRoot.name='Kage slash trail';
   this.group.add(this.arcRoot);
   this.slashSegments=32;
-  this.arc=this.makeSlashRibbon('#52ddff',.9,config.slash.range*.82);
-  this.arcEdge=this.makeSlashRibbon('#e7ffff',.27,config.slash.range*.83);
+  const radius=config.slash.range*.82;
+  this.arcHalo=this.makeSlashRibbon('#8076ff',2.0,radius-.2,1.0,true);
+  this.arc=this.makeSlashRibbon('#42cbff',1.36,radius,0,true);
+  this.arcEdge=this.makeSlashRibbon('#e6ffff',.34,radius+.07,-.015);
+  this.arcEcho=this.makeSlashRibbon('#a1a8ff',.22,radius-1.62,.6);
+  this.slashSparks=new THREE.InstancedMesh(new THREE.OctahedronGeometry(1,0),
+   new THREE.MeshBasicMaterial({color:'#b1f4ff',transparent:true,depthWrite:false,toneMapped:false,blending:THREE.AdditiveBlending}),24);
+  this.slashSparks.frustumCulled=false;
+  this.arcRoot.add(this.slashSparks);
   this.shadowRoot=new THREE.Group();this.shadowRoot.name='Stored shadow kunai';this.group.add(this.shadowRoot);this.shadowKunai=[];const silhouette=new THREE.Shape();silhouette.moveTo(0,.42);for(const[x,y]of[[-.15,.05],[-.055,-.12],[-.055,-.28],[.055,-.28],[.055,-.12],[.15,.05]])silhouette.lineTo(x,y);silhouette.closePath();const shadowGeometry=new THREE.ShapeGeometry(silhouette),shadowMat=new THREE.MeshBasicMaterial({color:'#21132f',transparent:true,opacity:.94,side:THREE.DoubleSide,depthWrite:false,toneMapped:false}),edgeMat=new THREE.LineBasicMaterial({color:'#b89aff',transparent:true,opacity:.9,depthWrite:false,toneMapped:false}),edgeGeometry=new THREE.BufferGeometry().setFromPoints(silhouette.getPoints().map(p=>new THREE.Vector3(p.x,p.y,.015))),ringGeometry=new THREE.TorusGeometry(.085,.022,4,12),ringMat=new THREE.MeshBasicMaterial({color:'#9f7cea',transparent:true,opacity:.85,depthWrite:false,toneMapped:false});
   for(let i=0;i<config.kunai.maxStored;i++){const marker=new THREE.Group();marker.name='Shadow kunai '+(i+1);marker.add(new THREE.Mesh(shadowGeometry,shadowMat),new THREE.LineLoop(edgeGeometry,edgeMat));const ring=new THREE.Mesh(ringGeometry,ringMat);ring.position.y=-.38;marker.add(ring);this.shadowRoot.add(marker);this.shadowKunai.push(marker);}
   this.panel=document.createElement('div');this.panel.id='kage-weapons-meter';this.panel.innerHTML='<b data-kunai>KUNAI READY</b><span data-slash>SLASH READY · R</span>';document.getElementById('ninja-hud').append(this.panel);this.reset();
  }
- makeSlashRibbon(color,width,radius){
-  const positions=[],indices=[];
+ makeSlashRibbon(color,width,radius,lift,soft=false){
+  const positions=[],indices=[],colors=[];
   for(let i=0;i<=this.slashSegments;i++){
    const t=i/this.slashSegments,angle=THREE.MathUtils.lerp(-1,1,t);
    const taper=Math.sin(t*Math.PI)*(.45+.55*t);
-   for(const r of [radius-width*taper,radius]){
-    positions.push(Math.sin(angle)*r,.24*Math.sin(angle)*r,Math.cos(angle)*r);
+   for(const [edge,r] of [radius-width*taper,radius].entries()){
+    positions.push(Math.sin(angle)*r,.32*Math.sin(angle)*r+lift*taper,Math.cos(angle)*r);
+    colors.push(1,1,1,soft&&edge===0?0:1);
    }
    if(i>0){const j=i*2;indices.push(j-2,j-1,j,j-1,j+1,j);}
   }
   const geometry=new THREE.BufferGeometry();
   geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
   geometry.setIndex(indices);
+  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,4));
   const mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({
-   color,transparent:true,depthWrite:false,side:THREE.DoubleSide,
+   color,vertexColors:true,transparent:true,depthWrite:false,side:THREE.DoubleSide,
    blending:THREE.AdditiveBlending,toneMapped:false
   }));
   this.arcRoot.add(mesh);
@@ -112,23 +121,48 @@ export class KageAttacks {
   this.render(dt);
  }
  render(dt=0){const h=this.hero,c=this.config;let i=0;for(const b of this.bolts){this.dummy.position.copy(b.position);this.dummy.quaternion.setFromUnitVectors(forward,b.dir);this.dummy.scale.setScalar(c.kunai.visualScale);this.dummy.updateMatrix();this.kunai.setMatrixAt(i,this.dummy.matrix);this.dummy.scale.multiplyScalar(c.kunai.outlineScale);this.dummy.updateMatrix();this.outlines.setMatrixAt(i,this.dummy.matrix);this.dummy.position.addScaledVector(b.dir,-c.kunai.trailLength/2);this.dummy.scale.set(c.kunai.trailWidth,c.kunai.trailWidth,c.kunai.trailLength);this.dummy.updateMatrix();this.trails.setMatrixAt(i++,this.dummy.matrix);}this.kunai.count=this.outlines.count=this.trails.count=i;this.kunai.instanceMatrix.needsUpdate=this.outlines.instanceMatrix.needsUpdate=this.trails.instanceMatrix.needsUpdate=true;
-  const slashProgress=1-this.slashTime/c.slash.effectSeconds;
-  this.arcRoot.visible=this.slashTime>0&&slashProgress>.14;
-  if(this.arcRoot.visible){
-   const sweep=THREE.MathUtils.smoothstep(slashProgress,.14,.54);
-   const fade=1-THREE.MathUtils.smoothstep(slashProgress,.46,1);
-   this.arcRoot.position.copy(this.slashOrigin);
-   this.arcRoot.quaternion.copy(this.slashRotation);
-   if(this.fallingSwing)this.arcRoot.scale.set(.16,.3,.32).multiplyScalar(SLASH_VISUAL_SCALE);
-   else this.arcRoot.scale.setScalar(SLASH_VISUAL_SCALE);
-   const segments=Math.floor(sweep*this.slashSegments)*6;
-   this.arc.geometry.setDrawRange(0,segments);
-   this.arcEdge.geometry.setDrawRange(0,segments);
-   this.arc.material.opacity=fade*.93;
-   this.arcEdge.material.opacity=fade;
-  }
+  this.renderSlash();
   const count=h.active&&h.enabled&&this.loading?this.stored:0;this.shadowRoot.visible=count>0;if(count){const head=h.character.nodes.B_Head.getWorldPosition(new THREE.Vector3());this.shadowRoot.position.set(head.x,Math.max(head.y+c.kunai.shadowHeight,h.root.position.y+2.9),head.z);this.shadowRoot.quaternion.copy(h.camera.quaternion);}for(let j=0;j<this.shadowKunai.length;j++){const marker=this.shadowKunai[j],wasVisible=marker.visible;marker.visible=j<count;if(!marker.visible)continue;marker.userData.age=wasVisible?(marker.userData.age||0)+dt:0;const offset=j-(count-1)/2;marker.position.set(offset*c.kunai.shadowSpacing,-Math.abs(offset)*.1+Math.sin(h.time*3+j*.8)*.035,0);marker.rotation.z=-offset*.12;marker.scale.setScalar(c.kunai.shadowScale*(.75+.25*Math.min(1,marker.userData.age/.12)));}
   this.heldKunai.visible=!!h.enabled&&!h.shuriken.charging&&h.throwPose<=0;this.panel.hidden=!h.active;this.panel.querySelector('[data-kunai]').textContent=this.loading?'KUNAI '+this.stored+' / '+c.kunai.maxStored+' STORED':this.cooldown>0?'KUNAI · '+this.cooldown.toFixed(1)+'s':'KUNAI READY · LMB / F';this.panel.querySelector('[data-slash]').textContent=this.slashCooldown>0?'SLASH · '+this.slashCooldown.toFixed(1)+'s':'SLASH READY · R';const button=document.getElementById('ninja-slash');if(button)button.disabled=this.slashCooldown>0;
+ }
+ renderSlash(){
+  const c=this.config.slash,progress=1-this.slashTime/c.effectSeconds;
+  this.arcRoot.visible=this.slashTime>0&&progress>.12;
+  if(!this.arcRoot.visible)return;
+  const sweep=THREE.MathUtils.smoothstep(progress,.12,.53);
+  const fade=1-THREE.MathUtils.smoothstep(progress,.5,1);
+  this.arcRoot.position.copy(this.slashOrigin);
+  this.arcRoot.quaternion.copy(this.slashRotation);
+  if(this.fallingSwing)this.arcRoot.scale.set(.24,.38,.39).multiplyScalar(SLASH_VISUAL_SCALE);
+  else this.arcRoot.scale.setScalar(SLASH_VISUAL_SCALE);
+  const segments=Math.ceil(sweep*this.slashSegments)*6;
+  for(const layer of [this.arcHalo,this.arc,this.arcEdge])layer.geometry.setDrawRange(0,segments);
+  const echo=THREE.MathUtils.smoothstep(progress,.23,.65);
+  this.arcEcho.geometry.setDrawRange(0,Math.floor(echo*this.slashSegments)*6);
+  this.arcHalo.material.opacity=fade*.53;
+  this.arc.material.opacity=fade*.96;
+  this.arcEdge.material.opacity=fade;
+  this.arcEcho.material.opacity=fade*.63;
+
+  const radius=c.range*.82;
+  let count=0;
+  for(let i=0;i<24;i++){
+   const fraction=(i+.5)/24;
+   if(fraction>sweep)break;
+   const age=Math.max(0,progress-.12-fraction*.39);
+   const angle=THREE.MathUtils.lerp(-1,1,fraction)+age*.14;
+   const travel=radius+age*(.9+i%4);
+   const x=Math.sin(angle)*travel;
+   const size=.085+(.19+i%3*.06)*(1-age);
+   this.dummy.position.set(x,.32*x+Math.sin(i*2.4)*age*2.6,Math.cos(angle)*travel);
+   this.dummy.rotation.set(angle*.24,angle,0);
+   this.dummy.scale.set(size*.44,size*.44,size*(1.15+i%3*.34));
+   this.dummy.updateMatrix();
+   this.slashSparks.setMatrixAt(count++,this.dummy.matrix);
+  }
+  this.slashSparks.count=count;
+  this.slashSparks.material.opacity=fade;
+  this.slashSparks.instanceMatrix.needsUpdate=true;
  }
  diagnostics(){return{kunaiModel:this.kunaiSource,kunaiTriangles:this.kunaiTriangles,shadowCount:(this.shadowKunai||[]).filter(m=>m.visible).length,stored:this.stored,loading:this.loading,cooldown:this.cooldown,active:this.bolts.length,queued:this.queue.length,throws:this.throws,volleys:this.volleys,lastVolley:this.lastVolley,slashCooldown:this.slashCooldown,slashes:this.slashes,lastSlashHits:this.lastSlashHits,slashHits:this.slashHits,slashHitbox:'cone',slashConeDegrees:this.config.slash.coneDegrees,slashDirection:this.slashDirection.toArray()};}
 }

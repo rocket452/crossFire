@@ -3,7 +3,7 @@ import {Luxmancer,LuxPlayer} from './luxmancer.js?v=423';
 import {RiftPlayer} from './rift-player.js?v=422';
 import {VioletPlayer} from './violet-player.js?v=395';
 import {DefenseTitle} from './defense-title.js?v=413';
-import {kageDashCanFinish} from './kage-attacks.js?v=393';
+import {kageDashCanFinish} from './kage-attacks.js?v=427';
 import {NINJA} from './ninja-motion.js?v=424';
 import {AssetCityLighting} from './asset-city-lighting.js?v=315';
 import {ASSET_CITY} from './asset-city-config.js?v=311';
@@ -39,14 +39,15 @@ import {CombatTesting} from './combat-testing.js?v=421';
 import {ActorSilhouettes} from './actor-silhouettes.js?v=426';
 import {RAIDER_COMBAT} from './evac-raider.js?v=421';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=415';
-import {NinjaHero} from './ninja-hero.js?v=424';
+import {NinjaHero} from './ninja-hero.js?v=427';
 import {RobotDeathEffects} from './robot-death-effects.js?v=enemy-low-health-smoke-291';
 import {shieldBeamIntersection,frontBarrierHit,absorbDirectionalBarrier} from './hero-defense.js?v=390';
 import {EnemyDamageFlash} from './enemy-damage-flash.js?v=393';
-import {HeroMinimap} from './hero-minimap.js?v=415';
+import {HeroMinimap} from './hero-minimap.js?v=427';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
-import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,WAVE_DEFENSE_HIGHWAYS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=423';
+import {EVAC_ROCKET} from './defense-rocket.js?v=427';
+import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,WAVE_DEFENSE_HIGHWAYS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=427';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {EvacRaiderWaves} from './evac-raider-waves.js?v=421';
 import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-approach.js?v=393';
@@ -62,7 +63,7 @@ import {DestructionWorld} from './destruction.js?v=393';
 import {InfantryCrowd} from './infantry.js?v=overall-performance-238';
 import {HelicopterPilot} from './helicopter-pilot.js?v=device-controls-59';
 import {traceImpact,UnitDamage} from './combat-collision.js?v=evac-performance-233';
-import {SiegeWalker} from './siege-walker.js?v=425';
+import {SiegeWalker} from './siege-walker.js?v=427';
 import {WalkerBeamImpact} from './walker-beam-impact.js?v=392';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=393';
@@ -384,7 +385,7 @@ function openDefenseUpgrade(mission){
 function defenseStatus(mission){
  const hud=$('defense-hud'),timer=$('defense-countdown');
  hud.hidden=false;
- const state=mission.phase==='waiting'?'Preparing':mission.phase==='launching'?'Liftoff':'Wave '+mission.wave+' / 3';
+ const state=mission.phase==='waiting'?'Preparing':mission.phase==='launching'?(mission.launchElapsed<EVAC_ROCKET.ignition?'Thrusters igniting':'Liftoff'):'Wave '+mission.wave+' / 3';
  const text=mission.phase==='reinforcements'
   ?'ROCKET CLEAR · '+(mission.victoryRemaining!==null?'BASTION DEFEATED':evacuationReinforcement?.adapter.enabled?'DEFEAT THE BASTION':'BASTION INBOUND')
   :'EVAC ROCKET · '+Math.ceil(100*mission.relay.health/mission.relay.maxHealth)+'% · '+state;
@@ -394,7 +395,9 @@ function defenseStatus(mission){
  if(timer.textContent!==countdown)timer.textContent=countdown;
  const bossHUD=document.querySelector('.boss-health-hud');
  const bastion=evacuationReinforcement?.adapter.enabled;
- bossHUD.hidden=mission.phase==='reinforcements'?!bastion:mission.wave!==3||mission.walker.dead||!mission.walker.root.visible;
+ const walkerPresent=mission.wave===3&&!mission.walker.dead&&mission.walker.root.visible;
+ document.querySelector('.robot-readout').hidden=!walkerPresent;
+ bossHUD.hidden=mission.phase==='reinforcements'?!bastion:!walkerPresent;
  const bossLabel=bastion?'THE BASTION':'SIEGE WALKER · WEAPONS';
  if(bossHUD.querySelector('b').textContent!==bossLabel)bossHUD.querySelector('b').textContent=bossLabel;
  if(mission.upgradePending&&!defenseUpgradePanel)openDefenseUpgrade(mission);

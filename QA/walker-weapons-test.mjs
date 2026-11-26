@@ -1,3 +1,4 @@
+import {Box as PhysicsBox,Vec3,Quaternion as PhysicsQuaternion} from '../dist/vendor/cannon-es.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {registerHooks} from 'node:module';
@@ -22,6 +23,35 @@ for(const dt of[1/30,1/60,1/120]){
   assert.equal(robot.root.name,'Cyberpunk Siege Walker');
   for(const {part} of WALKER_WEAPONS)assert.equal(robot.signalMeshes.get(part).parent,robot.meshes[part]);
  }
+ const mount=robot.nodes.plasma_cannon,head=robot.nodes.head;
+ const base=robot.meshes.plasma_cannon.geometry.boundingBox;
+ const barrelBounds=new THREE.Box3().setFromCenterAndSize(robot.sniperBarrelBox.center,robot.sniperBarrelBox.size);
+ const convex=box=>new PhysicsBox(new Vec3().copy(box.getSize(new THREE.Vector3()).multiplyScalar(.5))).convexPolyhedronRepresentation;
+ const headBounds=robot.meshes.head.geometry.boundingBox;
+ const headHull=convex(headBounds);
+ const headOrigin=new Vec3().copy(headBounds.getCenter(new THREE.Vector3()));
+ const gunVolumes=[base,barrelBounds].map(box=>({hull:convex(box),center:box.getCenter(new THREE.Vector3())}));
+ const aim=(yaw,dy)=>{
+  const target=mount.getWorldPosition(new THREE.Vector3())
+   .add(new THREE.Vector3(Math.sin(yaw)*90,dy,Math.cos(yaw)*90));
+  return robot.aimPlasma(target);
+ };
+ for(const headYaw of [-1.15,0,1.15])for(const headPitch of [-.65,0,.9]){
+  head.rotation.set(headPitch,headYaw,0,'YXZ');
+  const right=aim(Math.PI*55/180,1.4);
+  if(headYaw===0&&headPitch===0)assert(right.aligned&&Math.atan2(right.direction.x,right.direction.z)>.9,'sniper can track more than 50° outboard');
+  for(const yaw of [-1,-.6,-.3,0,.6,1])for(const height of [-60,1.4,60]){
+   aim(yaw,height);
+   const toHead=head.matrix.clone().invert().multiply(mount.matrix);
+   const rotation=new PhysicsQuaternion().copy(new THREE.Quaternion().setFromRotationMatrix(toHead));
+   for(const {hull,center} of gunVolumes){
+    const position=new Vec3().copy(center.clone().applyMatrix4(toHead));
+    assert(!hull.findSeparatingAxis(headHull,position,rotation,headOrigin,new PhysicsQuaternion(),new Vec3()),
+     `gun clears head at tracking yaw ${headYaw}, pitch ${headPitch}, target yaw ${yaw}, height ${height}`);
+   }
+  }
+ }
+ robot.reset();
  const damage=new UnitDamage(u=>u.entity.destroy()),boss=damage.add('boss','robot',robot,robot.weapons.maxHealth);boss.shapes=robot.shapes();
  // The eye strip is visual only; direct visor damage cannot contribute to defeat.
  const visor=robot.meshes.visor.localToWorld(robot.boxes.visor.center.clone()),eyeFrom=visor.clone().add(new THREE.Vector3(0,0,25));eyeFrom.y=1.65;

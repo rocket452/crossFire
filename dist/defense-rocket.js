@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 
-export const EVAC_ROCKET=Object.freeze({height:39,health:3200,ignition:1.2,launchSeconds:5.8});
+export const EVAC_ROCKET=Object.freeze({height:39,health:3200,ignition:4.2,launchSeconds:12.6});
 
 // Vertically launched rescue shuttle with a static launch pad and independently animated ship.
 export class DefenseRocket {
@@ -61,23 +61,46 @@ export class DefenseRocket {
    const runway=add(pad,new THREE.BoxGeometry(.24,.05,2.6),glass,.66);
    runway.position.set(Math.sin(a)*9.9,.66,Math.cos(a)*9.9);runway.rotation.y=a;
   }
+  this.padExhaust=new THREE.Group();
+  this.padExhaust.name='Evacuation rocket ignition wash';
+  pad.add(this.padExhaust);
+  const washMaterial=color=>new THREE.MeshBasicMaterial({
+   color,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false,toneMapped:false
+  });
+  this.pressureRings=Array.from({length:3},(_,index)=>{
+   const ring=add(this.padExhaust,new THREE.RingGeometry(.96,1,48),washMaterial(index===0?'#fff1af':'#fb75c4'),1.04+index*.025);
+   ring.rotation.x=-Math.PI/2;return ring;
+  });
+  this.engineLight=new THREE.PointLight('#ff8fab',0,30,1.5);
+  this.engineLight.position.y=2;
+  this.padExhaust.add(this.engineLight);
+  const dustMaterial=new THREE.MeshBasicMaterial({
+   color:'#c48ba6',transparent:true,depthWrite:false,opacity:.42
+  });
+  this.exhaustDust=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),dustMaterial,64);
+  this.exhaustDust.frustumCulled=false;
+  this.padExhaust.add(this.exhaustDust);
+  this.exhaustParticle=new THREE.Object3D();
   this.plume=new THREE.Group();
   this.root.add(this.plume);
   const exhaust=new THREE.MeshBasicMaterial({color:'#ff4faa',blending:THREE.AdditiveBlending,transparent:true,opacity:.58,depthWrite:false,toneMapped:false});
   add(this.plume,new THREE.ConeGeometry(3.3,15,12),exhaust,-7.5).rotation.z=Math.PI;
-  add(this.plume,new THREE.ConeGeometry(1.95,10,10),glass,-5).rotation.z=Math.PI;
+  const hotCore=washMaterial('#aeefff');
+  hotCore.opacity=.92;
+  add(this.plume,new THREE.ConeGeometry(1.95,10,10),hotCore,-5).rotation.z=Math.PI;
   for(let i=0;i<4;i++){
    const a=i*Math.PI/2,flare=add(this.plume,new THREE.ConeGeometry(.82,7.5,8),exhaust,-2.8);
    flare.position.x=Math.cos(a)*5.3;
    flare.position.z=Math.sin(a)*5.3;
    flare.rotation.z=Math.PI;
   }
+  this.exhaustMaterial=exhaust;
   this.shapes=[[5,5,4.6],[19,9,4.25],[31,5,3.2]].map(([y,h,r])=>({
    center:new THREE.Vector3(site.x,y,site.z),localY:y,half:{x:r,y:h,z:r}
   }));
   this.reset();
  }
- reset(){this.root.visible=true;this.root.position.y=0;this.plume.visible=false;
+ reset(){this.root.visible=true;this.root.position.y=0;this.plume.visible=false;this.padExhaust.visible=false;this.exhaustDust.count=0;this.engineLight.intensity=0;
   for(const shape of this.shapes)shape.center.y=shape.localY;
   this.pose(0);}
  pose(flash){
@@ -87,9 +110,37 @@ export class DefenseRocket {
  climb(elapsed){
   const {ignition,launchSeconds}=EVAC_ROCKET;
   const flight=THREE.MathUtils.clamp((elapsed-ignition)/(launchSeconds-ignition),0,1);
-  this.root.position.y=flight*flight*170;
+  const power=THREE.MathUtils.smoothstep(elapsed,0,ignition*.82);
+  const wash=power*(1-THREE.MathUtils.smoothstep(flight,.18,.56));
+  this.root.position.y=flight**2.25*170;
   this.plume.visible=true;
-  this.plume.scale.set(1+Math.sin(elapsed*39)*.09,.35+flight*2.5,1+Math.cos(elapsed*36)*.09);
+  this.plume.position.y=.58;
+  const exhaustWidth=.5+.5*power;
+  this.plume.scale.set(exhaustWidth*(1+Math.sin(elapsed*39)*.10),
+   Math.min(.025+power*.67+flight*1.4,(this.root.position.y+.57)/15),
+   exhaustWidth*(1+Math.cos(elapsed*36)*.09));
+  this.exhaustMaterial.opacity=.3+.5*power;
+  this.padExhaust.visible=wash>0;
+  this.engineLight.intensity=wash*(105+Math.sin(elapsed*37)*24);
+  for(const [i,ring] of this.pressureRings.entries()){
+   const age=(elapsed*.72+i/this.pressureRings.length)%1;
+   ring.scale.setScalar(2+age*25);
+   ring.material.opacity=wash*(1-age)**1.4*(i===0?.82:.56);
+  }
+  const dust=this.exhaustParticle;
+  this.exhaustDust.count=this.padExhaust.visible?this.exhaustDust.instanceMatrix.count:0;
+  this.exhaustDust.material.opacity=wash*.44;
+  for(let i=0;i<this.exhaustDust.count;i++){
+   const age=(elapsed*(.4+(i%5)*.03)+i*.61803399)%1,angle=i*2.399963;
+   const distance=3+age*(16+i%7)*(.55+power*.45);
+   dust.position.set(Math.cos(angle)*distance,.96+Math.sin(Math.PI*age)*(1.1+i%4*.35),Math.sin(angle)*distance);
+   const size=(.3+age*2.4)*(1-age**4);
+   dust.scale.set(size*1.45,size*.60,size*1.45);
+   dust.rotation.y=angle+age;
+   dust.updateMatrix();
+   this.exhaustDust.setMatrixAt(i,dust.matrix);
+  }
+  this.exhaustDust.instanceMatrix.needsUpdate=true;
   for(const shape of this.shapes)shape.center.y=this.root.position.y+shape.localY;
  }
 }

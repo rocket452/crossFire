@@ -17,7 +17,7 @@ export class HeroMinimap {
   svg('path',{d:'M0 0L-19 -31Q0 -39 19 -31Z',class:'minimap-cone'},clipped);
   svg('circle',{r:91,class:'minimap-ring'},this.svg);this.north=svg('text',{class:'minimap-north','text-anchor':'middle','dominant-baseline':'central'},this.svg);this.north.textContent='N';
   svg('path',{d:'M0 -6L4.8 4L0 2L-4.8 4Z',class:'minimap-player'},this.svg);
-  this.civilianCount=root.querySelector('[data-minimap-civilians]');this.activeWaves=[];this.enemyCount=root.querySelector('[data-minimap-enemies]');
+  this.activeWaves=[];this.enemyCount=root.querySelector('[data-minimap-enemies]');
  }
  setWorld({bounds,buildings,subways=[],landing=null,roadLanes=[-48,-24,0,24,48],roadExtent=60,route=null,roadSegments=[]}){
   this.clearWaveAlerts();this.world.replaceChildren();this.structures=[];
@@ -34,7 +34,7 @@ export class HeroMinimap {
  }
  refresh(){
   const data=this.getSnapshot(),people=data.civilians||[],enemies=data.enemies||[];
-  this.counts={civilians:data.civilianTotal??people.length,enemies:enemies.length};this.civilianCount.textContent=this.counts.civilians;this.enemyCount.textContent=enemies.length;
+  this.counts={civilians:data.civilianTotal??people.length,enemies:enemies.length};this.enemyCount.textContent=enemies.length;
   this.activeWaves=data.waves||[];const waveEnemies=new Set(this.activeWaves.flatMap(w=>w.enemyIds||[])),latest=this.activeWaves.at(-1);this.root.classList.toggle('has-wave-alert',!!latest);if(latest)this.root.style.setProperty('--wave-pulse',String(.5+.5*Math.sin(latest.age*10)));
   const entries=[...this.activeWaves.map(w=>({...w,id:'alert-'+w.id,kind:'wave',label:'Enemy wave: '+w.count+' Bruiser'+(w.count===1?'':'s')+' from the '+w.edge+' edge'})),...this.staticMarkers.map(e=>e.kind==='subway'?{...e,warning:!!data.spawnWarning?.active&&e.id==='subway-'+data.spawnWarning.entrance,warningTime:data.spawnWarning?.time||0,warningHz:data.spawnWarning?.hz||2.5,closed:!!data.spawnWarning?.ended,label:data.spawnWarning?.ended?'Civilian spawn closed':data.spawnWarning?.active?'Civilian spawn incoming in '+Math.ceil(data.spawnWarning.remaining)+' seconds':'Civilian spawn · subway'}:e),...civilianClusters(people).map(g=>({...g,id:'group-'+g.id,kind:'civilian',label:g.count+' civilians'+(g.targeted?' — targeted by enemy attack':'')})),...enemies.map(e=>({...e,kind:e.boss?'boss':'enemy',label:e.name||(e.boss?'Siege Walker':'Robot drone')})),...(data.allies||[]).map(a=>({...a,kind:'ally',label:'Allied hero'}))];
   for(const p of data.plasma||[])entries.push({...p,id:'impact-'+p.id,kind:'plasma',label:(p.sniper?'Sniper shot in ':'Plasma impact in ')+Math.max(0,p.eta).toFixed(1)+' seconds'});

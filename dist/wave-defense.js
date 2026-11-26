@@ -5,7 +5,7 @@ import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-eva
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
 
-import {DefenseRocket,EVAC_ROCKET} from './defense-rocket.js?v=386';
+import {DefenseRocket,EVAC_ROCKET} from './defense-rocket.js?v=427';
 
 export const RELAY={id:'evacuation-rocket',name:'Evacuation rocket',...center};
 const mapScale=1.3**2*1.4;
@@ -191,12 +191,12 @@ export class WaveDefense extends MissionEnemyWaves {
   }
   if(this.wave===3){
    const boss=this.walker;
-   boss.spawnOrigin={x:center.x,z:WAVE_DEFENSE_BOUNDS.minZ+12};
-   boss.reset();boss.root.visible=true;boss.combatUnit.alive=true;
+   boss.spawnOrigin={x:center.x,z:WAVE_DEFENSE_BOUNDS.maxZ-12};
+   boss.reset({yaw:Math.PI});boss.root.visible=true;boss.combatUnit.alive=true;
    boss.combatUnit.health=boss.combatUnit.maxHealth;
    boss.applyWalkPose(boss.walkPose);boss.combatUnit.shapes=boss.shapes();
    this.options.startArsenal();
-   this.alert('north',[boss]);
+   this.alert('south',[boss]);
   }
   const battle=this.wave===3?'Siege Walker':[
    ground+' Bruisers',air+' combat drones',ground+' Bruisers and '+air+' drones'
@@ -274,9 +274,10 @@ export class WaveDefense extends MissionEnemyWaves {
      this.relay.alive=false;
      this.relay.shapes=[];
      this.rocket.root.visible=false;
+     this.rocket.padExhaust.visible=false;
      this.onEvent('Evacuation rocket cleared the city.');
     }
-   }else this.walker.spawnOrigin.z=Math.min(center.z-35,this.walker.spawnOrigin.z+dt*2);
+   }else this.walker.spawnOrigin.z=Math.max(center.z+35,this.walker.spawnOrigin.z-dt*2);
   }
   this.options.status(this);
  }

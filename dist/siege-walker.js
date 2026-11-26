@@ -7,7 +7,30 @@ import {BeamCycle} from './beam-cycle.js?v=384';
 import {WalkerGait,solveLegKnee,angleDelta,WALKER_TURN_SPEED} from './walker-gait.js?v=384';
 
 const SNIPER_BARREL_Y=1.4;
-const SNIPER_BARREL_BASE=2.4;
+const SNIPER_BARREL_BASE=1.9;
+const SNIPER_MOUNT_OFFSET=2;
+const SNIPER_YAW_LIMIT=THREE.MathUtils.degToRad(62);
+const SNIPER_HEAD_CLEARANCE=.08;
+
+const BOX_FACES=[
+ [0,1,3,2],[4,6,7,5],[0,4,5,1],[2,3,7,6],[0,2,6,4],[1,5,7,3]
+];
+
+function transformedBoxIntersects(source,transform,target,corners,triangle,bounds){
+ if(!bounds.copy(source).applyMatrix4(transform).intersectsBox(target))return false;
+ for(const [i,corner] of corners.entries()){
+  corner.set(i&1?source.max.x:source.min.x,i&2?source.max.y:source.min.y,i&4?source.max.z:source.min.z)
+   .applyMatrix4(transform);
+ }
+ return BOX_FACES.some(([a,b,c,d])=>target.intersectsTriangle(triangle.set(corners[a],corners[b],corners[c]))
+  ||target.intersectsTriangle(triangle.set(corners[a],corners[c],corners[d])));
+}
+
+function shrinkSniperReceiver(geometry){
+ geometry.translate(0,-SNIPER_BARREL_Y,0);
+ geometry.scale(.73,.73,.72);
+ geometry.translate(0,SNIPER_BARREL_Y,0);
+}
 const SNIPER_MUZZLE_Z=8.85;
 
 function addSniperBarrel(receiver,cyberpunk){
@@ -55,7 +78,9 @@ export class SiegeWalker {
    const source=gltf.scene.getObjectByName(p.name);
    if(!source?.isMesh)throw Error('Missing robot component '+p.name);
    const pivot=new THREE.Vector3(...p.pivot),geometry=source.geometry.clone().applyMatrix4(source.matrixWorld);
-   geometry.translate(-pivot.x,-pivot.y,-pivot.z);geometry.computeBoundingBox();
+   geometry.translate(-pivot.x,-pivot.y,-pivot.z);
+   if(p.name==='plasma_cannon')shrinkSniperReceiver(geometry);
+   geometry.computeBoundingBox();
    const material=source.material.clone();
    if(p.name==='reactor'||p.name==='visor'){material.emissive=new THREE.Color(this.idleGlow);material.emissiveIntensity=2;}
    const mesh=new THREE.Mesh(geometry,material);mesh.castShadow=mesh.receiveShadow=true;
@@ -64,6 +89,7 @@ export class SiegeWalker {
     if(sourceSignal){
      const geometry=sourceSignal.geometry.clone().applyMatrix4(sourceSignal.matrixWorld);
      geometry.translate(-pivot.x,-pivot.y,-pivot.z);
+     if(p.name==='plasma_cannon')shrinkSniperReceiver(geometry);
      const signal=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({vertexColors:true}));
      signal.material.color.setScalar(2.2);
      signal.name=p.name+' running lights';
@@ -74,12 +100,26 @@ export class SiegeWalker {
    const node=new THREE.Group();node.name=p.name;node.add(mesh);
    const parent=p.parent?this.nodes[p.parent]:this.root;
    const parentPivot=p.parent?new THREE.Vector3(...spec.parts.find(q=>q.name===p.parent).pivot):new THREE.Vector3();
-   node.position.copy(pivot).sub(parentPivot);parent.add(node);
+   node.position.copy(pivot).sub(parentPivot);
+   if(p.name==='plasma_cannon')node.position.x+=SNIPER_MOUNT_OFFSET;
+   parent.add(node);
    this.restPositions[p.name]=node.position.clone();this.nodes[p.name]=node;this.meshes[p.name]=mesh;
    const b=geometry.boundingBox;this.boxes[p.name]={center:b.getCenter(new THREE.Vector3()),size:b.getSize(new THREE.Vector3())};
   }
   if(this.meshes.plasma_cannon){
    addSniperBarrel(this.meshes.plasma_cannon,!!spec.appearance);
+   const supportMaterial=new THREE.MeshStandardMaterial({
+    color:spec.appearance?0x373e58:0x3e444a,metalness:.55,roughness:.55
+   });
+   const mount=this.nodes.plasma_cannon.position;
+   const arm=new THREE.Mesh(new THREE.BoxGeometry(SNIPER_MOUNT_OFFSET+.8,1.04,1.38),supportMaterial);
+   arm.name='Sniper traverse arm';
+   arm.position.set(mount.x-SNIPER_MOUNT_OFFSET*.55,mount.y-.5,mount.z);
+   arm.castShadow=arm.receiveShadow=true;
+   const socket=new THREE.Mesh(new THREE.CylinderGeometry(.68,.61,.65,8),supportMaterial);
+   socket.name='Sniper pivot socket';
+   socket.position.set(mount.x,mount.y+.05,mount.z);
+   this.meshes.chest.add(arm,socket);
    this.sniperBarrelBox={
     center:new THREE.Vector3(0,SNIPER_BARREL_Y,(SNIPER_BARREL_BASE+SNIPER_MUZZLE_Z)/2),
     size:new THREE.Vector3(1.74,1.74,SNIPER_MUZZLE_Z-SNIPER_BARREL_BASE)
@@ -254,22 +294,56 @@ export class SiegeWalker {
   const forward=new THREE.Vector3(0,0,1).transformDirection(node.parent.matrixWorld);
   const heading=Math.atan2(forward.x,forward.z);
   const desiredYaw=Math.atan2(to.x,to.z);
-  const yaw=heading+THREE.MathUtils.clamp(angleDelta(desiredYaw,heading),-.22,.22);
+  const yaw=heading+THREE.MathUtils.clamp(angleDelta(desiredYaw,heading),-SNIPER_YAW_LIMIT,SNIPER_YAW_LIMIT);
   const horizontal=Math.hypot(to.x,to.z);
   const offset=Math.asin(THREE.MathUtils.clamp(muzzleOffset.y/Math.max(.1,to.length()),-.99,.99));
   const desiredPitch=-Math.atan2(to.y,horizontal)+offset;
   const pitch=THREE.MathUtils.clamp(desiredPitch,-1.25,1.4);
-  const world=new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));
-  node.quaternion.copy(node.parent.getWorldQuaternion(new THREE.Quaternion()).invert()).multiply(world);
+  const parentInverse=node.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+  const localRotation=angle=>parentInverse.clone().multiply(
+   new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch,angle,0,'YXZ')));
+  const desiredRotation=localRotation(yaw);
+  node.quaternion.copy(this.clearSniperHead(desiredRotation,localRotation(heading)));
   const position=node.localToWorld(muzzleOffset);
   const direction=new THREE.Vector3(0,0,1).transformDirection(node.matrixWorld);
   const aligned=direction.dot(new THREE.Vector3().copy(target).sub(position).normalize())>=Math.cos(.04);
   return{position,direction,aligned};
  }
+ // Test both gun sections in the head's local frame,
+ // including the cannon's recoil offset.
+ clearSniperHead(desired,neutral){
+  const head=this.nodes.head,cannon=this.nodes.plasma_cannon;
+  head.updateMatrix();
+  const headBounds=this.meshes.head.geometry.boundingBox.clone().expandByScalar(SNIPER_HEAD_CLEARANCE);
+  const toHead=head.matrix.clone().invert();
+  const muzzleBounds=new THREE.Box3().setFromCenterAndSize(this.sniperBarrelBox.center,this.sniperBarrelBox.size);
+  const receiverBounds=this.meshes.plasma_cannon.geometry.boundingBox;
+  const transform=new THREE.Matrix4(),bounds=new THREE.Box3();
+  const corners=Array.from({length:8},()=>new THREE.Vector3());
+  const triangle=new THREE.Triangle();
+  const clear=rotation=>{
+   transform.makeRotationFromQuaternion(rotation).setPosition(cannon.position).premultiply(toHead);
+   return !transformedBoxIntersects(receiverBounds,transform,headBounds,corners,triangle,bounds)
+    &&!transformedBoxIntersects(muzzleBounds,transform,headBounds,corners,triangle,bounds);
+  };
+  if(clear(desired))return desired;
+  if(!clear(neutral))neutral.identity();
+  const fitted=neutral.clone();
+  let low=0,high=1;
+  for(let i=0;i<9;i++){
+   const fraction=(low+high)/2;
+   if(clear(fitted.copy(neutral).slerp(desired,fraction)))low=fraction;
+   else high=fraction;
+  }
+  return fitted.copy(neutral).slerp(desired,low);
+ }
  updatePlasmaWarning(active,time=0){
   if(!this.isWeaponWorking('plasma'))return;
   this.plasmaCharging=active;
-  if(!active)this.plasmaAim=null;
+  if(!active&&this.plasmaAim){
+   this.plasmaAim=null;
+   this.nodes.plasma_cannon.quaternion.identity();
+  }
   const material=this.meshes.plasma_cannon?.material;
   if(material){material.emissive.set('#ff382f');material.emissiveIntensity=active?(.45+Math.sin(time*15)**2):0;}
  }
