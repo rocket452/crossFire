@@ -10,6 +10,7 @@ export class ActorSilhouettes {
  // Visible opaque hero bodies block overlays; hidden bodies fail depth and do not mask buildings.
  occlude(actor){if(!actor?.root||this.occluders.has(actor.root))return;this.occluders.add(actor.root);actor.root.traverse(o=>{if(o.isMesh&&!o.userData.actorSilhouette&&[].concat(o.material).every(m=>!m.transparent&&m.depthWrite))mark(o);});}
  register(actor){if(!actor?.root||this.registered.has(actor))return;this.registered.add(actor);const sources=[];actor.root.traverse(o=>{if(o.isMesh&&!o.userData.actorSilhouette&&!o.material?.transparent)sources.push(o);});for(const source of sources){mark(source);const overlay=setup(source.isInstancedMesh?new THREE.InstancedMesh(source.geometry,this.enemyMaterial,source.instanceMatrix.count):source.isSkinnedMesh?new THREE.SkinnedMesh(source.geometry,this.enemyMaterial):new THREE.Mesh(source.geometry,this.enemyMaterial));if(source.isSkinnedMesh){overlay.bind(source.skeleton,source.bindMatrix);overlay.bindMode=source.bindMode;}if(source.isInstancedMesh){overlay.instanceMatrix=source.instanceMatrix;overlay.count=source.count;}source.add(overlay);this.enemies.push({actor,source,overlay});}}
+ setEnemyVisibility(visible){this.enemyMaterial.visible=visible;}
  update(actors,evacuation,danger,time,occluders=[]){
   for(const actor of occluders)this.occlude(actor);
   this.enemies=this.enemies.filter(e=>{if(e.actor.faction==='argus'&&!e.actor.root.parent){e.overlay.removeFromParent();return false;}return true;});for(const actor of actors)this.register(actor);
@@ -20,5 +21,5 @@ export class ActorSilhouettes {
   // Keep one instanced draw and exactly the source's live/boarding/phase filtering.
   overlay.count=source.count;if(overlay.instanceColor)overlay.instanceColor.needsUpdate=true;
  }
- diagnostics(){return{enemyMeshes:this.enemies.filter(e=>e.overlay.visible&&e.actor.root.visible).length,civilianInstances:this.crowd?.overlay.count||0,threatenedCivilians:this.threatened};}
+ diagnostics(){return{enemyMeshes:this.enemyMaterial.visible?this.enemies.filter(e=>e.overlay.visible&&e.actor.root.visible).length:0,civilianInstances:this.crowd?.overlay.count||0,threatenedCivilians:this.threatened};}
 }

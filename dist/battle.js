@@ -36,7 +36,7 @@ import {BuildingSmoke} from './building-smoke.js?v=building-smoke-155';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=argus-sustained-205';
 import {EnemySeparation} from './enemy-separation.js?v=spider-bruiser-272';
 import {CombatTesting} from './combat-testing.js?v=421';
-import {ActorSilhouettes} from './actor-silhouettes.js?v=shogun-skin-310';
+import {ActorSilhouettes} from './actor-silhouettes.js?v=426';
 import {RAIDER_COMBAT} from './evac-raider.js?v=421';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=415';
 import {NinjaHero} from './ninja-hero.js?v=424';
@@ -994,7 +994,10 @@ if(districtMode){
 }
 minimap.setWorld({bounds:testingMode?COMBAT_ARENA.bounds:convoyMode?convoyConfig.map.bounds:districtMode?districtBounds:{minX:-60,maxX:60,minZ:-60,maxZ:60},roadLanes:testingMode?COMBAT_ARENA.roadLanes:undefined,roadExtent:testingMode?COMBAT_ARENA.bounds.maxZ:undefined,roadSegments:districtMode?districtRoads:undefined,buildings:layout.buildings,subways:evacuationMode?EVACUATION_ENTRANCES:[],landing:evacuation?.landing,route:convoyMode?convoyConfig.map.route:undefined});for(const h of[runner,ninja,hero,solara,portalHero,mochi,prism,axo,ember])guardHeroInSmoke(h,()=>ninja?.smoke);configureHeroes();loaded=true;$('choose-heroes').disabled=false;if(!evacuationBriefing)updateCombat(0);updateStats();setView(convoyMode?'convoy':districtMode?'overview':roster.has('ember')?'ember':roster.has('axo')?'axo':roster.has('prism')?'prism':roster.has('mochi')?'mochi':roster.has('rift')?'portal':roster.has('solara')?'solara':roster.has('violet')?'hero':'overview');$('loading').style.display='none';if(defenseTitle)defenseTitle.open();else if(evacuationBriefing)evacuationBriefing.open();else feed('Defenders deployed. Choose Heroes to change your team.');}catch(e){console.error(e);$('loading').innerHTML='<b>The district could not load.</b><span>Reload this page to try again.</span>';}}
 const actorSilhouettes=new ActorSilhouettes();
-function updateActorSilhouettes(){if(!loaded)return;const people=civilianScene()?.civilians||[],danger=targetedCivilianGroups(people,{walker:robot,missiles:robotMissiles?.missiles,plasma:walkerSniper?.shells,plasmaClock:walkerSniper?.clock,predictCivilian:(unit,seconds)=>evacuation?.predictCivilian(unit,seconds),raiders:activeRaiders()?.members});for(const c of people)if(c.silhouetteHitUntil>simTime)danger.add(c.group||c);actorSilhouettes.update([robot,...(argus?[argus,...argus.drones.alive,...argus.attacks.pylons.members.filter(p=>p.unit?.alive).map(p=>p.unit.entity)]:[]),...(bastionTest()?[bastionTest().boss]:[]),...(activeRaiders()?.members||[]),...(activeRaiders()?.flightDrones||[])],civilianScene(),danger,simTime,[runner,hero,solara,portalHero,mochi,ninja,prism,axo,ember]);}
+function updateActorSilhouettes(){
+ if(!loaded)return;
+ actorSilhouettes.setEnemyVisibility(!defenseTitle?.active&&!evacuationCinematic?.active);
+ const people=civilianScene()?.civilians||[],danger=targetedCivilianGroups(people,{walker:robot,missiles:robotMissiles?.missiles,plasma:walkerSniper?.shells,plasmaClock:walkerSniper?.clock,predictCivilian:(unit,seconds)=>evacuation?.predictCivilian(unit,seconds),raiders:activeRaiders()?.members});for(const c of people)if(c.silhouetteHitUntil>simTime)danger.add(c.group||c);actorSilhouettes.update([robot,...(argus?[argus,...argus.drones.alive,...argus.attacks.pylons.members.filter(p=>p.unit?.alive).map(p=>p.unit.entity)]:[]),...(bastionTest()?[bastionTest().boss]:[]),...(activeRaiders()?.members||[]),...(activeRaiders()?.flightDrones||[])],civilianScene(),danger,simTime,[runner,hero,solara,portalHero,mochi,ninja,prism,axo,ember]);}
 function controlledHero(){return[lux,runner,hero,portalHero,solara,mochi,ninja,prism,axo,ember].find(h=>h?.active===true&&h.enabled!==false)||null;}
 function minimapSnapshot(){
  const player=controlledHero(),point=(id,p,extra={})=>({id,x:p.x,z:p.z,...extra});
