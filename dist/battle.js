@@ -87,7 +87,7 @@ const evacuationMode=new URLSearchParams(location.search).get('scene')==='evacua
 const convoyMode=new URLSearchParams(location.search).get('scene')==='convoy';let convoy=null,convoyHUD=null,argus=null,convoyResults=null,resultsPause=false;
 const convoyConfig=convoyMode?await fetch('convoy-config.json?v=argus-sustained-205').then(r=>{if(!r.ok)throw Error('Convoy config unavailable');return r.json();}):null;
 const liberationMode=new URLSearchParams(location.search).get('scene')==='city-liberation';
-const {CityLiberation}=liberationMode?await import('./city-liberation.js?v=421'):{};
+const {CityLiberation}=liberationMode?await import('./city-liberation.js?v=429'):{};
 const {LiberationUI}=liberationMode?await import('./liberation-ui.js?v=398'):{};
 const defenseMode=new URLSearchParams(location.search).get('scene')==='wave-defense';
 const mission1Mode=liberationMode||defenseMode||new URLSearchParams(location.search).get('scene')==='mission-1';

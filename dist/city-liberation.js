@@ -1,6 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {LiberationBuild} from './liberation-build.js?v=398';
+import {EvacuationNavigation} from './evacuation-navigation.js?v=evacuation-57';
 import {escortMovementBounds} from './evac-approach.js?v=315';
 
 export const DISTRICTS=[
@@ -9,6 +10,14 @@ export const DISTRICTS=[
 ];
 const position=p=>new THREE.Vector3().copy(p);
 const streetStep=24;
+const entryBounds=escortMovementBounds(8);
+const streetAxis=(min,max)=>Array.from(
+ {length:Math.floor(max/streetStep)-Math.ceil(min/streetStep)+1},
+ (_,i)=>(Math.ceil(min/streetStep)+i)*streetStep
+);
+const streetX=streetAxis(entryBounds.minX,entryBounds.maxX);
+const streetZ=streetAxis(entryBounds.minZ,entryBounds.maxZ);
+const walkerHomeZ=48;
 const clearanceKey='zero-hour.city-liberation.clearance';
 export const CLEARANCE_CREDITS=12;
 
@@ -18,6 +27,10 @@ export class CityLiberation extends MissionEnemyWaves {
   this.options=options;this.damage=damage;this.clearance=false;
   try{this.clearance=options.storage?.getItem(clearanceKey)==='1';}catch{}
   this.actors=[...this.members,...this.flightDrones];
+  this.navigation=new EvacuationNavigation({isClear:(a,b)=>options.bruiser.isPathClear(
+   new THREE.Vector3(a.x,.12,a.z),new THREE.Vector3(b.x,.12,b.z)
+  )});
+  this.navigation.nodes=streetX.flatMap(x=>streetZ.map(z=>new THREE.Vector3(x,.12,z)));
   this.reset();
  }
  reset(){
@@ -89,23 +102,55 @@ export class CityLiberation extends MissionEnemyWaves {
   }
  }
  streetSpawns(){
-  const hero=this.hero.root.position,bounds=escortMovementBounds(8),spots=[];
-  for(let x=Math.ceil(bounds.minX/streetStep)*streetStep;x<=bounds.maxX;x+=streetStep){
-   for(let z=Math.ceil(bounds.minZ/streetStep)*streetStep;z<=bounds.maxZ;z+=streetStep){
-    const distance=Math.hypot(x-hero.x,z-hero.z);
-    if(distance<18||distance>65)continue;
-    const p=new THREE.Vector3(x,.12,z);
-    if(!this.options.openStreet(p))continue;
-    const clear=this.options.visible(new THREE.Vector3(x,2,z),hero.clone().add(new THREE.Vector3(0,1,0)));
-    spots.push({p,score:Math.abs(distance-30)+Math.random()*14+(clear?0:30)});
-   }
+  const {minX,maxX,minZ,maxZ}=entryBounds,hero=this.hero.root.position;
+  const edgePoints=[
+   ...streetX.flatMap(x=>[[x,minZ],[x,maxZ]]),
+   ...streetZ.flatMap(z=>[[minX,z],[maxX,z]])
+  ];
+  const spots=[];
+  for(const [x,z] of edgePoints){
+   const distance=Math.hypot(x-hero.x,z-hero.z);
+   if(distance<18)continue;
+   const point=new THREE.Vector3(x,.12,z);
+   if(!this.options.openStreet(point))continue;
+   if(this.actors.some(actor=>actor.spawned&&!actor.dead&&Math.hypot(
+    x-actor.root.position.x,z-actor.root.position.z
+   )<7))continue;
+   const clear=this.options.visible(new THREE.Vector3(x,2,z),hero.clone().add(new THREE.Vector3(0,1,0)));
+   spots.push({point,score:distance+(clear?0:30)});
   }
-  return spots.sort((a,b)=>a.score-b.score).map(s=>s.p);
+  return spots.sort((a,b)=>a.score-b.score).map(spot=>spot.point);
+ }
+ groundApproach(actor,start,rally){
+  this.navigation.landing=rally;
+  const path=this.navigation.route(start);
+  if(!path)return null;
+  const route=path.map(([x,z])=>new THREE.Vector3(x,.12,z));
+  let next=0;
+  return ()=>{
+   const target=actor.target?.shapes[0]?.center;
+   if(target){
+    const feet=new THREE.Vector3(target.x,.12,target.z);
+    if(this.navigation.isClear(actor.root.position,feet))return feet;
+   }
+   while(next<route.length&&actor.root.position.distanceToSquared(route[next])<=2.25)next++;
+   return route[next]||rally;
+  };
+ }
+ droneIngress(start,rally,altitude){
+  const dx=rally.x-start.x,dz=rally.z-start.z,distanceSquared=dx*dx+dz*dz;
+  let height=altitude;
+  for(const building of this.options.buildings||[]){
+   const t=distanceSquared?THREE.MathUtils.clamp(((building.x-start.x)*dx+(building.z-start.z)*dz)/distanceSquared,0,1):0;
+   const clearance=(building.footprint??10)/Math.SQRT2+6;
+   if(Math.hypot(building.x-start.x-t*dx,building.z-start.z-t*dz)<clearance)height=Math.max(height,building.floors*3+9);
+  }
+  return new THREE.Vector3(rally.x,height,rally.z);
  }
  recycleStragglers(){
   // Unseen packs left across town should not consume all reinforcement slots.
   for(const actor of this.actors){
-   if(!actor.spawned||actor.dead||actor.root.position.distanceToSquared(this.hero.root.position)<100**2){
+   if(!actor.spawned||actor.dead||(actor.age??actor.clock)<30||actor.root.position.distanceToSquared(this.hero.root.position)<100**2){
     this.stragglers.delete(actor);continue;
    }
    const since=this.stragglers.get(actor);
@@ -121,22 +166,34 @@ export class CityLiberation extends MissionEnemyWaves {
   if(slots<=0)return;
   const streets=this.streetSpawns();
   if(!streets.length)return;
-  const origin=streets[0];
+  const origin=streets[0],hero=this.hero.root.position;
+  const rally=this.navigation.nodes.filter(p=>this.options.openStreet(p))
+   .sort((a,b)=>a.distanceToSquared(hero)-b.distanceToSquared(hero))[0];
+  if(!rally)return;
   streets.sort((a,b)=>a.distanceToSquared(origin)-b.distanceToSquared(origin));
   for(const type of pattern){
    if(slots<=0)break;
    const air=type==='D',pool=air?this.flightDrones:this.members;
    const actor=pool.find(a=>!a.spawned)||pool.find(a=>this.elapsed-(this.retired.get(a)??Infinity)>6&&(!air||a.mode==='wreck'));
    if(!actor)continue;
-   const p=streets.shift();if(!p)break;
+   let p=streets.shift(),approach;
+   if(!air){
+    while(p&&!(approach=this.groundApproach(actor,p,rally)))p=streets.shift();
+   }
+   if(!p)break;
    this.retired.delete(actor);
    if(air){
-    p.y=this.drones.find(d=>d.actor===actor).start.y;
-    actor.options.ingress=null;actor.spawn(p);
+    const altitude=this.drones.find(d=>d.actor===actor).start.y;
+    const ingress=this.droneIngress(p,rally,altitude);
+    actor.options.ingress=ingress;
+    actor.options.cruiseAltitude=altitude;
+    p.y=ingress.y;actor.spawn(p);
    }else{
-    const rally=this.hero.root.position.clone();
-    actor.objective=()=>actor.target?.shapes[0]?position(actor.target.shapes[0].center):rally;
-    actor.spawnPosition=p;actor.reset();actor.spawn();actor.cooldown=1.2;
+    actor.objective=approach;
+    actor.spawnPosition=p;actor.reset();
+    const first=actor.objective();
+    actor.root.rotation.y=Math.atan2(first.x-p.x,first.z-p.z);
+    actor.spawn();actor.cooldown=1.2;
    }
    const u=actor.combatUnit;
    u.maxHealth=u.health=Math.ceil(u.maxHealth*(this.stage===0?.7:1));
@@ -148,7 +205,8 @@ export class CityLiberation extends MissionEnemyWaves {
   this.phase='boss';
   if(this.stage===0){
    const walker=this.options.walker;
-   walker.spawnOrigin={x:0,z:48};walker.reset();walker.root.visible=true;
+   walker.spawnOrigin={x:0,z:entryBounds.maxZ};walker.reset({yaw:Math.PI});walker.root.visible=true;
+   walker.applyWalkPose(walker.walkPose);
    walker.combatUnit.alive=true;walker.combatUnit.health=walker.combatUnit.maxHealth;
    walker.combatUnit.shapes=walker.shapes();this.options.startArsenal();
   }
@@ -174,6 +232,10 @@ export class CityLiberation extends MissionEnemyWaves {
   for(const actor of this.flightDrones)if(actor.spawned)actor.update(dt,targets);
   if(this.ended)return;
   this.collect();
+  if(this.stage===0&&this.phase==='boss'&&!this.options.walker.dead){
+   const origin=this.options.walker.spawnOrigin;
+   origin.z=Math.max(walkerHomeZ,origin.z-dt*4);
+  }
   if(this.phase==='streets'&&this.stageTime>=this.district.seconds)this.boss();
   if(this.phase==='boss'&&(this.stage===0?this.options.walker.dead:this.options.finalBossDefeated())){
    b.bossReward(this.stage===1);
