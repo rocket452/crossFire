@@ -6,7 +6,7 @@ import * as THREE from './vendor/three.module.js';
 import {BastionModel} from './bastion-model.js?v=392';
 import {BastionState} from './bastion-state.js?v=bastion-weapons-278';
 import {BastionProjectiles} from './bastion-projectiles.js?v=392';
-import {BastionEffects} from './bastion-effects.js?v=390';
+import {BastionEffects} from './bastion-effects.js?v=432';
 import {angleDistance} from './bastion-geometry.js?v=charged-shuriken-130';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 import {absorbDirectionalBarrier} from './hero-defense.js?v=390';
