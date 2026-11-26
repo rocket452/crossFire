@@ -1,3 +1,4 @@
+import {LUX_UPGRADES} from './lux-solar.js?v=423';
 import * as THREE from './vendor/three.module.js';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
@@ -86,6 +87,9 @@ export const DEFENSE_UPGRADES=[
  {id:'dash',hero:'volt',title:'Charged dash',detail:'Dashing generates charge 30% faster than normal movement.'},
  {id:'backstab-dash',hero:'ninja',title:'Backstab Dash',detail:'A gold Crosscut backstab banks one extra dash, even if the enemy survives.'},
  {id:'extra-air-jump',hero:'ninja',title:'Extra Air Jump',detail:'Gain a second midair jump. Wall jumps preserve your remaining air jumps.'},
+ {id:LUX_UPGRADES.quickLance.id,hero:'lux',title:'Quickdraw Sunlance',detail:`Sunlance charges in ${LUX_UPGRADES.quickLance.charge} second instead of 1.5 seconds.`},
+ {id:LUX_UPGRADES.quickLock.id,hero:'lux',title:'Rapid Lock',detail:`Light Volley locks onto each target ${LUX_UPGRADES.quickLock.speedMultiplier}× as fast.`},
+ {id:LUX_UPGRADES.communion.id,hero:'lux',title:'Intense Communion',detail:`Solar Communion restores ${LUX_UPGRADES.communion.recharge} Solar Energy per second after the wind-up.`},
  {id:'repair',title:'Repair rocket',detail:'Restore 30% of the evacuation rocket’s maximum HP.'}
 ];
 

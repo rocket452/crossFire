@@ -13,6 +13,12 @@ export const SOLAR_CONFIG=Object.freeze({
  attackCosts:Object.freeze({lance:5,spray:.5,comet:3})
 });
 
+export const LUX_UPGRADES=Object.freeze({
+ quickLance:{id:'lux-quick-lance',charge:1},
+ quickLock:{id:'lux-quick-lock',speedMultiplier:2},
+ communion:{id:'lux-communion',recharge:40}
+});
+
 const up=new T.Vector3(0,1,0);
 const facet=new T.OctahedronGeometry(1);
 const light=(color,opacity)=>new T.MeshBasicMaterial({

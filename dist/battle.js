@@ -1,5 +1,5 @@
 import {alertEnemiesToAttacker,inFrontOfEnemy} from './enemy-alert.js?v=421';
-import {Luxmancer,LuxPlayer} from './luxmancer.js?v=422';
+import {Luxmancer,LuxPlayer} from './luxmancer.js?v=423';
 import {RiftPlayer} from './rift-player.js?v=422';
 import {VioletPlayer} from './violet-player.js?v=395';
 import {DefenseTitle} from './defense-title.js?v=413';
@@ -46,7 +46,7 @@ import {EnemyDamageFlash} from './enemy-damage-flash.js?v=393';
 import {HeroMinimap} from './hero-minimap.js?v=415';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
-import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,WAVE_DEFENSE_HIGHWAYS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=421';
+import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,WAVE_DEFENSE_HIGHWAYS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=423';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {EvacRaiderWaves} from './evac-raider-waves.js?v=421';
 import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-approach.js?v=393';
@@ -73,7 +73,7 @@ import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';
 import {PortalHero} from './portal-hero.js?v=397';
 import {SolaraHero} from './solara-hero.js?v=rainbow-full-solara-290';
 import {HeroRoster} from './hero-roster.js?v=404';
-import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=422';
+import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=423';
 import {segmentBoxFraction} from './combat-collision.js?v=evac-performance-233';
 import {WalkerSniper,WALKER_SNIPER} from './walker-sniper.js?v=415';
 import {RobotEyeBeams} from './robot-eye-beams.js?v=charged-shuriken-130';
@@ -961,7 +961,7 @@ if(defenseMode){
  }};
  portalHero.player=new RiftPlayer(portalHero,groundOptions);
  const model=await new GLTFLoader().loadAsync('city-assets/licensed-characters/luxmancer.glb?v=416');
- lux=new Luxmancer(scene,model,{getUnits:()=>unitDamage.units,visible:districtVisible,
+ lux=new Luxmancer(scene,model,{hasUpgrade:id=>missionRaiders?.upgrades.has(id),getUnits:()=>unitDamage.units,visible:districtVisible,
   traceBolt:(a,b)=>traceWorld(a,b,{radius:.10,allied:true,livingOnly:true}),
   onHit:(hit,point,power)=>{
    if(hit.orb||hit.unit?.kind==='robot')return damageRobotHit(hit,power,'solar',true);

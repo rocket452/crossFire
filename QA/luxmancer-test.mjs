@@ -72,7 +72,7 @@ assert.equal(hero.effects.streaks.count+hero.effects.sparks.count+hero.effects.b
 assert.equal(hero.effects.sigil.visible,false);
 console.log('PASS animated Luxmancer asset, selection, arcing lance, automatic spread fire, four locks, homing impacts and reset');
 
-const {SOLAR_CONFIG}=await import('../dist/lux-solar.js');
+const {SOLAR_CONFIG,LUX_UPGRADES}=await import('../dist/lux-solar.js');
 Object.assign(p,{
  grounded:true,vertical:0,stick:{value:{x:0,y:0}},
  bounds:{minX:-200,maxX:200,minZ:-200,maxZ:200},
@@ -302,3 +302,31 @@ step(90);
 assert.equal(hero.energy,95,'releasing Shift lets a fresh Sunlance charge fire');
 p.keys.clear();
 console.log('PASS ground sprint speed, spell lockout and fresh charge after sprint');
+
+const upgrades=new Set(Object.values(LUX_UPGRADES).map(upgrade=>upgrade.id));
+hero.hasUpgrade=id=>upgrades.has(id);
+hero.reset();
+p.keys.add('KeyF');step(59);
+assert.equal(hero.shots.length,0);
+step(1);
+assert.equal(hero.shots[0]?.kind,'lance','Quickdraw fires after one second');
+p.keys.clear();
+
+const lockTarget={kind:'robot',alive:true,shapes:[{center:new T.Vector3(0,10,60)}]};
+targets.splice(0,targets.length,lockTarget);
+hero.lock(origin,ray,.174);
+assert.equal(hero.locks.length,0);
+hero.lock(origin,ray,.001);
+assert.deepEqual(hero.locks,[lockTarget],'Rapid Lock needs 0.175 seconds per target');
+targets.length=0;
+
+hero.energy=40;p.grounded=true;p.keys.add('KeyR');
+step(45);
+assert.equal(hero.energy,40);
+step(30);
+assert(Math.abs(hero.energy-60)<.001,'Intense Communion restores 40 energy per second after wind-up');
+upgrades.clear();hero.reset();p.keys.clear();
+assert.equal(hero.lanceChargeTime,1.5);
+assert.equal(hero.lockAcquireTime,.35);
+assert.equal(hero.solarRecharge,25);
+console.log('PASS Luxmancer upgrades change charge, lock and recovery timing and revert with run upgrades');

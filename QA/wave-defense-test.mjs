@@ -267,6 +267,14 @@ assert.equal(waves.chooseUpgrade('backstab-dash','ninja'),false);
 assert.equal(waves.chooseUpgrade('extra-air-jump','volt'),false);
 assert(waves.chooseUpgrade('extra-air-jump','ninja'));
 assert(waves.upgrades.has('extra-air-jump'));
+for(const id of ['lux-quick-lance','lux-quick-lock','lux-communion']){
+ waves.upgradePending=true;
+ assert.equal(waves.chooseUpgrade(id,'volt'),false);
+ assert(waves.chooseUpgrade(id,'lux'));
+ assert(waves.upgrades.has(id));
+ waves.upgradePending=true;
+ assert.equal(waves.chooseUpgrade(id,'lux'),false);
+}
 damage.hurt(waves.relay,1e6,RELAY);step(100);assert.equal(result,false);assert.equal(waves.wave,1);
 
 const energy=new RunnerEnergy();

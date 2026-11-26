@@ -1,4 +1,4 @@
-import {SOLAR_CONFIG} from './lux-solar.js?v=422';
+import {SOLAR_CONFIG} from './lux-solar.js?v=423';
 import {HEROES} from './hero-roster.js?v=404';
 
 const training={

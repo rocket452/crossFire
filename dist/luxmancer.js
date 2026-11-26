@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 import {LuxEffects} from './luxmancer-effects.js?v=411';
-import {SOLAR_CONFIG,LuxSolarEffects} from './lux-solar.js?v=422';
+import {SOLAR_CONFIG,LUX_UPGRADES,LuxSolarEffects} from './lux-solar.js?v=423';
 import {RiftPlayer} from './rift-player.js?v=422';
 
 const spells={
@@ -39,6 +39,15 @@ export class Luxmancer {
   this.pendingMark=new T.Mesh(ring,glow(0xfff1af));
   scene.add(this.pendingMark);
   this.reset();this.setEnabled(false);
+ }
+ get lanceChargeTime(){
+  return this.hasUpgrade?.(LUX_UPGRADES.quickLance.id)?LUX_UPGRADES.quickLance.charge:spells.lance.charge;
+ }
+ get lockAcquireTime(){
+  return this.hasUpgrade?.(LUX_UPGRADES.quickLock.id)?lockTime/LUX_UPGRADES.quickLock.speedMultiplier:lockTime;
+ }
+ get solarRecharge(){
+  return this.hasUpgrade?.(LUX_UPGRADES.communion.id)?LUX_UPGRADES.communion.recharge:SOLAR_CONFIG.recharge;
  }
  reset(refill=true){
   if(refill)this.energy=SOLAR_CONFIG.capacity;
@@ -95,8 +104,8 @@ export class Luxmancer {
    this.lanceCharge=0;this.lowEnergyTime=.65;
    return false;
   }
-  this.lanceCharge=Math.min(spells.lance.charge,this.lanceCharge+dt);
-  return this.lanceCharge>=spells.lance.charge-1e-8;
+  this.lanceCharge=Math.min(this.lanceChargeTime,this.lanceCharge+dt);
+  return this.lanceCharge>=this.lanceChargeTime-1e-8;
  }
  clearLocks(){
   this.locks=[];this.charging=false;this.volleyHold=0;
@@ -122,7 +131,7 @@ export class Luxmancer {
   if(best!==this.pendingTarget){this.pendingTarget=best;this.pendingTime=0;}
   if(!best)return;
   this.pendingTime+=dt;
-  if(this.pendingTime>=lockTime-1e-8){
+  if(this.pendingTime>=this.lockAcquireTime-1e-8){
    this.locks.push(best);this.pendingTarget=null;this.pendingTime=0;
   }
  }
@@ -139,7 +148,7 @@ export class Luxmancer {
   if(pending){
    this.pendingMark.position.copy(pending.shapes[0].center);
    this.pendingMark.quaternion.copy(camera.quaternion);
-   this.pendingMark.scale.setScalar(2.8-1.3*this.pendingTime/lockTime);
+   this.pendingMark.scale.setScalar(2.8-1.3*this.pendingTime/this.lockAcquireTime);
   }
  }
  stepShots(dt){
@@ -277,7 +286,7 @@ export class LuxPlayer extends RiftPlayer {
    if(!this.grounded){h.solarMode=null;return true;}
    const waiting=Math.min(dt,h.windup);
    h.windup-=waiting;
-   if(dt-waiting>1e-8)h.energy=Math.min(c.capacity,h.energy+(dt-waiting)*c.recharge);
+   if(dt-waiting>1e-8)h.energy=Math.min(c.capacity,h.energy+(dt-waiting)*h.solarRecharge);
    return true;
   }
   if(allowInput&&!sprinting&&this.taps.has('KeyQ')){
@@ -304,7 +313,7 @@ export class LuxPlayer extends RiftPlayer {
   const recoil=h.castKind===kind?T.MathUtils.clamp(h.castRemaining/.23,0,1):0;
   const right=c.world('B_R_UpperArm');
   if(kind==='lance'){
-   const gather=h.lanceCharge/spells.lance.charge;
+   const gather=h.lanceCharge/h.lanceChargeTime;
    right.addScaledVector(aim,.70-.27*recoil-.24*Math.sin(gather*Math.PI))
     .addScaledVector(up,.13*recoil-.035);
    const support=c.world('B_L_UpperArm').lerp(right,.68).addScaledVector(up,-.08);
@@ -422,12 +431,12 @@ export class LuxPlayer extends RiftPlayer {
    if(size){h.effects.burst('comet',origin,dir,false);h.cool.comet=spells.comet.gap;}
    h.clearLocks();
   }
-  const lanceProgress=h.lanceCharge/spells.lance.charge;
+  const lanceProgress=h.lanceCharge/h.lanceChargeTime;
   h.effects.cast(pose,h.character.hand(pose==='comet'&&wantsVolley?'L':'R'),dir,
-   pose==='comet'?(h.locks.length+h.pendingTime/lockTime)/maxLocks:Math.min(1,h.castRemaining/.23),lanceProgress,this.camera.aspect,h.root.position);
+   pose==='comet'?(h.locks.length+h.pendingTime/h.lockAcquireTime)/maxLocks:Math.min(1,h.castRemaining/.23),lanceProgress,this.camera.aspect,h.root.position);
   h.drawLocks(this.camera);
   this.updateEnergyHud();
-  const progress=h.pendingTarget?' · Acquiring '+Math.floor(100*h.pendingTime/lockTime)+'%':'';
+  const progress=h.pendingTarget?' · Acquiring '+Math.floor(100*h.pendingTime/h.lockAcquireTime)+'%':'';
   const spellStatus=lanceProgress?'Sunlance · Charging '+Math.floor(lanceProgress*100)+'%':
    h.charging?'Targets locked '+h.locks.length+' / '+maxLocks+progress:
    lanceHeld&&h.cool.lance?'Sunlance · '+h.cool.lance.toFixed(1)+'s':
