@@ -1,6 +1,6 @@
 import {alertEnemiesToAttacker,inFrontOfEnemy} from './enemy-alert.js?v=421';
-import {Luxmancer,LuxPlayer} from './luxmancer.js?v=420';
-import {RiftPlayer} from './rift-player.js?v=416';
+import {Luxmancer,LuxPlayer} from './luxmancer.js?v=422';
+import {RiftPlayer} from './rift-player.js?v=422';
 import {VioletPlayer} from './violet-player.js?v=395';
 import {DefenseTitle} from './defense-title.js?v=413';
 import {kageDashCanFinish} from './kage-attacks.js?v=393';
@@ -73,7 +73,7 @@ import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';
 import {PortalHero} from './portal-hero.js?v=397';
 import {SolaraHero} from './solara-hero.js?v=rainbow-full-solara-290';
 import {HeroRoster} from './hero-roster.js?v=404';
-import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=420';
+import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=422';
 import {segmentBoxFraction} from './combat-collision.js?v=evac-performance-233';
 import {WalkerSniper,WALKER_SNIPER} from './walker-sniper.js?v=415';
 import {RobotEyeBeams} from './robot-eye-beams.js?v=charged-shuriken-130';
@@ -183,7 +183,7 @@ const evacuationBriefing=districtMode?new EvacuationBriefing({
   roster.apply(mission1Mode?[id]:evacuationTeam(id,roster.active),{persist:false});
   setView('overview');
   const mobileDefense=(defenseMode||liberationMode)&&!inputMode.desktop;
-  if(!mobileDefense)viewport.scrollIntoView({block:'center'});
+  if(!mobileDefense&&!gameIsFullscreen())viewport.scrollIntoView({block:'center'});
   const player=id==='lux'?lux.player:id==='violet'?hero.player:id==='rift'?portalHero.player:id==='ninja'?ninja:runner;
   player.enter(defenseMode?RELAY_INTRO:undefined);
   if(liberationMode)missionRaiders.start(id,player);
@@ -414,8 +414,6 @@ function defenseResult(won){
  panel.querySelector('button').onclick=()=>{
   if(won){location.reload();return;}
   panel.close();
-  if(gameIsFullscreen())desktopPlayStarted=false;
-  setGameFullscreen(false);
   setView('overview');
   evacuationBriefing.open('choose');
   resetDistrict();

@@ -1,12 +1,13 @@
+import {SOLAR_CONFIG} from './lux-solar.js?v=422';
 import {HEROES} from './hero-roster.js?v=404';
 
 const training={
  lux:{tip:'Use the highway sightlines. Aim slightly above distant targets to account for Sunlance drop.',
-  controls:[['Move and jump','WASD · Space','Stick · Jump'],['Sunlance · charges for 1.5s','Hold left click or F to repeat · Stand still while held','Hold Sunlance to repeat · Stand still while held'],['Sunburst machine gun','Hold right click or G','Hold Sunburst'],['Light Volley','Hold E and sweep across targets · Release to fire early','Hold Lock volley and aim · Release to fire early'],
+  controls:[['Move and jump','WASD · Space','Stick · Jump'],['Sprint','Hold Shift on the ground · Casting disabled','—'],['Sunlance · charges for 1.5s','Hold left click or F to repeat · Stand still while held','Hold Sunlance to repeat · Stand still while held'],['Sunburst machine gun','Hold right click or G','Hold Sunburst'],['Light Volley','Hold E and sweep across targets · Release to fire early','Hold Lock volley and aim · Release to fire early'],
    ['Solar Blink','X to blink · X again to return · Aim at a roof edge to jump to the rooftop','Tap Solar Blink · Tap again to return'],
    ['Solar Disc','Q to toggle · Space up · Shift down','Disc to toggle · Jump / Up · Down'],
    ['Solar Communion','Hold R on solid ground · Release to cancel','Hold Recharge on solid ground · Release to cancel']],
-  bonus:'Sunlance uses 10 energy, Sunburst uses 1 per shot, and each locked comet uses 6. Flight uses 5 per second. Release Communion to move or attack again.'},
+  bonus:`Sunlance uses ${SOLAR_CONFIG.attackCosts.lance} energy, Sunburst uses ${SOLAR_CONFIG.attackCosts.spray} per shot, and each locked comet uses ${SOLAR_CONFIG.attackCosts.comet}. Flight uses ${SOLAR_CONFIG.flightDrain} per second. Release Communion to move or attack again.`},
  volt:{
   tip:'Run to build charge. Hold the rescue dash through a civilian group and release in a clear spot closer to the Chinook.',
   controls:[
@@ -73,7 +74,7 @@ export class EvacuationBriefing {
   this.liberationMode=liberationMode;this.defenseMode=defenseMode;this.combatOnly=combatOnly;
   this.pending=true;
   this.dialog=document.createElement('dialog');
-  this.dialog.className='evac-briefing';
+  this.dialog.className=defenseMode?'evac-briefing defense-briefing':'evac-briefing';
   this.dialog.setAttribute('aria-labelledby','evac-briefing-title');
   this.dialog.addEventListener('cancel',event=>{
    event.preventDefault();
@@ -85,7 +86,8 @@ export class EvacuationBriefing {
   if(this.dialog.open)return;
   this.pending=true;
   this.hero=null;
-  document.body.append(this.dialog);
+  const host=this.defenseMode?document.querySelector('.viewer'):document.body;
+  host.append(this.dialog);
   this.show(step);
   this.unsubscribe=this.inputMode.subscribe(()=>{
    if(this.step==='tutorial'&&this.pending)this.updateControls();

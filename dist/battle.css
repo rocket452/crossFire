@@ -182,9 +182,9 @@ html[data-input-mode=desktop] .viewer.is-ninja #shuriken-meter{display:block;fle
 .defense-upgrade-options button strong {font-size:1rem}
 .defense-upgrade-options button span {font-size:.9rem;font-weight:400}
 
-body.show-defense-title{overflow:hidden}
-.show-defense-title #viewport{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-height:none!important;aspect-ratio:auto!important;z-index:10000;background:#070c1b}
-.show-defense-title #viewport>:not(canvas){visibility:hidden!important}
+body:is(.show-defense-title,:has(.defense-briefing[open])){overflow:hidden}
+body:is(.show-defense-title,:has(.defense-briefing[open])) #viewport{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-height:none!important;aspect-ratio:auto!important;z-index:10000;background:#070c1b}
+body:is(.show-defense-title,:has(.defense-briefing[open])) #viewport>:not(canvas){visibility:hidden!important}
 dialog.defense-title[open]{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;box-sizing:border-box;inset:0;width:100%;height:100dvh;max-width:none;max-height:none;margin:0;padding:clamp(22px,5vw,80px);border:0;color:#f4faff;background:linear-gradient(161deg,#070e22dd,transparent 39%),linear-gradient(0deg,#05091de0,transparent 23%);overflow:hidden;touch-action:none;cursor:grab;user-select:none}
 .defense-title::backdrop{background:transparent}
 .defense-title:active{cursor:grabbing}

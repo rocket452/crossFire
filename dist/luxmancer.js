@@ -1,8 +1,8 @@
 import * as T from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 import {LuxEffects} from './luxmancer-effects.js?v=411';
-import {SOLAR_CONFIG,LuxSolarEffects} from './lux-solar.js?v=416';
-import {RiftPlayer} from './rift-player.js?v=416';
+import {SOLAR_CONFIG,LuxSolarEffects} from './lux-solar.js?v=422';
+import {RiftPlayer} from './rift-player.js?v=422';
 
 const spells={
  lance:{speed:205,life:1.8,damage:350,gap:.85,charge:1.5,length:3,width:.12,color:0xffdc53},
@@ -175,7 +175,7 @@ export class Luxmancer {
 }
 export class LuxPlayer extends RiftPlayer {
  constructor(hero,options){
-  super(hero,options,{hint:'WASD move · Space jump · Hold LMB Sunlance · RMB Sunburst · Hold E Light Volley · Q Solar Disc · Space / Shift altitude · X Solar Blink / return · Hold R recharge',
+  super(hero,options,{hint:'WASD move · Space jump · Shift sprint · Hold LMB Sunlance · RMB Sunburst · Hold E Light Volley · Q Solar Disc · Space / Shift altitude · X Solar Blink / return · Hold R recharge',
    actions:[['Jump / Up','Space'],['Hold Sunlance','Fire'],['Sunburst','Shield'],['Lock volley','KeyE'],['Disc','KeyQ'],['Down','ShiftLeft'],['Recharge','KeyR'],['Solar Blink','KeyX']],
    roofColor:'#ffdb65',
    codes:['KeyW','KeyA','KeyS','KeyD','Space','KeyE','KeyF','KeyG','KeyQ','KeyR','KeyX','ShiftLeft','ShiftRight']});
@@ -264,11 +264,11 @@ export class LuxPlayer extends RiftPlayer {
   this.vertical=0;
   if(this.hero.solarMode==='landing')this.hero.solarMode=null;
  }
- solarMovement(dt,allowInput){
+ solarMovement(dt,allowInput,sprinting){
   const h=this.hero,c=SOLAR_CONFIG,held=this.keys;
   h.lowEnergyTime=Math.max(0,h.lowEnergyTime-dt);
-  if(h.solarMode==='communion'&&!held.has('KeyR'))h.solarMode=null;
-  if(!h.solarMode&&this.grounded&&held.has('KeyR')){
+  if(h.solarMode==='communion'&&(sprinting||!held.has('KeyR')))h.solarMode=null;
+  if(!sprinting&&!h.solarMode&&this.grounded&&held.has('KeyR')){
    h.solarMode='communion';h.windup=c.windup;h.clearLocks();h.clearLance();
    h.castRemaining=0;h.poseWeight=0;h.effects.cast(null);
   }
@@ -280,7 +280,7 @@ export class LuxPlayer extends RiftPlayer {
    if(dt-waiting>1e-8)h.energy=Math.min(c.capacity,h.energy+(dt-waiting)*c.recharge);
    return true;
   }
-  if(allowInput&&this.taps.has('KeyQ')){
+  if(allowInput&&!sprinting&&this.taps.has('KeyQ')){
    if(h.solarMode==='flight')h.solarMode=this.grounded?null:'landing';
    else if(h.energy>0){h.solarMode='flight';this.platform=null;}
    else h.lowEnergyTime=.65;
@@ -291,7 +291,7 @@ export class LuxPlayer extends RiftPlayer {
    h.spend(powered*c.flightDrain);
    if(h.solarMode==='landing'&&dt>powered)this.moveDisc(dt-powered,true,allowInput);
   }else if(h.solarMode==='landing')this.moveDisc(dt,true,allowInput);
-  else this.move(dt,allowInput);
+  else this.move(dt,allowInput,sprinting?c.sprintMultiplier:1);
   return false;
  }
  poseCast(kind,ray){
@@ -329,12 +329,14 @@ export class LuxPlayer extends RiftPlayer {
   const h=this.hero;
   this.hurt.step(dt);
   const lanceHeld=this.keys.has('Fire')||this.keys.has('KeyF');
-  const channeling=this.solarMovement(dt,!lanceHeld);
+  const sprinting=this.grounded&&h.solarMode!=='flight'&&h.solarMode!=='landing'
+   &&(this.keys.has('ShiftLeft')||this.keys.has('ShiftRight'));
+  const channeling=this.solarMovement(dt,sprinting||!lanceHeld,sprinting);
   this.frame();
   if(this.roofMarker){
    const feet=h.root.position;
    const roof=this.roofBelow(feet.x,feet.z,feet.y+.06,feet.y-.22);
-   this.updateSolarBlink(dt,!channeling&&!lanceHeld,roof?.section?.building);
+   this.updateSolarBlink(dt,!sprinting&&!channeling&&!lanceHeld,roof?.section?.building);
   }
   h.solarEffects.update(dt,h.root.position,h.solarMode,h.windup);
   const sprayClock=h.cool.spray>0?h.cool.spray-dt:0;
@@ -343,6 +345,17 @@ export class LuxPlayer extends RiftPlayer {
   h.cool.lance=Math.max(0,h.cool.lance-dt);
   h.cool.comet=Math.max(0,h.cool.comet-dt);
   h.castRemaining=Math.max(0,h.castRemaining-dt);
+  if(sprinting){
+   h.clearLocks();h.clearLance();
+   h.castRemaining=0;h.poseWeight=0;h.effects.cast(null);
+   this.face(dt,false);
+   const clip=this.grounded?(this.walking?'Run':'Idle'):(this.vertical>0?'Jump':'Fall');
+   h.character.update(clip,dt,{loop:this.grounded,rate:this.walking&&this.grounded?SOLAR_CONFIG.sprintMultiplier:1});
+   this.updateEnergyHud();
+   this.output.textContent='Sprint · Release Shift to cast';
+   this.taps.clear();
+   return;
+  }
   if(channeling){
    this.updateEnergyHud();
    this.face(dt,true);

@@ -104,7 +104,7 @@ export class RiftPlayer extends ManualHeroControls {
   const lift=new Vector3(0,1.35,0);
   return this.blocked(from.clone().add(lift),to.clone().add(lift),.95);
  }
- move(dt,allowInput=true){
+ move(dt,allowInput=true,speedMultiplier=1){
   const keys=this.keys,position=this.hero.root.position;
   this.carryDeck(position);
   const startX=position.x,startZ=position.z;
@@ -114,7 +114,7 @@ export class RiftPlayer extends ManualHeroControls {
   if(allowInput)motion.set(Math.sin(this.yaw)*f-Math.cos(this.yaw)*r,0,Math.cos(this.yaw)*f+Math.sin(this.yaw)*r).clampLength(0,1);
   this.walking=false;
   for(const axis of ['x','z']){
-   const next=position.clone();next[axis]+=motion[axis]*RIFT.moveSpeed*dt;this.clamp(next);
+   const next=position.clone();next[axis]+=motion[axis]*RIFT.moveSpeed*speedMultiplier*dt;this.clamp(next);
    if(position.distanceToSquared(next)<1e-9||this.sweep(position,next))continue;
    position.copy(next);this.walking=true;
   }

@@ -2,14 +2,15 @@ import * as T from './vendor/three.module.js';
 
 export const SOLAR_CONFIG=Object.freeze({
  capacity:100,
- flightDrain:5,
+ flightDrain:2.5,
+ sprintMultiplier:1.5,
  flightSpeed:31,
  climbSpeed:19,
  glideSpeed:12,
  landingSpeed:8,
  windup:.75,
  recharge:25,
- attackCosts:Object.freeze({lance:10,spray:1,comet:6})
+ attackCosts:Object.freeze({lance:5,spray:.5,comet:3})
 });
 
 const up=new T.Vector3(0,1,0);
