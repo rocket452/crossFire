@@ -3,6 +3,7 @@ import {LaserShuriken} from './laser-shuriken.js?v=424';
 import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
 import {KageSmoke,guardHeroInSmoke} from './kage-smoke.js?v=390';
 import {KageBombs} from './kage-bombs.js?v=smoke-projectile-219';
+import {KAGE_BOMB_ABILITIES_ENABLED} from './kage-ability-config.js?v=433';
 import {KageAttacks,kageHitPower} from './kage-attacks.js?v=427';
 import {ChargedShuriken} from './charged-shuriken.js?v=352';
 import {ShurikenWorld} from './shuriken-world.js?v=424';
@@ -33,7 +34,30 @@ export class NinjaHero {
     this.motion.backstabDashReady=true;
     this.showDashReset('BACKSTAB DASH · EXTRA DASH READY');
    }
-  }});this.laserStar=new LaserShuriken(this,shurikenConfig.laserStar);this.attacks=new KageAttacks(this,shurikenConfig);this.attacks.panel.insertAdjacentHTML('beforeend','<span data-laser>LASER STAR · RMB / G</span><span data-bomb>BOMB READY · C</span><span data-smoke>SMOKE READY · V</span>');this.bombs=new KageBombs(scene,shurikenConfig.bomb,{world:this.shurikenWorld,origin:()=>this.character.hand('R'),aim:()=>this.aim(),units:()=>this.getDashEnemies(),missiles:()=>this.getAttackThreats(),hit:(hit,power,kind)=>this.hit(hit,power,kind),velocity:()=>this.velocity,redirect,onThrow:()=>{this.throwPose=.25;this.shurikenEffects.tone(shurikenConfig.feedback.throwHz);}});this.smoke=new KageSmoke(scene,shurikenConfig.smoke,{canDeploy:()=>this.enabled!==false,ground:p=>{const from=p.clone().addScaledVector(UP,.5),to=new THREE.Vector3(p.x,terrainHeight(p.x,p.z)-.5,p.z),hit=this.shurikenWorld.solid(from,to);return hit&&this.shurikenWorld.normal(hit).y>.65?new THREE.Vector3().copy(hit.point).addScaledVector(UP,.03):null;},onDeploy:()=>{this.shurikenEffects.tone(160);}});this.smokeBombs=new KageBombs(scene,{...shurikenConfig.bomb,cooldown:this.smoke.config.cooldown,maxActive:1,lifetime:this.smoke.config.projectileFuseSeconds},{world:this.shurikenWorld,origin:()=>this.character.hand('R'),aim:()=>this.aim(),velocity:()=>this.velocity,redirect,variant:'smoke',expireDetonates:true,canThrow:()=>this.enabled!==false&&this.smoke.cooldown<=0&&this.smoke.domes.length<this.smoke.config.maxActive,onDetonate:b=>this.smoke.deploy(b.position,{reserved:true}),onThrow:()=>{this.smoke.cooldown=this.smoke.config.cooldown;this.throwPose=.3;this.shurikenEffects.tone(shurikenConfig.feedback.throwHz);}});guardHeroInSmoke(this,()=>this.smoke);this.reset();this.bindInput();
+  }});
+  this.laserStar=new LaserShuriken(this,shurikenConfig.laserStar);
+  this.attacks=new KageAttacks(this,shurikenConfig);
+  this.attacks.panel.insertAdjacentHTML('beforeend','<span data-laser>LASER STAR · RMB / G</span>');
+  if(KAGE_BOMB_ABILITIES_ENABLED)this.attacks.panel.insertAdjacentHTML('beforeend','<span data-bomb>BOMB READY · C</span><span data-smoke>SMOKE READY · V</span>');
+  const projectileOptions={world:this.shurikenWorld,origin:()=>this.character.hand('R'),aim:()=>this.aim(),velocity:()=>this.velocity,redirect};
+  this.bombs=new KageBombs(scene,shurikenConfig.bomb,{
+   ...projectileOptions,canThrow:()=>KAGE_BOMB_ABILITIES_ENABLED,
+   units:()=>this.getDashEnemies(),missiles:()=>this.getAttackThreats(),hit:(hit,power,kind)=>this.hit(hit,power,kind),
+   onThrow:()=>{this.throwPose=.25;this.shurikenEffects.tone(shurikenConfig.feedback.throwHz);}
+  });
+  this.smoke=new KageSmoke(scene,shurikenConfig.smoke,{
+   canDeploy:()=>KAGE_BOMB_ABILITIES_ENABLED&&this.enabled!==false,
+   ground:p=>{const from=p.clone().addScaledVector(UP,.5),to=new THREE.Vector3(p.x,terrainHeight(p.x,p.z)-.5,p.z),hit=this.shurikenWorld.solid(from,to);return hit&&this.shurikenWorld.normal(hit).y>.65?new THREE.Vector3().copy(hit.point).addScaledVector(UP,.03):null;},
+   onDeploy:()=>this.shurikenEffects.tone(160)
+  });
+  this.smokeBombs=new KageBombs(scene,{...shurikenConfig.bomb,cooldown:this.smoke.config.cooldown,maxActive:1,lifetime:this.smoke.config.projectileFuseSeconds},{
+   ...projectileOptions,variant:'smoke',expireDetonates:true,
+   canThrow:()=>this.smoke.canDeploy()&&this.smoke.cooldown<=0&&this.smoke.domes.length<this.smoke.config.maxActive,
+   onDetonate:b=>this.smoke.deploy(b.position,{reserved:true}),
+   onThrow:()=>{this.smoke.cooldown=this.smoke.config.cooldown;this.throwPose=.3;this.shurikenEffects.tone(shurikenConfig.feedback.throwHz);}
+  });
+  guardHeroInSmoke(this,()=>this.smoke);
+  this.reset();this.bindInput();
  }
  throwSmoke(atFeet=false){return this.smokeBombs.throw(atFeet?{aim:this.character.hand('R').addScaledVector(UP,-5)}:{});}
  art(parent,geometry,material,position){const m=new THREE.Mesh(geometry,material);m.position.set(...position);m.castShadow=true;parent.add(m);return m;}
@@ -78,12 +102,19 @@ export class NinjaHero {
   $('play-ninja').onclick=()=>this.enter();document.querySelectorAll('[data-play-ninja]').forEach(b=>b.onclick=()=>this.enter());$('exit-ninja').onclick=()=>this.exit();$('ninja-debug').onclick=()=>{this.shurikenEffects.debug=!this.shurikenEffects.debug;};$('ninja-fullscreen').onclick=()=>$('fullscreen').click();
   this.moveStick=new TouchStick($('ninja-stick'),$('ninja-thumb'),{enabled:()=>this.canInput()});
   const look=(x,y)=>{this.yaw-=x*.005;this.pitch=THREE.MathUtils.clamp(this.pitch-y*.004,-1.35,1.35);};
-  window.addEventListener('keydown',e=>{if(!this.active||document.querySelector('dialog[open]')||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;const k=e.key.toLowerCase();if(k==='escape'){e.preventDefault();if(this.locked())document.exitPointerLock();else this.exit();return;}if(!this.canInput())return;if(k===this.shurikenConfig.input.teleportKey&&!e.repeat){e.preventDefault();this.teleportPending=true;}if(k===this.shurikenConfig.input.cancelKey&&!e.repeat){e.preventDefault();this.cancelStarPending=true;}if(e.code===this.shurikenConfig.input.debugKey&&!e.repeat){e.preventDefault();this.shurikenEffects.debug=!this.shurikenEffects.debug;}if(['w','a','s','d',' ','shift','f','g','t','r','c',this.smoke.config.key,'arrowup','arrowdown','arrowleft','arrowright'].includes(k)){e.preventDefault();this.keys.add(k);if(k===' '&&!e.repeat)this.jumpPending=true;if(k==='shift'&&!e.repeat)this.dashPending=true;if(k==='f'&&!e.repeat)this.tapFire=true;if(k==='g'&&!e.repeat)this.tapLaser=true;if(k==='t'&&!e.repeat)this.tapShuriken=true;if(k==='r'&&!e.repeat)this.slashPending=true;if(k==='c'&&!e.repeat)this.bombPending=true;if(k===this.smoke.config.key&&!e.repeat)this.smokePending=true;}});
+  const actionKeys=['w','a','s','d',' ','shift','f','g','t','r','arrowup','arrowdown','arrowleft','arrowright'];
+  const actionButtons=[['ninja-jump','jumpPending'],['ninja-dash','dashPending'],['ninja-slash','slashPending']];
+  if(KAGE_BOMB_ABILITIES_ENABLED){
+   actionKeys.push('c',this.smoke.config.key);
+   actionButtons.push(['ninja-bomb','bombPending'],['ninja-smoke','smokePending']);
+   for(const id of ['ninja-bomb','ninja-smoke','kage-smoke-help'])$(id).hidden=false;
+  }
+  window.addEventListener('keydown',e=>{if(!this.active||document.querySelector('dialog[open]')||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;const k=e.key.toLowerCase();if(k==='escape'){e.preventDefault();if(this.locked())document.exitPointerLock();else this.exit();return;}if(!this.canInput())return;if(k===this.shurikenConfig.input.teleportKey&&!e.repeat){e.preventDefault();this.teleportPending=true;}if(k===this.shurikenConfig.input.cancelKey&&!e.repeat){e.preventDefault();this.cancelStarPending=true;}if(e.code===this.shurikenConfig.input.debugKey&&!e.repeat){e.preventDefault();this.shurikenEffects.debug=!this.shurikenEffects.debug;}if(actionKeys.includes(k)){e.preventDefault();this.keys.add(k);if(k===' '&&!e.repeat)this.jumpPending=true;if(k==='shift'&&!e.repeat)this.dashPending=true;if(k==='f'&&!e.repeat)this.tapFire=true;if(k==='g'&&!e.repeat)this.tapLaser=true;if(k==='t'&&!e.repeat)this.tapShuriken=true;if(k==='r'&&!e.repeat)this.slashPending=true;if(KAGE_BOMB_ABILITIES_ENABLED&&!e.repeat){if(k==='c')this.bombPending=true;if(k===this.smoke.config.key)this.smokePending=true;}}});
   window.addEventListener('keyup',e=>this.keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{this.clearInput();if(this.active&&this.locked())document.exitPointerLock();});document.addEventListener('visibilitychange',()=>{if(document.hidden)this.clearInput();});
   document.addEventListener('pointerlockchange',()=>{if(this.active){if(!this.locked())this.clearInput();this.updateHUD();}});inputMode.subscribe(()=>{if(this.active){this.clearInput();if(!inputMode.desktop&&this.locked())document.exitPointerLock();this.updateHUD();}});
   this.canvas.addEventListener('contextmenu',e=>{if(this.active)e.preventDefault();});this.canvas.addEventListener('mousedown',e=>{if(!this.active||!inputMode.desktop||this.isPaused()||document.querySelector('dialog[open]'))return;if(!this.locked()){if(e.button===0)this.requestLock();return;}if(e.button===0){this.shurikenEffects.unlock();this.heldFire=true;this.tapFire=true;}if(e.button===2){e.preventDefault();this.shurikenEffects.unlock();this.heldLaser=true;this.tapLaser=true;}});window.addEventListener('mouseup',e=>{if(e.button===0)this.heldFire=false;if(e.button===2)this.heldLaser=false;});window.addEventListener('mousemove',e=>{if(this.canInput()&&inputMode.desktop)look(e.movementX,e.movementY);});
   this.canvas.addEventListener('pointerdown',e=>{if(!this.active||inputMode.desktop||this.isPaused())return;this.lookPointer={id:e.pointerId,x:e.clientX,y:e.clientY};this.canvas.setPointerCapture(e.pointerId);});this.canvas.addEventListener('pointermove',e=>{const p=this.lookPointer;if(!p||p.id!==e.pointerId||!this.canInput())return;look(e.clientX-p.x,e.clientY-p.y);p.x=e.clientX;p.y=e.clientY;});for(const event of['pointerup','pointercancel','lostpointercapture'])this.canvas.addEventListener(event,e=>{if(this.lookPointer?.id===e.pointerId)this.lookPointer=null;});
-  for(const[id,key]of[['ninja-jump','jumpPending'],['ninja-dash','dashPending'],['ninja-slash','slashPending'],['ninja-bomb','bombPending'],['ninja-smoke','smokePending']]){$(id).onpointerdown=e=>{e.preventDefault();if(this.canInput())this[key]=true;};$(id).onclick=e=>{if(e.detail===0&&this.canInput())this[key]=true;};}
+  for(const[id,key]of actionButtons){$(id).onpointerdown=e=>{e.preventDefault();if(this.canInput())this[key]=true;};$(id).onclick=e=>{if(e.detail===0&&this.canInput())this[key]=true;};}
   for(const [id,flag]of[['ninja-teleport','teleportPending'],['ninja-cancel','cancelStarPending']]){const button=$(id);button.onpointerdown=e=>{e.preventDefault();if(this.canInput()){this.shurikenEffects.unlock();this[flag]=true;}};button.onclick=e=>{if(e.detail===0&&this.canInput())this[flag]=true;};}for(const[id,held,tap]of[['ninja-fire','heldFire','tapFire'],['ninja-laser','heldLaser','tapLaser'],['ninja-shuriken','heldShuriken','tapShuriken']]){const button=$(id);button.onpointerdown=e=>{if(!this.canInput())return;this.shurikenEffects.unlock();e.preventDefault();button.setPointerCapture(e.pointerId);this[held]=true;this[tap]=true;};for(const event of['pointerup','pointercancel','lostpointercapture'])button.addEventListener(event,()=>this[held]=false);button.onclick=e=>{if(e.detail===0&&this.canInput())this[tap]=true;};}
  }
  requestLock(){if(!this.active||!inputMode.desktop||this.isPaused()||document.querySelector('dialog[open]'))return;try{const result=this.canvas.requestPointerLock?.();result?.catch(()=>{});}catch{}this.canvas.focus({preventScroll:true});}
@@ -110,7 +141,8 @@ export class NinjaHero {
   if(wasAir&&this.motion.mode==='ground'){this.landing=.24;this.landingStrength=THREE.MathUtils.clamp(-fallSpeed/30,.2,1);}this.jumpPending=this.dashPending=this.tapFire=this.tapLaser=this.tapShuriken=this.slashPending=this.bombPending=this.smokePending=false;this.root.position.copy(this.motion.position);this.velocity.copy(this.motion.velocity);if(this.motion.active||wasDash||this.motion.fallingCut){this.ribbons.push({p:this.root.position.clone().add(new THREE.Vector3(0,1.1,0)),life:.3});if(this.ribbons.length>32)this.ribbons.shift();}
   if(!this.active&&fire&&this.throwTimer<=0&&!this.motion.active&&target){this.throwPose=.18;this.throwTimer=this.shurikenConfig.kunai.cooldown;this.pose(dt,target);this.attacks.quickThrow(target);}else this.pose(dt,target);
   // The battle render loop owns camera updates, once per frame after movement.
-  this.smoke.aiClock-=dt;if(!this.active&&this.smoke.aiClock<=0){this.smoke.aiClock=this.smoke.config.aiInterval;if(this.motion.mode==='ground'&&(this.hitSeconds>0||this.getSmokeThreats().some(p=>Math.hypot(p.x-this.root.position.x,p.z-this.root.position.z)<this.smoke.config.radius*.75)))this.throwSmoke(true);}this.smoke.update(dt);this.smokeBombs.update(dt);const smokeButton=$('ninja-smoke');smokeButton.disabled=this.smoke.cooldown>0;smokeButton.textContent=this.smokeBombs.bombs.length?'SMOKE IN FLIGHT':this.smoke.cooldown>0?'SMOKE · '+this.smoke.cooldown.toFixed(1)+'s':'SMOKE · V';this.attacks.panel.querySelector('[data-smoke]').textContent=smokeButton.textContent;this.bombs.update(dt);const bombButton=$('ninja-bomb');bombButton.disabled=this.bombs.cooldown>0;bombButton.textContent=this.bombs.cooldown>0?'BOMB · '+this.bombs.cooldown.toFixed(1)+'s':'BOMB · C';this.attacks.panel.querySelector('[data-bomb]').textContent=bombButton.textContent;this.attacks.update(dt,{held:fire,slash,enabled:this.active&&this.canInput()});
+  if(KAGE_BOMB_ABILITIES_ENABLED)this.updateBombAbilities(dt);
+  this.attacks.update(dt,{held:fire,slash,enabled:this.active&&this.canInput()});
   if(this.active&&this.canInput()){
    this.laserStar.update(dt,laser);
    if(this.laserStar.state==='charging')this.attacks.heldKunai.visible=false;
@@ -120,6 +152,24 @@ export class NinjaHero {
    $('ninja-laser').textContent=this.laserStar.label;
   }
   this.shuriken.update(dt,{held:this.active&&this.canInput()&&secondary,dashing:this.motion.active});this.shurikenEffects.update(dt,time);this.updateProjectiles(dt);this.renderEffects(dt);if(this.active)this.updateHUD();
+ }
+ updateBombAbilities(dt){
+  this.smoke.aiClock-=dt;
+  if(!this.active&&this.smoke.aiClock<=0){
+   this.smoke.aiClock=this.smoke.config.aiInterval;
+   const {x,z}=this.root.position;
+   if(this.motion.mode==='ground'&&(this.hitSeconds>0||this.getSmokeThreats().some(p=>Math.hypot(p.x-x,p.z-z)<this.smoke.config.radius*.75)))this.throwSmoke(true);
+  }
+  this.smoke.update(dt);
+  this.smokeBombs.update(dt);
+  this.bombs.update(dt);
+  const smokeButton=$('ninja-smoke'),bombButton=$('ninja-bomb');
+  smokeButton.disabled=this.smoke.cooldown>0;
+  smokeButton.textContent=this.smokeBombs.bombs.length?'SMOKE IN FLIGHT':this.smoke.cooldown>0?'SMOKE · '+this.smoke.cooldown.toFixed(1)+'s':'SMOKE · V';
+  bombButton.disabled=this.bombs.cooldown>0;
+  bombButton.textContent=this.bombs.cooldown>0?'BOMB · '+this.bombs.cooldown.toFixed(1)+'s':'BOMB · C';
+  this.attacks.panel.querySelector('[data-smoke]').textContent=smokeButton.textContent;
+  this.attacks.panel.querySelector('[data-bomb]').textContent=bombButton.textContent;
  }
  pose(dt,target){
   const m=this.motion.body,speed=Math.hypot(m.velocity.x,m.velocity.z),moving=speed>1,heading=moving?Math.atan2(m.velocity.x,m.velocity.z):this.yaw,yaw=this.motion.active?Math.atan2(this.motion.dash.direction.x,this.motion.dash.direction.z):this.throwPose>0||this.attacks?.slashTime>0?this.yaw:heading;

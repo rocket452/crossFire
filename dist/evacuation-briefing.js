@@ -1,5 +1,6 @@
 import {SOLAR_CONFIG} from './lux-solar.js?v=423';
-import {HEROES} from './hero-roster.js?v=404';
+import {HEROES} from './hero-roster.js?v=433';
+import {KAGE_BOMB_ABILITIES_ENABLED} from './kage-ability-config.js?v=433';
 
 const training={
  lux:{tip:'Use the highway sightlines. Aim slightly above distant targets to account for Sunlance drop.',
@@ -45,7 +46,7 @@ const training={
   bonus:'Attack Portal regains one charge every five seconds. Aim the Redirect exit where you want shots to go, then place the entrance in the path of incoming fire.'
  },
  ninja:{
-  tip:'Throw smoke at civilians crossing open streets or waiting at the pad. Allies inside the dome are protected from damage.',
+  tip:KAGE_BOMB_ABILITIES_ENABLED?'Throw smoke at civilians crossing open streets or waiting at the pad. Allies inside the dome are protected from damage.':'Use shuriken teleports and wall jumps to attack from rooftops.',
   controls:[
    ['Move and aim','WASD · Mouse','Left stick · Drag the scene'],
    ['Jump again in air or near a wall','Space','Jump'],
@@ -53,12 +54,12 @@ const training={
    ['Throw, stop and recall laser star','Hold RMB or G, release, then press twice','Hold Laser Star, release, then tap twice'],
    ['Charge and throw shuriken','Hold and release T','Hold and release Shuriken'],
    ['Teleport to a fully charged star','Q','Teleport'],
-   ['Dash / sword slash','Shift / R','Dash / Slash'],
-   ['Explosive bomb / protective smoke','C / V','Bomb / Smoke']
+   ['Dash / sword slash','Shift / R','Dash / Slash']
   ],
   bonus:'Dash toward the reticle. A dash that destroys an enemy or missile resets the cooldown.'
  }
 };
+if(KAGE_BOMB_ABILITIES_ENABLED)training.ninja.controls.push(['Explosive bomb / protective smoke','C / V','Bomb / Smoke']);
 
 export function evacuationTeam(lead,current){
  const allies=current.filter(id=>id!==lead);
@@ -148,14 +149,19 @@ export class EvacuationBriefing {
    const hero=HEROES.find(entry=>entry.id===id);
    return `<button type="button" class="evac-briefing-hero" data-hero="${id}" style="--hero-accent:${hero.color}">
     <span class="evac-hero-icon" aria-hidden="true">${hero.icon}</span><strong>${hero.name}</strong>
-    <span>${id==='lux'?'Snipe from cover and mark enemies for seeking light.':id==='rift'?'Blink, return, and redirect incoming fire.':id==='violet'?'Fly, block incoming fire, and unleash a force beam.':this.combatOnly?(id==='volt'?'Build charge at high speed and strike with lightning.':'Throw a laser star and teleport to a charged shuriken.'):id==='volt'?'Carry civilians out of danger with a lightning dash.':'Shield civilians from damage with protective smoke.'}</span>
+    <span>${id==='lux'?'Snipe from cover and mark enemies for seeking light.':id==='rift'?'Blink, return, and redirect incoming fire.':id==='violet'?'Fly, block incoming fire, and unleash a force beam.':id==='volt'?(this.combatOnly?'Build charge at high speed and strike with lightning.':'Carry civilians out of danger with a lightning dash.'):!this.combatOnly&&KAGE_BOMB_ABILITIES_ENABLED?'Shield civilians from damage with protective smoke.':'Throw a laser star and teleport to a charged shuriken.'}</span>
    </button>`;
   }).join('')}</div>
   <footer><button type="button" class="secondary" data-back>Back</button></footer>`;
  }
  tutorial(){
   const lesson=training[this.hero];
-  const tip=['lux','rift','violet'].includes(this.hero)?lesson.tip:this.combatOnly?(this.hero==='volt'?'Run to build charge, then stop briefly to fire. Use buildings as cover when the Walker winds up.':'Use shuriken teleports and wall jumps to attack from rooftops. Smoke protects allies inside its dome.'):lesson.tip;
+  let tip=lesson.tip;
+  if(this.combatOnly&&this.hero==='volt')tip='Run to build charge, then stop briefly to fire. Use buildings as cover when the Walker winds up.';
+  if(this.combatOnly&&this.hero==='ninja'){
+   tip='Use shuriken teleports and wall jumps to attack from rooftops.';
+   if(KAGE_BOMB_ABILITIES_ENABLED)tip+=' Smoke protects allies inside its dome.';
+  }
   return `<p class="evac-briefing-lead">${tip}</p>
    <dl class="evac-briefing-controls">${this.controlRows()}</dl>
    <p class="evac-briefing-tip">${lesson.bonus}</p>
