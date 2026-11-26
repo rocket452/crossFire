@@ -4,6 +4,7 @@ import {registerHooks} from 'node:module';
 import * as THREE from '../dist/vendor/three.module.js';
 import {UnitDamage,traceImpact} from '../dist/combat-collision.js';
 import {DestructionWorld} from '../dist/destruction.js';
+import {VOLT_RESCUE_DASH_ENABLED} from '../dist/hero-ability-config.js';
 import {LiberationBuild,UPGRADES} from '../dist/liberation-build.js';
 import {escortMovementBounds} from '../dist/evac-approach.js';
 import {CityLiberation,DISTRICTS} from '../dist/city-liberation.js';
@@ -47,7 +48,9 @@ for(const hero of ['ninja','volt']){
   assert(cards.every(u=>!u.hero||u.hero===hero));assert.equal(new Set(cards.map(c=>c.id)).size,cards.length);
   if(cards.length){seen.add(cards[0].id);build.choose(cards[0].id);}
  }
- assert.equal(seen.size,UPGRADES.filter(u=>!u.hero||u.hero===hero).length);
+ const unavailable=hero==='volt'&&!VOLT_RESCUE_DASH_ENABLED?['pulse','recovery','afterimage','dynamo']:[];
+ const expected=UPGRADES.filter(u=>(!u.hero||u.hero===hero)&&!unavailable.includes(u.id));
+ assert.deepEqual([...seen].sort(),expected.map(u=>u.id).sort());
  for(const {upgrade,rank} of build.ranks.values())assert.equal(rank,upgrade.max);
 }
 const energy=new RunnerEnergy();equip(b,'dynamo');

@@ -1,3 +1,4 @@
+import {LUX_SOLAR_DISC_ENABLED} from './hero-ability-config.js?v=434';
 import * as T from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
 import {LuxEffects} from './luxmancer-effects.js?v=411';
@@ -184,10 +185,10 @@ export class Luxmancer {
 }
 export class LuxPlayer extends RiftPlayer {
  constructor(hero,options){
-  super(hero,options,{hint:'WASD move · Space jump · Shift sprint · Hold LMB Sunlance · RMB Sunburst · Hold E Light Volley · Q Solar Disc · Space / Shift altitude · X Solar Blink / return · Hold R recharge',
-   actions:[['Jump / Up','Space'],['Hold Sunlance','Fire'],['Sunburst','Shield'],['Lock volley','KeyE'],['Disc','KeyQ'],['Down','ShiftLeft'],['Recharge','KeyR'],['Solar Blink','KeyX']],
+  super(hero,options,{hint:'WASD move · Space jump · Shift sprint · Hold LMB Sunlance · RMB Sunburst · Hold E Light Volley'+(LUX_SOLAR_DISC_ENABLED?' · Q Solar Disc · Space / Shift altitude':'')+' · X Solar Blink / return · Hold R recharge',
+   actions:[['Jump / Up','Space'],['Hold Sunlance','Fire'],['Sunburst','Shield'],['Lock volley','KeyE'],...(LUX_SOLAR_DISC_ENABLED?[['Disc','KeyQ'],['Down','ShiftLeft']]:[]),['Recharge','KeyR'],['Solar Blink','KeyX']],
    roofColor:'#ffdb65',
-   codes:['KeyW','KeyA','KeyS','KeyD','Space','KeyE','KeyF','KeyG','KeyQ','KeyR','KeyX','ShiftLeft','ShiftRight']});
+   codes:['KeyW','KeyA','KeyS','KeyD','Space','KeyE','KeyF','KeyG',...(LUX_SOLAR_DISC_ENABLED?['KeyQ']:[]),'KeyR','KeyX','ShiftLeft','ShiftRight']});
   this.hud.classList.add('lux-player');
   const meter=document.createElement('div');
   meter.className='lux-energy';
@@ -289,7 +290,7 @@ export class LuxPlayer extends RiftPlayer {
    if(dt-waiting>1e-8)h.energy=Math.min(c.capacity,h.energy+(dt-waiting)*h.solarRecharge);
    return true;
   }
-  if(allowInput&&!sprinting&&this.taps.has('KeyQ')){
+  if(LUX_SOLAR_DISC_ENABLED&&allowInput&&!sprinting&&this.taps.has('KeyQ')){
    if(h.solarMode==='flight')h.solarMode=this.grounded?null:'landing';
    else if(h.energy>0){h.solarMode='flight';this.platform=null;}
    else h.lowEnergyTime=.65;

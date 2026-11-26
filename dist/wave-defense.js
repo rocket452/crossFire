@@ -1,3 +1,4 @@
+import {VOLT_RESCUE_DASH_ENABLED} from './hero-ability-config.js?v=434';
 import {LUX_UPGRADES} from './lux-solar.js?v=423';
 import * as THREE from './vendor/three.module.js';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
@@ -84,7 +85,7 @@ const bruiserCount=formations.reduce((sum,[ground])=>sum+ground,0)*3;
 const droneCount=formations.reduce((sum,[,air])=>sum+air,0)*3;
 export const DEFENSE_UPGRADES=[
  {id:'chain',hero:'volt',title:'Chain lightning',detail:'Primary attacks arc to one additional nearby enemy.'},
- {id:'dash',hero:'volt',title:'Charged dash',detail:'Dashing generates charge 30% faster than normal movement.'},
+ ...(VOLT_RESCUE_DASH_ENABLED?[{id:'dash',hero:'volt',title:'Charged dash',detail:'Dashing generates charge 30% faster than normal movement.'}]:[]),
  {id:'backstab-dash',hero:'ninja',title:'Backstab Dash',detail:'A gold Crosscut backstab banks one extra dash, even if the enemy survives.'},
  {id:'extra-air-jump',hero:'ninja',title:'Extra Air Jump',detail:'Gain a second midair jump. Wall jumps preserve your remaining air jumps.'},
  {id:LUX_UPGRADES.quickLance.id,hero:'lux',title:'Quickdraw Sunlance',detail:`Sunlance charges in ${LUX_UPGRADES.quickLance.charge} second instead of 1.5 seconds.`},

@@ -1,3 +1,5 @@
+import {VOLT_CRITICAL_MASS_ENABLED,VOLT_RESCUE_DASH_ENABLED} from './hero-ability-config.js?v=434';
+
 // Values are per rank. Rarity weights affect the draft, never hit registration.
 const upgrade=(id,name,detail,rarity,max,value,hero=null)=>({id,name,detail,rarity,max,value,hero});
 export const UPGRADES=[
@@ -22,13 +24,14 @@ export const UPGRADES=[
  upgrade('learning','Combat telemetry','Earn 25% more XP from each robot.','common',3,.25),
  upgrade('weld','Plasma cutter','Welding beam deals 55% more damage.','rare',3,.55,'volt'),
  upgrade('dynamo','Kinetic dynamo','Generate energy during a lightning dash at 130% of the normal travel rate.','rare',1,1.3,'volt'),
- upgrade('storm','Storm lens','Sky Strike and Critical Mass deal 40% more damage.','epic',3,.4,'volt'),
+ upgrade('storm','Storm lens',VOLT_CRITICAL_MASS_ENABLED?'Sky Strike and Critical Mass deal 40% more damage.':'Sky Strike deals 40% more damage.','epic',3,.4,'volt'),
  upgrade('airJump','Air step','Gain a second midair jump.','rare',1,1,'ninja'),
  upgrade('backstab','Crosscut reserve','A successful gold Crosscut banks another dash.','epic',1,1,'ninja'),
  upgrade('blade','Honed edge','Sword slashes and dash strikes deal 40% more damage.','rare',3,.4,'ninja')
 ];
 const precisionParts=new Set(['head','front-left','front-right','rear-left','rear-right','forearm_r','rocket_pod','plasma_cannon','chest','arm-left','arm-right','launcher-1','launcher-4']);
 const weights={common:5,rare:3,epic:1};
+const dashUpgrades=new Set(['pulse','recovery','afterimage','dynamo']);
 export class LiberationBuild {
  constructor(hero,random=Math.random){
   this.hero=hero;this.random=random;this.ranks=new Map();this.hp=120;this.level=1;this.xp=0;
@@ -67,7 +70,9 @@ export class LiberationBuild {
  draft(){
   if(!this.rewards.length||this.cards.length)return this.cards;
   const hasField=['burst','echo','pulse'].some(id=>this.value(id)>0);
-  const available=UPGRADES.filter(u=>(!u.hero||u.hero===this.hero)&&(u.id!=='reach'||hasField)&&(this.ranks.get(u.id)?.rank||0)<u.max);
+  const available=UPGRADES.filter(u=>(!u.hero||u.hero===this.hero)
+   &&(this.hero!=='volt'||VOLT_RESCUE_DASH_ENABLED||!dashUpgrades.has(u.id))
+   &&(u.id!=='reach'||hasField)&&(this.ranks.get(u.id)?.rank||0)<u.max);
   while(this.cards.length<3&&available.length){
    const epic=available.filter(u=>u.rarity==='epic');
    let pool=available;

@@ -1,26 +1,27 @@
+import {VOLT_CRITICAL_MASS_ENABLED,VOLT_OVERLOAD_ENABLED,VOLT_RESCUE_DASH_ENABLED,LUX_SOLAR_DISC_ENABLED} from './hero-ability-config.js?v=434';
 import {SOLAR_CONFIG} from './lux-solar.js?v=423';
-import {HEROES} from './hero-roster.js?v=433';
+import {HEROES} from './hero-roster.js?v=434';
 import {KAGE_BOMB_ABILITIES_ENABLED} from './kage-ability-config.js?v=433';
 
 const training={
  lux:{tip:'Use the highway sightlines. Aim slightly above distant targets to account for Sunlance drop.',
   controls:[['Move and jump','WASD · Space','Stick · Jump'],['Sprint','Hold Shift on the ground · Casting disabled','—'],['Sunlance · charges for 1.5s','Hold left click or F to repeat · Stand still while held','Hold Sunlance to repeat · Stand still while held'],['Sunburst machine gun','Hold right click or G','Hold Sunburst'],['Light Volley','Hold E and sweep across targets · Release to fire early','Hold Lock volley and aim · Release to fire early'],
    ['Solar Blink','X to blink · X again to return · Aim at a roof edge to jump to the rooftop','Tap Solar Blink · Tap again to return'],
-   ['Solar Disc','Q to toggle · Space up · Shift down','Disc to toggle · Jump / Up · Down'],
+   ...(LUX_SOLAR_DISC_ENABLED?[['Solar Disc','Q to toggle · Space up · Shift down','Disc to toggle · Jump / Up · Down']]:[]),
    ['Solar Communion','Hold R on solid ground · Release to cancel','Hold Recharge on solid ground · Release to cancel']],
-  bonus:`Sunlance uses ${SOLAR_CONFIG.attackCosts.lance} energy, Sunburst uses ${SOLAR_CONFIG.attackCosts.spray} per shot, and each locked comet uses ${SOLAR_CONFIG.attackCosts.comet}. Flight uses ${SOLAR_CONFIG.flightDrain} per second. Release Communion to move or attack again.`},
+  bonus:`Sunlance uses ${SOLAR_CONFIG.attackCosts.lance} energy, Sunburst uses ${SOLAR_CONFIG.attackCosts.spray} per shot, and each locked comet uses ${SOLAR_CONFIG.attackCosts.comet}. ${LUX_SOLAR_DISC_ENABLED?`Flight uses ${SOLAR_CONFIG.flightDrain} per second. `:''}Release Communion to move or attack again.`},
  volt:{
-  tip:'Run to build charge. Hold the rescue dash through a civilian group and release in a clear spot closer to the Chinook.',
+  tip:'Run to build charge. '+(VOLT_RESCUE_DASH_ENABLED?'Hold the rescue dash through a civilian group and release in a clear spot closer to the Chinook.':'Intercept incoming missiles with lightning.'),
   controls:[
    ['Move and aim','WASD · Mouse','Left stick · Drag the scene'],
    ['Boost / jump','Shift / Space','Boost / Jump'],
    ['Lightning','Hold left click or F','Hold Fire'],
-   ['Rescue dash','Hold E','Hold Dash'],
-   ['Weld / robot stun','Hold R / Q','Hold Weld / Stun'],
+   ...(VOLT_RESCUE_DASH_ENABLED?[['Rescue dash','Hold E','Hold Dash']]:[]),
+   VOLT_OVERLOAD_ENABLED?['Weld / robot stun','Hold R / Q','Hold Weld / Stun']:['Welding beam','Hold R','Hold Weld'],
    ['Sky Strike / Ball Lightning','Z / V','Sky Strike / Ball Lightning'],
-   ['Critical Mass','Hold and release right click','Hold and release Mass']
+   ...(VOLT_CRITICAL_MASS_ENABLED?[['Critical Mass','Hold and release right click','Hold and release Mass']]:[])
   ],
-  bonus:'Release Critical Mass before 2.6 seconds to avoid overloading. Attack while stopped, then get moving again to recharge.'
+  bonus:(VOLT_CRITICAL_MASS_ENABLED?'Release Critical Mass before 2.6 seconds to avoid overloading. ':'')+'Attack while stopped, then get moving again to recharge.'
  },
  violet:{
   tip:'Fly above the streets to intercept attackers. Face incoming fire and raise your barrier to charge the force beam.',
@@ -52,7 +53,7 @@ const training={
    ['Jump again in air or near a wall','Space','Jump'],
    ['Throw or store kunai','Tap LMB or F to throw · Hold to store','Tap Kunai to throw · Hold to store'],
    ['Throw, stop and recall laser star','Hold RMB or G, release, then press twice','Hold Laser Star, release, then tap twice'],
-   ['Charge and throw shuriken','Hold and release T','Hold and release Shuriken'],
+   ['Charge and throw shuriken','Hold and release E','Hold and release Shuriken'],
    ['Teleport to a fully charged star','Q','Teleport'],
    ['Dash / sword slash','Shift / R','Dash / Slash']
   ],
@@ -149,7 +150,7 @@ export class EvacuationBriefing {
    const hero=HEROES.find(entry=>entry.id===id);
    return `<button type="button" class="evac-briefing-hero" data-hero="${id}" style="--hero-accent:${hero.color}">
     <span class="evac-hero-icon" aria-hidden="true">${hero.icon}</span><strong>${hero.name}</strong>
-    <span>${id==='lux'?'Snipe from cover and mark enemies for seeking light.':id==='rift'?'Blink, return, and redirect incoming fire.':id==='violet'?'Fly, block incoming fire, and unleash a force beam.':id==='volt'?(this.combatOnly?'Build charge at high speed and strike with lightning.':'Carry civilians out of danger with a lightning dash.'):!this.combatOnly&&KAGE_BOMB_ABILITIES_ENABLED?'Shield civilians from damage with protective smoke.':'Throw a laser star and teleport to a charged shuriken.'}</span>
+    <span>${id==='lux'?'Snipe from cover and mark enemies for seeking light.':id==='rift'?'Blink, return, and redirect incoming fire.':id==='violet'?'Fly, block incoming fire, and unleash a force beam.':id==='volt'?(!this.combatOnly&&VOLT_RESCUE_DASH_ENABLED?'Carry civilians out of danger with a lightning dash.':'Build charge at high speed and strike with lightning.'):!this.combatOnly&&KAGE_BOMB_ABILITIES_ENABLED?'Shield civilians from damage with protective smoke.':'Throw a laser star and teleport to a charged shuriken.'}</span>
    </button>`;
   }).join('')}</div>
   <footer><button type="button" class="secondary" data-back>Back</button></footer>`;
