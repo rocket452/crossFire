@@ -20,17 +20,19 @@ function target(x,z){
 }
 const a=target(0,6),b=target(8,6);
 const hit=unit=>({unit,point:unit.shapes[0].center});
+// Only one target holds marks: marking b clears a.
 marks.place(a);marks.place(a);marks.place(b);
-assert(!marks.teleport(hit(a)));
-marks.place(a);marks.place(a);marks.step(.016,a);
-assert.equal(marks.count(a),3);assert.equal(marks.count(b),1);
+assert.equal(marks.count(a),0);assert.equal(marks.count(b),1);assert.equal(marks.marked(),b);
+assert(!marks.teleport());
+marks.place(a);assert.equal(marks.count(b),0);marks.place(a);marks.place(a);marks.place(a);marks.step(.016);
+assert.equal(marks.count(a),3);assert.equal(marks.marks.size,1);
 assert.equal(marks.marks.get(a).group.children[0].material,marks.aimed);
-assert(!marks.teleport(null));assert(!marks.teleport(hit(b)));
 const rear=world.rearLanding.bind(world);
-world.rearLanding=()=>({valid:false});assert(!marks.teleport(hit(a)));assert.equal(marks.count(a),3);
-world.rearLanding=rear;assert(marks.teleport(hit(a)));
+world.rearLanding=()=>({valid:false});assert(!marks.teleport());assert.equal(marks.count(a),3);
+// Q teleports without any aim input.
+world.rearLanding=rear;assert(marks.teleport());
 assert(hero.arrival.point.z<6);assert(hero.arrival.faceOrigin);assert(hero.arrival.config.refreshDash);
-assert.equal(marks.count(a),0);assert.equal(marks.count(b),1);assert.equal(hero.shuriken.crosscutTarget,a);
-b.alive=false;marks.step(.1,null);assert.equal(scene.children.length,0);
-marks.place(a,3,3);marks.step(3,a);assert(!marks.teleport(hit(a)));
-console.log('PASS per-target marks, three-mark cap, aimed feedback, landing validation, safe rear arrival, dash refresh, consumption and cleanup');
+assert.equal(marks.count(a),0);assert.equal(marks.marks.size,0);assert.equal(hero.shuriken.crosscutTarget,a);
+marks.place(b);b.alive=false;marks.step(.1);assert.equal(scene.children.length,0);
+marks.place(a,3,3);marks.step(3);assert(!marks.teleport());
+console.log('PASS single marked target, three-mark cap, ready feedback, Q teleport without aiming, landing validation, safe rear arrival, dash refresh, consumption and cleanup');

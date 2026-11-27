@@ -16,8 +16,11 @@ export class KunaiMarks {
   const mark=this.marks.get(unit);
   return mark?.count===KUNAI_MARKS_REQUIRED&&this.valid(unit)?unit.entity.root.getWorldPosition(new Vector3()):null;
  }
+ // Only one enemy carries kunai marks at a time: marking a new one clears the others.
+ marked(){for(const unit of this.marks.keys())if(this.valid(unit))return unit;return null;}
  place(unit,count=1,seconds=Infinity){
   if(!this.valid(unit))return;
+  for(const other of [...this.marks.keys()])if(other!==unit)this.remove(other);
   let mark=this.marks.get(unit);
   if(!mark){
    mark={count:0,group:new Group()};this.marks.set(unit,mark);
@@ -38,7 +41,7 @@ export class KunaiMarks {
   for(const unit of this.marks.keys())this.remove(unit);
   this.clock=0;this.target=null;this.blocked=false;
  }
- step(dt,target){
+ step(dt,target=this.marked()){
   this.clock+=dt;
   for(const [unit,mark] of this.marks){
    if(!this.valid(unit)||mark.until<=this.clock){this.remove(unit);continue;}
@@ -56,10 +59,11 @@ export class KunaiMarks {
   if(this.target!==target)this.blocked=false;
   this.target=target;
  }
- teleport(hit){
-  const unit=hit?.unit,h=this.hero;
+ // Q teleports behind the marked enemy; no aiming needed.
+ teleport(){
+  const unit=this.marked(),h=this.hero;
   if(this.count(unit)<KUNAI_MARKS_REQUIRED)return false;
-  const center=new Vector3().copy(hit.point);
+  const shape=unit.shapes[0],center=shape?new Vector3().copy(shape.center):unit.entity.root.getWorldPosition(new Vector3());
   const landing=h.shurikenWorld.rearLanding(unit,center);
   if(!landing.valid){this.blocked=true;return false;}
   const {point}=landing;
