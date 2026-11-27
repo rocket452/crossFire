@@ -19,6 +19,8 @@ const streetAxis=(min,max)=>Array.from(
 const streetX=streetAxis(entryBounds.minX,entryBounds.maxX);
 const streetZ=streetAxis(entryBounds.minZ,entryBounds.maxZ);
 const walkerHomeZ=48;
+// Kage's dash takes this share of a Bruiser's or drone's max health here (bosses keep the full hit).
+export const LIBERATION_KAGE_DASH_FRACTION=.5;
 
 
 export class CityLiberation extends MissionEnemyWaves {
@@ -205,6 +207,7 @@ export class CityLiberation extends MissionEnemyWaves {
    }
    const u=actor.combatUnit;
    u.maxHealth=u.health=Math.ceil(u.maxHealth*(this.stage===0?.7:1));
+   u.kageDashFraction=LIBERATION_KAGE_DASH_FRACTION;
    slots--;
   }
   this.pack++;

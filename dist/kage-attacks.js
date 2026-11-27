@@ -12,7 +12,14 @@ const slashFragment=`uniform vec3 color;uniform float sweep;uniform float fade;u
  vec3 c=mix(vec3(.42,.32,1.),color,trail);c=mix(c,vec3(1.),head*.8+edge*rim*.6);
  float a=edge*(trail*.85+head*.9)*fade;
  gl_FragColor=vec4(c*a,a);}`;
-export function kageHitPower(hit,power,kind){return hit.unit?.entity?.type==='mireguard'&&['ninja-slash','ninja-dash'].includes(kind)?hit.unit.maxHealth*hit.unit.entity.config.kageMeleeFraction:power;}
+export function kageHitPower(hit,power,kind){
+ const unit=hit.unit;
+ if(unit?.entity?.type==='mireguard'&&['ninja-slash','ninja-dash'].includes(kind))return unit.maxHealth*unit.entity.config.kageMeleeFraction;
+ // Modes can mark regular enemies with a dash fraction (City Liberation: half). The dash then takes that share
+ // of max health, so it only finishes wounded targets and its yellow "can finish" flash stays meaningful.
+ if(kind==='ninja-dash'&&unit?.kageDashFraction>0)return unit.maxHealth*unit.kageDashFraction;
+ return power;
+}
 const forward=new THREE.Vector3(0,0,1);
 const SLASH_VISUAL_SCALE=1.2;
 // Player primary / melee; movement and the teleport shuriken remain independent.
