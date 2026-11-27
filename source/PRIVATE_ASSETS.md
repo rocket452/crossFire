@@ -4,6 +4,17 @@ The user supplied `ExplosiveLLC.zip` from the RPG Character Mecanim Animation Pa
 
 Public GitHub repository: https://github.com/rocket452/crossFire . The pack and derived standalone geometry/animation are not included there. The Sites audience remains owner-private. Do not change either audience automatically.
 
+## Revision 443: Cyber Ninja Kage
+
+`kage-cyber.glb` is the default Kage model ("Cyber Ninja" in the Kage model picker). It is built from the
+user's Cyber Ninja model sheet by `source/build_kage_cyber.py`, which needs only the licensed `humanoid.glb`: it
+replaces the body with original low-poly geometry (dark armor, light-grey plates and bracers, red crest, scarf and
+glow strips, cyan eyes, oversized helmet and flared boots; about 1,900 triangles) and keeps the rig's 53 joints and
+all 17 clips unchanged, plus the extra `B_KageScarf` bone the game animates. Run it through the `bpy` module:
+`python -c "import bpy,sys,runpy; sys.argv=['x','--','humanoid.glb','kage-cyber.glb']; runpy.run_path('source/build_kage_cyber.py', run_name='__main__')"`.
+The output embeds the licensed animation data, so keep it in the ignored `dist/city-assets/licensed-characters/`
+directory and force-add it only on `site-licensed-assets`. `node QA/kage-armor-test.mjs --cyber` checks it.
+
 ## Revision 441: fewer private runtime files
 
 - Kage's kunai and shuriken are now original public models (`dist/city-assets/kage-kunai.glb`, `kage-shuriken.glb`, built by `source/build_kage_weapons.py`). The uploaded `licensed-weapons/` files are no longer loaded and need not be deployed.

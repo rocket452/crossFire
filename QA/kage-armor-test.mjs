@@ -13,8 +13,8 @@ async function load(name){
  const file=fs.readFileSync(new URL('../dist/city-assets/licensed-characters/'+name,import.meta.url));
  return new GLTFLoader().parseAsync(file.buffer.slice(file.byteOffset,file.byteOffset+file.byteLength),'');
 }
-const frog=process.argv.includes('--frog');
-const [classic,armored]=await Promise.all([load('humanoid.glb'),load(frog?'kage-frog.glb':'kage-armored.glb')]);
+const frog=process.argv.includes('--frog'),cyber=process.argv.includes('--cyber');
+const [classic,armored]=await Promise.all([load('humanoid.glb'),load(cyber?'kage-cyber.glb':frog?'kage-frog.glb':'kage-armored.glb')]);
 assert.equal(armored.animations.length,17);
 for(const [index,clip]of armored.animations.entries()){
  const original=classic.animations[index];
@@ -40,13 +40,17 @@ const ch=actor.character;
 assert.deepEqual(ch.root.scale.toArray(),[1.30,1,1.30]);
 assert.equal(ch.root.getWorldPosition(new T.Vector3()).y,0,'proportion changes keep the rig origin at the feet');
 assert.equal(ch.bones.length,54);
-assert.equal(ch.triangles,frog?5998:3008);
-if(frog){
+assert.equal(ch.triangles,cyber?1916:frog?5998:3008);
+if(cyber){
+ for(const name of ['armor dark','armor light','crest red','scarf red','glow red','eye cyan'])
+  assert(ch.meshes.some(m=>m.material.name===name));
+}
+else if(frog){
  for(const name of ['Leaf green skin','Ice white optics','Ion cyan','Visor graphite','Midnight face wrap','Cerulean crest','Palm webbing'])
   assert(ch.meshes.some(m=>m.material.name===name));
 }
 else assert(ch.meshes.some(m=>m.material.name==='Ice blue visor'&&m.material.emissiveIntensity>1));
-assert(ch.meshes.some(mesh=>mesh.material.name==='Flexible joint seals'));
+if(!cyber)assert(ch.meshes.some(mesh=>mesh.material.name==='Flexible joint seals'));
 for(const mesh of ch.meshes){
  const weights=mesh.geometry.attributes.skinWeight,indices=mesh.geometry.attributes.skinIndex;
  for(let i=0;i<weights.count;i++){
