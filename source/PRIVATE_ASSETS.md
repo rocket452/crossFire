@@ -4,6 +4,18 @@ The user supplied `ExplosiveLLC.zip` from the RPG Character Mecanim Animation Pa
 
 Public GitHub repository: https://github.com/rocket452/crossFire . The pack and derived standalone geometry/animation are not included there. The Sites audience remains owner-private. Do not change either audience automatically.
 
+## Revision 443: Frog Ninja Kage rebuilt from the concept sheet
+
+`kage-frog.glb` (the default Kage model) is now built from the supplied Frog Ninja concept art by
+`source/build_kage_frog_concept.py`, which needs only the licensed `humanoid.glb` (no reference FBX). It replaces the
+body with new geometry (black suit, grey armor, cyan trim, green frog hands and webbed feet, blue headband/scarf/cape,
+katana) and keeps the rig's 53 joints and all 17 clips unchanged, plus the extra `B_KageScarf` bone the game animates.
+Run it through the `bpy` module (it supplies `mathutils`):
+`python -c "import bpy,sys,runpy; sys.argv=['x','--','humanoid.glb','kage-frog.glb']; runpy.run_path('source/build_kage_frog_concept.py', run_name='__main__')"`.
+The output embeds the licensed animation data, so keep it in the ignored `dist/city-assets/licensed-characters/`
+directory and force-add it only on `site-licensed-assets`. `node QA/kage-armor-test.mjs --frog` checks it.
+The older "Armored" variant still needs its own reference FBX and is unavailable without it.
+
 ## Revision 441: fewer private runtime files
 
 - Kage's kunai and shuriken are now original public models (`dist/city-assets/kage-kunai.glb`, `kage-shuriken.glb`, built by `source/build_kage_weapons.py`). The uploaded `licensed-weapons/` files are no longer loaded and need not be deployed.
