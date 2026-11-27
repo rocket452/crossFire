@@ -1,8 +1,9 @@
 import * as THREE from './vendor/three.module.js';
 import {PYROCLAST} from './pyroclast-config.js?v=458';
-import {buildPyroclast} from './pyroclast-model.js?v=457';
+import {buildPyroclast} from './pyroclast-model.js?v=459';
 import {PyroclastFX,FlameTornado,flame,meteorTail,FIRE} from './pyroclast-fx.js?v=457';
 import {glowBillboard} from './lightning-kit.js?v=451';
+import {PyroclastRig} from './pyroclast-rig.js?v=459';
 
 const UP=new THREE.Vector3(0,1,0);
 const ease=t=>t*t*(3-2*t);
@@ -12,7 +13,7 @@ const ease=t=>t*t*(3-2*t);
 export class Pyroclast {
  constructor(scene,damage,options={},config=PYROCLAST){
   Object.assign(this,{scene,damage,options,config,id:'evac-raider-pyroclast',type:'pyroclast',evac:true});
-  this.model=buildPyroclast(config.height);this.root=this.model.root;this.root.visible=false;scene.add(this.root);
+  this.model=buildPyroclast(config.height);this.rig=new PyroclastRig(this.model);this.root=this.model.root;this.root.visible=false;scene.add(this.root);
   this.fx=new PyroclastFX(scene);this.fx.setEnabled(false);
   this.tornadoPool=Array.from({length:config.tornadoes.count},()=>new FlameTornado(this.fx.group,config.tornadoes));
   // Fireball art pool: hot core, halo and a burning trail.
@@ -45,6 +46,7 @@ export class Pyroclast {
   this.velocity=new THREE.Vector3();this.goal=new THREE.Vector3();this.time=0;this.retarget=0;this.orbitAngle=Math.random()*Math.PI*2;
   this.state={name:'idle',t:0,duration:0};this.cycleIndex=0;this.goalSpot=null;this.goalClock=0;this.stunRemaining=0;this.deathTime=0;
   this.stats={fireballs:0,tornadoes:0,meteors:0,heroHits:0,explosions:0,attacks:0};this.target=null;
+  this.nextHand='R';this.lastThrow=null;this.prevHealth=null;this.flinchClock=0;this.rig?.reset();
  }
  spawn(position=this.config.spawn){
   this.reset();
@@ -102,17 +104,18 @@ export class Pyroclast {
   const c=this.config[name];this.stats.attacks++;this.attack=name;this.state={name:'windup',t:0,duration:c.windup};
   if(name==='meteors'){this.meteorQueue=[];for(let i=0;i<c.count;i++)this.meteorQueue.push(i*c.spawnSeconds/c.count);}
   if(name==='tornadoes'){this.clearTornadoWarnings();this.tornadoSpots=this.planTornadoSpots();this.tornadoWarns=this.tornadoSpots.map(p=>this.fx.decal('warn',p,c.radius,c.windup+.5));}
-  this.fired=0;
+  this.fired=0;if(name==='fireballs'){this.nextHand='R';this.lastThrow=null;}
  }
- handPosition(key='R'){return this.model.parts['hand'+key].localToWorld(new THREE.Vector3(0,-.12,.02));}
+ handPosition(key='R'){return this.model.parts['hand'+key].localToWorld(new THREE.Vector3(0,-.11,-.05));}
  launchFireball(){
   const c=this.config.fireballs,t=this.target||this.pickTarget();if(!t)return;
-  const from=this.handPosition('R'),to=this.heroPosition(t).clone();
+  const hand=this.nextHand||'R',from=this.handPosition(hand),to=this.heroPosition(t).clone();
   const v=t.entity?.motion?.velocity;if(v)to.add(new THREE.Vector3(v.x||0,0,v.z||0).multiplyScalar(c.lead*from.distanceTo(to)/c.speed));
   const art=this.fireballArt.find(a=>!a.group.visible);if(!art)return;
   art.group.visible=true;art.group.position.copy(from);
   this.fireballs.push({art,target:t,position:from.clone(),velocity:to.sub(from).normalize().multiplyScalar(c.speed),life:c.life,closest:Infinity});
   this.stats.fireballs++;this.fx.kit.glow(from,{size:4,life:.25,grow:1,color:FIRE.hot});this.fx.flash(from,.6);
+  this.lastThrow={hand,time:this.time};this.nextHand=hand==='R'?'L':'R';this.rig.kick('torso',-2.2,0,0);this.rig.kick('pelvis',-1.2,0,0);
  }
  explodeFireball(f,point,hit){
   const c=this.config.fireballs;this.fx.explosion(point,c.blastRadius*.75,{ground:true,groundY:this.ground(point.x,point.z)});this.stats.explosions++;
@@ -138,7 +141,7 @@ export class Pyroclast {
  clearTornadoWarnings(){for(const w of this.tornadoWarns||[])if(this.fx.decals.includes(w))this.fx.removeDecal(w);this.tornadoWarns=[];}
  spawnTornadoes(){
   const c=this.config.tornadoes,spots=this.tornadoSpots?.length?this.tornadoSpots:this.planTornadoSpots(),focus=this.tornadoFocus?.alive?this.tornadoFocus:this.pickTarget();
-  this.clearTornadoWarnings();this.tornadoSpots=null;
+  this.clearTornadoWarnings();this.tornadoSpots=null;this.rig.kick('torso',4,0,0);this.fx.flash(this.root.position.clone().setY(this.root.position.y+2),.7);
   spots.forEach((start,i)=>{
    const art=this.tornadoPool[i];if(!art)return;
    const goal=focus?this.heroPosition(focus):this.root.position,heading=Math.atan2(goal.x-start.x,goal.z-start.z);
@@ -305,48 +308,39 @@ export class Pyroclast {
  }
  // ---- procedural animation and persistent fire -------------------------
  animate(dt){
-  const P=this.model.parts,s=this.state,t=this.time,w=s.name==='windup'?ease(Math.min(1,s.t/s.duration)):0;
-  const attackT=s.name==='attack'?s.t:0,a=this.attack;
-  // Flying base pose: legs trailing, arms loose and slightly spread.
-  P.hipL.rotation.x=.25+.06*Math.sin(t*2.1);P.hipR.rotation.x=.12+.06*Math.sin(t*2.1+1);
-  P.kneeL.rotation.x=.55;P.kneeR.rotation.x=.75;
-  let rx=.15,rz=-.35,lx=.15,lz=.35;
-  if(a==='fireballs'&&(s.name==='windup'||s.name==='attack')){
-   // Right arm cocks back over the shoulder, then hurls forward each throw.
-   const throwPhase=s.name==='attack'?(attackT%this.config.fireballs.interval)/this.config.fireballs.interval:0;
-   rx=s.name==='windup'?THREE.MathUtils.lerp(.15,2.6,w):THREE.MathUtils.lerp(-1.5,2.4,ease(throwPhase));rz=-.25;lx=-1.1;lz=.15;
-  }else if(a==='tornadoes'&&(s.name==='windup'||s.name==='attack')){
-   const sweep=s.name==='attack'?1:w;rz=-1.35+.9*sweep;lz=1.35-.9*sweep;rx=lx=-.35*sweep;
-  }else if(a==='meteors'&&(s.name==='windup'||s.name==='attack')){
-   const lift=s.name==='attack'?1:w;rx=lx=-2.85*lift;rz=-.35;lz=.35;
-  }
-  const blend=Math.min(1,dt*10);
-  P.shoulderR.rotation.x+=(rx-P.shoulderR.rotation.x)*blend;P.shoulderR.rotation.z+=(rz-P.shoulderR.rotation.z)*blend;
-  P.shoulderL.rotation.x+=(lx-P.shoulderL.rotation.x)*blend;P.shoulderL.rotation.z+=(lz-P.shoulderL.rotation.z)*blend;
-  P.elbowR.rotation.x=-.35;P.elbowL.rotation.x=-.35;
-  P.torso.rotation.x=a==='meteors'&&s.name!=='recover'?-.12:.05;
-  P.head.rotation.x=-.05+.04*Math.sin(t*1.3);
-  this.model.body.position.y=Math.sin(t*1.7)*this.config.flight.bob;
-  // Cape and coat tails stream behind with speed.
-  const speed=this.velocity.length();
-  for(let i=0;i<3;i++){const h=P['capePanel'+i];h.rotation.x=.25+Math.min(.9,speed*.06)+.12*Math.sin(t*3.1+i*1.3);}
-  P['tail-1'].rotation.x=.25+Math.min(.6,speed*.04)+.1*Math.sin(t*3.4);P.tail1.rotation.x=.25+Math.min(.6,speed*.04)+.1*Math.sin(t*3.4+1);
-  // Fire: crown flares during attacks, boot jets push harder when climbing.
-  const fury=this.mode==='flying'?(s.name==='windup'||s.name==='attack'?1.25:1):Math.max(0,1-this.deathTime/this.config.deathSeconds);
+  const P=this.model.parts,s=this.state,t=this.time,a=this.attack,c=this.config;
+  // Flinch when damage lands (throttled so sustained fire reads as a stagger, not a seizure).
+  const hp=this.combatUnit?.health;this.flinchClock-=dt;
+  if(this.prevHealth!==null&&hp<this.prevHealth&&this.mode==='flying'&&this.flinchClock<=0){this.rig.flinch(.3+Math.min(1.1,(this.prevHealth-hp)/350));this.flinchClock=.18;}
+  this.prevHealth=hp??null;
+  // Where the hero is, relative to the head, in body space (root already yaws to face them).
+  let look={pitch:.25,yaw:0};const tgt=this.target?.alive&&this.target.shapes?.length?this.heroPosition(this.target):null;
+  if(tgt){const l=this.root.worldToLocal(tgt.clone());const dy=l.y-c.height*.84,flat=Math.hypot(l.x,l.z)||1;look={pitch:THREE.MathUtils.clamp(Math.atan2(-dy,flat),-.6,.9),yaw:THREE.MathUtils.clamp(Math.atan2(l.x,l.z),-.7,.7)};}
+  const localVel=this.velocity.clone().applyAxisAngle(UP,-this.root.rotation.y);
+  const fb=c.fireballs,untilNext=s.name==='windup'?s.duration-s.t:s.name==='attack'&&this.fired<fb.count?this.fired*fb.interval-s.t:Infinity;
+  const cloth=this.rig.update(dt,{t,mode:this.mode,state:s,attack:a,stunned:this.stunRemaining>0&&this.mode==='flying',localVel,look,
+   throw:{last:this.lastThrow,next:this.nextHand,untilNext,remaining:a==='fireballs'?fb.count-this.fired:0}});
+  this.model.body.position.y=Math.sin(t*1.7)*c.flight.bob;this.model.body.rotation.z=Math.sin(t*.9)*.025;
+  // Fire: crown flares during attacks, veins and rims burn hotter; boot jets push harder when climbing.
+  const fury=this.mode==='flying'?(s.name==='windup'||s.name==='attack'?1.25:1):Math.max(0,1-this.deathTime/c.deathSeconds);
+  this.model.update(t,{heat:fury*(this.stunRemaining>0?.55:1),flow:cloth.flow,sway:cloth.sway,rim:.8+.4*fury});
   for(const f of this.model.flames){f.material.uniforms.time.value=t;f.material.uniforms.intensity.value=fury;}
-  for(const k of ['L','R']){const j=P['jet'+k];j.scale.y=-(.75+.25*Math.sin(t*23+(k==='L'?0:1))+Math.max(0,this.velocity.y)*.05);}
-  for(const cMesh of this.model.capes)cMesh.material.uniforms.time.value=t;
+  for(const k of ['L','R']){const j=P['jet'+k];j.scale.y=-(.75+.25*Math.sin(t*23+(k==='L'?0:1))+Math.max(0,this.velocity.y)*.05+(a==='tornadoes'&&s.name==='windup'?.4:0));}
   const pulse=.75+.25*Math.sin(t*4);for(const g of this.model.glows)g.material.color.setRGB(1,.55+.35*pulse,.1+.15*pulse);
+  for(const m of this.model.trims)m.material.color.setRGB(1,.4+.12*pulse*fury,.08);
   // Aura glows and rising embers.
   const chest=this.aimPoint(),head=P.head.getWorldPosition(this.tmp);
-  this.aura.position.copy(chest);this.aura.scale.setScalar(this.config.height*1.25*(.9+.1*pulse));this.aura.material.uniforms.opacity.value=.2*fury;
-  this.headGlow.position.copy(head).y+=.8;this.headGlow.scale.setScalar(this.config.height*.7*(.9+.15*Math.sin(t*9)));this.headGlow.material.uniforms.opacity.value=.42*fury;
+  this.aura.position.copy(chest);this.aura.scale.setScalar(c.height*1.25*(.9+.1*pulse));this.aura.material.uniforms.opacity.value=.2*fury;
+  this.headGlow.position.copy(head).y+=.8;this.headGlow.scale.setScalar(c.height*.7*(.9+.15*Math.sin(t*9)));this.headGlow.material.uniforms.opacity.value=.42*fury;
   if(this.mode==='flying'){this.fx.kit.spark(head.clone().add(new THREE.Vector3(0,.6,0)),2,1.2,3,{life:.9,size:.09,sizeSpread:.1,gravity:-3,spread:.7});
-   this.fx.kit.spark(this.handPosition('L'),1,.6,1,{life:.6,size:.06,gravity:-2});this.fx.kit.spark(this.handPosition('R'),1,.6,1,{life:.6,size:.06,gravity:-2});}
-  // Charge fireball grows in the right hand during the fireball windup.
-  const charging=a==='fireballs'&&(s.name==='windup'||(s.name==='attack'&&this.fired<this.config.fireballs.count));
+   this.fx.kit.spark(this.handPosition('L'),1,.6,1,{life:.6,size:.06,gravity:-2});this.fx.kit.spark(this.handPosition('R'),1,.6,1,{life:.6,size:.06,gravity:-2});
+   const hem=P.cape.localToWorld(new THREE.Vector3((Math.random()-.5)*.8,-1.5,-.2-cloth.flow*.8));this.fx.kit.spark(hem,1,1.2,2,{life:.8,size:.07,sizeSpread:.08,gravity:-2.5});}
+  // Charge fireball grows in the cocked hand between throws.
+  const charging=a==='fireballs'&&(s.name==='windup'||(s.name==='attack'&&this.fired<fb.count));
   this.charge.group.visible=charging&&this.mode==='flying';
-  if(this.charge.group.visible){const grow=s.name==='windup'?w:.7;this.charge.group.position.copy(this.handPosition('R'));this.charge.group.scale.setScalar(.25+.75*grow);for(const fl of this.charge.flames)fl.material.uniforms.time.value=t;}
+  if(this.charge.group.visible){
+   const grow=s.name==='windup'?ease(Math.min(1,s.t/s.duration)):.35+.55*Math.min(1,(t-(this.lastThrow?.time??t))/fb.interval);
+   this.charge.group.position.copy(this.handPosition(this.nextHand));this.charge.group.scale.setScalar(.18+.42*grow);for(const fl of this.charge.flames)fl.material.uniforms.time.value=t;}
   for(const art of this.fireballArt)if(art.group.visible)art.halo.material.uniforms.opacity.value=.9;
  }
  diagnostics(){

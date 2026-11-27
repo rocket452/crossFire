@@ -5,7 +5,7 @@ const root=new URL('../dist/',import.meta.url).href;
 const T=await import(root+'vendor/three.module.js');
 const {UnitDamage}=await import(root+'combat-collision.js');
 const {PYROCLAST}=await import(root+'pyroclast-config.js?v=458');
-const {Pyroclast}=await import(root+'pyroclast.js?v=458');
+const {Pyroclast}=await import(root+'pyroclast.js?v=459');
 
 function fixture({protectedHero=false,dt=1/60}={}){
  const scene=new T.Scene(),events=[],impacts=[],deaths=[];let pyro;
@@ -88,6 +88,33 @@ for(const dt of [1/30,1/60,1/120]){
  assert(bursts.every(b=>b.life>0),'no fireball expired in mid-air: '+JSON.stringify(bursts));
  const miss=JSON.stringify(bursts.map(b=>+b.miss.toFixed(1)));assert(bursts.every(b=>b.miss<c.blastRadius*c.fuse),'every burst is a hit or a near miss: '+miss);assert(bursts.some(b=>b.miss<c.blastRadius),'a burst catches the hero in the blast: '+miss);
  console.log('PASS homing/proximity fuse vs leaping hero, miss distances',bursts.map(b=>+b.miss.toFixed(1)).join(','));
+}
+
+// Animation rig: alternating-hand volley, readable attack poses, stun slump, flinch and streaming cloth.
+{
+ const f=fixture(),{pyro}=f;pyro.spawn();const P=pyro.model.parts,hands=[];
+ const orig=pyro.launchFireball.bind(pyro);pyro.launchFireball=()=>{hands.push(pyro.nextHand);return orig();};
+ const seen={};const watch=()=>{const s=pyro.state.name,a=pyro.attack;
+  if(a==='meteors'&&s==='windup'&&pyro.state.t>pyro.state.duration*.95)seen.meteorArms=Math.max(P.shoulderL.rotation.x,P.shoulderR.rotation.x);
+  if(a==='tornadoes'&&s==='windup'&&pyro.state.t>pyro.state.duration*.95)seen.tornadoRaise=Math.min(P.shoulderL.rotation.z,-P.shoulderR.rotation.z);
+  if(a==='tornadoes'&&s==='attack'&&pyro.state.t>.2)seen.slam=Math.max(seen.slam??-9,P.torso.rotation.x);
+  if(a==='fireballs'&&s==='windup')seen.cock=Math.min(seen.cock??0,P.elbowR.rotation.x);};
+ for(let i=0;i<20*60;i++){pyro.update(1/60);watch();}
+ assert.deepEqual(hands.slice(0,3),['R','L','R'],'fireballs alternate hands');
+ assert(seen.cock<-1.5,'throwing elbow cocked back: '+seen.cock);
+ assert(seen.tornadoRaise>1.6,'arms sweep up to summon tornadoes: '+seen.tornadoRaise);
+ assert(seen.slam>.25,'aerial slam hunches the torso: '+seen.slam);
+ assert(seen.meteorArms<-2.2,'both arms raised to call meteors: '+seen.meteorArms);
+ const g=fixture(),q=g.pyro;q.spawn();for(let i=0;i<60;i++)q.update(1/60);q.stun(3);for(let i=0;i<60;i++)q.update(1/60);
+ assert(q.model.parts.head.rotation.x>.4&&q.model.parts.torso.rotation.x>.3,'stunned boss slumps');
+ const h=fixture(),r=h.pyro;r.spawn();for(let i=0;i<90;i++)r.update(1/60);const before=r.model.parts.torso.rotation.x;
+ h.damage.hurt(r.combatUnit,600,null,'torso');for(let i=0;i<5;i++)r.update(1/60);
+ assert(r.model.parts.torso.rotation.x<before-.08,'damage flinch snaps the torso back');
+ const k=fixture(),c=k.pyro;c.spawn();c.velocity.set(0,0,0);c.rig.update(1/60,{t:0,mode:'flying',state:{name:'pause',t:0,duration:1},attack:null,stunned:false,localVel:new T.Vector3(0,0,0),look:{pitch:0,yaw:0},throw:{}});
+ for(let i=0;i<120;i++)c.rig.update(1/60,{t:i/60,mode:'flying',state:{name:'pause',t:0,duration:1},attack:null,stunned:false,localVel:new T.Vector3(0,0,13),look:{pitch:0,yaw:0},throw:{}});
+ assert(c.rig.flow>.7&&c.model.parts.cape.rotation.x>.4,'cape streams back at speed');
+ assert(pyro.model.root.children.length&&pyro.model.trims.length>10&&pyro.model.capes.length===3);
+ console.log('PASS rig: hands',hands.slice(0,3).join(''),'poses',JSON.stringify(Object.fromEntries(Object.entries(seen).map(([a,b])=>[a,+b.toFixed(2)]))));
 }
 
 // Damage-protected heroes are not hurt; stun pauses attacks.
