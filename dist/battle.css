@@ -233,3 +233,7 @@ body.game-viewport-lock{overflow:hidden}
 .lux-energy[data-empty] progress{background:#744627}
 [data-input-mode=touch] .lux-player .violet-buttons{grid-template-columns:repeat(4,auto)}
 [data-input-mode=touch] .lux-player .lux-energy{bottom:142px}
+#runner-hud.circuit-ready .runner-reticle {
+ color:#77ffff;
+ text-shadow:0 0 4px #e8ffff,0 0 10px #00daff,0 0 18px #00daff;
+}
