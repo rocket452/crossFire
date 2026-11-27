@@ -1,6 +1,17 @@
 import * as THREE from './vendor/three.module.js';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 import {prepareKunaiModel} from './kage-kunai-model.js?v=original-kunai-441';
+import {LightningKit} from './lightning-kit.js?v=448';
+// Slash crescent shader: the sweep head is white-hot, the body cyan and the tail fades to violet.
+const slashVertex=`attribute vec2 arcUv;varying vec2 vUv;void main(){vUv=arcUv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
+const slashFragment=`uniform vec3 color;uniform float sweep;uniform float fade;uniform float tail;uniform float rim;varying vec2 vUv;void main(){
+ float behind=sweep-vUv.x;if(behind<0.)discard;
+ float trail=exp(-behind*tail);
+ float head=exp(-behind*28.);
+ float edge=mix(pow(vUv.y,2.2),pow(vUv.y,9.),rim);
+ vec3 c=mix(vec3(.42,.32,1.),color,trail);c=mix(c,vec3(1.),head*.8+edge*rim*.6);
+ float a=edge*(trail*.85+head*.9)*fade;
+ gl_FragColor=vec4(c*a,a);}`;
 export function kageHitPower(hit,power,kind){return hit.unit?.entity?.type==='mireguard'&&['ninja-slash','ninja-dash'].includes(kind)?hit.unit.maxHealth*hit.unit.entity.config.kageMeleeFraction:power;}
 const forward=new THREE.Vector3(0,0,1);
 const SLASH_VISUAL_SCALE=1.2;
@@ -18,10 +29,13 @@ export class KageAttacks {
   this.group.add(this.arcRoot);
   this.slashSegments=32;
   const radius=config.slash.range*.82;
-  this.arcHalo=this.makeSlashRibbon('#8076ff',2.0,radius-.2,1.0,true);
-  this.arc=this.makeSlashRibbon('#42cbff',1.36,radius,0,true);
-  this.arcEdge=this.makeSlashRibbon('#e6ffff',.34,radius+.07,-.015);
-  this.arcEcho=this.makeSlashRibbon('#a1a8ff',.22,radius-1.62,.6);
+  // Close blade swoosh plus a fainter far wave that shows the cut's full reach.
+  const swoosh=2.35;this.swooshRadius=swoosh;
+  this.arcHalo=this.makeSlashRibbon('#6f6cff',2.1,swoosh+.35,.15,true,3.2,0);
+  this.arc=this.makeSlashRibbon('#46d6ff',1.55,swoosh,0,true,4.5,0);
+  this.arcEdge=this.makeSlashRibbon('#e9ffff',.16,swoosh+.04,-.01,false,7,1);
+  this.arcEcho=this.makeSlashRibbon('#7fe2ff',.8,radius,.2,true,6,0);this.arcEcho.material.uniforms.tail.value=6;
+  this.cutKit=new LightningKit(this.group,{arcs:8,glows:8,sparks:140});this.cuts=[];
   this.slashSparks=new THREE.InstancedMesh(new THREE.OctahedronGeometry(1,0),
    new THREE.MeshBasicMaterial({color:'#b1f4ff',transparent:true,depthWrite:false,toneMapped:false,blending:THREE.AdditiveBlending}),24);
   this.slashSparks.frustumCulled=false;
@@ -30,39 +44,45 @@ export class KageAttacks {
   for(let i=0;i<config.kunai.maxStored;i++){const marker=new THREE.Group();marker.name='Shadow kunai '+(i+1);marker.add(new THREE.Mesh(shadowGeometry,shadowMat),new THREE.LineLoop(edgeGeometry,edgeMat));const ring=new THREE.Mesh(ringGeometry,ringMat);ring.position.y=-.38;marker.add(ring);this.shadowRoot.add(marker);this.shadowKunai.push(marker);}
   this.panel=document.createElement('div');this.panel.id='kage-weapons-meter';this.panel.innerHTML='<b data-kunai>KUNAI READY</b><span data-kunai-teleport></span><span data-slash>SLASH READY · R</span>';document.getElementById('ninja-hud').append(this.panel);this.reset();
  }
- makeSlashRibbon(color,width,radius,lift,soft=false){
-  const positions=[],indices=[],colors=[];
+ makeSlashRibbon(color,width,radius,lift,soft=false,tail=5,rim=0){
+  const positions=[],indices=[],colors=[],uvs=[];
   for(let i=0;i<=this.slashSegments;i++){
    const t=i/this.slashSegments,angle=THREE.MathUtils.lerp(-1,1,t);
    const taper=Math.sin(t*Math.PI)*(.45+.55*t);
    for(const [edge,r] of [radius-width*taper,radius].entries()){
     positions.push(Math.sin(angle)*r,.32*Math.sin(angle)*r+lift*taper,Math.cos(angle)*r);
-    colors.push(1,1,1,soft&&edge===0?0:1);
+    colors.push(1,1,1,soft&&edge===0?0:1);uvs.push(t,edge);
    }
    if(i>0){const j=i*2;indices.push(j-2,j-1,j,j-1,j+1,j);}
   }
   const geometry=new THREE.BufferGeometry();
   geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
   geometry.setIndex(indices);
-  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,4));
-  const mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({
-   color,vertexColors:true,transparent:true,depthWrite:false,side:THREE.DoubleSide,
-   blending:THREE.AdditiveBlending,toneMapped:false
-  }));
+  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,4));geometry.setAttribute('arcUv',new THREE.Float32BufferAttribute(uvs,2));
+  const mesh=new THREE.Mesh(geometry,new THREE.ShaderMaterial({
+   uniforms:{color:{value:new THREE.Color(color)},sweep:{value:0},fade:{value:1},tail:{value:tail},rim:{value:rim}},vertexShader:slashVertex,fragmentShader:slashFragment,
+   transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,toneMapped:false
+  }));mesh.renderOrder=6;
   this.arcRoot.add(mesh);
   return mesh;
  }
  poseSlash(){
+  const h=this.hero;
+  if(h.character?.root)h.character.root.position.z=0;
   if(this.slashTime<=0)return;
-  const h=this.hero,t=1-this.slashTime/this.config.slash.effectSeconds;
-  const windUp=THREE.MathUtils.smoothstep(t,0,.14);
-  const swing=THREE.MathUtils.smoothstep(t,.14,.53);
-  const recovery=1-THREE.MathUtils.smoothstep(t,.58,1);
-  const twist=(windUp*.55-swing*1.28)*recovery;
+  const t=1-this.slashTime/this.config.slash.effectSeconds;
+  // Coil, then a fast committed cut with overshoot, a small lunge and a held follow-through.
+  const windUp=THREE.MathUtils.smoothstep(t,0,.16);
+  const raw=THREE.MathUtils.clamp((t-.16)/.26,0,1),swing=1-Math.pow(1-raw,3);
+  const overshoot=Math.sin(Math.min(1,Math.max(0,(t-.3)/.3))*Math.PI)*.18;
+  const recovery=1-THREE.MathUtils.smoothstep(t,.62,1);
+  const twist=(windUp*.95-swing*1.55-overshoot)*recovery;
   const spine=h.character.nodes.B_Spine1;
   spine?.rotateY(twist);
-  spine?.rotateX(-Math.asin(this.slashDirection.y)*.5*recovery);
-  spine?.rotateZ(-twist*.24);
+  spine?.rotateX((-Math.asin(this.slashDirection.y)*.5+.18*windUp*(1-swing)+.22*swing)*recovery);
+  spine?.rotateZ(-twist*.3);
+  if(!this.fallingSwing&&h.character?.root)h.character.root.position.z=(.48*swing-.08*windUp*(1-swing))*recovery;
+  const edge=h.blade?.userData.edge;if(edge){const flare=Math.sin(Math.min(1,raw*1.15)*Math.PI);edge.material.opacity=.3+.7*flare*recovery;edge.scale.set(1+1.4*flare,1+.25*flare,1);}
   h.character.root.updateWorldMatrix(true,true);
   const origin=h.root.position.clone();
   origin.y+=this.config.slash.height;
@@ -72,9 +92,9 @@ export class KageAttacks {
   };
   const blade=this.fallingSwing
    ?new THREE.Vector3(-.42,.95-.98*swing,.24+.88*swing)
-   :new THREE.Vector3(-.94+1.66*swing,.52-.60*swing,.23+.65*Math.sin(swing*Math.PI));
+   :new THREE.Vector3(-.98+1.78*swing+.12*overshoot,.62*windUp*(1-swing)+.1-.66*swing,.18+.7*Math.sin(swing*Math.PI));
   arm('L',blade);
-  arm('R',new THREE.Vector3(.55,.12+.25*windUp,-.3+.42*swing));
+  arm('R',new THREE.Vector3(.5-.2*swing,.18+.3*windUp*(1-swing),-.36+.5*swing));
  }
  reset(){this.cooldown=this.slashCooldown=this.slashTime=this.loadTime=0;this.held=this.loading=false;this.stored=0;this.queue=[];this.bolts=[];this.volleyClock=0;this.throws=this.volleys=this.slashes=0;this.lastVolley=0;this.slashHits=0;this.lastSlashHits=0;this.slashRotation=new THREE.Quaternion();this.slashDirection=new THREE.Vector3(0,0,1);this.slashOrigin=new THREE.Vector3();this.kunai.count=this.trails.count=0;if(this.outlines)this.outlines.count=0;this.arcRoot.visible=false;this.clearStoredVisual();}
  clearStoredVisual(){if(this.shadowRoot)this.shadowRoot.visible=false;for(const m of this.shadowKunai||[])m.visible=false;}
@@ -110,11 +130,25 @@ export class KageAttacks {
    h.shurikenEffects.tone(this.config.feedback.backstabHz);
    return true;
   }
-  for(const unit of h.getDashEnemies()){if(!unit.alive||unit.dashPhased)continue;const nearest=this.coneHit(unit,center);if(!nearest)continue;h.hit({kind:'unit',unit,part:nearest.part,point:nearest.point},c.damage,'ninja-slash');this.lastSlashHits++;}
+  for(const unit of h.getDashEnemies()){if(!unit.alive||unit.dashPhased)continue;const nearest=this.coneHit(unit,center);if(!nearest)continue;h.hit({kind:'unit',unit,part:nearest.part,point:nearest.point},c.damage,'ninja-slash');this.queueCut(nearest.point);this.lastSlashHits++;}
   for(const missile of h.getAttackThreats()){if(!missile.alive)continue;const point=new THREE.Vector3().copy(missile.position);if(this.inCone(point,center)&&this.clearLine(center,point)){h.hit({kind:'missile',missile,point},c.damage,'ninja-slash');this.lastSlashHits++;}}
   // Environment hits use the same direct-hit callback; no damage through a wall.
   const enemySections=new Set(h.getDashEnemies().flatMap(u=>u.entity?.sections||[]));for(const section of h.getSections()){if(section.hidden||section.collisionDisabled||enemySections.has(section))continue;const shape={center:section.body?.position||section,rotation:section.body?.quaternion,half:{x:section.size[0]/2,y:section.size[1]/2,z:section.size[2]/2}},near=this.coneHit({shapes:[shape]},center);if(near)h.hit({kind:'building',section,point:near.point},c.damage,'ninja-slash');}
   this.slashHits+=this.lastSlashHits;h.burst(center,12);h.shurikenEffects.tone(this.config.feedback.backstabHz);return true;
+ }
+ queueCut(point){
+  // Flash a cut on each struck enemy when the visible sweep reaches it.
+  const local=new THREE.Vector3().copy(point).sub(this.slashOrigin).applyQuaternion(this.slashRotation.clone().invert());
+  const u=THREE.MathUtils.clamp((Math.atan2(local.x,local.z)+1)/2,0,1);
+  (this.cuts||=[]).push({point:new THREE.Vector3().copy(point),at:.14+.3*u,done:false});
+ }
+ cutFlash(point){
+  if(!this.cutKit)return;
+  const across=new THREE.Vector3(.85,-.32,0).applyQuaternion(this.slashRotation);
+  this.cutKit.arc(point.clone().sub(across),point.clone().add(across),{life:.11,width:1.3,jag:.01,maxJag:.05,flicker:1,coreWidth:1.8});
+  this.cutKit.glow(point,{size:1.6,life:.16,grow:1.2,color:new THREE.Color('#ffffff')});
+  this.cutKit.glow(point,{size:3,life:.3,grow:.6,peak:.7});
+  this.cutKit.spark(point,26,10,2,{life:.3,size:.07,sizeSpread:.09});
  }
  fallingStrike(from,to){
   const h=this.hero,c=this.config.slash;
@@ -133,12 +167,15 @@ export class KageAttacks {
   this.render(dt);
  }
  render(dt=0){const h=this.hero,c=this.config;let i=0;for(const b of this.bolts){this.dummy.position.copy(b.position);this.dummy.quaternion.setFromUnitVectors(forward,b.dir);this.dummy.scale.setScalar(c.kunai.visualScale);this.dummy.updateMatrix();this.kunai.setMatrixAt(i,this.dummy.matrix);this.dummy.scale.multiplyScalar(c.kunai.outlineScale);this.dummy.updateMatrix();this.outlines.setMatrixAt(i,this.dummy.matrix);this.dummy.position.addScaledVector(b.dir,-c.kunai.trailLength/2);this.dummy.scale.set(c.kunai.trailWidth,c.kunai.trailWidth,c.kunai.trailLength);this.dummy.updateMatrix();this.trails.setMatrixAt(i++,this.dummy.matrix);}this.kunai.count=this.outlines.count=this.trails.count=i;this.kunai.instanceMatrix.needsUpdate=this.outlines.instanceMatrix.needsUpdate=this.trails.instanceMatrix.needsUpdate=true;
-  this.renderSlash();
+  this.renderSlash(dt);
   const count=h.active&&h.enabled&&this.loading?this.stored:0;this.shadowRoot.visible=count>0;if(count){const head=h.character.nodes.B_Head.getWorldPosition(new THREE.Vector3());this.shadowRoot.position.set(head.x,Math.max(head.y+c.kunai.shadowHeight,h.root.position.y+2.9),head.z);this.shadowRoot.quaternion.copy(h.camera.quaternion);}for(let j=0;j<this.shadowKunai.length;j++){const marker=this.shadowKunai[j],wasVisible=marker.visible;marker.visible=j<count;if(!marker.visible)continue;marker.userData.age=wasVisible?(marker.userData.age||0)+dt:0;const offset=j-(count-1)/2;marker.position.set(offset*c.kunai.shadowSpacing,-Math.abs(offset)*.1+Math.sin(h.time*3+j*.8)*.035,0);marker.rotation.z=-offset*.12;marker.scale.setScalar(c.kunai.shadowScale*(.75+.25*Math.min(1,marker.userData.age/.12)));}
   this.heldKunai.visible=!!h.enabled&&!h.shuriken.charging&&h.throwPose<=0;this.panel.hidden=!h.active;this.panel.querySelector('[data-kunai]').textContent=this.loading?'KUNAI '+this.stored+' / '+c.kunai.maxStored+' STORED':this.cooldown>0?'KUNAI · '+this.cooldown.toFixed(1)+'s':'KUNAI READY · LMB / F';this.panel.querySelector('[data-slash]').textContent=this.slashCooldown>0?'SLASH · '+this.slashCooldown.toFixed(1)+'s':'SLASH READY · R';const button=document.getElementById('ninja-slash');if(button)button.disabled=this.slashCooldown>0;
  }
- renderSlash(){
+ renderSlash(dt=0){
   const c=this.config.slash,progress=1-this.slashTime/c.effectSeconds;
+  this.cutKit?.step(dt);
+  for(const cut of this.cuts||[])if(!cut.done&&progress>=cut.at){cut.done=true;this.cutFlash(cut.point);}
+  if(this.slashTime<=0&&this.cuts)this.cuts.length=0;
   this.arcRoot.visible=this.slashTime>0&&progress>.12;
   if(!this.arcRoot.visible)return;
   const sweep=THREE.MathUtils.smoothstep(progress,.12,.53);
@@ -147,28 +184,24 @@ export class KageAttacks {
   this.arcRoot.quaternion.copy(this.slashRotation);
   if(this.fallingSwing)this.arcRoot.scale.set(.24,.38,.39).multiplyScalar(SLASH_VISUAL_SCALE);
   else this.arcRoot.scale.setScalar(SLASH_VISUAL_SCALE);
-  const segments=Math.ceil(sweep*this.slashSegments)*6;
-  for(const layer of [this.arcHalo,this.arc,this.arcEdge])layer.geometry.setDrawRange(0,segments);
-  const echo=THREE.MathUtils.smoothstep(progress,.23,.65);
-  this.arcEcho.geometry.setDrawRange(0,Math.floor(echo*this.slashSegments)*6);
-  this.arcHalo.material.opacity=fade*.53;
-  this.arc.material.opacity=fade*.96;
-  this.arcEdge.material.opacity=fade;
-  this.arcEcho.material.opacity=fade*.63;
+  const head=1-Math.pow(1-sweep,2)+.02;
+  const echo=THREE.MathUtils.smoothstep(progress,.18,.48);
+  const set=(layer,s,f)=>{layer.material.uniforms.sweep.value=s;layer.material.uniforms.fade.value=f;};
+  set(this.arcHalo,head,fade*.55);set(this.arc,head,fade*1.1);set(this.arcEdge,head,fade*1.3);set(this.arcEcho,echo*1.02,.42*(1-THREE.MathUtils.smoothstep(progress,.42,.7)));
 
-  const radius=c.range*.82;
+  const radius=this.swooshRadius||c.range*.82;
   let count=0;
   for(let i=0;i<24;i++){
    const fraction=(i+.5)/24;
    if(fraction>sweep)break;
    const age=Math.max(0,progress-.12-fraction*.39);
    const angle=THREE.MathUtils.lerp(-1,1,fraction)+age*.14;
-   const travel=radius+age*(.9+i%4);
+   const travel=radius+age*(.5+i%4*.4);
    const x=Math.sin(angle)*travel;
-   const size=.085+(.19+i%3*.06)*(1-age);
+   const size=(.03+(.06+i%3*.025)*(1-age));
    this.dummy.position.set(x,.32*x+Math.sin(i*2.4)*age*2.6,Math.cos(angle)*travel);
    this.dummy.rotation.set(angle*.24,angle,0);
-   this.dummy.scale.set(size*.44,size*.44,size*(1.15+i%3*.34));
+   this.dummy.scale.set(size*.3,size*.3,size*(2.4+i%3*.6));
    this.dummy.updateMatrix();
    this.slashSparks.setMatrixAt(count++,this.dummy.matrix);
   }

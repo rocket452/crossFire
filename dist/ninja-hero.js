@@ -5,7 +5,7 @@ import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
 import {KageSmoke,guardHeroInSmoke} from './kage-smoke.js?v=390';
 import {KageBombs} from './kage-bombs.js?v=smoke-projectile-219';
 import {KAGE_BOMB_ABILITIES_ENABLED} from './kage-ability-config.js?v=433';
-import {KageAttacks,kageHitPower} from './kage-attacks.js?v=441';
+import {KageAttacks,kageHitPower} from './kage-attacks.js?v=449';
 import {ChargedShuriken} from './charged-shuriken.js?v=435';
 import {ShurikenWorld} from './shuriken-world.js?v=424';
 import {ShurikenEffects} from './shuriken-effects.js?v=441';
@@ -93,7 +93,13 @@ export class NinjaHero {
    this.scarf=new THREE.Group();this.scarf.position.set(-.13,.14,-.14);head.add(this.scarf);for(let i=0;i<2;i++)this.art(this.scarf,new THREE.BoxGeometry(.11,.035,.48-i*.12),this.red,[i*.13,-i*.08,-.25]);
   }
   this.heldStar=this.art(this.character.nodes.B_R_Hand,this.starGeometry,this.silver,[0,.035,.08]);this.heldStar.scale.setScalar(.7/NINJA.shurikenScale);
-  this.blade=this.art(this.character.nodes.B_L_Hand,new THREE.BoxGeometry(.055,.9,.025),this.silver,[0,.4,.04]);this.blade.visible=false;
+  // Slightly curved katana with a cyan energy edge that flares during the cut.
+  const katana=new THREE.Shape();katana.moveTo(-.026,-.5);katana.quadraticCurveTo(-.03,.1,-.005,.52);katana.lineTo(.026,.38);katana.quadraticCurveTo(.03,-.05,.026,-.5);katana.closePath();
+  const bladeGeometry=new THREE.ExtrudeGeometry(katana,{depth:.014,bevelEnabled:false});bladeGeometry.translate(0,0,-.007);
+  this.blade=this.art(this.character.nodes.B_L_Hand,bladeGeometry,this.silver,[0,.44,.04]);this.blade.visible=false;
+  const edgeShape=new THREE.Shape();edgeShape.moveTo(-.075,-.5);edgeShape.quadraticCurveTo(-.08,.1,-.01,.62);edgeShape.lineTo(.07,.4);edgeShape.quadraticCurveTo(.08,-.05,.075,-.5);edgeShape.closePath();
+  const edge=new THREE.Mesh(new THREE.ShapeGeometry(edgeShape),new THREE.MeshBasicMaterial({color:'#66e6ff',transparent:true,opacity:.35,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,toneMapped:false}));
+  edge.renderOrder=6;this.blade.add(edge);this.blade.userData.edge=edge;
  }
  reset(){if(this.active)this.exit();this.clearDashReset();this.dashResetNotices=0;this.kunaiMarks?.reset();this.shuriken?.reset();this.shurikenEffects?.reset();this.attacks?.reset();this.bombs?.reset();this.smokeBombs?.reset();this.smoke?.reset();this.hurt.reset();this.hitSeconds=0;this.motion.reset();this.character.reset();this.projectiles=[];this.particles=[];this.ribbons=[];this.throwTimer=0;this.throwPose=0;this.airTuck=0;this.somersault=0;this.wallPose=0;this.landing=0;this.landingStrength=0;this.shots=0;this.damage=0;this.kills=0;this.missileKills=0;this.hitCount=0;this.lastHit=null;this.eyeHits=0;this.time=0;this.aiJump=1;this.patrolIndex=0;this.yaw=Math.PI;this.pitch=HERO_CAMERA.defaultPitch;this.clearInput();this.stars.count=this.sparks.count=this.trails.count=0;this.slash.visible=false;this.visual.rotation.set(0,0,0);this.root.position.copy(new THREE.Vector3().copy(this.motion.position));this.root.visible=this.vfx.visible=this.enabled===true;this.pose(0,null);}
  setEnabled(value){this.enabled=!!value;this.reset();this.root.visible=this.vfx.visible=this.enabled;}
