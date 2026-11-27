@@ -4,8 +4,8 @@ let seed=12345;Math.random=()=>((seed=Math.imul(seed^seed>>>15,2246822507)+10139
 const root=new URL('../dist/',import.meta.url).href;
 const T=await import(root+'vendor/three.module.js');
 const {UnitDamage}=await import(root+'combat-collision.js');
-const {PYROCLAST}=await import(root+'pyroclast-config.js?v=458');
-const {Pyroclast}=await import(root+'pyroclast.js?v=459');
+const {PYROCLAST}=await import(root+'pyroclast-config.js?v=461');
+const {Pyroclast}=await import(root+'pyroclast.js?v=461');
 
 function fixture({protectedHero=false,dt=1/60}={}){
  const scene=new T.Scene(),events=[],impacts=[],deaths=[];let pyro;
@@ -45,12 +45,12 @@ for(const dt of [1/30,1/60,1/120]){
   maxTornadoes=Math.max(maxTornadoes,pyro.tornadoes.length);
   const warns=pyro.fx.decals.filter(d=>d.kind==='warn').length;sawWarn=Math.max(sawWarn,warns);
   for(const m of pyro.meteors){if(m.art&&!pyro.fx.decals.includes(m.warn))warnBeforeImpact=false;
-   if(m.age<PYROCLAST.meteors.telegraph&&m.art)warnBeforeImpact=false;}
+   if(m.age<m.telegraph&&m.art)warnBeforeImpact=false;}
   if(hero.knock.some(v=>v.y>=PYROCLAST.tornadoes.lift-.01))lifted=true;
  }
  const s=pyro.stats;
  assert(['fireballs','tornadoes','meteors'].every(a=>seen.has(a)),'all three attacks used: '+[...seen]);
- assert(s.fireballs>=PYROCLAST.fireballs.count&&s.fireballs%PYROCLAST.fireballs.count===0);assert.equal(s.tornadoes,PYROCLAST.tornadoes.count);assert.equal(s.meteors,PYROCLAST.meteors.count);
+ assert(s.fireballs>=PYROCLAST.fireballs.count&&s.fireballs%PYROCLAST.fireballs.count===0);assert.equal(s.tornadoes,PYROCLAST.tornadoes.count);assert.equal(s.meteors,PYROCLAST.meteors.count+1,'16 meteors plus the finale');
  assert.equal(maxTornadoes,PYROCLAST.tornadoes.count,'moving tornado hazards');
  assert(sawWarn>=3,'several meteor landing rings telegraphed at once');assert(warnBeforeImpact,'each meteor waits for its warning ring');
  assert(minClear>=3,'stays airborne: clearance '+minClear.toFixed(2));
@@ -115,6 +115,26 @@ for(const dt of [1/30,1/60,1/120]){
  assert(c.rig.flow>.7&&c.model.parts.cape.rotation.x>.4,'cape streams back at speed');
  assert(pyro.model.root.children.length&&pyro.model.trims.length>10&&pyro.model.capes.length===3);
  console.log('PASS rig: hands',hands.slice(0,3).join(''),'poses',JSON.stringify(Object.fromEntries(Object.entries(seen).map(([a,b])=>[a,+b.toFixed(2)]))));
+}
+
+// Meteor spectacle: sky rift, target beams, meteors falling out of the rift, a giant finale, debris and crater fires.
+{
+ const f=fixture(),{pyro,heroUnit}=f;pyro.spawn();const c=PYROCLAST.meteors,FX=pyro.meteorFX,hero=heroUnit.shapes[0].center;
+ let riftOpen=0,maxBeams=0,fromRift=true,finale=null,debris=0,fires=0,smoke=0;
+ for(let i=0;i<24*60;i++){pyro.update(1/60);
+  riftOpen=Math.max(riftOpen,FX.riftState.open);maxBeams=Math.max(maxBeams,FX.beams.filter(b=>b.active).length);
+  for(const m of pyro.meteors){if(m.start.y<c.riftHeight-5)fromRift=false;if(m.finale)finale=m;}
+  debris=Math.max(debris,FX.debris.filter(d=>d.mesh.visible).length);fires=Math.max(fires,FX.fires.filter(d=>d.mesh.visible).length);smoke=Math.max(smoke,FX.smoke.filter(d=>d.mesh.visible).length);}
+ assert(riftOpen>.9,'rift opens over the target area');assert(fromRift,'meteors fall out of the rift');
+ assert(maxBeams>=3,'each telegraphed meteor raises a target beam');
+ assert(finale&&finale.radius===c.finale.radius&&Math.hypot(finale.landing.x-hero.x,finale.landing.z-hero.z)<.01,'giant finale meteor lands on the hero');
+ assert(debris>5&&fires>=3&&smoke>10,'impacts throw debris, leave crater fires and smoke: '+[debris,fires,smoke]);
+ assert(FX.riftState.target===0&&FX.beams.every(b=>!b.active),'rift closes and beams clear after the shower');
+ // Dying mid-shower closes the rift.
+ const g=fixture(),q=g.pyro;q.spawn();while(!(q.attack==='meteors'&&q.state.name==='attack'))q.update(1/60);
+ g.damage.hurt(q.combatUnit,1e6,null,'torso');for(let i=0;i<8*60;i++)q.update(1/60);
+ assert.equal(q.meteorFX.riftState.target,0,'rift closes when Pyroclast falls');
+ console.log('PASS meteor spectacle: rift',riftOpen.toFixed(2),'beams',maxBeams,'debris',debris,'fires',fires,'smoke',smoke);
 }
 
 // Damage-protected heroes are not hurt; stun pauses attacks.

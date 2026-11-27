@@ -1,7 +1,8 @@
 import * as THREE from './vendor/three.module.js';
-import {PYROCLAST} from './pyroclast-config.js?v=458';
-import {buildPyroclast} from './pyroclast-model.js?v=459';
-import {PyroclastFX,FlameTornado,flame,meteorTail,FIRE} from './pyroclast-fx.js?v=457';
+import {PYROCLAST} from './pyroclast-config.js?v=461';
+import {buildPyroclast} from './pyroclast-model.js?v=461';
+import {PyroclastFX,FlameTornado,flame,meteorTail,FIRE} from './pyroclast-fx.js?v=461';
+import {MeteorShowerFX} from './pyroclast-meteor-fx.js?v=461';
 import {glowBillboard} from './lightning-kit.js?v=451';
 import {PyroclastRig} from './pyroclast-rig.js?v=459';
 
@@ -14,7 +15,7 @@ export class Pyroclast {
  constructor(scene,damage,options={},config=PYROCLAST){
   Object.assign(this,{scene,damage,options,config,id:'evac-raider-pyroclast',type:'pyroclast',evac:true});
   this.model=buildPyroclast(config.height);this.rig=new PyroclastRig(this.model);this.root=this.model.root;this.root.visible=false;scene.add(this.root);
-  this.fx=new PyroclastFX(scene);this.fx.setEnabled(false);
+  this.fx=new PyroclastFX(scene);this.fx.setEnabled(false);this.meteorFX=new MeteorShowerFX(this.fx);
   this.tornadoPool=Array.from({length:config.tornadoes.count},()=>new FlameTornado(this.fx.group,config.tornadoes));
   // Fireball art pool: hot core, halo and a burning trail.
   this.fireballArt=Array.from({length:config.fireballs.count+1},()=>{
@@ -27,9 +28,9 @@ export class Pyroclast {
   this.charge=this.fireballArt.pop();
   this.aura=glowBillboard('#ff5a14',3);this.aura.material.uniforms.opacity.value=.5;this.fx.group.add(this.aura);
   this.headGlow=glowBillboard('#ffb12c',4);this.fx.group.add(this.headGlow);
-  this.meteorArt=Array.from({length:8},()=>{
+  this.meteorArt=Array.from({length:10},()=>{
    const g=new THREE.Group();g.visible=false;this.fx.group.add(g);
-   const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1.9,0),new THREE.MeshStandardMaterial({color:'#2a1a16',emissive:'#ff4a10',emissiveIntensity:.9,roughness:.8,flatShading:true}));
+   const rock=this.meteorFX.rock(1.9);
    const glow=glowBillboard(FIRE.orange,6);glow.scale.setScalar(9);glow.material.uniforms.opacity.value=.8;const hot=glowBillboard(FIRE.yellow,7);hot.scale.setScalar(4.2);
    const trail=meteorTail(22,2.1);
    g.add(rock,glow,hot,trail);return {group:g,rock,trail};
@@ -41,7 +42,7 @@ export class Pyroclast {
   this.damage.units=this.damage.units.filter(u=>u.entity!==this);this.combatUnit=null;
   this.spawned=false;this.mode='inactive';this.root.visible=false;this.fx.clear();this.fx.setEnabled(false);
   for(const t of this.tornadoPool)t.root.visible=false;for(const a of [...this.fireballArt,this.charge,...this.meteorArt])a.group.visible=false;
-  this.aura.visible=this.headGlow.visible=false;
+  this.aura.visible=this.headGlow.visible=false;this.meteorFX?.clear();
   this.fireballs=[];this.tornadoes=[];this.meteors=[];this.pendingMeteors=[];this.hitClock=new Map();this.tornadoWarns=[];this.tornadoSpots=null;this.tornadoFocus=null;
   this.velocity=new THREE.Vector3();this.goal=new THREE.Vector3();this.time=0;this.retarget=0;this.orbitAngle=Math.random()*Math.PI*2;
   this.state={name:'idle',t:0,duration:0};this.cycleIndex=0;this.goalSpot=null;this.goalClock=0;this.stunRemaining=0;this.deathTime=0;
@@ -102,7 +103,10 @@ export class Pyroclast {
  // ---- attacks ----------------------------------------------------------
  beginAttack(name){
   const c=this.config[name];this.stats.attacks++;this.attack=name;this.state={name:'windup',t:0,duration:c.windup};
-  if(name==='meteors'){this.meteorQueue=[];for(let i=0;i<c.count;i++)this.meteorQueue.push(i*c.spawnSeconds/c.count);}
+  if(name==='meteors'){this.meteorQueue=[];for(let i=0;i<c.count;i++)this.meteorQueue.push(i*c.spawnSeconds/c.count);this.finaleSpawned=false;
+   // A burning rift tears open high above the target area; every meteor falls out of it.
+   const focus=this.target||this.pickTarget(),hero=focus?this.heroPosition(focus):this.root.position;
+   const center=hero.clone().lerp(this.root.position,.35);center.y=this.ground(hero.x,hero.z)+c.riftHeight;this.meteorFX.openRift(center,c.riftRadius);}
   if(name==='tornadoes'){this.clearTornadoWarnings();this.tornadoSpots=this.planTornadoSpots();this.tornadoWarns=this.tornadoSpots.map(p=>this.fx.decal('warn',p,c.radius,c.windup+.5));}
   this.fired=0;if(name==='fireballs'){this.nextHand='R';this.lastThrow=null;}
  }
@@ -150,16 +154,20 @@ export class Pyroclast {
    this.fx.explosion(start.clone().add(new THREE.Vector3(0,1,0)),c.radius*1.2,{scorch:false,groundY:start.y});
   });
  }
- spawnMeteor(index){
-  const c=this.config.meteors,list=this.targets();
-  const base=list.length?this.heroPosition(list[index%list.length]).clone():this.root.position.clone();
-  // The first few land right on heroes; the rest spread around them.
-  const spread=index<3?2.5:c.spread,a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*spread;
+ spawnMeteor(index,finale=false){
+  const c=this.config.meteors,F=c.finale,list=this.targets();
+  const focus=list.find(u=>u===this.target)||list[index%Math.max(1,list.length)];
+  const base=focus?this.heroPosition(focus).clone():this.root.position.clone();
+  // The first few land right on heroes, the rest spread around them; the finale lands on the target.
+  const spread=finale?0:index<3?2.5:c.spread,a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*spread;
   const x=THREE.MathUtils.clamp(base.x+Math.cos(a)*r,-110,110),z=THREE.MathUtils.clamp(base.z+Math.sin(a)*r,-110,110);
   const landing=new THREE.Vector3(x,this.ground(x,z),z);
-  const warn=this.fx.decal('warn',landing,c.radius,c.telegraph+c.fall+.1);
-  const sweep=this.root.rotation.y+Math.PI+(Math.random()-.5)*.5,dir=new THREE.Vector3(Math.sin(sweep)*.55,1,Math.cos(sweep)*.55).normalize();
-  this.meteors.push({landing,warn,start:landing.clone().addScaledVector(dir,c.startHeight),age:0,art:null});this.stats.meteors++;
+  const radius=finale?F.radius:c.radius,telegraph=finale?F.telegraph:c.telegraph,fall=finale?F.fall:c.fall;
+  const scale=finale?F.scale:index<3?1.25:.8+Math.random()*.35;
+  const warn=this.fx.decal('warn',landing,radius,telegraph+fall+.1);
+  const beam=this.meteorFX.beam(landing,radius);
+  const start=this.meteorFX.rift.visible?this.meteorFX.riftPoint(finale?.1:.6):landing.clone().add(new THREE.Vector3(0,c.startHeight,0));
+  this.meteors.push({landing,warn,beam,start,age:0,art:null,radius,telegraph,fall,scale,finale,power:finale?F.power:1});this.stats.meteors++;
  }
  // ---- update -----------------------------------------------------------
  update(dt,time=0){
@@ -185,7 +193,8 @@ export class Pyroclast {
   if(s.name==='windup'&&s.t>=s.duration){this.state={name:'attack',t:0,duration:this.attackDuration()};if(this.attack==='tornadoes')this.spawnTornadoes();return;}
   if(s.name==='attack'){
    if(this.attack==='fireballs'){const f=c.fireballs;while(this.fired<f.count&&s.t>=this.fired*f.interval){this.launchFireball();this.fired++;}}
-   if(this.attack==='meteors'){while(this.meteorQueue.length&&s.t>=this.meteorQueue[0]){this.meteorQueue.shift();this.spawnMeteor(this.fired++);}}
+   if(this.attack==='meteors'){while(this.meteorQueue.length&&s.t>=this.meteorQueue[0]){this.meteorQueue.shift();this.spawnMeteor(this.fired++);}
+    if(!this.meteorQueue.length&&!this.finaleSpawned&&s.t>=c.meteors.spawnSeconds){this.finaleSpawned=true;this.spawnMeteor(this.fired++,true);}}
    if(s.t>=s.duration){this.state={name:'recover',t:0,duration:c[this.attack].recover};}
    return;
   }
@@ -276,22 +285,31 @@ export class Pyroclast {
  updateMeteors(dt){
   const c=this.config.meteors;
   for(const m of [...this.meteors]){
-   m.age+=dt;const warnT=Math.min(1,m.age/c.telegraph);m.warn.mesh.material.uniforms.progress.value=warnT;
-   if(m.age>=c.telegraph&&!m.art){m.art=this.meteorArt.find(a=>!a.group.visible)||null;if(m.art){m.art.group.visible=true;}}
+   m.age+=dt;const warnT=Math.min(1,m.age/m.telegraph);m.warn.mesh.material.uniforms.progress.value=warnT;this.meteorFX.setBeam(m.beam,warnT);
+   if(m.age>=m.telegraph&&!m.art){m.art=this.meteorArt.find(a=>!a.group.visible)||null;
+    if(m.art){m.art.group.visible=true;m.art.group.scale.setScalar(m.scale);this.fx.kit.glow(m.start,{size:8*m.scale,life:.35,grow:1,color:FIRE.hot,peak:.8});}}
    if(m.art){
-    const f=Math.min(1,(m.age-c.telegraph)/c.fall),pos=m.start.clone().lerp(m.landing,f*f);
+    const f=Math.min(1,(m.age-m.telegraph)/m.fall),pos=m.start.clone().lerp(m.landing,f*f);
     m.art.group.position.copy(pos);m.art.rock.rotation.x+=dt*5;m.art.rock.rotation.y+=dt*3;
     const dir=m.start.clone().sub(m.landing).normalize();
     m.art.trail.quaternion.setFromUnitVectors(UP,dir);m.art.trail.material.uniforms.time.value=this.time;
-    this.fx.kit.spark(pos,5,4,.5,{life:.7,size:.25,sizeSpread:.25,gravity:-1});
+    // Burning trail: sparks, flame puffs and a dark smoke wake behind the rock.
+    this.fx.kit.spark(pos,Math.round(5*m.scale),4,.5*m.scale,{life:.7,size:.25,sizeSpread:.25,gravity:-1});
+    if(Math.random()<.24)this.meteorFX.puffSmoke(pos.clone().addScaledVector(dir,2.5*m.scale),2*m.scale,1.4,dir.clone().multiplyScalar(2).add(new THREE.Vector3((Math.random()-.5)*2,1,(Math.random()-.5)*2)),{peak:.6,grow:2.4});
+    if(Math.random()<.3)this.fx.puff(pos.clone().addScaledVector(dir,1.4*m.scale),1.5*m.scale,.35,1);
    }
-   if(m.age>=c.telegraph+c.fall){
-    this.fx.explosion(m.landing,c.radius*1.25);this.stats.explosions++;
-    this.hurtHeroes(m.landing.clone().add(new THREE.Vector3(0,1,0)),c.radius,1,{knock:12,lift:9});
-    this.impactWorld(m.landing,c.radius*.8,null);
-    if(m.art)m.art.group.visible=false;this.fx.removeDecal(m.warn);this.meteors.splice(this.meteors.indexOf(m),1);
+   if(m.age>=m.telegraph+m.fall){
+    const g=m.landing.y;
+    this.fx.explosion(m.landing,m.radius*1.25,{groundY:g});this.stats.explosions++;
+    this.meteorFX.impact(m.landing,m.radius,g);
+    if(m.finale){this.fx.explosion(m.landing.clone().add(new THREE.Vector3(0,3,0)),m.radius*1.6,{ground:false});this.fx.decal('shock',m.landing,m.radius*.9,.7);}
+    this.hurtHeroes(m.landing.clone().add(new THREE.Vector3(0,1,0)),m.radius,m.power,{knock:m.finale?20:12,lift:m.finale?13:9});
+    this.impactWorld(m.landing,m.radius*.8,null);
+    if(m.art)m.art.group.visible=false;this.fx.removeDecal(m.warn);this.meteorFX.releaseBeam(m.beam);this.meteors.splice(this.meteors.indexOf(m),1);
    }
   }
+  if(this.meteorFX.riftState.target>0&&((!this.meteors.length&&(this.attack!=='meteors'||this.finaleSpawned))||this.mode!=='flying'))this.meteorFX.closeRift();
+  this.meteorFX.update(dt);
  }
  updateDeath(dt){
   this.deathTime+=dt;const p=this.root.position;
@@ -326,8 +344,7 @@ export class Pyroclast {
   this.model.update(t,{heat:fury*(this.stunRemaining>0?.55:1),flow:cloth.flow,sway:cloth.sway,rim:.8+.4*fury});
   for(const f of this.model.flames){f.material.uniforms.time.value=t;f.material.uniforms.intensity.value=fury;}
   for(const k of ['L','R']){const j=P['jet'+k];j.scale.y=-(.75+.25*Math.sin(t*23+(k==='L'?0:1))+Math.max(0,this.velocity.y)*.05+(a==='tornadoes'&&s.name==='windup'?.4:0));}
-  const pulse=.75+.25*Math.sin(t*4);for(const g of this.model.glows)g.material.color.setRGB(1,.55+.35*pulse,.1+.15*pulse);
-  for(const m of this.model.trims)m.material.color.setRGB(1,.4+.12*pulse*fury,.08);
+  const pulse=.75+.25*Math.sin(t*4);
   // Aura glows and rising embers.
   const chest=this.aimPoint(),head=P.head.getWorldPosition(this.tmp);
   this.aura.position.copy(chest);this.aura.scale.setScalar(c.height*1.25*(.9+.1*pulse));this.aura.material.uniforms.opacity.value=.2*fury;

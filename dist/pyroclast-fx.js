@@ -67,14 +67,15 @@ void main(){
 const flatVertex=`varying vec2 vP;void main(){vP=position.xy;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
 // Meteor warning decal: pulsing outer ring, inner disc that fills as impact approaches.
 const warnFragment=`varying vec2 vP;uniform float progress;uniform float time;uniform float fade;void main(){
- float r=length(vP);if(r>1.)discard;float a=atan(vP.y,vP.x);
+ float r=length(vP)*1.5;if(r>1.5)discard;float a=atan(vP.y,vP.x);
  float ring=smoothstep(.86,.93,r)*smoothstep(1.,.97,r);
  float fill=step(r,progress)*(.18+.25*smoothstep(progress-.08,progress,r));
  float ticks=step(.5,fract(a*12./6.2832-time*.6))*smoothstep(.76,.8,r)*smoothstep(.86,.82,r);
  float pulse=.6+.4*sin(time*(7.+18.*progress));
- float cross=(smoothstep(.04,0.,abs(vP.x))+smoothstep(.04,0.,abs(vP.y)))*smoothstep(.3,.0,r)*.8;
+ float cross=(smoothstep(.04,0.,abs(vP.x*1.5))+smoothstep(.04,0.,abs(vP.y*1.5)))*smoothstep(.3,.0,r)*.8;
+ float lockR=1.5-.5*progress;float lock=smoothstep(.035,0.,abs(r-lockR))*(.35+.65*progress)*step(.5,fract(a*4./6.2832+time*.35+.25));
  vec3 c=mix(vec3(1.,.25,.05),vec3(1.,.8,.3),progress);
- float v=(ring*(.7+.3*pulse)+fill*pulse+ticks*.45+cross*pulse)*fade;
+ float v=(ring*(.7+.3*pulse)+fill*pulse+ticks*.45+cross*pulse+lock*1.2)*fade;
  gl_FragColor=vec4(c*v,1.);}`;
 const scorchFragment=NOISE+`varying vec2 vP;uniform float fade;uniform float seed;uniform float time;void main(){
  float r=length(vP);if(r>1.)discard;float a=atan(vP.y,vP.x);
@@ -114,7 +115,7 @@ export class PyroclastFX {
  decal(kind,position,radius,life,uniforms={}){
   const fragment=kind==='warn'?warnFragment:kind==='scorch'?scorchFragment:shockFragment;
   const material=new THREE.ShaderMaterial({uniforms:{progress:{value:0},time:{value:0},fade:{value:1},seed:{value:Math.random()*6},opacity:{value:1},...uniforms},vertexShader:flatVertex,fragmentShader:fragment,...additive});
-  const mesh=new THREE.Mesh(new THREE.CircleGeometry(1,48),material);mesh.rotation.x=-Math.PI/2;mesh.position.copy(position);mesh.position.y+=kind==='warn'?.09:.06;mesh.scale.setScalar(radius);mesh.renderOrder=kind==='warn'?5:4;mesh.frustumCulled=false;
+  const mesh=new THREE.Mesh(new THREE.CircleGeometry(1,48),material);mesh.rotation.x=-Math.PI/2;mesh.position.copy(position);mesh.position.y+=kind==='warn'?.09:.06;mesh.scale.setScalar(kind==='warn'?radius*1.5:radius);mesh.renderOrder=kind==='warn'?5:4;mesh.frustumCulled=false;
   this.group.add(mesh);const d={kind,mesh,age:0,life,radius};this.decals.push(d);return d;
  }
  removeDecal(d){this.group.remove(d.mesh);d.mesh.material.dispose();d.mesh.geometry.dispose();this.decals.splice(this.decals.indexOf(d),1);}
