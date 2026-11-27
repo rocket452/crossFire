@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 
 export const THUNDER_PUNCH=Object.freeze({
- key:'h',cost:25,damage:300,range:3.8,radius:.38,windup:.09,recovery:.3,stagger:.42
+ key:'c',cost:25,damage:300,range:3.8,radius:.38,windup:.09,recovery:.3,stagger:.42
 });
 
 export class ThunderPunch {
