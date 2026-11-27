@@ -7,8 +7,8 @@ export const PYROCLAST=Object.freeze({
  cycle:['fireballs','tornadoes','meteors'],
  pauseSeconds:2.2,
  openingDelay:2.5,
- fireballs:{windup:1.1,count:3,interval:.42,speed:30,radius:2,blastRadius:6.5,power:1,life:5,lead:.6,homing:1.4,fuse:1.5,dropGravity:32,recover:.8},
- tornadoes:{windup:.9,count:3,speed:6.5,turn:1.6,radius:2.3,height:12,life:7.5,hitInterval:.5,lift:9,recover:.6},
+ fireballs:{windup:1.1,count:3,interval:.42,speed:60,radius:2,blastRadius:6.5,power:1,life:5,lead:.6,homing:1.4,fuse:1.5,dropGravity:32,recover:.8},
+ tornadoes:{windup:1.1,count:3,speed:6.5,turn:1.6,radius:4.6,height:24,spawnRadius:17,life:7.5,hitInterval:.5,lift:9,recover:.6},
  meteors:{windup:1.3,count:16,spawnSeconds:3.4,telegraph:1.7,fall:.85,spread:15,radius:4,startHeight:70,recover:1},
  stunScale:.5,
  deathSeconds:2.4

@@ -4,8 +4,8 @@ let seed=12345;Math.random=()=>((seed=Math.imul(seed^seed>>>15,2246822507)+10139
 const root=new URL('../dist/',import.meta.url).href;
 const T=await import(root+'vendor/three.module.js');
 const {UnitDamage}=await import(root+'combat-collision.js');
-const {PYROCLAST}=await import(root+'pyroclast-config.js?v=457');
-const {Pyroclast}=await import(root+'pyroclast.js?v=457');
+const {PYROCLAST}=await import(root+'pyroclast-config.js?v=458');
+const {Pyroclast}=await import(root+'pyroclast.js?v=458');
 
 function fixture({protectedHero=false,dt=1/60}={}){
  const scene=new T.Scene(),events=[],impacts=[],deaths=[];let pyro;
@@ -29,7 +29,7 @@ function fixture({protectedHero=false,dt=1/60}={}){
  assert(pyro.id.startsWith('evac-raider'),'own projectiles skip the boss');
  assert(pyro.root.visible&&pyro.fx.enabled!==false&&pyro.aura.visible&&pyro.headGlow.visible);
  assert(pyro.model.flames.length>=8,'persistent head/body flames');assert(pyro.model.capes.length>=3,'burning cape panels');
- assert.equal(pyro.modifyDamage(100,null,'head'),150);assert.equal(pyro.modifyDamage(100,null,'torso'),100);
+ assert.equal(PYROCLAST.fireballs.speed,60);assert.equal(pyro.modifyDamage(100,null,'head'),150);assert.equal(pyro.modifyDamage(100,null,'torso'),100);
  const head=pyro.combatUnit.shapes[0].center,legs=pyro.combatUnit.shapes[2].center;assert(head.y>legs.y+1.5,'upright hit boxes');
  console.log('PASS spawn: one boss unit, 3 hit shapes, head ×1.5, persistent flames');
 }
@@ -58,6 +58,24 @@ for(const dt of [1/30,1/60,1/120]){
  assert(f.impacts.length>=s.fireballs,'fireballs and meteors break the world');
  assert.equal(pyro.meteors.length,0);assert.equal(pyro.fx.decals.filter(d=>d.kind==='warn').length,0,'warning rings removed after impact');
  console.log('PASS cycle @'+Math.round(1/dt)+'fps:',JSON.stringify(s),'min clearance',minClear.toFixed(1));
+}
+
+// Tornadoes are telegraphed by warning rings, then rise in a ring around the hero (not at the boss) and close in.
+{
+ const f=fixture(),{pyro,heroUnit}=f;pyro.spawn();const c=PYROCLAST.tornadoes,hero=heroUnit.shapes[0].center;
+ let warned=0;while(pyro.stats.tornadoes===0&&pyro.time<20){pyro.update(1/60);if(pyro.attack==='tornadoes'&&pyro.state.name==='windup')warned=Math.max(warned,pyro.fx.decals.filter(d=>d.kind==='warn').length);}
+ assert.equal(warned,c.count,'one warning ring per tornado during the wind-up');
+ assert.equal(pyro.fx.decals.filter(d=>d.kind==='warn').length,0,'tornado warnings cleared on spawn');
+ const starts=pyro.tornadoes.map(t=>t.position.clone()),dist=starts.map(p=>Math.hypot(p.x-hero.x,p.z-hero.z));
+ assert(dist.every(d=>Math.abs(d-c.spawnRadius)<1),'spawn ring radius '+dist.map(d=>d.toFixed(1)));
+ const angles=starts.map(p=>Math.atan2(p.z-hero.z,p.x-hero.x)).sort((a,b)=>a-b),gaps=angles.map((a,i)=>((angles[(i+1)%angles.length]-a)+Math.PI*2)%(Math.PI*2));
+ assert(gaps.every(g=>Math.abs(g-Math.PI*2/c.count)<.05),'evenly surround the hero');
+ assert(pyro.tornadoes.every(t=>t.target===heroUnit));
+ assert.equal(pyro.tornadoPool[0].outer.geometry.parameters.height,c.height);assert.equal(c.radius,4.6);assert.equal(c.height,24);
+ for(let i=0;i<120;i++)pyro.update(1/60);
+ const after=pyro.tornadoes.map(t=>Math.hypot(t.position.x-hero.x,t.position.z-hero.z));
+ assert(after.every((d,i)=>d<dist[i]-5),'tornadoes close in on the hero: '+after.map(d=>d.toFixed(1)));
+ console.log('PASS tornado warnings, ring spawn around hero at',dist.map(d=>d.toFixed(1)).join(','),'→',after.map(d=>d.toFixed(1)).join(','));
 }
 
 // Fireballs home gently and fuse on a near miss, so a hero leaping 20m+ through the air still gets a burst beside them.

@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {PYROCLAST} from './pyroclast-config.js?v=457';
+import {PYROCLAST} from './pyroclast-config.js?v=458';
 import {buildPyroclast} from './pyroclast-model.js?v=457';
 import {PyroclastFX,FlameTornado,flame,meteorTail,FIRE} from './pyroclast-fx.js?v=457';
 import {glowBillboard} from './lightning-kit.js?v=451';
@@ -41,7 +41,7 @@ export class Pyroclast {
   this.spawned=false;this.mode='inactive';this.root.visible=false;this.fx.clear();this.fx.setEnabled(false);
   for(const t of this.tornadoPool)t.root.visible=false;for(const a of [...this.fireballArt,this.charge,...this.meteorArt])a.group.visible=false;
   this.aura.visible=this.headGlow.visible=false;
-  this.fireballs=[];this.tornadoes=[];this.meteors=[];this.pendingMeteors=[];this.hitClock=new Map();
+  this.fireballs=[];this.tornadoes=[];this.meteors=[];this.pendingMeteors=[];this.hitClock=new Map();this.tornadoWarns=[];this.tornadoSpots=null;this.tornadoFocus=null;
   this.velocity=new THREE.Vector3();this.goal=new THREE.Vector3();this.time=0;this.retarget=0;this.orbitAngle=Math.random()*Math.PI*2;
   this.state={name:'idle',t:0,duration:0};this.cycleIndex=0;this.goalSpot=null;this.goalClock=0;this.stunRemaining=0;this.deathTime=0;
   this.stats={fireballs:0,tornadoes:0,meteors:0,heroHits:0,explosions:0,attacks:0};this.target=null;
@@ -63,7 +63,7 @@ export class Pyroclast {
   if(this.mode!=='flying')return;
   this.mode='dying';this.deathTime=0;this.state={name:'dying',t:0,duration:this.config.deathSeconds};
   if(this.combatUnit){this.combatUnit.alive=false;this.combatUnit.shapes=[];}
-  this.charge.group.visible=false;
+  this.charge.group.visible=false;this.clearTornadoWarnings();
   this.options.onEvent?.('Pyroclast is falling!');
  }
  // ---- hit shapes -------------------------------------------------------
@@ -101,6 +101,7 @@ export class Pyroclast {
  beginAttack(name){
   const c=this.config[name];this.stats.attacks++;this.attack=name;this.state={name:'windup',t:0,duration:c.windup};
   if(name==='meteors'){this.meteorQueue=[];for(let i=0;i<c.count;i++)this.meteorQueue.push(i*c.spawnSeconds/c.count);}
+  if(name==='tornadoes'){this.clearTornadoWarnings();this.tornadoSpots=this.planTornadoSpots();this.tornadoWarns=this.tornadoSpots.map(p=>this.fx.decal('warn',p,c.radius,c.windup+.5));}
   this.fired=0;
  }
  handPosition(key='R'){return this.model.parts['hand'+key].localToWorld(new THREE.Vector3(0,-.12,.02));}
@@ -118,16 +119,33 @@ export class Pyroclast {
   this.hurtHeroes(point,c.blastRadius,c.power,{knock:14,lift:7});this.impactWorld(point,c.blastRadius*.6,hit);
   f.art.group.visible=false;
  }
- spawnTornadoes(){
-  const c=this.config.tornadoes,list=this.targets();
+ // Ring of spots around the hero, nudged off rooftops onto the same street level.
+ planTornadoSpots(){
+  const c=this.config.tornadoes,focus=this.target||this.pickTarget();
+  const center=focus?this.heroPosition(focus).clone():this.root.position.clone(),floor=this.ground(center.x,center.z),base=Math.random()*Math.PI*2,spots=[];
   for(let i=0;i<c.count;i++){
-   const art=this.tornadoPool[i],angle=this.root.rotation.y+(i-(c.count-1)/2)*.9;
-   const start=this.root.position.clone().add(new THREE.Vector3(Math.sin(angle)*6,0,Math.cos(angle)*6));start.y=this.ground(start.x,start.z);
-   const target=list.length?list[i%list.length]:null;
-   art.root.visible=true;art.root.position.copy(start);art.root.scale.setScalar(.2);
-   this.tornadoes.push({art,position:start,heading:angle,target,age:0,wander:Math.random()*6});this.stats.tornadoes++;
-   this.fx.explosion(start,3,{scorch:false});
+   let pick=null;
+   for(const r of [c.spawnRadius,c.spawnRadius*.75,c.spawnRadius*1.3])for(const off of [0,.3,-.3,.6,-.6,.9,-.9]){
+    if(pick)break;const a=base+i*Math.PI*2/c.count+off;
+    const x=THREE.MathUtils.clamp(center.x+Math.cos(a)*r,-110,110),z=THREE.MathUtils.clamp(center.z+Math.sin(a)*r,-110,110),g=this.ground(x,z);
+    if(g<1.5||Math.abs(g-floor)<1.5)pick=new THREE.Vector3(x,g,z);
+   }
+   if(!pick){const a=base+i*Math.PI*2/c.count,x=center.x+Math.cos(a)*c.spawnRadius,z=center.z+Math.sin(a)*c.spawnRadius;pick=new THREE.Vector3(x,this.ground(x,z),z);}
+   spots.push(pick);
   }
+  this.tornadoFocus=focus;return spots;
+ }
+ clearTornadoWarnings(){for(const w of this.tornadoWarns||[])if(this.fx.decals.includes(w))this.fx.removeDecal(w);this.tornadoWarns=[];}
+ spawnTornadoes(){
+  const c=this.config.tornadoes,spots=this.tornadoSpots?.length?this.tornadoSpots:this.planTornadoSpots(),focus=this.tornadoFocus?.alive?this.tornadoFocus:this.pickTarget();
+  this.clearTornadoWarnings();this.tornadoSpots=null;
+  spots.forEach((start,i)=>{
+   const art=this.tornadoPool[i];if(!art)return;
+   const goal=focus?this.heroPosition(focus):this.root.position,heading=Math.atan2(goal.x-start.x,goal.z-start.z);
+   art.root.visible=true;art.root.position.copy(start);art.root.scale.setScalar(.2);
+   this.tornadoes.push({art,position:start.clone(),heading,target:focus,age:0,wander:Math.random()*6});this.stats.tornadoes++;
+   this.fx.explosion(start.clone().add(new THREE.Vector3(0,1,0)),c.radius*1.2,{scorch:false,groundY:start.y});
+  });
  }
  spawnMeteor(index){
   const c=this.config.meteors,list=this.targets();
@@ -160,6 +178,7 @@ export class Pyroclast {
  updateBrain(dt){
   const c=this.config,s=this.state;s.t+=dt;
   if(s.name==='pause'&&s.t>=s.duration){this.beginAttack(c.cycle[this.cycleIndex++%c.cycle.length]);return;}
+  if(s.name==='windup'&&this.attack==='tornadoes')for(const w of this.tornadoWarns||[])w.mesh.material.uniforms.progress.value=Math.min(1,s.t/s.duration);
   if(s.name==='windup'&&s.t>=s.duration){this.state={name:'attack',t:0,duration:this.attackDuration()};if(this.attack==='tornadoes')this.spawnTornadoes();return;}
   if(s.name==='attack'){
    if(this.attack==='fireballs'){const f=c.fireballs;while(this.fired<f.count&&s.t>=this.fired*f.interval){this.launchFireball();this.fired++;}}
