@@ -68,13 +68,13 @@ import {WalkerBeamImpact} from './walker-beam-impact.js?v=392';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=393';
 import {VioletHero} from './violet-hero.js?v=428';
-import {Speedster} from './speedster.js?v=436';
+import {Speedster} from './speedster.js?v=437';
 import {RobotMissiles,WALKER_SALVO_SIZE,WALKER_MISSILE_BLAST_RADIUS,WALKER_MISSILE_UNIT_BLAST_RADIUS} from './robot-missiles.js?v=424';
 import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';
 import {PortalHero} from './portal-hero.js?v=397';
 import {SolaraHero} from './solara-hero.js?v=rainbow-full-solara-290';
 import {HeroRoster} from './hero-roster.js?v=434';
-import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=436';
+import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=437';
 import {segmentBoxFraction} from './combat-collision.js?v=evac-performance-233';
 import {WalkerSniper,WALKER_SNIPER} from './walker-sniper.js?v=415';
 import {RobotEyeBeams} from './robot-eye-beams.js?v=charged-shuriken-130';
@@ -900,7 +900,17 @@ async function initialize(){try{const [g,data,infantryModel,infantryMotion,cockp
  onImpact:sniperImpact,
  onLaunch:p=>{robot.plasmaRecoil=.42;shotsFired++;emitParticle('spark',p,18,1.8);},
  onEvent:feed
- });arsenal=new RobotArsenal({plasma:true});hero=new VioletHero(scene,heroModel,heroSpec,{redirect:(p,a,b)=>portalHero?.redirect(p,a,b),onPowerHit:violetPowerHit,characterModel:violetArmor||humanoid,getRobot:heroRobot,getMissileTarget:from=>robotMissiles.selectThreat(from,'violet'),claimMissile:m=>robotMissiles.claim(m,'violet'),buildings:layout.buildings,onEvent:feed,traceOrb:(from,to)=>traceWorld(from,to,{radius:.48,allied:true,livingOnly:!!hero?.active}),onOrbHit:violetOrbImpact});beamCombat=new BeamCombat({physics,units:unitDamage,onDebris:p=>{const point=new THREE.Vector3().copy(p);emitParticle('spark',point,6,.9);emitParticle('smoke',point,1,.65);},getHeroTargets:playerHitTargets,onHeroHit:(u,p,power)=>u.entity.receiveEyeHit(p,power),getTerrainHit:traceTerrain,getBarriers:()=>[...(hero?.barriers()||[]),...(mochi?.barriers()||[])],onImpact:(p,collision)=>{weaponImpacts.beam++;if(collision.kind==='shield'||collision.section)return;emitParticle('spark',new THREE.Vector3(p.x,p.y,p.z),7,1.8);emitParticle('smoke',new THREE.Vector3(p.x,p.y,p.z),2,.8);}});runner=new Speedster({scene,camera,controls,canvas:renderer.domElement,model:runnerModel,spec:runnerSpec,characterModel:voltArmor||humanoid,getBuildings:()=>layout.buildings,getRobot:heroRobot,getMissileTarget:from=>robotMissiles.selectThreat(from,'volt',m=>traceWorld(from,m.position,{radius:.1,allied:true})?.missile===m)||robotMissiles.selectThreat(from,'volt'),getAimTargets:()=>[...(robotMissiles?.missiles||[]).filter(m=>m.alive).map(m=>({id:m.id,kind:'missile',position:m.position})),...unitDamage.units.filter(u=>u.alive&&u.kind==='robot'&&u.entity!==bastionTest()?.boss).flatMap(u=>u.shapes.filter(shape=>shape.part!=='capacitor').map((shape,i)=>({id:u.id+'-'+(shape.part||i),unitId:u.id,kind:'robot',position:shape.center,half:shape.half,rotation:shape.rotation})))],getSections:arenaSections,traceAim:(from,to,options={})=>options.sectionsOnly?traceImpact(from,to,{sections:arenaSections(),ground:false}):traceWorld(from,to,{...options,allied:!!options.allied,includeVoltOrb:options.includeVoltOrb??!!runner?.active}),getStormSections:()=>physics.chunks,dashChargeMultiplier:()=>defenseMode&&missionRaiders?.upgrades.has('dash')?1.3:0,getStormTarget:voltGroundTarget,onStormHit:voltStormHit,onStormStrikeBuildings:buildings=>{for(const id of buildings)physics.checkSupports(id);},onElectric:electricAttack,onCircuitHit:(hit,power)=>{
+ });arsenal=new RobotArsenal({plasma:true});hero=new VioletHero(scene,heroModel,heroSpec,{redirect:(p,a,b)=>portalHero?.redirect(p,a,b),onPowerHit:violetPowerHit,characterModel:violetArmor||humanoid,getRobot:heroRobot,getMissileTarget:from=>robotMissiles.selectThreat(from,'violet'),claimMissile:m=>robotMissiles.claim(m,'violet'),buildings:layout.buildings,onEvent:feed,traceOrb:(from,to)=>traceWorld(from,to,{radius:.48,allied:true,livingOnly:!!hero?.active}),onOrbHit:violetOrbImpact});beamCombat=new BeamCombat({physics,units:unitDamage,onDebris:p=>{const point=new THREE.Vector3().copy(p);emitParticle('spark',point,6,.9);emitParticle('smoke',point,1,.65);},getHeroTargets:playerHitTargets,onHeroHit:(u,p,power)=>u.entity.receiveEyeHit(p,power),getTerrainHit:traceTerrain,getBarriers:()=>[...(hero?.barriers()||[]),...(mochi?.barriers()||[])],onImpact:(p,collision)=>{weaponImpacts.beam++;if(collision.kind==='shield'||collision.section)return;emitParticle('spark',new THREE.Vector3(p.x,p.y,p.z),7,1.8);emitParticle('smoke',new THREE.Vector3(p.x,p.y,p.z),2,.8);}});runner=new Speedster({scene,camera,controls,canvas:renderer.domElement,model:runnerModel,spec:runnerSpec,characterModel:voltArmor||humanoid,getBuildings:()=>layout.buildings,getRobot:heroRobot,getMissileTarget:from=>robotMissiles.selectThreat(from,'volt',m=>traceWorld(from,m.position,{radius:.1,allied:true})?.missile===m)||robotMissiles.selectThreat(from,'volt'),getAimTargets:()=>[...(robotMissiles?.missiles||[]).filter(m=>m.alive).map(m=>({id:m.id,kind:'missile',position:m.position})),...unitDamage.units.filter(u=>u.alive&&u.kind==='robot'&&u.entity!==bastionTest()?.boss).flatMap(u=>u.shapes.filter(shape=>shape.part!=='capacitor').map((shape,i)=>({id:u.id+'-'+(shape.part||i),unitId:u.id,kind:'robot',position:shape.center,half:shape.half,rotation:shape.rotation})))],getSections:arenaSections,traceAim:(from,to,options={})=>options.sectionsOnly?traceImpact(from,to,{sections:arenaSections(),ground:false}):traceWorld(from,to,{...options,allied:!!options.allied,includeVoltOrb:options.includeVoltOrb??!!runner?.active}),getStormSections:()=>physics.chunks,dashChargeMultiplier:()=>defenseMode&&missionRaiders?.upgrades.has('dash')?1.3:0,getStormTarget:voltGroundTarget,onStormHit:voltStormHit,onStormStrikeBuildings:buildings=>{for(const id of buildings)physics.checkSupports(id);},onElectric:electricAttack,onThunderHit:(hit,power,seconds)=>{
+  const before=droneEngineHealth(hit);
+  const damage=damageRobotHit(hit,power,'thunder-punch',true);
+  const dealt=damage>0||droneEngineHealth(hit)<before;
+  const enemy=hit.unit.entity;
+  if(dealt&&hit.unit.alive&&![robot,argus,bastionTest()?.boss,testingArena?.ronin].includes(enemy))enemy.stun?.(seconds);
+  return dealt;
+ },onThunderImpact:(point,connected)=>{
+  droneImpactShake=Math.max(droneImpactShake,connected?.56:.18);
+  if(connected)emitParticle('spark',new THREE.Vector3().copy(point),20,1.3);
+ },onCircuitHit:(hit,power)=>{
   const before=droneEngineHealth(hit);
   const dealt=damageRobotHit(hit,power,'circuit-breaker',true);
   return dealt>0||droneEngineHealth(hit)<before;

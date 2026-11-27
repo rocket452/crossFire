@@ -64,16 +64,18 @@ export class CircuitBreaker {
   if(hit?.unit?.kind!=='robot'||!hit.unit.alive)return;
   const {unit}=hit,side=this.side(unit,position),detonates=this.primed(unit,position);
   if(!this.hit(hit,this.config.damage*(detonates?1+this.config.bonusDamage:1)))return;
-  if(detonates){
-   this.remove(unit);this.detonations++;
-   this.shockwave.position.copy(hit.point);this.shockAge=0;this.updateShockwave(0);
-   this.detonate(hit.point);return;
-  }
+  if(detonates){this.consume(hit);return;}
   if(!side||!unit.alive||this.marks.has(unit))return;
   const ring=new THREE.Mesh(this.ringGeometry,this.ringMaterial);
   ring.quaternion.setFromAxisAngle(UP,Math.atan2(side.z,-side.x));
   this.scene.add(ring);this.updateRing(unit,ring);
   this.marks.set(unit,{side,ring,until:this.time+this.config.markSeconds});
+ }
+ consume(hit){
+  if(!this.marks.has(hit.unit))return;
+  this.remove(hit.unit);this.detonations++;
+  this.shockwave.position.copy(hit.point);this.shockAge=0;this.updateShockwave(0);
+  this.detonate(hit.point);
  }
  updateShockwave(dt){
   this.shockAge+=dt;

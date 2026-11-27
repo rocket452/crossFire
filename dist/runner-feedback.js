@@ -9,6 +9,18 @@ export class RunnerFeedback {
  unlock(){try{const Audio=window.AudioContext||window.webkitAudioContext;if(Audio){this.audio??=new Audio();if(this.audio.state==='suspended')this.audio.resume().catch(()=>{});}}catch{}}
  chime(){const c=this.audio;if(!c||c.state!=='running')return;try{for(const[frequency,delay]of [[523.25,0],[659.25,.08],[783.99,.16]]){const o=c.createOscillator(),gain=c.createGain(),start=c.currentTime+delay;o.type='sine';o.frequency.value=frequency;gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(.075,start+.012);gain.gain.exponentialRampToValueAtTime(.001,start+.24);o.connect(gain);gain.connect(c.destination);o.onended=()=>{o.disconnect();gain.disconnect();};o.start(start);o.stop(start+.25);}this.soundCount++;}catch{}}
  ready(sound=true){const c=this.audio;if(!sound||!c||c.state!=='running')return;try{const o=c.createOscillator(),gain=c.createGain();o.type='sine';o.frequency.setValueAtTime(740,c.currentTime);o.frequency.exponentialRampToValueAtTime(1110,c.currentTime+.10);gain.gain.setValueAtTime(.04,c.currentTime);gain.gain.exponentialRampToValueAtTime(.001,c.currentTime+.16);o.connect(gain);gain.connect(c.destination);o.onended=()=>{o.disconnect();gain.disconnect();};o.start();o.stop(c.currentTime+.18);}catch{}}
+ thunder(enabled,impact){
+  const c=this.audio;
+  if(!enabled||c?.state!=='running')return;
+  const now=c.currentTime;
+  for(const [shape,high,low,volume,duration] of [['triangle',impact?150:210,33,impact?.24:.09,.29],['sawtooth',880,65,.045,.1]]){
+   const voice=c.createOscillator(),gain=c.createGain();voice.type=shape;
+   voice.frequency.setValueAtTime(high,now);voice.frequency.exponentialRampToValueAtTime(low,now+duration);
+   gain.gain.setValueAtTime(volume,now);gain.gain.exponentialRampToValueAtTime(.001,now+duration);
+   voice.connect(gain);gain.connect(c.destination);
+   voice.onended=()=>{voice.disconnect();gain.disconnect();};voice.start();voice.stop(now+duration);
+  }
+ }
  electricalCue(enabled,startHz,endHz,volume){
   const audio=this.audio;
   if(!enabled||audio?.state!=='running')return;

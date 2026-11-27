@@ -16,6 +16,7 @@ const training={
    ['Move and aim','WASD · Mouse','Left stick · Drag the scene'],
    ['Boost / jump','Shift / Space','Boost / Jump'],
    ['Lightning','Hold left click or F','Hold Fire'],
+   ['Thunder Punch','H · 25 charge','Tap Punch'],
    ['Circuit Breaker','Y · Flank the blue side to detonate','Tap Circuit · Flank the blue side'],
    ...(VOLT_RESCUE_DASH_ENABLED?[['Rescue dash','Hold E','Hold Dash']]:[]),
    VOLT_OVERLOAD_ENABLED?['Weld / robot stun','Hold R / Q','Hold Weld / Stun']:['Welding beam','Hold R','Hold Weld'],
