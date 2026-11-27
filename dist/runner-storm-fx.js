@@ -1,6 +1,6 @@
-import {SkyStrikeFX} from './sky-strike-fx.js?v=447';
+import {SkyStrikeFX} from './sky-strike-fx.js?v=448';
 import * as THREE from './vendor/three.module.js';
-import {LightningKit,glowBillboard,WHITE} from './lightning-kit.js?v=447';
+import {LightningKit,glowBillboard,WHITE} from './lightning-kit.js?v=448';
 const poolFragment=`varying vec2 vP;uniform float opacity;uniform float time;void main(){float r=length(vP);float a=pow(max(0.,1.-r),2.2);float rip=.85+.15*sin(r*22.-time*6.);gl_FragColor=vec4(vec3(.12,.55,1.)*a*rip*opacity,1.);}`;
 import {VOLT_STORM as C} from './runner-storm.js?v=424';
 export class RunnerStormFX {

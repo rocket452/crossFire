@@ -1,8 +1,8 @@
 import {LUX_SOLAR_DISC_ENABLED} from './hero-ability-config.js?v=434';
 import * as T from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
-import {LuxEffects} from './luxmancer-effects.js?v=411';
-import {SOLAR_CONFIG,LUX_UPGRADES,LuxSolarEffects} from './lux-solar.js?v=423';
+import {LuxEffects} from './luxmancer-effects.js?v=448';
+import {SOLAR_CONFIG,LUX_UPGRADES,LuxSolarEffects} from './lux-solar.js?v=448';
 import {RiftPlayer} from './rift-player.js?v=435';
 
 const spells={
@@ -32,7 +32,7 @@ export class Luxmancer {
   this.character=new HumanoidCharacter(model,{height:2.5});
   this.root.add(this.character.root);scene.add(this.root);
   this.shots=[];this.free={};this.effects=new LuxEffects(scene);
-  this.solarEffects=new LuxSolarEffects(scene);
+  this.solarEffects=new LuxSolarEffects(scene);this.solarEffects.light=this.effects.light;
   for(const [kind,s] of Object.entries(spells)){
    this.free[kind]=[];s.material??=glow(s.color);
   }

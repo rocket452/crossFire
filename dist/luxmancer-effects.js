@@ -1,10 +1,19 @@
 import * as T from './vendor/three.module.js';
+import {LightningKit,glowBillboard} from './lightning-kit.js?v=448';
+const GOLD=new T.Color('#ffb43a'),SUN=new T.Color('#ffd879'),HOT=new T.Color('#fff4d2');
+// Sunburst decal: soft radial rays that flare out on impact.
+const rayVertex=`varying vec2 vP;void main(){vP=position.xy;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
+const rayFragment=`varying vec2 vP;uniform float opacity;uniform float seed;void main(){float r=length(vP),a=atan(vP.y,vP.x);
+ float rays=pow(max(0.,sin(a*8.+seed)),6.)*.7+pow(max(0.,sin(a*13.-seed*1.7)),10.)*.5;
+ float body=smoothstep(1.,.0,r);float core=exp(-r*7.);
+ vec3 c=mix(vec3(1.,.55,.12),vec3(1.,.95,.75),core+rays*.3);
+ gl_FragColor=vec4(c*(rays*body*1.3+core*1.6)*opacity,1.);}`;
 
 const spark=new T.OctahedronGeometry(1,0);
 const rim=new T.TorusGeometry(1,.024,5,40);
 const streak=new T.CylinderGeometry(.3,1,1,4).rotateX(Math.PI/2);
 const forward=new T.Vector3(0,0,1);
-const white=new T.Color(0xfff4cc),amber=new T.Color(0xff9a23);
+const white=new T.Color(0xffe2a0),amber=new T.Color(0xff7a14);
 const styles={
  lance:{radius:2.2,time:.34,sparks:16,size:.12},
  spray:{radius:.46,time:.16,sparks:4,size:.065},
@@ -65,7 +74,7 @@ export class LuxEffects {
    this.sigilRays.add(ray);
   }
   this.lanceGather=new T.Group();
-  const core=chargeLight(0xfff3b8,.96),rings=chargeLight(0xffb92c,.75),motes=chargeLight(0xffda71,.86);
+  const core=chargeLight(0xffe7a0,.75),rings=chargeLight(0xff9a1a,.5),motes=chargeLight(0xffa83a,.42);
   this.chargeMaterials=[core,rings,motes];
   this.lanceCore=new T.Mesh(spark,core);
   this.lanceGather.add(this.lanceCore);
@@ -79,15 +88,23 @@ export class LuxEffects {
   this.lanceSeal=new T.Mesh(rim,rings);
   this.lanceSeal.rotation.x=-Math.PI/2;
   this.sigil.add(this.lanceGather);scene.add(this.sigil,this.lanceSeal);
+  // Warm glow layers: shot heads, charge sun, impact sunbursts, sparks and a light.
+  this.kit=new LightningKit(scene,{arcs:4,glows:40,sparks:420,sparkColor:new T.Color(1,.55,.12)});
+  this.heads=Array.from({length:48},()=>{const g=glowBillboard(GOLD,8);g.visible=false;scene.add(g);return g;});
+  this.chargeSun=glowBillboard(SUN,9);this.chargeSun.material.depthTest=false;this.chargeSun.visible=false;scene.add(this.chargeSun);
+  this.rayGeometry=new T.CircleGeometry(1,48);this.rays=[];
+  this.light=new T.PointLight('#ffb54a',0,40,2);scene.add(this.light);this.flash=0;this.flashPos=new T.Vector3();
   this.clock=0;this.reset();
  }
  reset(){
   for(const b of this.bursts)if(b.ring)this.recycleRing(b.ring);
   this.bursts.length=0;this.streaks.count=0;this.sparks.count=0;this.sigil.visible=false;this.lanceGather.visible=false;this.lanceSeal.visible=false;
+  this.kit?.clear();for(const h of this.heads||[])h.visible=false;if(this.chargeSun)this.chargeSun.visible=false;for(const r of this.rays||[])r.mesh.visible=false;if(this.light)this.light.intensity=0;this.flash=0;
  }
  recycleRing(ring){ring.visible=false;this.freeRings.push(ring);}
  cast(kind,hand,direction,power,charge=0,aspect=1,feet=null){
   this.sigil.visible=!!kind;
+  if(this.chargeSun)this.chargeSun.visible=kind==='lance'&&charge>0;
   this.lanceGather.visible=kind==='lance'&&charge>0;
   this.lanceSeal.visible=this.lanceGather.visible&&!!feet;
   this.sigilRays.visible=!this.lanceGather.visible;
@@ -98,6 +115,10 @@ export class LuxEffects {
   const base=kind==='comet'?.30:kind==='spray'?.16:.19;
   this.sigil.scale.setScalar(base*(.8+.65*power+.45*charge+.08*Math.sin(this.clock*20)));
   if(!this.lanceGather.visible)return;
+  {const full=charge>=.999,beat=full?.85+.15*Math.sin(this.clock*24):1;
+   this.chargeSun.position.copy(hand).addScaledVector(direction,.3);this.chargeSun.scale.setScalar((.5+1.9*charge)*beat);
+   this.chargeSun.material.uniforms.opacity.value=(.35+.65*charge)*beat;
+   if(Math.random()<.5+charge)this.kit.spark(this.chargeSun.position,1,1.2+charge*2,.4,{life:.3,size:.05,sizeSpread:.06,gravity:-1});}
   for(const material of this.chargeMaterials)material.uniforms.aspect.value=aspect;
   this.lanceCore.scale.setScalar(.28+.96*charge);
   this.lanceCore.rotation.set(this.clock*5,this.clock*8,0);
@@ -121,6 +142,7 @@ export class LuxEffects {
  }
  burst(kind,point,normal,impact){
   const style=styles[kind];
+  this.solar(kind,point,normal,impact);
   let ring=null;
   if(kind!=='spray'){
    ring=this.freeRings.pop();
@@ -133,8 +155,31 @@ export class LuxEffects {
    radius:style.radius*(impact?1:.51),
    rays:Array.from({length:style.sparks},()=>new T.Vector3().randomDirection())});
  }
+ solar(kind,point,normal,impact){
+  const p=new T.Vector3().copy(point),big=kind==='lance'?1:kind==='comet'?.85:.3;
+  if(!impact){this.kit.glow(p,{size:.7+big*1.1,life:.12+big*.08,grow:1,color:SUN,peak:.9});if(kind!=='spray')this.kit.spark(p,6+big*10,4+big*4,.5,{life:.25,size:.06});return;}
+  this.kit.glow(p,{size:1+big*2.6,life:.16+big*.12,grow:1.3,color:HOT,peak:.85});
+  this.kit.glow(p,{size:1.6+big*5,life:.3+big*.3,grow:.8,color:GOLD,peak:.55});
+  this.kit.spark(p,kind==='spray'?5:18+big*30,kind==='spray'?5:9+big*8,2+big*2,{life:.35+big*.25,size:.07+big*.05,sizeSpread:.1,gravity:9});
+  if(kind!=='spray'){
+   let r=this.rays.find(x=>!x.mesh.visible);
+   if(!r){r={mesh:new T.Mesh(this.rayGeometry,new T.ShaderMaterial({uniforms:{opacity:{value:0},seed:{value:0}},vertexShader:rayVertex,fragmentShader:rayFragment,transparent:true,depthWrite:false,side:T.DoubleSide,toneMapped:false,blending:T.AdditiveBlending}))};r.mesh.renderOrder=7;this.scene.add(r.mesh);this.rays.push(r);}
+   r.mesh.visible=true;r.age=0;r.life=.32+big*.12;r.size=1.2+big*3.2;r.mesh.position.copy(p);
+   r.mesh.quaternion.setFromUnitVectors(forward,new T.Vector3().copy(normal).normalize().negate());r.mesh.material.uniforms.seed.value=Math.random()*6.28;
+   this.flash=Math.max(this.flash,big);this.flashPos.copy(p);
+  }
+ }
  update(dt,shots){
   this.clock+=dt;
+  this.kit.step(dt);
+  for(const r of this.rays){if(!r.mesh.visible)continue;r.age+=dt;const t=r.age/r.life;if(t>=1){r.mesh.visible=false;continue;}
+   r.mesh.scale.setScalar(r.size*(.35+.65*(1-(1-t)**3)));r.mesh.material.uniforms.opacity.value=(1-t)**1.5;}
+  this.flash=Math.max(0,this.flash-dt*5);if(this.flash>.01){this.light.position.copy(this.flashPos);this.light.intensity=Math.max(this.light.intensity,this.flash*this.flash*420);}
+  {let h=0;for(const shot of shots){if(h>=this.heads.length)break;const g=this.heads[h++],k=shot.kind;g.visible=true;g.position.copy(shot.mesh.position);
+    const size=k==='lance'?1.5:k==='comet'?1.9:.5,flick=.85+.15*Math.sin(this.clock*40+h);g.scale.setScalar(size*flick);g.material.uniforms.opacity.value=k==='spray'?.7:1;
+    if(k==='comet'&&Math.random()<.7)this.kit.spark(shot.mesh.position,1,1.5,.5,{life:.45,size:.08,sizeSpread:.08,gravity:2});
+    if(k==='lance'&&Math.random()<.8)this.kit.spark(shot.mesh.position,1,2,.3,{life:.25,size:.07,gravity:3});}
+   for(;h<this.heads.length;h++)this.heads[h].visible=false;}
   const dummy=this.dummy;
   let count=0;
   for(const shot of shots){
@@ -149,7 +194,7 @@ export class LuxEffects {
      dummy.quaternion.setFromUnitVectors(forward,this.direction.divideScalar(length));
      dummy.scale.set(width,width,length);
      dummy.updateMatrix();this.streaks.setMatrixAt(count,dummy.matrix);
-     this.streaks.setColorAt(count++,this.tint.copy(white).lerp(amber,1-fade).multiplyScalar(fade));
+     this.streaks.setColorAt(count++,this.tint.copy(white).lerp(amber,1-fade).multiplyScalar(fade*.85));
     }
     head=node;
    }
@@ -170,10 +215,10 @@ export class LuxEffects {
     if(count>=this.sparks.instanceMatrix.count)break;
     dummy.position.copy(b.point).addScaledVector(ray,reach*(.7+.22*ray.y));
     dummy.quaternion.setFromUnitVectors(forward,ray);
-    const size=b.style.size*(1-t);
+    const size=b.style.size*(1-t)*.7;
     dummy.scale.set(size,size,size*3.6);
     dummy.updateMatrix();this.sparks.setMatrixAt(count,dummy.matrix);
-    this.sparks.setColorAt(count++,this.tint.copy(white).lerp(amber,t).multiplyScalar(1-t));
+    this.sparks.setColorAt(count++,this.tint.copy(white).lerp(amber,.35+t*.65).multiplyScalar((1-t)*.8));
    }
   }
   this.sparks.count=count;this.sparks.instanceMatrix.needsUpdate=true;

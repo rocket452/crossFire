@@ -1,4 +1,5 @@
 import * as T from './vendor/three.module.js';
+import {LightningKit,glowBillboard} from './lightning-kit.js?v=448';
 
 export const SOLAR_CONFIG=Object.freeze({
  capacity:100,
@@ -30,8 +31,8 @@ function circle(radius,color,opacity){
  return mesh;
 }
 function sunSeal(radius){
- const seal=new T.Group(),material=light(0xffd46d,.86);
- seal.add(circle(radius,0xffd453,.93),circle(radius*.69,0xfff5c5,.8));
+ const seal=new T.Group(),material=light(0xffc45e,.75);
+ seal.add(circle(radius,0xffc14a,.8),circle(radius*.69,0xffd98a,.55));
  for(let i=0;i<12;i++){
   const angle=i*Math.PI/6;
   const ray=new T.Mesh(facet,material);
@@ -97,13 +98,23 @@ export class LuxSolarEffects {
    group.add(seal,shaft);return {group,seal,shaft};
   });
   scene.add(this.disc,this.pillar,this.blinkAnchor,...this.blinkPulses.map(p=>p.group));
+  // Warm light, ground glow, embers and the blink streak.
+  this.kit=new LightningKit(scene,{arcs:6,glows:8,sparks:260,sparkColor:new T.Color(1,.55,.12)});
+  this.groundGlow=glowBillboard('#ff9a2e',2);this.topGlow=glowBillboard('#ffd56b',3);this.groundGlow.visible=this.topGlow.visible=false;scene.add(this.groundGlow,this.topGlow);
+  this.light=null;// shared with LuxEffects (set by Luxmancer) to avoid an extra scene light
   this.reset();
  }
  reset(){
   this.clock=0;this.disc.visible=false;this.pillar.visible=false;this.blinkAnchor.visible=false;
   for(const pulse of this.blinkPulses)pulse.group.visible=false;
+  this.kit?.clear();if(this.groundGlow)this.groundGlow.visible=this.topGlow.visible=false;this.blinkFlash=0;
  }
  blink(from,to){
+  const a=new T.Vector3().copy(from).addScaledVector(up,1.1),b=new T.Vector3().copy(to).addScaledVector(up,1.1);
+  for(let i=0;i<3;i++)this.kit.arc(a,b,{life:.28+i*.06,width:i?.9:2.2,jag:i?.04:.012,maxJag:i?1:.2,flicker:.05,color:new T.Color('#ffb340')});
+  this.lastBlink=b.clone();
+  for(const p of [a,b]){this.kit.glow(p,{size:3.2,life:.3,grow:1,color:new T.Color('#fff1c8')});this.kit.glow(p,{size:5,life:.5,grow:.5,color:new T.Color('#ffa63a'),peak:.7});this.kit.spark(p,30,7,3,{life:.45,size:.08,sizeSpread:.1,gravity:6});}
+  this.light?.position.copy(b);this.blinkFlash=1;
   this.blinkPulses.forEach((pulse,index)=>{
    pulse.start=this.clock;
    pulse.group.position.copy(index?to:from).addScaledVector(up,.05);
@@ -130,7 +141,10 @@ export class LuxSolarEffects {
   }
  }
  update(dt,position,mode,windup){
-  this.clock+=dt;
+  this.clock+=dt;this.kit.step(dt);
+  this.blinkFlash=Math.max(0,(this.blinkFlash||0)-dt*3.5);
+  this.groundGlow.visible=this.topGlow.visible=false;
+  if(this.light){this.light.intensity=this.blinkFlash*this.blinkFlash*700;if(this.blinkFlash>0)this.light.position.copy(this.lastBlink||position);}
   this.disc.visible=mode==='flight'||mode==='landing';
   this.pillar.visible=mode==='communion';
   if(this.disc.visible){
@@ -145,6 +159,11 @@ export class LuxSolarEffects {
   this.groundSeal.rotation.y=this.clock*.8;
   const progress=1-windup/SOLAR_CONFIG.windup;
   this.groundSeal.scale.setScalar(.60+.40*progress);
+  {const beat=.85+.15*Math.sin(this.clock*7);this.groundGlow.visible=this.topGlow.visible=true;
+   this.groundGlow.position.copy(position).y+=.5;this.groundGlow.scale.setScalar(5.5*(.4+.6*progress)*beat);this.groundGlow.material.uniforms.opacity.value=.55*progress;
+   this.topGlow.position.copy(position).y+=6;this.topGlow.scale.setScalar(4*progress*beat);this.topGlow.material.uniforms.opacity.value=.35*progress;
+   if(this.light&&(this.blinkFlash<=0||this.light.intensity<60)){this.light.position.copy(position).y+=2.5;this.light.intensity=Math.max(this.light.intensity,140*progress*beat);}
+   if(Math.random()<.9)this.kit.spark(position,1+Math.floor(progress*2),.8,6,{life:.9,size:.09,sizeSpread:.1,gravity:-3,spread:1.6});}
   this.beams.forEach((mesh,i)=>{
    mesh.visible=progress>.12*i;
    mesh.scale.set(.23+.77*progress,1,.23+.77*progress);

@@ -1,5 +1,5 @@
 import {alertEnemiesToAttacker,inFrontOfEnemy} from './enemy-alert.js?v=421';
-import {Luxmancer,LuxPlayer} from './luxmancer.js?v=435';
+import {Luxmancer,LuxPlayer} from './luxmancer.js?v=448';
 import {RiftPlayer} from './rift-player.js?v=435';
 import {VioletPlayer} from './violet-player.js?v=428';
 import {DefenseTitle} from './defense-title.js?v=413';
@@ -68,7 +68,7 @@ import {WalkerBeamImpact} from './walker-beam-impact.js?v=392';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=393';
 import {VioletHero} from './violet-hero.js?v=428';
-import {Speedster} from './speedster.js?v=447';
+import {Speedster} from './speedster.js?v=448';
 import {RobotMissiles,WALKER_SALVO_SIZE,WALKER_MISSILE_BLAST_RADIUS,WALKER_MISSILE_UNIT_BLAST_RADIUS} from './robot-missiles.js?v=424';
 import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';
 import {PortalHero} from './portal-hero.js?v=397';

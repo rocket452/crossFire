@@ -3,7 +3,7 @@ import * as THREE from './vendor/three.module.js';
 // Visual layer for Volt's Circuit Breaker: lightning bolts, flank marks and detonations.
 // Gameplay (timing, marks, damage) stays in circuit-breaker.js; this only draws.
 
-import {LightningKit,CYAN,WHITE} from './lightning-kit.js?v=447';
+import {LightningKit,CYAN,WHITE} from './lightning-kit.js?v=448';
 
 // Flank mark: a band around the target whose valid flank arc is bright, with chevrons
 // streaming toward the flank, rotating dashes and an expiry sweep.

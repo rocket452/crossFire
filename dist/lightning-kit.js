@@ -109,12 +109,12 @@ const glowFragment=`uniform vec3 color;uniform float opacity;varying vec2 vUv;vo
 
 const sparkVertex=`attribute float life;attribute float size;varying float vLife;
 void main(){vLife=life;vec4 view=modelViewMatrix*vec4(position,1.);gl_PointSize=size*life*(260./-view.z);gl_Position=projectionMatrix*view;}`;
-const sparkFragment=`varying float vLife;void main(){if(vLife<=0.)discard;vec2 c=gl_PointCoord*2.-1.;float a=max(0.,1.-dot(c,c));
- vec3 col=mix(vec3(.15,.75,1.),vec3(1.),a*a*vLife);gl_FragColor=vec4(col*a*1.4,a);}`;
+const sparkFragment=`uniform vec3 tint;varying float vLife;void main(){if(vLife<=0.)discard;vec2 c=gl_PointCoord*2.-1.;float a=max(0.,1.-dot(c,c));
+ vec3 col=mix(tint,vec3(1.),a*a*vLife);gl_FragColor=vec4(col*a*1.4,a);}`;
 
 
 export class LightningKit {
- constructor(parent,{arcs=26,glows=10,sparks=180,points=ARC_POINTS,bigArcs=0,bigPoints=64}={}){
+ constructor(parent,{arcs=26,glows=10,sparks=180,points=ARC_POINTS,bigArcs=0,bigPoints=64,sparkColor=new THREE.Color(.15,.75,1.)}={}){
   this.group=new THREE.Group();this.group.name='LightningKit';parent.add(this.group);
   this.arcs=Array.from({length:arcs},()=>new Arc(this.group,points));this.arcCursor=0;
   this.bigArcs=Array.from({length:bigArcs},()=>new Arc(this.group,bigPoints));this.bigCursor=0;
@@ -130,7 +130,7 @@ export class LightningKit {
   this.sparkSize=new THREE.BufferAttribute(new Float32Array(count),1);
   sg.setAttribute('position',this.sparkPos).setAttribute('life',this.sparkLife).setAttribute('size',this.sparkSize);
   this.sparkVel=new Float32Array(count*3);this.sparkAge=new Float32Array(count);this.sparkMax=new Float32Array(count);this.sparkGravity=new Float32Array(count);this.sparkCursor=0;
-  this.sparks=new THREE.Points(sg,new THREE.ShaderMaterial({vertexShader:sparkVertex,fragmentShader:sparkFragment,transparent:true,depthWrite:false,toneMapped:false,blending:THREE.AdditiveBlending}));
+  this.sparks=new THREE.Points(sg,new THREE.ShaderMaterial({uniforms:{tint:{value:new THREE.Color(sparkColor)}},vertexShader:sparkVertex,fragmentShader:sparkFragment,transparent:true,depthWrite:false,toneMapped:false,blending:THREE.AdditiveBlending}));
   this.sparks.frustumCulled=false;this.sparks.renderOrder=8;this.group.add(this.sparks);
  }
  arc(from,to,options){const a=this.arcs[this.arcCursor];this.arcCursor=(this.arcCursor+1)%this.arcs.length;a.fire(from,to,options);return a;}
