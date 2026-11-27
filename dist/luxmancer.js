@@ -1,7 +1,7 @@
 import {LUX_SOLAR_DISC_ENABLED} from './hero-ability-config.js?v=434';
 import * as T from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
-import {LuxEffects} from './luxmancer-effects.js?v=451';
+import {LuxEffects} from './luxmancer-effects.js?v=455';
 import {SOLAR_CONFIG,LUX_UPGRADES,LuxSolarEffects} from './lux-solar.js?v=451';
 import {RiftPlayer} from './rift-player.js?v=435';
 
@@ -17,8 +17,25 @@ const targetable=unit=>unit.alive&&unit.shapes.length>0;
 const up=new T.Vector3(0,1,0),forward=new T.Vector3(0,0,1);
 const gem=new T.OctahedronGeometry(1),ring=new T.TorusGeometry(1,.075,5,32);
 const glow=color=>new T.MeshBasicMaterial({color,toneMapped:false,blending:T.AdditiveBlending,transparent:true,depthWrite:false});
-const white=glow(0xfff8cf),gold=glow(0xffc145);
+const white=glow(0xfff8cf),gold=glow(0xffc145),cometRing=glow(0xffa53a);cometRing.opacity=.45;
+// Sun reticle for volley locks: gold ring, eight rays and corner brackets, drawn once.
+let reticleMap=null;
+function reticleTexture(){
+ if(reticleMap||typeof document==='undefined')return reticleMap;
+ const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d'),m=128;
+ g.shadowColor='#ffb02e';g.shadowBlur=16;g.strokeStyle='#ffd877';g.lineWidth=7;g.beginPath();g.arc(m,m,70,0,Math.PI*2);g.stroke();
+ g.lineWidth=3;g.strokeStyle='#fff0c0';g.beginPath();g.arc(m,m,52,0,Math.PI*2);g.stroke();
+ g.fillStyle='#fff3c8';for(let i=0;i<8;i++){const a=i*Math.PI/4,r1=i%2?78:80,r2=i%2?92:104;g.save();g.translate(m,m);g.rotate(a);g.beginPath();g.moveTo(r1,-5);g.lineTo(r2,0);g.lineTo(r1,5);g.closePath();g.fill();g.restore();}
+ g.strokeStyle='#ffc552';g.lineWidth=6;for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){g.beginPath();g.moveTo(m+sx*118,m+sy*86);g.lineTo(m+sx*118,m+sy*118);g.lineTo(m+sx*86,m+sy*118);g.stroke();}
+ reticleMap=new T.CanvasTexture(c);reticleMap.colorSpace=T.SRGBColorSpace;return reticleMap;
+}
+function reticle(opacity=1){
+ const map=reticleTexture();if(!map)return null;
+ const m=new T.Mesh(new T.PlaneGeometry(1.7,1.7),new T.MeshBasicMaterial({map,transparent:true,opacity,depthTest:false,depthWrite:false,blending:T.AdditiveBlending,toneMapped:false}));
+ m.renderOrder=9;return m;
+}
 function halo(){
+ const sun=reticle();if(sun){const g=new T.Group();g.add(sun);g.userData.reticle=sun;return g;}
  const mark=new T.Mesh(ring,gold);
  const star=new T.Mesh(gem,white);
  star.scale.set(.12,.26,.08);star.position.y=1;
@@ -37,7 +54,7 @@ export class Luxmancer {
    this.free[kind]=[];s.material??=glow(s.color);
   }
   this.marks=Array.from({length:maxLocks},()=>{const m=halo();scene.add(m);m.visible=false;return m;});
-  this.pendingMark=new T.Mesh(ring,glow(0xfff1af));
+  this.pendingMark=reticle(.55)||new T.Mesh(ring,glow(0xfff1af));
   scene.add(this.pendingMark);
   this.reset();this.setEnabled(false);
  }
@@ -80,8 +97,8 @@ export class Luxmancer {
    const core=new T.Mesh(gem,white);core.scale.set(.52,.52,1.15);mesh.add(core);
    if(kind==='comet'){
     for(let i=0;i<2;i++){
-     const orbit=new T.Mesh(ring,s.material);
-     orbit.rotation.x=i?.72:-.72;orbit.scale.set(2.1,2.1,.3);mesh.add(orbit);
+     const orbit=new T.Mesh(ring,cometRing);
+     orbit.rotation.x=i?.72:-.72;orbit.scale.set(1.7,1.7,.18);mesh.add(orbit);
     }
    }
    this.scene.add(mesh);
@@ -95,7 +112,7 @@ export class Luxmancer {
   this.shots.push({mesh,kind,target,v:velocity,life:s.life,trail:[],sampleTime:0,cast,power:s.damage*(options.scale||1),
    pierced:new Set(),pierce:(this.liberation?.v('Phase Ammunition')||0)+(kind==='lance'&&this.liberation?.v('Prismatic Lance')?8:0)});
   this.castKind=kind;this.castRemaining=kind==='comet'?.36:.23;
-  if(kind!=='comet')this.effects.burst(kind,origin,direction,false);
+  if(kind!=='comet')this.effects.burst(kind,origin,direction,false);else this.effects.solar?.('comet',origin,direction,false);
   return true;
  }
  clearLance(){
@@ -137,7 +154,7 @@ export class Luxmancer {
   if(!best)return;
   this.pendingTime+=dt*(1+(this.liberation?.v('Overclock Chip')||0)/100);
   if(this.pendingTime>=this.lockAcquireTime-1e-8){
-   this.locks.push(best);this.pendingTarget=null;this.pendingTime=0;
+   this.locks.push(best);this.pendingTarget=null;this.pendingTime=0;this.effects.lockPing?.(best.shapes[0].center);
   }
  }
  drawLocks(camera){
@@ -145,15 +162,15 @@ export class Luxmancer {
    const unit=this.locks[i];
    mark.visible=!!unit;
    if(!unit)continue;
-   mark.position.copy(unit.shapes[0].center);mark.scale.setScalar(1.5);
-   mark.quaternion.copy(camera.quaternion);
+   mark.position.copy(unit.shapes[0].center);mark.scale.setScalar(1.5*(1+.06*Math.sin(this.effects.clock*7+i)));
+   mark.quaternion.copy(camera.quaternion);if(mark.userData.reticle)mark.rotateZ(this.effects.clock*.9+i);
   }
   const pending=this.pendingTarget;
   this.pendingMark.visible=!!pending;
   if(pending){
    this.pendingMark.position.copy(pending.shapes[0].center);
    this.pendingMark.quaternion.copy(camera.quaternion);
-   this.pendingMark.scale.setScalar(2.8-1.3*this.pendingTime/this.lockAcquireTime);
+   this.pendingMark.scale.setScalar(2.8-1.3*this.pendingTime/this.lockAcquireTime);this.pendingMark.rotateZ(-this.effects.clock*3);
   }
  }
  stepShots(dt){

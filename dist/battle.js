@@ -1,5 +1,5 @@
 import {alertEnemiesToAttacker,inFrontOfEnemy} from './enemy-alert.js?v=421';
-import {Luxmancer,LuxPlayer} from './luxmancer.js?v=451';
+import {Luxmancer,LuxPlayer} from './luxmancer.js?v=455';
 import {RiftPlayer} from './rift-player.js?v=435';
 import {VioletPlayer} from './violet-player.js?v=428';
 import {DefenseTitle} from './defense-title.js?v=413';

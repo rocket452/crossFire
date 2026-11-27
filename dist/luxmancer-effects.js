@@ -17,7 +17,7 @@ const white=new T.Color(0xffe2a0),amber=new T.Color(0xff7a14);
 const styles={
  lance:{radius:2.2,time:.34,sparks:16,size:.12},
  spray:{radius:.46,time:.16,sparks:4,size:.065},
- comet:{radius:2.75,time:.44,sparks:20,size:.15}
+ comet:{radius:2.3,time:.44,sparks:20,size:.15}
 };
 function light(color,opacity=1){
  return new T.MeshBasicMaterial({color,opacity,transparent:true,depthWrite:false,
@@ -66,9 +66,9 @@ export class LuxEffects {
   this.direction=new T.Vector3();this.tint=new T.Color();
   this.sigil=new T.Group();
   this.sigilRays=new T.Group();this.sigil.add(this.sigilRays);
-  this.sigilRays.add(new T.Mesh(rim,light(0xffdc71,.75)));
+  this.sigilRays.add(new T.Mesh(rim,light(0xffc65a,.55)));
   for(let i=0;i<6;i++){
-   const angle=i*Math.PI/3,ray=new T.Mesh(spark,light(0xffeea2,.85));
+   const angle=i*Math.PI/3,ray=new T.Mesh(spark,light(0xffcf73,.5));
    ray.position.set(Math.cos(angle),Math.sin(angle),0);
    ray.scale.set(.22,.055,.075);ray.rotation.z=angle;
    this.sigilRays.add(ray);
@@ -146,7 +146,7 @@ export class LuxEffects {
   let ring=null;
   if(kind!=='spray'){
    ring=this.freeRings.pop();
-   if(!ring){ring=new T.Mesh(rim,light(0xffdb78));this.scene.add(ring);}
+   if(!ring){ring=new T.Mesh(rim,light(0xffa640));this.scene.add(ring);}
    ring.visible=true;ring.position.copy(point);
    ring.quaternion.setFromUnitVectors(forward,normal.clone().normalize());
    ring.scale.setScalar(.12);ring.material.opacity=.95;
@@ -154,6 +154,12 @@ export class LuxEffects {
   this.bursts.push({style,point:new T.Vector3().copy(point),ring,age:0,
    radius:style.radius*(impact?1:.51),
    rays:Array.from({length:style.sparks},()=>new T.Vector3().randomDirection())});
+ }
+ lockPing(center){
+  const p=new T.Vector3().copy(center);
+  this.kit.glow(p,{size:2.6,life:.28,grow:1.1,color:SUN,peak:.85});
+  this.kit.glow(p,{size:1.1,life:.14,color:HOT});
+  this.kit.spark(p,16,5,1.5,{life:.4,size:.07,sizeSpread:.08,gravity:3});
  }
  solar(kind,point,normal,impact){
   const p=new T.Vector3().copy(point),big=kind==='lance'?1:kind==='comet'?.85:.3;
@@ -176,8 +182,8 @@ export class LuxEffects {
    r.mesh.scale.setScalar(r.size*(.35+.65*(1-(1-t)**3)));r.mesh.material.uniforms.opacity.value=(1-t)**1.5;}
   this.flash=Math.max(0,this.flash-dt*5);if(this.flash>.01){this.light.position.copy(this.flashPos);this.light.intensity=Math.max(this.light.intensity,this.flash*this.flash*420);}
   {let h=0;for(const shot of shots){if(h>=this.heads.length)break;const g=this.heads[h++],k=shot.kind;g.visible=true;g.position.copy(shot.mesh.position);
-    const size=k==='lance'?1.5:k==='comet'?1.9:.5,flick=.85+.15*Math.sin(this.clock*40+h);g.scale.setScalar(size*flick);g.material.uniforms.opacity.value=k==='spray'?.7:1;
-    if(k==='comet'&&Math.random()<.7)this.kit.spark(shot.mesh.position,1,1.5,.5,{life:.45,size:.08,sizeSpread:.08,gravity:2});
+    const size=k==='lance'?1.5:k==='comet'?2.4:.5,flick=.85+.15*Math.sin(this.clock*40+h);g.scale.setScalar(size*flick);g.material.uniforms.opacity.value=k==='spray'?.7:1;
+    if(k==='comet')this.kit.spark(shot.mesh.position,2,1.6,.4,{life:.55,size:.09,sizeSpread:.1,gravity:1.5});
     if(k==='lance'&&Math.random()<.8)this.kit.spark(shot.mesh.position,1,2,.3,{life:.25,size:.07,gravity:3});}
    for(;h<this.heads.length;h++)this.heads[h].visible=false;}
   const dummy=this.dummy;
@@ -189,7 +195,7 @@ export class LuxEffects {
     const length=this.direction.length();
     if(length>.001&&count<this.streaks.instanceMatrix.count){
      const fade=1-index/shot.trail.length;
-     const width=(shot.kind==='lance'?.18:shot.kind==='comet'?.26:.075)*fade;
+     const width=(shot.kind==='lance'?.18:shot.kind==='comet'?.34:.075)*fade;
      dummy.position.copy(head).lerp(node,.5);
      dummy.quaternion.setFromUnitVectors(forward,this.direction.divideScalar(length));
      dummy.scale.set(width,width,length);
@@ -210,7 +216,7 @@ export class LuxEffects {
     this.bursts.splice(i,1);continue;
    }
    const reach=b.radius*(1-(1-t)**2);
-   if(b.ring){b.ring.scale.setScalar(.12+reach);b.ring.material.opacity=.85*(1-t);}
+   if(b.ring){b.ring.scale.setScalar(.12+reach);b.ring.material.opacity=.45*(1-t)*(1-t);}
    for(const ray of b.rays){
     if(count>=this.sparks.instanceMatrix.count)break;
     dummy.position.copy(b.point).addScaledVector(ray,reach*(.7+.22*ray.y));
