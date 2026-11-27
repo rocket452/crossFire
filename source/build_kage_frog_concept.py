@@ -110,6 +110,36 @@ def ribbon(path, widths, across, mats, weights):
     surface(points, faces, weights)
 
 
+def side_plate(profile, x, mat, edge, bone, side, depth=.01):
+    """Thin plate in the YZ plane on the outside of a limb; profile is (z, y) pairs."""
+    n = len(profile)
+    points = [(side * x, y, z) for z, y in profile] + [(side * (x - depth), y, z) for z, y in profile]
+    faces = [(list(range(n)), mat), (list(range(n, 2 * n)), edge)]
+    faces += [([i, (i + 1) % n, (i + 1) % n + n, i + n], edge) for i in range(n)]
+    center = Vector((side * (x + .2), 0, 0))
+    oriented = []
+    for indices, m in faces[:1]:
+        normal = (Vector(points[indices[1]]) - Vector(points[indices[0]])).cross(Vector(points[indices[2]]) - Vector(points[indices[0]]))
+        oriented.append((indices if normal.x * side > 0 else list(reversed(indices)), m))
+    first_flipped = oriented[0][0] != faces[0][0]
+    back = faces[1][0] if first_flipped else list(reversed(faces[1][0]))
+    oriented.append((back, edge))
+    for indices, m in faces[2:]:
+        oriented.append((list(reversed(indices)) if first_flipped else indices, m))
+    surface(points, oriented, fixed(bone))
+
+
+def scaled(build, pivot, factor):
+    """Run `build`, then scale every vertex it added about `pivot` (normals are unchanged by uniform scale)."""
+    before = {k: len(v) for k, v in geometry.items()}
+    build()
+    pivot = Vector(pivot)
+    for key, items in geometry.items():
+        for i in range(before.get(key, 0), len(items)):
+            point, normal, skin = items[i]
+            items[i] = (tuple(pivot + (Vector(point) - pivot) * factor), normal, skin)
+
+
 def scarf_weights(top, bottom, parent):
     """Blend from `parent` at `top` down to the animated scarf bone at `bottom`."""
     return lambda v: blend(v.y, bottom, top, 'B_KageScarf', parent)
@@ -147,11 +177,12 @@ def body():
           (1.585, 0, -.012, .125, .105)], ['scarf blue', 'scarf blue', 'scarf dark'],
          lambda v: [('B_Neck', 1)] if v.z > -.02 else blend(v.y, 1.46, 1.54, 'B_Spine2', 'B_Neck'), facets=10)
     # Katana across the back (hilt over the right shoulder, sheath down to the left hip).
-    hilt, tip = Vector((-.15, 1.60, -.205)), Vector((.205, .86, -.205))
-    tube(hilt, hilt + (tip - hilt) * .13, .026, .026, 'suit black', fixed('B_Spine2'), facets=6)
-    block(hilt + (tip - hilt) * .02, (.07, .016, .05), 'armor grey', fixed('B_Spine2'), axis=tip - hilt)
-    tube(hilt + (tip - hilt) * .13, tip, .036, .028, 'suit grey', fixed('B_Spine2'), facets=6)
-    for k in (.25, .36, .47):
+    hilt, tip = Vector((-.27, 1.80, -.2)), Vector((.21, .90, -.2))
+    tube(hilt, hilt + (tip - hilt) * .16, .024, .024, 'suit black', fixed('B_Spine2'), facets=6)
+    block(hilt, (.04, .03, .04), 'armor grey', fixed('B_Spine2'), axis=tip - hilt)
+    block(hilt + (tip - hilt) * .16, (.075, .016, .06), 'armor grey', fixed('B_Spine2'), axis=tip - hilt)
+    tube(hilt + (tip - hilt) * .165, tip, .032, .026, 'suit grey', fixed('B_Spine2'), facets=6)
+    for k in (.3, .4, .5, .6):
         pos = hilt + (tip - hilt) * k
         block(pos + Vector((0, 0, -.034)), (.026, .026, .012), 'ion cyan', fixed('B_Spine2'), axis=tip - hilt)
     # Diagonal strap over the chest/back.
@@ -159,38 +190,39 @@ def body():
            [.052, .052, .052, .052], [(0, 0, 1)] * 4, ('suit black',), fixed('B_Spine2'))
     # Cape tails on the back: weighted to the gameplay-driven scarf bone for flutter.
     for side in (-1, 1):
-        path = [Vector((side * .09, 1.47, -.13)), Vector((side * .12, 1.30, -.215)),
-                Vector((side * .15, 1.10, -.25)), Vector((side * .17, .86, -.26)), Vector((side * .19, .72, -.25))]
-        ribbon(path, [.09, .115, .14, .16, .14], [(1, 0, 0)] * 5,
+        path = [Vector((side * .11, 1.47, -.12)), Vector((side * .16, 1.30, -.19)),
+                Vector((side * .21, 1.08, -.22)), Vector((side * .25, .86, -.22)), Vector((side * .28, .66, -.2))]
+        ribbon(path, [.10, .12, .13, .14, .10], [(1, 0, .35 * side)] * 5,
                ('scarf blue', 'scarf blue', 'scarf dark', 'scarf dark'), scarf_weights(1.47, .96, 'B_Spine2'))
 
 
 def limbs():
     for side, prefix in ((1, 'B_L_'), (-1, 'B_R_')):
         joint = lambda s: fixed(prefix + s)
-        # Legs: black suit with oversized grey shin/knee armor and cyan lightning strips.
-        loft([(.49, .108, -.008, .07, .066), (.64, .10, -.005, .088, .072), (.86, .088, -.005, .098, .088),
+        # Legs: slim black thighs, then oversized armored boots like the concept sheet.
+        loft([(.49, .108, -.008, .07, .066), (.64, .10, -.005, .085, .072), (.86, .088, -.005, .095, .086),
               (.975, .083, 0, .088, .074)], ['suit black', 'suit black', 'suit grey'], joint('Thigh'), side=side)
-        loft([(.112, .134, -.038, .112, .108), (.25, .131, -.015, .118, .108), (.41, .116, -.007, .10, .092),
-              (.533, .108, -.007, .078, .074), (.585, .107, -.005, .066, .068)],
-             ['suit black', 'suit black', 'suit grey', 'suit black'], joint('Calf'), side=side)
-        block((side * .125, .535, .05), (.19, .15, .17), 'armor grey', joint('Calf'), axis=(0, 1, .1))
-        block((side * .125, .35, .068), (.17, .15, .11), 'armor light', joint('Calf'), axis=(0, 1, .16))
-        block((side * .125, .165, .02), (.20, .105, .19), 'armor grey', joint('Calf'))
-        # Cyan lightning bolt on the outer shin.
-        plate([(.20, .46, .0), (.245, .40, .0), (.224, .365, .0), (.255, .285, .0), (.185, .345, .0), (.205, .38, .0)],
-              'ion cyan', 'armor edge', prefix + 'Calf', side=side, depth=.008)
-        # Frog foot: green ankle sock, then three splayed toes with a dark pad.
-        loft([(.0, .137, .03, .115, .16), (.05, .137, .035, .118, .15), (.095, .137, .03, .105, .12),
-              (.165, .135, -.02, .09, .10)], ['frog green', 'frog dark', 'frog green'],
+        loft([(.085, .136, -.01, .135, .15), (.17, .136, -.006, .142, .152), (.30, .132, 0, .136, .14),
+              (.42, .124, 0, .118, .12), (.50, .115, -.004, .09, .092), (.585, .107, -.005, .066, .068)],
+             ['suit grey', 'suit black', 'suit black', 'suit black', 'suit black'], joint('Calf'), side=side, facets=10)
+        block((side * .13, .55, .065), (.175, .12, .13), 'armor light', joint('Calf'), axis=(0, 1, .25))
+        block((side * .132, .335, .115), (.19, .2, .07), 'armor light', joint('Calf'), axis=(0, 1, .12))
+        block((side * .132, .335, .085), (.23, .24, .05), 'armor grey', joint('Calf'), axis=(0, 1, .12))
+        block((side * .24, .30, -.01), (.06, .22, .2), 'armor grey', joint('Calf'))
+        block((side * .136, .12, .02), (.25, .06, .25), 'armor grey', joint('Calf'))
+        side_plate([(-.06, .40), (.0, .31), (-.03, .30), (.04, .19), (-.06, .29), (-.025, .30)],
+                   .275, 'ion cyan', 'armor edge', prefix + 'Calf', side)
+        # Frog foot: green pad, then three long splayed toes with rounded tips.
+        loft([(.0, .137, .04, .12, .15), (.045, .137, .05, .12, .15), (.085, .137, .055, .11, .12),
+              (.14, .135, .03, .09, .09)], ['frog green', 'frog green', 'frog dark'],
              lambda v: blend(v.z, .105, .165, prefix + 'Foot', prefix + 'Toe0'), side=side)
-        for dx, yaw in ((-.058, -.28), (0, 0.0), (.058, .28)):
-            base = Vector((side * (.137 + dx), .032, .115))
-            tip = base + Vector((side * math.sin(yaw) * .16, -.012, math.cos(yaw) * .17))
-            tube(base, tip, .033, .026, 'frog green', lambda v: blend(v.z, .13, .19, prefix + 'Foot', prefix + 'Toe0'),
-                 facets=6, stretch=(1, .75))
-            tube(tip, tip + (tip - base).normalized() * .035, .026, .020, 'frog dark', fixed(prefix + 'Toe0'),
-                 facets=6, stretch=(1, .75))
+        for dx, yaw in ((-.07, -.38), (0, 0.0), (.07, .38)):
+            base = Vector((side * (.137 + dx * .6), .03, .12))
+            tip = base + Vector((side * math.sin(yaw) * .2, -.01, math.cos(yaw) * .2))
+            tube(base, tip, .036, .028, 'frog green', lambda v: blend(v.z, .13, .2, prefix + 'Foot', prefix + 'Toe0'),
+                 facets=6, stretch=(1, .7))
+            tube(tip, tip + (tip - base).normalized() * .045, .04, .03, 'frog green', fixed(prefix + 'Toe0'),
+                 facets=6, stretch=(1, .7))
         # Arms: black sleeves, chunky grey shoulder and forearm armor.
         loft([(.13, .012, 1.423, .08, .062), (.196, .013, 1.432, .086, .08), (.263, .012, 1.43, .074, .066),
               (.288, .013, 1.421, .06, .046)], ['suit black', 'suit black', 'suit grey'], joint('UpperArm'), axis='x', side=side)
@@ -218,43 +250,53 @@ def limbs():
 
 
 def helmet():
+    scaled(head_parts, (0, 1.53, 0), 1.32)
+
+
+def head_parts():
     head = 'B_Head'
-    # Skull: black chin/mask below, green cap above, with a layered crest.
-    loft([(1.511, 0, -.005, .067, .063), (1.543, 0, -.008, .118, .084), (1.61, 0, -.016, .156, .106),
-          (1.681, 0, -.029, .17, .128), (1.748, 0, -.026, .16, .118), (1.804, 0, -.032, .11, .098),
-          (1.846, 0, -.033, .062, .068)],
-         ['suit black', 'visor black', 'visor black', 'frog green', 'frog green', 'frog dark'], fixed(head), facets=12)
-    # Face: dark visor wrap with two slanted white glowing eyes and a masked lower face.
-    plate([(-.108, 1.652, .092), (0, 1.672, .139), (.108, 1.652, .092), (.106, 1.585, .097),
-           (.055, 1.55, .124), (0, 1.545, .13), (-.055, 1.55, .124), (-.106, 1.585, .097)],
-          'visor black', 'armor edge', head, ridge=(0, 1.60, .15))
+    # Layers from the sheet, bottom to top: black chin mask, green cheek band, black visor,
+    # thin blue headband, then a green dome with grey ridges and a cyan center crest.
+    loft([(1.511, 0, -.005, .067, .063), (1.535, 0, -.002, .10, .086), (1.572, 0, -.006, .138, .112),
+          (1.606, 0, -.012, .158, .125), (1.652, 0, -.02, .168, .132), (1.70, 0, -.025, .172, .134),
+          (1.75, 0, -.027, .166, .127), (1.80, 0, -.03, .142, .112), (1.845, 0, -.032, .095, .08),
+          (1.868, 0, -.033, .04, .04)],
+         ['suit black', 'suit black', 'frog green', 'visor black', 'visor black', 'frog green', 'frog green',
+          'suit grey', 'suit grey'], fixed(head), facets=16)
+    # Pointed ninja mask over the lower face.
+    plate([(-.07, 1.592, .118), (0, 1.60, .135), (.07, 1.592, .118), (.05, 1.56, .112), (0, 1.522, .11),
+           (-.05, 1.56, .112)], 'suit black', 'visor black', head, ridge=(0, 1.565, .155))
     for side in (-1, 1):
-        plate([(.012, 1.628, .150), (.108, 1.664, .116), (.112, 1.648, .112), (.064, 1.606, .146), (.014, 1.604, .156)],
+        plate([(.07, 1.60, .118), (.15, 1.615, .075), (.15, 1.578, .07), (.1, 1.565, .1), (.05, 1.57, .114)],
+              'frog green', 'frog dark', head, side=side, depth=.01)
+    # Large slanted glowing eyes on the visor band.
+    for side in (-1, 1):
+        plate([(.018, 1.648, .138), (.118, 1.688, .106), (.128, 1.668, .102), (.085, 1.632, .128), (.022, 1.628, .142)],
               'eye white', 'visor black', head, side=side, depth=.01)
-    plate([(-.075, 1.567, .112), (-.034, 1.551, .134), (0, 1.56, .144), (.034, 1.551, .134),
-           (.075, 1.567, .112), (.062, 1.528, .094), (0, 1.51, .105), (-.062, 1.528, .094)],
-          'suit black', 'visor black', head, ridge=(0, 1.536, .156))
-    # Crest: cyan center stripe flanked by grey ridges running front to back.
-    plate([(-.026, 1.868, .02), (.026, 1.868, .02), (.036, 1.835, .06), (.028, 1.742, .118), (0, 1.69, .15),
-           (-.028, 1.742, .118), (-.036, 1.835, .06)], 'ion cyan', 'armor edge', head, ridge=(0, 1.78, .13))
+    # Brow guard above the eyes.
+    plate([(-.15, 1.705, .085), (0, 1.69, .135), (.15, 1.705, .085), (.15, 1.716, .084), (0, 1.704, .136),
+           (-.15, 1.716, .084)], 'suit grey', 'visor black', head, depth=.012)
+    # Crest: cyan center stripe between dark grey ridges, converging toward the brow.
+    plate([(-.022, 1.872, .0), (.022, 1.872, .0), (.03, 1.84, .05), (.022, 1.778, .10), (0, 1.74, .118),
+           (-.022, 1.778, .10), (-.03, 1.84, .05)], 'ion cyan', 'armor edge', head, ridge=(0, 1.80, .118))
     for side in (-1, 1):
-        plate([(.045, 1.855, .018), (.092, 1.845, .012), (.152, 1.77, .03), (.16, 1.70, .08), (.12, 1.69, .14),
-               (.088, 1.742, .122), (.055, 1.82, .06)], 'armor grey', 'armor edge', head, side=side, depth=.016,
-              ridge=(.11, 1.76, .12))
-        plate([(.12, 1.84, -.04), (.17, 1.79, -.02), (.18, 1.70, .01), (.15, 1.66, .02), (.13, 1.74, -.01)],
-              'frog dark', 'armor edge', head, side=side, depth=.012)
+        plate([(.034, 1.868, .0), (.07, 1.858, -.004), (.118, 1.80, .04), (.135, 1.735, .085), (.09, 1.73, .115),
+               (.06, 1.78, .10), (.04, 1.84, .05)], 'suit grey', 'visor black', head, side=side, depth=.016,
+              ridge=(.085, 1.79, .102))
+        plate([(.12, 1.84, -.06), (.158, 1.80, -.045), (.172, 1.745, -.02), (.15, 1.74, -.005), (.13, 1.79, -.03)],
+              'suit grey', 'visor black', head, side=side, depth=.012)
         # Cyan ear disc.
-        tube((side * .165, 1.665, -.02), (side * .19, 1.665, -.02), .038, .038, 'armor edge', fixed(head), facets=10)
-        tube((side * .19, 1.665, -.02), (side * .198, 1.665, -.02), .025, .025, 'ion cyan', fixed(head), facets=10)
-    # Blue headband around the brow, knot at the rear left and two streaming tails.
-    loft([(1.668, 0, -.02, .165, .136), (1.69, 0, -.022, .171, .139), (1.712, 0, -.022, .166, .134)],
-         ['scarf blue', 'scarf dark'], fixed(head), facets=14)
-    block((-.05, 1.70, -.19), (.09, .075, .07), 'scarf dark', fixed(head))
-    tail_weights = lambda v: blend(v.y + (v.z * 0.5), 1.48, 1.72, 'B_KageScarf', head)
-    for ends, width in (([(-.07, 1.68, -.26), (-.11, 1.60, -.36), (-.15, 1.50, -.43)], .105),
-                        ([(-.03, 1.66, -.26), (-.02, 1.55, -.34), (.01, 1.43, -.39)], .11)):
-        path = [Vector((-.05, 1.70, -.2)), *[Vector(e) for e in ends]]
-        ribbon(path, [.06, width, width * 1.15, width * .7], [(1, 0, .2)] * 4, CLOTH, tail_weights)
+        tube((side * .165, 1.66, -.02), (side * .19, 1.66, -.02), .042, .042, 'suit grey', fixed(head), facets=12)
+        tube((side * .19, 1.66, -.02), (side * .197, 1.66, -.02), .03, .03, 'ion cyan', fixed(head), facets=12)
+        tube((side * .195, 1.66, -.02), (side * .2, 1.66, -.02), .018, .018, 'suit grey', fixed(head), facets=12)
+    # Thin blue headband at the brow, knot at the back left and two tails streaming to his left.
+    loft([(1.70, 0, -.025, .177, .139), (1.722, 0, -.026, .176, .138)], ['scarf blue'], fixed(head), facets=16)
+    block((.06, 1.712, -.165), (.08, .06, .06), 'scarf dark', fixed(head))
+    tail_weights = lambda v: blend(v.y + v.z * .5 - v.x * .3, 1.38, 1.62, 'B_KageScarf', head)
+    for ends, width in (([(.12, 1.72, -.2), (.22, 1.70, -.25), (.32, 1.66, -.3)], .07),
+                        ([(.11, 1.69, -.2), (.19, 1.61, -.25), (.27, 1.55, -.29)], .075)):
+        path = [Vector((.06, 1.712, -.17)), *[Vector(e) for e in ends]]
+        ribbon(path, [.05, width, width * 1.2, width * .5], [(0, 1, .3)] * 4, CLOTH, tail_weights)
 
 
 def with_scarf_bone(rig):
