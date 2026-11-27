@@ -1,0 +1,95 @@
+import assert from 'node:assert/strict';
+// Deterministic randomness (orbit angle, meteor scatter) so runs are repeatable.
+let seed=12345;Math.random=()=>((seed=Math.imul(seed^seed>>>15,2246822507)+1013904223>>>0)/4294967296);
+const root=new URL('../dist/',import.meta.url).href;
+const T=await import(root+'vendor/three.module.js');
+const {UnitDamage}=await import(root+'combat-collision.js');
+const {PYROCLAST}=await import(root+'pyroclast-config.js?v=457');
+const {Pyroclast}=await import(root+'pyroclast.js?v=457');
+
+function fixture({protectedHero=false,dt=1/60}={}){
+ const scene=new T.Scene(),events=[],impacts=[],deaths=[];let pyro;
+ const damage=new UnitDamage(u=>{if(u.entity===pyro)pyro.destroy();});
+ const hero={hits:0,knock:[],motion:{velocity:{x:0,z:0},applyKnockback(v){hero.knock.push(v.clone());}},
+  isDamageProtected:()=>protectedHero,receiveEyeHit(){hero.hits++;return true;},active:true};
+ const heroUnit={id:'volt',kind:'hero',alive:true,entity:hero,shapes:[{center:new T.Vector3(0,1.48,10),half:{x:.55,y:1,z:.55}}]};
+ pyro=new Pyroclast(scene,damage,{getTargets:()=>[heroUnit],trace:()=>null,visible:()=>true,rainLanding:(x,z)=>new T.Vector3(x,0,z),
+  onImpact:(p,r)=>impacts.push(r),onDeath:(p,o)=>deaths.push(o),onEvent:e=>events.push(e)});
+ const step=s=>{for(let i=0;i<Math.round(s/dt);i++)pyro.update(dt);};
+ return {scene,damage,pyro,hero,heroUnit,events,impacts,deaths,step};
+}
+
+// Spawn registers one boss unit with head/torso/leg hit shapes and lights the fire FX.
+{
+ const f=fixture(),{pyro,damage}=f;
+ assert.equal(pyro.spawned,false);assert.equal(pyro.root.visible,false);assert.equal(damage.units.length,0);
+ pyro.spawn();
+ assert.equal(damage.units.length,1);assert.equal(pyro.combatUnit.health,PYROCLAST.health);
+ assert.deepEqual(pyro.combatUnit.shapes.map(s=>s.part),['head','torso','legs']);
+ assert(pyro.id.startsWith('evac-raider'),'own projectiles skip the boss');
+ assert(pyro.root.visible&&pyro.fx.enabled!==false&&pyro.aura.visible&&pyro.headGlow.visible);
+ assert(pyro.model.flames.length>=8,'persistent head/body flames');assert(pyro.model.capes.length>=3,'burning cape panels');
+ assert.equal(pyro.modifyDamage(100,null,'head'),150);assert.equal(pyro.modifyDamage(100,null,'torso'),100);
+ const head=pyro.combatUnit.shapes[0].center,legs=pyro.combatUnit.shapes[2].center;assert(head.y>legs.y+1.5,'upright hit boxes');
+ console.log('PASS spawn: one boss unit, 3 hit shapes, head ×1.5, persistent flames');
+}
+
+// A full cycle flies above ground and runs fireballs → tornadoes → meteors at any frame rate.
+for(const dt of [1/30,1/60,1/120]){
+ const f=fixture({dt}),{pyro,hero,step}=f;pyro.spawn();
+ let minClear=Infinity,sawWarn=0,warnBeforeImpact=true,maxTornadoes=0,lifted=false;
+ const seen=new Set();
+ for(let i=0;i<Math.round(26/dt);i++){
+  pyro.update(dt);seen.add(pyro.attack);
+  const p=pyro.root.position;minClear=Math.min(minClear,p.y-pyro.ground(p.x,p.z));
+  maxTornadoes=Math.max(maxTornadoes,pyro.tornadoes.length);
+  const warns=pyro.fx.decals.filter(d=>d.kind==='warn').length;sawWarn=Math.max(sawWarn,warns);
+  for(const m of pyro.meteors){if(m.art&&!pyro.fx.decals.includes(m.warn))warnBeforeImpact=false;
+   if(m.age<PYROCLAST.meteors.telegraph&&m.art)warnBeforeImpact=false;}
+  if(hero.knock.some(v=>v.y>=PYROCLAST.tornadoes.lift-.01))lifted=true;
+ }
+ const s=pyro.stats;
+ assert(['fireballs','tornadoes','meteors'].every(a=>seen.has(a)),'all three attacks used: '+[...seen]);
+ assert(s.fireballs>=PYROCLAST.fireballs.count&&s.fireballs%PYROCLAST.fireballs.count===0);assert.equal(s.tornadoes,PYROCLAST.tornadoes.count);assert.equal(s.meteors,PYROCLAST.meteors.count);
+ assert.equal(maxTornadoes,PYROCLAST.tornadoes.count,'moving tornado hazards');
+ assert(sawWarn>=3,'several meteor landing rings telegraphed at once');assert(warnBeforeImpact,'each meteor waits for its warning ring');
+ assert(minClear>=3,'stays airborne: clearance '+minClear.toFixed(2));
+ assert(s.heroHits>0&&hero.hits>0,'attacks hurt the hero');assert(lifted,'tornado throws the hero upward');
+ assert(f.impacts.length>=s.fireballs,'fireballs and meteors break the world');
+ assert.equal(pyro.meteors.length,0);assert.equal(pyro.fx.decals.filter(d=>d.kind==='warn').length,0,'warning rings removed after impact');
+ console.log('PASS cycle @'+Math.round(1/dt)+'fps:',JSON.stringify(s),'min clearance',minClear.toFixed(1));
+}
+
+// Fireballs home gently and fuse on a near miss, so a hero leaping 20m+ through the air still gets a burst beside them.
+{
+ const f=fixture(),{pyro,heroUnit}=f;pyro.spawn();const c=PYROCLAST.fireballs,bursts=[];
+ const orig=pyro.explodeFireball.bind(pyro);pyro.explodeFireball=(fb,point,hit)=>{bursts.push({life:fb.life,miss:point.distanceTo(heroUnit.shapes[0].center)});return orig(fb,point,hit);};
+ const center=heroUnit.shapes[0].center;let t=0;
+ for(let i=0;i<Math.round(9/(1/60));i++){t+=1/60;center.set(Math.sin(t*.9)*24,6+Math.abs(Math.sin(t*1.3))*20,20+Math.cos(t*.9)*12);f.hero.motion.velocity={x:Math.cos(t*.9)*21.6,z:-Math.sin(t*.9)*10.8};pyro.update(1/60);}
+ assert.equal(bursts.length,c.count,'every fireball burst');
+ assert(bursts.every(b=>b.life>0),'no fireball expired in mid-air: '+JSON.stringify(bursts));
+ const miss=JSON.stringify(bursts.map(b=>+b.miss.toFixed(1)));assert(bursts.every(b=>b.miss<c.blastRadius*c.fuse),'every burst is a hit or a near miss: '+miss);assert(bursts.some(b=>b.miss<c.blastRadius),'a burst catches the hero in the blast: '+miss);
+ console.log('PASS homing/proximity fuse vs leaping hero, miss distances',bursts.map(b=>+b.miss.toFixed(1)).join(','));
+}
+
+// Damage-protected heroes are not hurt; stun pauses attacks.
+{
+ const f=fixture({protectedHero:true}),{pyro,hero,step}=f;pyro.spawn();step(24);
+ assert.equal(hero.hits,0);assert.equal(pyro.stats.heroHits,0);
+ const g=fixture(),q=g.pyro;q.spawn();q.stun(20);g.step(6);assert.equal(q.stats.attacks,0,'stunned boss does not attack');
+ console.log('PASS protection and stun');
+}
+
+// Killing him through the shared damage system: falls, explodes, reports defeat, and reset clears him.
+{
+ const f=fixture(),{pyro,damage,step}=f;pyro.spawn();step(3);
+ damage.hurt(pyro.combatUnit,PYROCLAST.health*.25,null,'torso');assert.equal(pyro.mode,'flying');assert.equal(pyro.combatUnit.health,PYROCLAST.health*.75);
+ damage.hurt(pyro.combatUnit,1e6,null,'head');
+ assert.equal(pyro.mode,'dying');assert.equal(pyro.combatUnit.alive,false);assert.equal(pyro.combatUnit.shapes.length,0);
+ step(PYROCLAST.deathSeconds+.2);
+ assert.equal(pyro.mode,'dead');assert.equal(pyro.root.visible,false);assert.equal(f.deaths.length,1);assert.equal(f.deaths[0].large,true);
+ assert(f.events.includes('Pyroclast is falling!')&&f.events.includes('Pyroclast defeated.'));
+ pyro.reset();assert.equal(damage.units.length,0);assert.equal(pyro.spawned,false);assert.equal(pyro.fx.decals.length,0);
+ pyro.spawn();assert.equal(damage.units.length,1);assert.equal(pyro.combatUnit.health,PYROCLAST.health);
+ console.log('PASS death, defeat event and respawn');
+}
