@@ -131,20 +131,20 @@ export class EvacuationBriefing {
  objective(){
   if(this.liberationMode)return `<p class="evac-briefing-lead">Clear two occupied districts and defeat the Siege Walker and Bastion.</p>
    <ul class="evac-objectives"><li>Hunt Bruisers and drones for XP and credits. Each level lets you choose an upgrade.</li><li>Spend credits at the central supply beacon. Press B at the depot to shop, or I anywhere to inspect your build. Your build carries into the next district.</li><li>If your hero falls, the run ends.</li></ul>
-   <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
+   <footer><a href="?scene=battle">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
   if(this.defenseMode)return `<p class="evac-briefing-lead">Protect the evacuation rocket while it prepares for liftoff.</p>
    <ul class="evac-objectives"><li>Clear the first two waves and defeat the Siege Walker to launch the rocket.</li><li>Enemies engage nearby heroes. Choose an upgrade between waves. Defeat the Bastion if reinforcements arrive.</li><li>If the relay falls, the mission ends.</li></ul>
-   <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
+   <footer><a href="?scene=battle">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
 
   if(this.combatOnly)return `<p class="evac-briefing-lead">Take down the Siege Walker in the cyberpunk district.</p>
    <ul class="evac-objectives"><li>Destroy its three weapons to defeat it.</li>
    <li>Watch the radar for Bruisers from the south and combat drones from the north.</li></ul>
-   <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
+   <footer><a href="?scene=battle">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
   return `<p class="evac-briefing-lead">Get civilians from the subway entrance to the evacuation Chinook.</p>
    <ul class="evac-objectives"><li>Protect each group as it crosses the exposed street and boards.</li>
    <li>Intercept missiles and hold off the robots while the Chinook takes off.</li>
    <li>Destroy the Siege Walker’s weapons to take it down.</li></ul>
-   <footer><a href="./">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
+   <footer><a href="?scene=battle">Exit to City Battle</a><button type="button" data-next>Choose hero</button></footer>`;
  }
  choices(){
   return `<div class="evac-briefing-heroes">${(this.defenseMode?['volt','ninja','violet','rift','lux']:this.liberationMode?['volt','ninja','lux']:['volt','ninja']).map(id=>{
