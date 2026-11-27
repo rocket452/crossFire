@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 
 export const CIRCUIT_BREAKER=Object.freeze({
- key:'y',cost:12,shots:3,duration:.3,range:52,damage:55,markSeconds:4,angleDegrees:90,bonusDamage:2
+ key:'e',cost:12,shots:3,duration:.3,range:52,damage:55,markSeconds:4,angleDegrees:90,bonusDamage:2
 });
 const UP=new THREE.Vector3(0,1,0);
 
