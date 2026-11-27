@@ -1,8 +1,8 @@
 import {LUX_SOLAR_DISC_ENABLED} from './hero-ability-config.js?v=434';
 import * as T from './vendor/three.module.js';
 import {HumanoidCharacter} from './humanoid-character.js?v=overall-performance-238';
-import {LuxEffects} from './luxmancer-effects.js?v=448';
-import {SOLAR_CONFIG,LUX_UPGRADES,LuxSolarEffects} from './lux-solar.js?v=448';
+import {LuxEffects} from './luxmancer-effects.js?v=451';
+import {SOLAR_CONFIG,LUX_UPGRADES,LuxSolarEffects} from './lux-solar.js?v=451';
 import {RiftPlayer} from './rift-player.js?v=435';
 
 const spells={

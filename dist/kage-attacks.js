@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
 import {prepareKunaiModel} from './kage-kunai-model.js?v=original-kunai-441';
-import {LightningKit} from './lightning-kit.js?v=448';
+import {LightningKit} from './lightning-kit.js?v=451';
 // Slash crescent shader: the sweep head is white-hot, the body cyan and the tail fades to violet.
 const slashVertex=`attribute vec2 arcUv;varying vec2 vUv;void main(){vUv=arcUv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
 const slashFragment=`uniform vec3 color;uniform float sweep;uniform float fade;uniform float tail;uniform float rim;varying vec2 vUv;void main(){

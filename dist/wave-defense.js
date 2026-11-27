@@ -1,5 +1,5 @@
 import {VOLT_RESCUE_DASH_ENABLED} from './hero-ability-config.js?v=434';
-import {LUX_UPGRADES} from './lux-solar.js?v=423';
+import {LUX_UPGRADES} from './lux-solar.js?v=451';
 import * as THREE from './vendor/three.module.js';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';

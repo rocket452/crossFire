@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {LightningKit,glowBillboard} from './lightning-kit.js?v=448';
+import {LightningKit,glowBillboard} from './lightning-kit.js?v=451';
 const GOLD=new T.Color('#ffb43a'),SUN=new T.Color('#ffd879'),HOT=new T.Color('#fff4d2');
 // Sunburst decal: soft radial rays that flare out on impact.
 const rayVertex=`varying vec2 vP;void main(){vP=position.xy;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;

@@ -110,7 +110,7 @@ const glowFragment=`uniform vec3 color;uniform float opacity;varying vec2 vUv;vo
 const sparkVertex=`attribute float life;attribute float size;varying float vLife;
 void main(){vLife=life;vec4 view=modelViewMatrix*vec4(position,1.);gl_PointSize=size*life*(260./-view.z);gl_Position=projectionMatrix*view;}`;
 const sparkFragment=`uniform vec3 tint;varying float vLife;void main(){if(vLife<=0.)discard;vec2 c=gl_PointCoord*2.-1.;float a=max(0.,1.-dot(c,c));
- vec3 col=mix(tint,vec3(1.),a*a*vLife);gl_FragColor=vec4(col*a*1.4,a);}`;
+ vec3 col=mix(tint,vec3(1.),a*a*a*vLife*.8);gl_FragColor=vec4(col*a*1.4,a);}`;
 
 
 export class LightningKit {

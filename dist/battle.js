@@ -1,16 +1,16 @@
 import {alertEnemiesToAttacker,inFrontOfEnemy} from './enemy-alert.js?v=421';
-import {Luxmancer,LuxPlayer} from './luxmancer.js?v=448';
+import {Luxmancer,LuxPlayer} from './luxmancer.js?v=451';
 import {RiftPlayer} from './rift-player.js?v=435';
 import {VioletPlayer} from './violet-player.js?v=428';
 import {DefenseTitle} from './defense-title.js?v=413';
-import {kageDashCanFinish} from './kage-attacks.js?v=449';
+import {kageDashCanFinish} from './kage-attacks.js?v=451';
 import {NINJA} from './ninja-motion.js?v=424';
 import {AssetCityLighting} from './asset-city-lighting.js?v=315';
 import {ASSET_CITY} from './asset-city-config.js?v=311';
 import {AssetCity} from './asset-city.js?v=347';
 import {setupRoninModelChoice} from './ronin-model-choice.js?v=310';
 import {RUNNER_BEAM} from './runner-beam.js?v=lightning-range-298';
-import {WELDING_BEAM,weldStun} from './runner-welder.js?v=volt-abilities-371';
+import {WELDING_BEAM,weldStun} from './runner-welder.js?v=451';
 import {VOLT_STORM} from './runner-storm.js?v=424';
 import {massContacts,CRITICAL_MASS} from './critical-mass.js?v=mass-charge-369';
 import {WALKER_WEAPON_HEALTH_SCALE} from './walker-weapons.js?v=415';
@@ -39,7 +39,7 @@ import {CombatTesting} from './combat-testing.js?v=432';
 import {ActorSilhouettes} from './actor-silhouettes.js?v=426';
 import {RAIDER_COMBAT} from './evac-raider.js?v=421';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=415';
-import {NinjaHero} from './ninja-hero.js?v=450';
+import {NinjaHero} from './ninja-hero.js?v=451';
 import {RobotDeathEffects} from './robot-death-effects.js?v=enemy-low-health-smoke-291';
 import {shieldBeamIntersection,frontBarrierHit,absorbDirectionalBarrier} from './hero-defense.js?v=390';
 import {EnemyDamageFlash} from './enemy-damage-flash.js?v=393';
@@ -47,7 +47,7 @@ import {HeroMinimap} from './hero-minimap.js?v=427';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
 import {EVAC_ROCKET} from './defense-rocket.js?v=427';
-import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,WAVE_DEFENSE_HIGHWAYS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=434';
+import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,WAVE_DEFENSE_HIGHWAYS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=451';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {EvacRaiderWaves} from './evac-raider-waves.js?v=421';
 import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-approach.js?v=393';
@@ -68,13 +68,13 @@ import {WalkerBeamImpact} from './walker-beam-impact.js?v=392';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=393';
 import {VioletHero} from './violet-hero.js?v=428';
-import {Speedster} from './speedster.js?v=448';
+import {Speedster} from './speedster.js?v=451';
 import {RobotMissiles,WALKER_SALVO_SIZE,WALKER_MISSILE_BLAST_RADIUS,WALKER_MISSILE_UNIT_BLAST_RADIUS} from './robot-missiles.js?v=424';
 import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';
 import {PortalHero} from './portal-hero.js?v=397';
 import {SolaraHero} from './solara-hero.js?v=rainbow-full-solara-290';
 import {HeroRoster} from './hero-roster.js?v=441';
-import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=441';
+import {EvacuationBriefing,evacuationTeam} from './evacuation-briefing.js?v=451';
 import {segmentBoxFraction} from './combat-collision.js?v=evac-performance-233';
 import {WalkerSniper,WALKER_SNIPER} from './walker-sniper.js?v=415';
 import {RobotEyeBeams} from './robot-eye-beams.js?v=charged-shuriken-130';
@@ -634,7 +634,7 @@ function phaseDashAlly(unit,phased){
 function weldingBeamHit(hit,power,kind='welding'){
  if(hit.voltOrb){runner.storm.recharge(power,hit.energyOrb);runner.liberation?.weldOrb(hit.energyOrb);return{damage:0};}
  if(hit.orb)return{damage:bastionTest().boss.applyHit(hit,power,'weld-'+simTime)};
- let damage=0,stunned=false;if(hit.missile)damage=robotMissiles.hurt(hit.missile,power,'volt');else if(hit.unit?.kind==='robot'&&hit.unit.alive){damage=damageRobotHit(hit,power,liberationMode?kind:'welding',true);stunned=weldStun(hit,damage,[robot,argus,bastionTest()?.boss]);if(damage>0)runner.fx.damageEffect.notify({...hit,damage},runner.character?runner.character.hand('R'):runner.root.position);}else if(hit.section)physics.impact(new THREE.Vector3().copy(hit.point),4*power/WELDING_BEAM.damagePerSecond,.35,hit.section,{player:true,source:'volt-rush'});return{damage,stunned};
+ let damage=0,stunned=false;if(hit.missile)damage=robotMissiles.hurt(hit.missile,power,'volt');else if(hit.unit?.kind==='robot'&&hit.unit.alive){damage=damageRobotHit(hit,power,liberationMode?kind:'welding',true);stunned=weldStun(hit,damage,[robot,argus,bastionTest()?.boss]);if(damage>0&&kind!=='welding')runner.fx.damageEffect.notify({...hit,damage},runner.character?runner.character.hand('R'):runner.root.position);}else if(hit.section)physics.impact(new THREE.Vector3().copy(hit.point),4*power/WELDING_BEAM.damagePerSecond,.35,hit.section,{player:true,source:'volt-rush'});return{damage,stunned};
 }
 function voltGroundTarget(from,direction){
  const c=VOLT_STORM,far=from.clone().addScaledVector(direction,c.strikeRange),terrain=traceTerrain(from,far),flat=traceImpact(from,far,{sections:[],ground:true,radius:0}),ground=terrain&&(!flat||terrain.t<flat.t)?terrain:flat,p=ground?new THREE.Vector3().copy(ground.point):new THREE.Vector3(runner.motion.position.x+Math.sin(runner.yaw)*25,0,runner.motion.position.z+Math.cos(runner.yaw)*25);p.y=terrainHeight(p.x,p.z)+.1;const b=runner.motion.bounds;if(p.x<b.minX+1||p.x>b.maxX-1||p.z<b.minZ+1||p.z>b.maxZ-1)return null;if(traceImpact(from,p,{sections:physics.chunks,ground:false})||traceImpact(p.clone().add(new THREE.Vector3(0,.2,0)),p.clone().add(new THREE.Vector3(0,4,0)),{sections:physics.chunks,ground:false,radius:.3}))return null;return p;

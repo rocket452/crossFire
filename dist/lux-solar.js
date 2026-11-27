@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {LightningKit,glowBillboard} from './lightning-kit.js?v=448';
+import {LightningKit,glowBillboard} from './lightning-kit.js?v=451';
 
 export const SOLAR_CONFIG=Object.freeze({
  capacity:100,
