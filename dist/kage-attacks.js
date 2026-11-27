@@ -81,7 +81,19 @@ export class KageAttacks {
  cancelInput(){this.held=this.loading=false;this.stored=this.loadTime=0;this.queue=[];this.clearStoredVisual();}
  release(target){if(!this.loading)return false;const c=this.config.kunai,origin=this.hero.character.hand('R').clone(),dir=target.clone().sub(origin).normalize(),count=this.stored;this.queue=Array.from({length:count},()=>({origin:origin.clone(),dir:dir.clone()}));this.volleyClock=0;this.kunaiCast=this.hero.liberation?.cast('kunai',c.damage,origin);this.loading=false;this.stored=0;this.clearStoredVisual();this.cooldown=c.cooldown;this.volleys++;this.lastVolley=count;this.hero.shurikenEffects.tone(this.config.feedback.throwHz);return true;}
  quickThrow(target){if(this.cooldown>0||this.queue.length)return false;this.loading=true;this.stored=1;return this.release(target);}
- input(held,dt){const c=this.config.kunai;if(held&&!this.loading&&this.cooldown<=0&&!this.queue.length){this.loading=true;this.loadTime=0;this.stored=1;}if(held&&this.loading){this.loadTime+=dt*(1+(this.hero.liberation?.v('Overclock Chip')||0)/100);this.stored=Math.min(c.maxStored,1+Math.floor((this.loadTime+1e-8)/c.storeSeconds));}if(!held&&this.held&&this.loading)this.release(this.hero.aim());this.held=held;}
+ input(held,dt,wallJump){
+  const c=this.config.kunai;
+  if(held&&!this.loading&&this.cooldown<=0&&!this.queue.length){
+   this.loading=true;this.loadTime=0;this.stored=1;
+  }
+  if(held&&this.loading){
+   this.loadTime+=dt*(1+(this.hero.liberation?.v('Overclock Chip')||0)/100);
+   if(wallJump)this.loadTime+=c.storeSeconds;
+   this.stored=Math.min(c.maxStored,1+Math.floor((this.loadTime+1e-8)/c.storeSeconds));
+  }
+  if(!held&&this.held&&this.loading)this.release(this.hero.aim());
+  this.held=held;
+ }
  // The cone and feedback share a frozen frame centered on the existing cursor aim point.
  captureSlashAim(center){const direction=this.hero.aim().clone().sub(center);if(direction.lengthSq()<1e-8)direction.set(Math.sin(this.hero.yaw),0,Math.cos(this.hero.yaw));direction.normalize();const right=new THREE.Vector3(direction.z,0,-direction.x);if(right.lengthSq()<1e-8)right.set(Math.cos(this.hero.yaw),0,-Math.sin(this.hero.yaw));right.normalize();const up=new THREE.Vector3().crossVectors(direction,right).normalize();this.slashDirection.copy(direction);this.slashRotation.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right,up,direction));}
  inCone(point,center){const c=this.config.slash,d=point.clone().sub(center),along=d.dot(this.slashDirection),radius=Math.max(0,along)*Math.tan(c.coneDegrees*Math.PI/360);return along>=-1e-6&&along<=c.range+1e-6&&Math.max(0,d.lengthSq()-along*along)<=radius*radius+1e-6;}
@@ -115,7 +127,7 @@ export class KageAttacks {
   this.slashHits++;this.lastSlashHits++;
   return true;
  }
- update(dt,{held=false,slash=false,enabled=false}={}){const h=this.hero,c=this.config.kunai;this.cooldown=Math.max(0,this.cooldown-dt);this.slashCooldown=Math.max(0,this.slashCooldown-dt);this.slashTime=Math.max(0,this.slashTime-dt);if(enabled){this.input(held,dt);if(slash)this.slash();}else if(this.loading||this.held)this.cancelInput();
+ update(dt,{held=false,slash=false,enabled=false,wallJump=false}={}){const h=this.hero,c=this.config.kunai;this.cooldown=Math.max(0,this.cooldown-dt);this.slashCooldown=Math.max(0,this.slashCooldown-dt);this.slashTime=Math.max(0,this.slashTime-dt);if(enabled){this.input(held,dt,wallJump);if(slash)this.slash();}else if(this.loading||this.held)this.cancelInput();
   this.volleyClock-=dt;while(this.queue.length&&this.volleyClock<=0){const p=this.queue.shift();if(this.bolts.length>=c.maxProjectiles)this.bolts.shift();h.liberation?.projectile('kunai',p.origin,c.damage,this.kunaiCast);this.bolts.push({cast:p.cast||this.kunaiCast,pierced:new Set(),position:p.origin.clone(),dir:p.dir.clone(),age:0,travelled:0,owner:'kage'});this.volleyClock+=c.burstInterval;this.throws++;h.shots++;h.throwPose=.18;h.burst(p.origin,2);}
   for(const bolt of [...this.bolts]){const distance=Math.min(c.speed*dt,c.range-bolt.travelled),to=bolt.position.clone().addScaledVector(bolt.dir,distance),transit=h.redirect(bolt,bolt.position,to);let remove=false;if(transit){bolt.position.copy(transit.position);bolt.dir.copy(transit.direction);}else{const hit=h.traceWorld(bolt.position,to,{allied:true,radius:c.radius,moving:true,skipUnits:bolt.pierced});h.liberation?.foundry(bolt,bolt.position,hit?.point||to,c.damage);if(hit){hit.cast=bolt.cast;bolt.position.copy(hit.point);h.hit(hit,c.damage,'kunai');if(h.active)h.kunaiMarks?.place(hit.unit);remove=!hit.unit||bolt.pierced.size>=(h.liberation?.v('Phase Ammunition')||0);if(!remove)bolt.pierced.add(hit.unit);}else bolt.position.copy(to);}bolt.travelled+=distance;bolt.age+=dt;if(remove||bolt.travelled>=c.range||bolt.age>c.range/c.speed+1)this.bolts.splice(this.bolts.indexOf(bolt),1);}
   this.render(dt);

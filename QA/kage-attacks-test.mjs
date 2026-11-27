@@ -55,3 +55,16 @@ for(const target of [true,false]){
  assert.equal(m.resets,0);
 }
 console.log('PASS falling cut contacts once, rebounds two metres, misses end after eight metres and fall to ground.');
+
+{
+ const {a}=setup(),dt=1/120,store=a.config.kunai.storeSeconds;
+ const tick=(held,wallJump=false,seconds=dt)=>a.update(seconds,{held,wallJump,enabled:true});
+ tick(false,true);assert.equal(a.stored,0,'wall jumps with empty hands give no charge');
+ tick(true,false,store*.75);assert.equal(a.stored,1);
+ tick(true,true);assert.equal(a.stored,2,'wall jump grants one charge immediately');
+ tick(true,false,store*.25);assert.equal(a.stored,3,'preserve progress toward the next charge');
+ tick(true,true);assert.equal(a.stored,3,'wall jump cannot exceed the cap');
+ tick(false);assert.equal(a.lastVolley,3);
+ tick(true,true);assert.equal(a.stored,0,'wall jump cannot bypass the volley cooldown');
+}
+console.log('PASS wall jumps grant one held kunai immediately, preserve timer progress and respect the cap and cooldown.');
