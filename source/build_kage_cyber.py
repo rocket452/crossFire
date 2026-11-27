@@ -34,7 +34,7 @@ V.MATERIALS.update({
     'scarf shade': ('8e1022', .74, 0),
     'crest red': ('dd1f35', .4, 0),
     'glow red': ('ff3b4a', .3, 2.2),
-    'eye cyan': ('9ff6ff', .25, 2.8),
+    'eye cyan': ('3fe6ff', .25, 1.6),
 })
 CLOTH = ('scarf red', 'scarf shade')
 geometry, surface, loft, plate, fixed, blend = V.geometry, V.surface, V.loft, V.plate, V.fixed, V.blend
@@ -158,6 +158,7 @@ def body():
     plate(hexagon(0, 1.30, .122, .078, .085), 'armor light', 'armor mid', 'B_Spine2', depth=.02, ridge=(0, 1.30, .14))
     plate(hexagon(0, .985, .108, .06, .052), 'armor light', 'armor mid', 'B_Pelvis', depth=.02, ridge=(0, .985, .122))
     loft([(.95, 0, .004, .136, .1), (1.02, 0, .006, .14, .102)], ['armor mid'], fixed('B_Pelvis'), facets=8)
+    plate(hexagon(0, 1.135, .1, .052, .048), 'armor light', 'armor mid', 'B_Spine1', depth=.02, ridge=(0, 1.135, .112))
     # Red glowing emblem on the back.
     block((0, 1.30, -.112), (.045, .08, .014), 'glow red', fixed('B_Spine2'))
     # Red scarf: thick collar with a V at the front.
@@ -167,9 +168,10 @@ def body():
           'scarf red', 'scarf shade', 'B_Spine2', depth=.02)
     # Two long scarf tails behind the shoulders, splaying outward (animated by B_KageScarf).
     for side in (-1, 1):
-        path = [Vector((side * .1, 1.48, -.09)), Vector((side * .17, 1.32, -.15)), Vector((side * .23, 1.12, -.17)),
-                Vector((side * .27, .92, -.16)), Vector((side * .29, .80, -.15))]
-        ribbon(path, [.09, .12, .13, .12, .02], [(1, 0, .3 * side)] * 5, CLOTH, scarf_weights(1.48, 1.0, 'B_Spine2'))
+        # Tails hang from the collar down the sides, visible from front and back like the model sheet.
+        path = [Vector((side * .13, 1.47, -.02)), Vector((side * .2, 1.33, -.05)), Vector((side * .25, 1.15, -.06)),
+                Vector((side * .29, .97, -.05)), Vector((side * .31, .84, -.04))]
+        ribbon(path, [.1, .13, .14, .12, .02], [(1, -.25 * side, .15 * side)] * 5, CLOTH, scarf_weights(1.48, 1.0, 'B_Spine2'))
     # Short katana on the back, hilt over the right shoulder.
     hilt, tip = Vector((-.2, 1.66, -.16)), Vector((.16, 1.0, -.16))
     tube(hilt, hilt + (tip - hilt) * .2, .022, .022, 'joint black', fixed('B_Spine2'), facets=6)
@@ -184,22 +186,22 @@ def limbs():
         loft([(.56, .106, -.006, .066, .064), (.72, .098, -.004, .075, .07), (.86, .09, -.004, .084, .078),
               (.975, .084, 0, .08, .07)], ['armor dark', 'armor dark', 'armor dark'], joint('Thigh'), side=side, facets=8)
         # Flared boots: light-grey cuff below the knee, dark lower boot, light toe cap.
-        loft([(.08, .136, .01, .13, .14), (.20, .135, .004, .125, .134), (.32, .132, 0, .116, .122), (.36, .13, 0, .113, .116),
-              (.48, .124, 0, .1, .1), (.58, .116, -.004, .086, .086), (.64, .11, -.006, .072, .072)],
+        loft([(.08, .14, .015, .175, .19), (.20, .139, .008, .165, .178), (.32, .135, 0, .148, .156), (.36, .133, 0, .142, .148),
+              (.48, .126, 0, .122, .124), (.58, .118, -.004, .1, .1), (.645, .11, -.006, .078, .078)],
              ['armor dark', 'armor dark', 'armor mid', 'armor light', 'armor light', 'armor light'], joint('Calf'),
              side=side, facets=8)
-        side_plate([(-.045, .34), (-.015, .34), (.04, .12), (.01, .12)], .262, 'glow red', 'armor dark', prefix + 'Calf', side)
+        side_plate([(-.055, .35), (-.02, .35), (.045, .13), (.01, .13)], .31, 'glow red', 'armor dark', prefix + 'Calf', side)
         # Foot: light-grey sloped toe cap and a dark sole.
-        loft([(.0, .137, .05, .12, .16), (.055, .137, .065, .12, .16), (.11, .137, .045, .105, .12)],
+        loft([(.0, .14, .075, .165, .21), (.06, .14, .09, .165, .205), (.12, .14, .06, .145, .16)],
              ['armor light', 'armor light'], lambda v: blend(v.z, .1, .22, prefix + 'Foot', prefix + 'Toe0'), side=side, facets=8)
-        block((side * .137, .01, .05), (.23, .02, .31), 'armor dark', lambda v: blend(v.z, .1, .22, prefix + 'Foot', prefix + 'Toe0'))
+        block((side * .14, .012, .07), (.28, .024, .36), 'armor dark', lambda v: blend(v.z, .1, .22, prefix + 'Foot', prefix + 'Toe0'))
         # Arms: dark round shoulder, thin upper arm, large light-grey forearm bracer, dark hand.
-        tube((side * .17, 1.43, 0), (side * .24, 1.43, 0), .062, .062, 'armor dark', joint('UpperArm'), facets=8)
+        tube((side * .165, 1.43, 0), (side * .25, 1.43, 0), .078, .078, 'armor dark', joint('UpperArm'), facets=10)
         loft([(.24, .01, 1.425, .045, .045), (.42, .01, 1.422, .045, .044), (.50, .01, 1.42, .042, .042)],
              ['armor dark', 'armor dark'], lambda v: blend(abs(v.x), .45, .50, prefix + 'UpperArm', prefix + 'Forearm'),
              axis='x', side=side, facets=6)
-        loft([(.50, .012, 1.42, .052, .05), (.54, .012, 1.422, .068, .065), (.69, .012, 1.424, .072, .068),
-              (.72, .012, 1.424, .056, .054)], ['armor light', 'armor light', 'armor mid'], joint('Forearm'), axis='x', side=side, facets=8)
+        loft([(.50, .012, 1.42, .058, .056), (.54, .012, 1.422, .084, .08), (.69, .012, 1.424, .088, .084),
+              (.72, .012, 1.424, .064, .062)], ['armor light', 'armor light', 'armor mid'], joint('Forearm'), axis='x', side=side, facets=8)
         loft([(.70, .012, 1.424, .05, .045), (.76, .013, 1.426, .055, .042)], ['joint black'],
              lambda v: blend(abs(v.x), .705, .755, prefix + 'Forearm', prefix + 'Hand'), axis='x', side=side, facets=6)
         block((side * .80, 1.43, .012), (.075, .11, .095), 'armor dark', joint('Hand'), axis=(side, 0, 0))
@@ -211,7 +213,7 @@ def limbs():
 
 
 def helmet():
-    scaled(head_parts, (0, 1.53, 0), 1.12)
+    scaled(head_parts, (0, 1.53, 0), 1.26)
 
 
 def head_parts():

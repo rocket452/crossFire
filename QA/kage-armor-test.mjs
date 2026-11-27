@@ -40,7 +40,7 @@ const ch=actor.character;
 assert.deepEqual(ch.root.scale.toArray(),[1.24,1,1.24]);
 assert.equal(ch.root.getWorldPosition(new T.Vector3()).y,0,'proportion changes keep the rig origin at the feet');
 assert.equal(ch.bones.length,54);
-assert.equal(ch.triangles,cyber?1916:frog?5998:3008);
+assert.equal(ch.triangles,cyber?1954:frog?5998:3008);
 if(cyber){
  for(const name of ['armor dark','armor light','crest red','scarf red','glow red','eye cyan'])
   assert(ch.meshes.some(m=>m.material.name===name));
