@@ -1,5 +1,5 @@
 import {ThunderPunch,THUNDER_PUNCH} from './thunder-punch.js?v=437';
-import {CircuitBreaker,CIRCUIT_BREAKER} from './circuit-breaker.js?v=438';
+import {CircuitBreaker,CIRCUIT_BREAKER} from './circuit-breaker.js?v=441';
 import {VOLT_CRITICAL_MASS_ENABLED,VOLT_OVERLOAD_ENABLED,VOLT_RESCUE_DASH_ENABLED} from './hero-ability-config.js?v=434';
 import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=395';
 import {stepAttackMovement} from './runner-attack-stop.js?v=beam-slide-370';

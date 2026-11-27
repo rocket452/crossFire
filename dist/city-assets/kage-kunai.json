@@ -1,0 +1,34 @@
+{
+  "source": "original (source/build_kage_weapons.py)",
+  "triangles": 966,
+  "parts": [
+    {
+      "name": "Kunai blade",
+      "triangles": 62
+    },
+    {
+      "name": "Kunai fuller",
+      "triangles": 40
+    },
+    {
+      "name": "Kunai collar",
+      "triangles": 92
+    },
+    {
+      "name": "Kunai grip",
+      "triangles": 452
+    },
+    {
+      "name": "Kunai ring",
+      "triangles": 320
+    }
+  ],
+  "materials": [
+    "Kunai edge",
+    "Kunai steel",
+    "Kunai wrap"
+  ],
+  "length": 0.85,
+  "forward": "+Z",
+  "gripOffsetZ": -0.2
+}

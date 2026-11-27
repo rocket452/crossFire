@@ -1,6 +1,6 @@
 import {VOLT_CRITICAL_MASS_ENABLED,VOLT_OVERLOAD_ENABLED,VOLT_RESCUE_DASH_ENABLED,LUX_SOLAR_DISC_ENABLED} from './hero-ability-config.js?v=434';
 import {SOLAR_CONFIG} from './lux-solar.js?v=423';
-import {HEROES} from './hero-roster.js?v=434';
+import {HEROES} from './hero-roster.js?v=441';
 import {KAGE_BOMB_ABILITIES_ENABLED} from './kage-ability-config.js?v=433';
 
 const training={

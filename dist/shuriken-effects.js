@@ -13,7 +13,7 @@ export class ShurikenEffects {
  constructor(hero,config){this.hero=hero;this.config=config;this.group=new THREE.Group();hero.scene.add(this.group);this.flash=0;this.strikeTime=0;this.traceAge=1;this.debug=false;this.note='HOLD SHURIKEN · RELEASE TO THROW';
   const material=(color,opacity=1)=>new THREE.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,toneMapped:false}),line=()=>new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:config.preview.readyColor,transparent:true,opacity:.8,depthWrite:false}));
   this.line=line();this.line.frustumCulled=false;this.trace=line();this.trace.frustumCulled=false;this.group.add(this.line,this.trace);
-  this.ghost=new THREE.Mesh(hero.starGeometry,material(config.preview.readyColor,.55));this.ghost.material.wireframe=hero.shurikenSource!=='Shuriken.blend';this.group.add(this.ghost);
+  this.ghost=new THREE.Mesh(hero.starGeometry,material(config.preview.readyColor,.55));this.ghost.material.wireframe=hero.shurikenSource==='procedural';this.group.add(this.ghost);
   this.charge=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),material(config.preview.lineColor,.4));this.group.add(this.charge);
   const starMaterial=hero.silver.clone();starMaterial.emissiveIntensity=.3;this.thrown=new THREE.InstancedMesh(hero.starGeometry,starMaterial,config.collision.maxEarlyStars+1);this.thrown.frustumCulled=false;this.group.add(this.thrown);this.dummy=new THREE.Object3D();
   this.ring=new THREE.Mesh(new THREE.TorusGeometry(config.feedback.stationaryRingRadius,.055,4,32),material(config.preview.readyColor,.8));this.ring.rotation.x=Math.PI/2;this.group.add(this.ring);

@@ -1,3 +1,9 @@
+# Kage shuriken — original model (revision 441)
+
+The shuriken is now an original four-blade hooked star with a center hole and raised hub ring, built from scratch by `source/build_kage_weapons.py`. It is public at `dist/city-assets/kage-shuriken.glb` with `kage-shuriken.json`, keeps the 1.2m XY-plane/+Z-spin contract, and the existing visual scale, spin and gameplay are unchanged. `QA/kage-shuriken-model-test.mjs` validates it.
+
+The section below documents the earlier uploaded shuriken, which is no longer loaded.
+
 # Uploaded Kage shuriken (revision 283)
 
 The supplied `Shuriken.blend` is the conversion source; `Shuriken.fbx` contains the same evaluated 6,016-triangle mesh and is retained privately as its companion. Blender runs with `--factory-startup --disable-autoexec`; only the evaluated mesh is exported, including its Array, Mirror and Subdivision modifiers. The 189,412-byte GLB preserves the four blades, central hole, thickness and authored normals without requiring textures.

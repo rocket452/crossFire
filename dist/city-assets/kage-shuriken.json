@@ -1,0 +1,9 @@
+{
+  "source": "original (source/build_kage_weapons.py)",
+  "triangles": 640,
+  "vertices": 320,
+  "diameter": 1.2,
+  "plane": "XY",
+  "spinAxis": "+Z",
+  "blades": 4
+}

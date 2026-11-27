@@ -1,3 +1,9 @@
+# Kage kunai — original model (revision 441)
+
+The kunai is now an original model built from scratch by `source/build_kage_weapons.py` (no supplied geometry). It is public and lives at `dist/city-assets/kage-kunai.glb` with `kage-kunai.json`. It keeps the earlier runtime contract: 0.85m long, centered, blade toward glTF +Z, wrapped grip centered near z=-0.20, three opaque materials (edge steel, steel, red cord wrap) and no textures. Regenerate with `blender -b --factory-startup --python source/build_kage_weapons.py -- dist/city-assets` (or the `bpy` Python module). `QA/kage-kunai-model-test.mjs` validates it.
+
+The section below documents the earlier uploaded kunai, which is no longer loaded.
+
 # Uploaded Kage kunai (revision 284)
 
 `kunai.zip` contains an FBX assembly and three color textures, inside a nested source archive. Extraction and conversion happen outside public GitHub under `/workspace/private-assets/kage-kunai/`. The three authored parts are preserved: blade (144 triangles), ring (1,152), and wrapped grip (1,484), totaling 2,780 triangles. The textures are embedded at 256px each in a 209,380-byte GLB; no external image downloads are needed.

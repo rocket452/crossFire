@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {traceImpact} from './combat-collision.js?v=robot-experiments-108';
-import {prepareKunaiModel} from './kage-kunai-model.js?v=uploaded-kunai-284';
+import {prepareKunaiModel} from './kage-kunai-model.js?v=original-kunai-441';
 export function kageHitPower(hit,power,kind){return hit.unit?.entity?.type==='mireguard'&&['ninja-slash','ninja-dash'].includes(kind)?hit.unit.maxHealth*hit.unit.entity.config.kageMeleeFraction:power;}
 const forward=new THREE.Vector3(0,0,1);
 const SLASH_VISUAL_SCALE=1.2;

@@ -1,6 +1,8 @@
 import {KAGE_BOMB_ABILITIES_ENABLED} from './kage-ability-config.js?v=433';
 
-export const HEROES=Object.freeze([
+// Solara Frost and Frostfin are disabled: their licensed models are not in the build.
+export const DISABLED_HERO_IDS=Object.freeze(['solara','axo']);
+const ALL_HEROES=[
  {id:'lux',name:'Luxmancer',element:'SOLAR MAGIC',role:'Long-range light caster',detail:'Arc a Sunlance down the highway, scatter light at close range, or mark a squad for homing comets.',control:'Player',color:'#ffce55',icon:'☀'},
  {id:'ember',name:'Cinder Fang',element:'FIRE / SHAPESHIFTER',role:'Air-running cat & fireball caster',detail:'Runs through the sky as a fiery cat, leaving embers behind. Lands on surviving roofs or the ground and transforms into a human to throw fireballs.',control:'CPU defender',color:'#ff8c48',icon:'♨'},
  {id:'axo',name:'Frostfin',element:'ICE / AXOLOTL',role:'Freezing breath & ice slides',detail:'A four-legged ice axolotl who flies through the air on a growing ice ribbon and chills enemies with freezing breath.',control:'CPU defender',color:'#a5edff',icon:'❄'},
@@ -11,7 +13,8 @@ export const HEROES=Object.freeze([
  {id:'violet',name:'Violet Sentinel',element:'FORCE',role:'Air defense',detail:'Absorb hits with a force shield to power a stationary sustained beam. Also fires purple orbs.',control:'CPU defender',color:'#bc8bf5',icon:'◈'},
  {id:'solara',name:'Solara Frost',element:'FIRE / ICE',role:'Missile / plasma defense',detail:'Track incoming missiles with fireballs, ride an ice path and raise protective domes over allies.',control:'CPU defender',color:'#9bdfff',icon:'✦'},
  {id:'rift',name:'Rift Warden',element:'PORTALS',role:'Evacuation & barrage',detail:'Personal teleport, up to three autonomous firing portals, and a large transport pair for allies and projectiles.',control:'CPU defender',color:'#a6e8bf',icon:'◎'}
-]);
+];
+export const HEROES=Object.freeze(ALL_HEROES.filter(hero=>!DISABLED_HERO_IDS.includes(hero.id)));
 export const DEFAULT_HEROES=Object.freeze(['volt','violet','rift']);
 export function validRoster(ids){return Array.isArray(ids)&&ids.length<=3&&new Set(ids).size===ids.length&&ids.every(id=>HEROES.some(h=>h.id===id));}
 export class HeroRoster {

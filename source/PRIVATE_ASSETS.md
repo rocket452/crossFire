@@ -4,6 +4,12 @@ The user supplied `ExplosiveLLC.zip` from the RPG Character Mecanim Animation Pa
 
 Public GitHub repository: https://github.com/rocket452/crossFire . The pack and derived standalone geometry/animation are not included there. The Sites audience remains owner-private. Do not change either audience automatically.
 
+## Revision 441: fewer private runtime files
+
+- Kage's kunai and shuriken are now original public models (`dist/city-assets/kage-kunai.glb`, `kage-shuriken.glb`, built by `source/build_kage_weapons.py`). The uploaded `licensed-weapons/` files are no longer loaded and need not be deployed.
+- Solara Frost and Frostfin are disabled (`DISABLED_HERO_IDS` in `dist/hero-roster.js`). `solara-female.glb` and `axolotl.glb` are no longer loaded. Rainbow Star and Cinder Fang now use the shared `humanoid.glb` body.
+- `humanoid.glb` can be regenerated with the `bpy` 4.2 Python module (`pip install "bpy==4.2.*" numpy` under Python 3.11) by running `python source/convert_explosive.py -- --input ... --output ... --texture ...`; Blender 4.0 is too old for the converter's `corner_normals` call.
+
 ## Assets and conversion
 
 The retained source is in `/workspace/private-assets/explosive/ExplosiveLLC/` outside the public repository. Runtime files are generated into the ignored `dist/city-assets/licensed-characters/` directory for local QA and copied into the private build checkout. The deployed private runtime files are `humanoid.glb`, `manifest.json`, `solara-female.glb` and `solara-female.json`; the uploaded archive, FBXs, PSD, Unity scripts and demo scenes are not deployed.
