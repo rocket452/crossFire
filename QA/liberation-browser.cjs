@@ -10,6 +10,8 @@ const {chromium}=require('playwright');
    const response=await route.fetch();await route.fulfill({response,body:await response.text()+'\nwindow.liberationTest=()=>missionRaiders;'});
   });
   await page.goto((process.env.GAME_URL||'http://localhost:8234/')+'?scene=city-liberation');
+  // City Liberation opens on the title cinematic; start it to reach the mission briefing.
+  await page.locator('dialog.defense-title[open] [data-title-start]').click();
   await page.locator('dialog[open] [data-next]').click();
   for(const id of ['volt','ninja','lux']){
    await page.locator('[data-hero="'+id+'"]').click();await page.locator('[data-start]').click();

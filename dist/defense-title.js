@@ -2,12 +2,12 @@ import {MathUtils,Spherical,Vector3} from './vendor/three.module.js';
 
 // Cut on shot boundaries. Within each shot the camera eases behind its subject.
 export class DefenseTitle {
- constructor({startRound,rebuild,enter,leave,actors,obstruction,openingDelay=0}){
+ constructor({startRound,rebuild,enter,leave,actors,obstruction,openingDelay=0,subtitle='Wave Defense'}){
   Object.assign(this,{startRound,rebuild,enter,leave,actors,obstruction,openingDelay});
   this.dialog=document.createElement('dialog');
   this.dialog.className='defense-title';
   this.dialog.setAttribute('aria-labelledby','defense-title-heading');
-  this.dialog.innerHTML=`<header><h1 id="defense-title-heading">Zero Hour Heroes</h1><p>Wave Defense</p></header>
+  this.dialog.innerHTML=`<header><h1 id="defense-title-heading">Zero Hour Heroes</h1><p>${subtitle}</p></header>
    <div class="defense-title-actions">
     <p class="defense-title-orbit-hint">Drag to rotate</p>
     <button type="button" data-title-start>Press Enter to Start</button>
