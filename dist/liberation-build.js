@@ -1,4 +1,4 @@
-import {EVOLUTIONS, ITEMS, RELICS} from './liberation-catalog.js';
+import {EVOLUTIONS, ITEMS, RELICS} from './liberation-catalog.js?v=439';
 
 export class LiberationBuild {
  constructor(hero,random=Math.random){

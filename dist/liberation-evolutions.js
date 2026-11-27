@@ -107,6 +107,7 @@ export class HeroEvolutionCombat extends LiberationCombat {
   if(this.v('Dimensional Cut'))this.line(from,to,3,130,null,'Dimensional Cut',violet);
   if(!star.host||!this.v('Shadow Relay'))return;
   const target=this.targets(to,25,star.host.entity)[0];if(!target)return;
+  if(this.hero.kunaiMarks){this.hero.kunaiMarks.place(target.unit,3,3);return;}
   const s=this.hero.shuriken;star.host=target.unit;star.position.copy(target.point);
   star.localPoint=star.host.entity.root.worldToLocal(star.position.clone());star.stationaryAge=Math.max(0,s.config.full.markSeconds-3);
   s.stars.push(star);s.anchor=star;s.emit('lodged',{star});
@@ -154,7 +155,7 @@ export class HeroEvolutionCombat extends LiberationCombat {
    if(this.v('Execution Line')){this.linked.add(unit);s.link=this.linked;}
   }
   if(kind==='ninja-slash'){
-   const effects=Number(s.embed>0)+Number(this.hero.shuriken?.anchor?.host===unit)+Number(this.hero.laserStar?.host===unit)+Number(!!s.link?.size);
+   const effects=Number(s.embed>0)+Number(this.hero.shuriken?.anchor?.host===unit||!!this.hero.kunaiMarks?.count(unit))+Number(this.hero.laserStar?.host===unit)+Number(!!s.link?.size);
    if(this.v('Severance')&&effects)this.delay(.12,()=>{const t=this.targets(p,30).find(t=>t.unit===unit);if(t){this.run.options.arc(this.pos,t.point,violet);this.damage(t,power*.4*effects,{kind,ancestry:['Severance']});}});
    if(s.embed){const group=this.targets(p,45,unit.entity);for(let i=0;i<s.embed&&group.length;i++)this.bolt(p,group[i%group.length],66,c,'Hidden Arsenal',{color:violet,passive:false});s.embed=0;}
   }
@@ -183,7 +184,7 @@ export class HeroEvolutionCombat extends LiberationCombat {
   }
   if(this.b.hero==='ninja'){
    const star=h.laserStar;if(!star)return;
-   if(this.v('Phantom Footing')&&h.motion.mode==='air'&&(star.mesh.visible&&star.state!=='charging'&&star.mesh.position.distanceTo(this.pos)<4||h.shuriken.anchor?.position.distanceTo(this.pos)<4))h.motion.jumps=Math.min(h.motion.jumps,1);
+   if(this.v('Phantom Footing')&&h.motion.mode==='air'&&(star.mesh.visible&&star.state!=='charging'&&star.mesh.position.distanceTo(this.pos)<4||h.shuriken.anchor?.position.distanceTo(this.pos)<4||[...(h.kunaiMarks?.marks.keys()||[])].some(u=>h.kunaiMarks.anchor(u)?.distanceTo(this.pos)<4)))h.motion.jumps=Math.min(h.motion.jumps,1);
    if(this.v('Grinding Singularity')&&star.state==='grinding')this.pull(star.mesh.position,star.radius+7,dt*8);
    return;
   }

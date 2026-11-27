@@ -16,17 +16,17 @@ t=setup();
 const beyond=t.enemy(0,331);
 t.step(1,true);
 t.step(2);
-assert.equal(t.a.throws,5);
+assert.equal(t.a.throws,3);
 assert.equal(beyond.health,1000,'stored kunai cannot reach past 330 m');
 assert.equal(t.a.bolts.length,0,'all kunai expire at the range limit');
-t=setup();t.enemy(0,10);t.enemy(0,20);t.step(2,true);assert.equal(t.a.stored,5);assert.equal(t.a.throws,0,'held kunai do not auto-fire');t.step(.45);assert.equal(t.a.throws,5);assert.equal(t.a.lastVolley,5);assert.equal(t.units[0].health,725);assert.equal(t.units[1].health,1000,'kunai stop at first enemy');assert.equal(t.a.bolts.length,0);
-t=setup();t.step(.25,true);assert.equal(t.a.stored,2);t.step(.25,true);assert.equal(t.a.stored,3);t.step(.5,true);assert.equal(t.a.stored,5);t.step(8,true);assert.equal(t.a.stored,5);t.h.aim=()=>new THREE.Vector3(100,1.2,0);t.step(1/120);assert.equal(t.a.queue.length,4);t.h.aim=()=>new THREE.Vector3(0,1.2,100);t.step(.35);assert.equal(t.a.throws,5);assert(t.a.bolts.every(b=>b.dir.x>.999&&Math.abs(b.position.z)<1e-8),'released volley stays in one straight line');
+t=setup();t.enemy(0,10);t.enemy(0,20);t.step(2,true);assert.equal(t.a.stored,3);assert.equal(t.a.throws,0,'held kunai do not auto-fire');t.step(.45);assert.equal(t.a.throws,3);assert.equal(t.a.lastVolley,3);assert.equal(t.units[0].health,835);assert.equal(t.units[1].health,1000,'kunai stop at first enemy');assert.equal(t.a.bolts.length,0);
+t=setup();t.step(.25,true);assert.equal(t.a.stored,2);t.step(.25,true);assert.equal(t.a.stored,3);t.step(.5,true);assert.equal(t.a.stored,3);t.step(8,true);assert.equal(t.a.stored,3);t.h.aim=()=>new THREE.Vector3(100,1.2,0);t.step(1/120);assert.equal(t.a.queue.length,2);t.h.aim=()=>new THREE.Vector3(0,1.2,100);t.step(.35);assert.equal(t.a.throws,3);assert(t.a.bolts.every(b=>b.dir.x>.999&&Math.abs(b.position.z)<1e-8),'released volley stays in one straight line');
 t=setup();t.step(2,true);t.a.cancelInput();t.step(.2);assert.equal(t.a.throws,0,'pause/input loss discards stored kunai');
 t=setup();for(const [x,z]of[[0,7.5],[-2,2],[2,2],[0,-3],[0,12]])t.enemy(x,z);assert(t.a.slash());assert.deepEqual(t.units.map(u=>u.health),[560,560,560,1000,1000]);assert.equal(t.a.lastSlashHits,3);assert(!t.a.slash(),'melee cooldown');t.step(1.1);assert(t.a.slash());assert.deepEqual(t.units.map(u=>u.health),[120,120,120,1000,1000]);
 t=setup();t.enemy(0,3);t.sections.push({id:'wall',size:[2,4,.3],state:'intact',body:{position:new THREE.Vector3(0,2,1.5),quaternion:new THREE.Quaternion()}});assert(t.a.slash());assert.equal(t.units[0].health,1000,'slash cannot hit through an intact wall');
 const {COMBAT_DRONE}=await import('../dist/combat-drone-config.js');
 t=setup();const droneHull=t.enemy(0,5,COMBAT_DRONE.hullHealth);assert(t.a.slash());assert(!droneHull.alive,'one slash drops a full-health drone hull');
-console.log('PASS kunai tap/cooldown, five-stack hold/release, no auto-fire, fixed straight burst, first-hit damage, input cancellation; slash hits all forward enemies once, excludes rear/far targets, respects walls and cooldown.');
+console.log('PASS kunai tap/cooldown, three-stack hold/release, no auto-fire, fixed straight burst, first-hit damage, input cancellation; slash hits all forward enemies once, excludes rear/far targets, respects walls and cooldown.');
 // Aim tilts the complete melee fan, including its vertical thickness and cover tests.
 for(const sign of[-1,1]){t=setup();t.h.root.position.y=8;const y=8+sign*6;t.h.aim=()=>new THREE.Vector3(0,y,1.5);const aimed=t.enemy(0,1.5);aimed.shapes[0].center.y=y;const level=t.enemy(0,7);level.shapes[0].center.y=9.2;assert(t.a.slash());assert.equal(aimed.health,560,'aimed '+(sign<0?'down':'up')+' strike hits');assert.equal(level.health,1000,'level target outside tilted fan');assert(sign*t.a.slashDirection.y>.8);const direction=t.a.slashDirection.clone();t.h.aim=()=>new THREE.Vector3(100,8,0);assert(t.a.slashDirection.equals(direction),'active swing aim remains locked');}
 t=setup();t.h.root.position.y=8;t.h.aim=()=>new THREE.Vector3(0,1.2,0);const below=t.enemy(0,0);assert(t.a.slash());assert.equal(below.health,560,'straight-down slash uses a finite attack frame');assert(t.a.slashRotation.toArray().every(Number.isFinite));

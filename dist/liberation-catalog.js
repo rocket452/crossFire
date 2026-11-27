@@ -29,7 +29,7 @@ export const EVOLUTIONS=[
   ['Blade Foundry','star kunai','Throw kunai or ordinary shuriken through a grinding star to duplicate them.'],
   ['Grinding Singularity','star field','Grinding stars draw smaller enemies inward.'],
   ['Crosscut','star dash','Dash through a deployed star to release two opposing stars.'],
-  ['Shadow Relay','anchor kill','Teleport to a lodged anchor to relay it to another nearby enemy.'],
+  ['Shadow Relay','anchor kill','Teleport to a marked enemy to fully mark another nearby enemy for three seconds.'],
   ['Dimensional Cut','anchor slash','Teleporting cuts enemies along the travel path.'],
   ['Severance','slash star anchor kunai','Slash triggers a spectral cut per distinct active Kage effect on the victim.'],
   ['Death From Above','aerial kunai','Falling Cut rebounds restore jumps and scatter kunai.']
