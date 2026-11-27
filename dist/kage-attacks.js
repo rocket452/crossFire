@@ -30,12 +30,13 @@ export class KageAttacks {
   this.slashSegments=32;
   const radius=config.slash.range*.82;
   // Close blade swoosh plus a fainter far wave that shows the cut's full reach.
-  const swoosh=2.35;this.swooshRadius=swoosh;
-  this.arcHalo=this.makeSlashRibbon('#6f6cff',2.1,swoosh+.35,.15,true,3.2,0);
-  this.arc=this.makeSlashRibbon('#46d6ff',1.55,swoosh,0,true,4.5,0);
-  this.arcEdge=this.makeSlashRibbon('#e9ffff',.16,swoosh+.04,-.01,false,7,1);
+  const swoosh=3.0;this.swooshRadius=swoosh;
+  this.arcHalo=this.makeSlashRibbon('#7b5cff',3.0,swoosh+.5,.15,true,2.6,0);
+  this.arc=this.makeSlashRibbon('#46d6ff',2.2,swoosh,0,true,3.6,0);
+  this.arcEdge=this.makeSlashRibbon('#f2ffff',.3,swoosh+.05,-.01,false,5,1);
+  this.arcInner=this.makeSlashRibbon('#b06cff',1.1,swoosh-1.15,.35,true,4,0);
   this.arcEcho=this.makeSlashRibbon('#7fe2ff',.8,radius,.2,true,6,0);this.arcEcho.material.uniforms.tail.value=6;
-  this.cutKit=new LightningKit(this.group,{arcs:8,glows:8,sparks:140});this.cuts=[];
+  this.cutKit=new LightningKit(this.group,{arcs:10,glows:28,sparks:320});this.tipLocal=new THREE.Vector3();this.cuts=[];
   this.slashSparks=new THREE.InstancedMesh(new THREE.OctahedronGeometry(1,0),
    new THREE.MeshBasicMaterial({color:'#b1f4ff',transparent:true,depthWrite:false,toneMapped:false,blending:THREE.AdditiveBlending}),24);
   this.slashSparks.frustumCulled=false;
@@ -134,7 +135,16 @@ export class KageAttacks {
   for(const missile of h.getAttackThreats()){if(!missile.alive)continue;const point=new THREE.Vector3().copy(missile.position);if(this.inCone(point,center)&&this.clearLine(center,point)){h.hit({kind:'missile',missile,point},c.damage,'ninja-slash');this.lastSlashHits++;}}
   // Environment hits use the same direct-hit callback; no damage through a wall.
   const enemySections=new Set(h.getDashEnemies().flatMap(u=>u.entity?.sections||[]));for(const section of h.getSections()){if(section.hidden||section.collisionDisabled||enemySections.has(section))continue;const shape={center:section.body?.position||section,rotation:section.body?.quaternion,half:{x:section.size[0]/2,y:section.size[1]/2,z:section.size[2]/2}},near=this.coneHit({shapes:[shape]},center);if(near)h.hit({kind:'building',section,point:near.point},c.damage,'ninja-slash');}
-  this.slashHits+=this.lastSlashHits;h.burst(center,12);h.shurikenEffects.tone(this.config.feedback.backstabHz);return true;
+  this.slashHits+=this.lastSlashHits;h.burst(center,12);this.launchFlash(center);h.shurikenEffects.tone(this.config.feedback.backstabHz);return true;
+ }
+ launchFlash(center){
+  if(!this.cutKit)return;
+  const ahead=center.clone().addScaledVector(this.slashDirection,1.2);
+  this.cutKit.glow(ahead,{size:2.4,life:.16,grow:1.4,color:new THREE.Color('#ffffff'),peak:.8});
+  this.cutKit.glow(ahead,{size:5,life:.32,grow:.6,color:new THREE.Color('#8a6cff'),peak:.6});
+  const feet=this.hero.root.position.clone();feet.y+=.1;
+  for(let i=0;i<10;i++){const a=i/10*Math.PI*2,p=feet.clone().add(new THREE.Vector3(Math.cos(a)*1.8,0,Math.sin(a)*1.8));this.cutKit.arc(feet,p,{life:.18,width:.55,jag:.25,maxJag:.3,flicker:.04});}
+  this.cutKit.spark(feet,30,7,1,{life:.35,size:.07,sizeSpread:.08,gravity:4,spread:.6});
  }
  queueCut(point){
   // Flash a cut on each struck enemy when the visible sweep reaches it.
@@ -180,16 +190,26 @@ export class KageAttacks {
   if(!this.arcRoot.visible)return;
   const sweep=THREE.MathUtils.smoothstep(progress,.12,.53);
   const fade=1-THREE.MathUtils.smoothstep(progress,.5,1);
-  this.arcRoot.position.copy(this.slashOrigin);
+  // Ride along with Kage: anchor at his current chest height, keep the captured aim.
+  this.arcRoot.position.copy(this.hero.root.position);this.arcRoot.position.y+=c.height;
   this.arcRoot.quaternion.copy(this.slashRotation);
   if(this.fallingSwing)this.arcRoot.scale.set(.24,.38,.39).multiplyScalar(SLASH_VISUAL_SCALE);
   else this.arcRoot.scale.setScalar(SLASH_VISUAL_SCALE);
   const head=1-Math.pow(1-sweep,2)+.02;
   const echo=THREE.MathUtils.smoothstep(progress,.18,.48);
   const set=(layer,s,f)=>{layer.material.uniforms.sweep.value=s;layer.material.uniforms.fade.value=f;};
-  set(this.arcHalo,head,fade*.55);set(this.arc,head,fade*1.1);set(this.arcEdge,head,fade*1.3);set(this.arcEcho,echo*1.02,.42*(1-THREE.MathUtils.smoothstep(progress,.42,.7)));
+  set(this.arcHalo,head,fade*.85);set(this.arc,head,fade*1.5);set(this.arcEdge,head,fade*1.8);if(this.arcInner)set(this.arcInner,Math.max(0,head-.08),fade*.9);set(this.arcEcho,echo*1.02,.42*(1-THREE.MathUtils.smoothstep(progress,.42,.7)));
 
   const radius=this.swooshRadius||c.range*.82;
+  if(this.cutKit&&sweep<1&&!this.fallingSwing){
+   // Blazing blade tip racing along the crescent, shedding sparks and afterglow.
+   const a=THREE.MathUtils.lerp(-1,1,Math.min(1,head));
+   this.tipLocal.set(Math.sin(a)*radius,.32*Math.sin(a)*radius,Math.cos(a)*radius);
+   this.arcRoot.updateMatrixWorld();const tip=this.arcRoot.localToWorld(this.tipLocal.clone());
+   this.cutKit.glow(tip,{size:.8,life:.045,color:new THREE.Color('#ffffff'),peak:.75});
+   this.cutKit.glow(tip,{size:1.5,life:.08,peak:.22});
+   this.cutKit.spark(tip,5,8,1.5,{life:.32,size:.08,sizeSpread:.1,gravity:6});
+  }
   let count=0;
   for(let i=0;i<24;i++){
    const fraction=(i+.5)/24;
