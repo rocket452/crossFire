@@ -80,17 +80,17 @@ import {WalkerSniper,WALKER_SNIPER} from './walker-sniper.js?v=415';
 import {RobotEyeBeams} from './robot-eye-beams.js?v=charged-shuriken-130';
 import {RobotArsenal} from './robot-arsenal.js?v=relay-targeting-385';
 import {setTerrainMoundsEnabled,terrainHeight,traceTerrain} from './runner-motion.js?v=424';
-const assetCityMode=new URLSearchParams(location.search).get('scene')==='city-test';
-const testingMode=assetCityMode||new URLSearchParams(location.search).get('scene')==='testing';let testingArena=null,assetCity=null;
+const assetCityMode=(new URLSearchParams(location.search).get('scene')||'city-liberation')==='city-test';
+const testingMode=assetCityMode||(new URLSearchParams(location.search).get('scene')||'city-liberation')==='testing';let testingArena=null,assetCity=null;
 function activeRaiders(){return testingArena||evacuation?.raider||missionRaiders;}
-const evacuationMode=new URLSearchParams(location.search).get('scene')==='evacuation';let evacuation=null,evacuationHelicopterStrike=null,evacuationReinforcement=null,evacuationCinematic=null;
-const convoyMode=new URLSearchParams(location.search).get('scene')==='convoy';let convoy=null,convoyHUD=null,argus=null,convoyResults=null,resultsPause=false;
+const evacuationMode=(new URLSearchParams(location.search).get('scene')||'city-liberation')==='evacuation';let evacuation=null,evacuationHelicopterStrike=null,evacuationReinforcement=null,evacuationCinematic=null;
+const convoyMode=(new URLSearchParams(location.search).get('scene')||'city-liberation')==='convoy';let convoy=null,convoyHUD=null,argus=null,convoyResults=null,resultsPause=false;
 const convoyConfig=convoyMode?await fetch('convoy-config.json?v=argus-sustained-205').then(r=>{if(!r.ok)throw Error('Convoy config unavailable');return r.json();}):null;
-const liberationMode=new URLSearchParams(location.search).get('scene')==='city-liberation';
+const liberationMode=(new URLSearchParams(location.search).get('scene')||'city-liberation')==='city-liberation';
 const {CityLiberation}=liberationMode?await import('./city-liberation.js?v=439'):{};
 const {LiberationUI}=liberationMode?await import('./liberation-ui.js?v=435'):{};
-const defenseMode=new URLSearchParams(location.search).get('scene')==='wave-defense';
-const mission1Mode=liberationMode||defenseMode||new URLSearchParams(location.search).get('scene')==='mission-1';
+const defenseMode=(new URLSearchParams(location.search).get('scene')||'city-liberation')==='wave-defense';
+const mission1Mode=liberationMode||defenseMode||(new URLSearchParams(location.search).get('scene')||'city-liberation')==='mission-1';
 const districtMode=evacuationMode||mission1Mode;
 setTerrainMoundsEnabled(!defenseMode);
 const districtHeroStart=defenseMode?WAVE_DEFENSE_HERO_START:MISSION1_HERO_START;
@@ -201,7 +201,7 @@ const defenseTitle=defenseMode?new DefenseTitle({
  rebuild:()=>resetDistrict(),
  leave:()=>{
   const url=new URL(location.href);
-  url.searchParams.delete('scene');
+  url.searchParams.set('scene','battle');
   location.assign(url);
  },
  startRound:()=>{
@@ -1054,7 +1054,7 @@ function renderedPlayerDamage(){if(!lastPlayerDamage)return null;const c=lastPla
 window.battleDiagnostics=()=>({liberation:liberationMode&&missionRaiders?.build?{stage:missionRaiders.stage+1,phase:missionRaiders.phase,level:missionRaiders.build.level,kills:missionRaiders.build.kills,hp:missionRaiders.build.hp,credits:missionRaiders.build.credits,upgrades:[...missionRaiders.build.ranks.keys()]}:null,waveDefense:defenseMode&&missionRaiders?{wave:missionRaiders.wave,group:missionRaiders.group+1,upgradePending:missionRaiders.upgradePending,upgrades:[...missionRaiders.upgrades],phase:missionRaiders.phase,relayHP:missionRaiders.relay.health,remaining:missionRaiders.remaining}:null,mission1:mission1Mode?{buildings:layout?.buildings.length,raiders:missionRaiders?.diagnostics()}:null,assetCity:assetCity?.diagnostics()||null,testing:testingArena?.diagnostics()||null,enemySeparation:enemySeparation.diagnostics(),actorSilhouettes:actorSilhouettes.diagnostics(),robotDeathEffects:robotDeathEffects.diagnostics(),enemyDamageFlash:enemyDamageFlash.diagnostics(),minimap:minimap.diagnostics(),evacuation:evacuation?.diagnostics()||null,evacuationHelicopterStrike:evacuationHelicopterStrike?.diagnostics()||null,evacuationReinforcement:evacuationReinforcement?.diagnostics()||null,evacuationCinematic:evacuationCinematic?.diagnostics()||null,convoy:convoy?.diagnostics()||null,argus:argus?.diagnostics()||null,mapBounds:convoyMode?convoyConfig.map.bounds:districtMode?districtBounds:{minX:-60,maxX:60,minZ:-60,maxZ:60},loaded,paused,speed,view,inputMode:inputMode.mode,seconds:simTime,shotsFired,weaponImpacts:{...weaponImpacts},army:{tanks:tanks.length,helicopters:helicopters.length,infantry:troops.length},physics:physics?.stats(),camera:camera.position.toArray(),pilot:pilot?.diagnostics(),playerMissiles,playerHits,playerBuildingHits,playerUnitHits,renderedPlayerDamage:renderedPlayerDamage(),combat:unitDamage?.stats(),ninja:ninja?.diagnostics(),robot:robot?.diagnostics(),mochi:mochi?.diagnostics(),prism:prism?.diagnostics(),axolotl:axo?.diagnostics(),embercat:ember?.diagnostics(),hero:hero?.diagnostics(),portalHero:portalHero?.diagnostics(),solara:solara?.diagnostics(),roster:roster.diagnostics(),missileDefense:robotMissiles?.diagnostics(),arsenal:arsenal?.diagnostics(),eyeBeams:eyeBeams?.diagnostics(),walkerSniper:walkerSniper?.diagnostics(),runner:runner?.diagnostics(),beam:beamCombat?.diagnostics(),beamEffect:beamEffect?.diagnostics(),missileExplosions:missileExplosions.diagnostics(),helicopters:helicopters.map(h=>({team:h.team,index:h.i,position:h.root.position.toArray(),visible:h.root.visible})),infantry:soldierCrowd?.diagnostics(),triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,debris:physics?.dynamic.slice(0,3).map(c=>({position:[c.body.position.x,c.body.position.y,c.body.position.z],quaternion:[c.body.quaternion.x,c.body.quaternion.y,c.body.quaternion.z,c.body.quaternion.w]}))});
 
 if(districtMode||testingMode||convoyMode){document.querySelectorAll('[data-view="tank"],[data-view="air"],[data-view="infantry"],.factions').forEach(e=>e.hidden=true);document.querySelector('.headline>p').innerHTML=liberationMode?'City Liberation.<br>Break the occupation.':defenseMode?'Wave Defense.<br>Protect the evacuation rocket.':mission1Mode?'Mission 1.<br>Take down the Siege Walker.':'Protect the civilians.<br>Escort them to the evacuation Chinook.';}
-document.querySelector('.viewer').classList.toggle('is-escort',evacuationMode);$('scene-select').value=assetCityMode?'city-test':convoyMode?'convoy':testingMode?'testing':liberationMode?'city-liberation':defenseMode?'wave-defense':mission1Mode?'mission-1':evacuationMode?'evacuation':'battle';$('evac-status').hidden=!evacuationMode;$('casualty-hud').hidden=!evacuationMode;$('scene-select').onchange=e=>{const url=new URL(location.href);if(['evacuation','mission-1','city-liberation','wave-defense','testing','convoy','city-test'].includes(e.target.value))url.searchParams.set('scene',e.target.value);else url.searchParams.delete('scene');location.href=url.href;};
+document.querySelector('.viewer').classList.toggle('is-escort',evacuationMode);$('scene-select').value=assetCityMode?'city-test':convoyMode?'convoy':testingMode?'testing':liberationMode?'city-liberation':defenseMode?'wave-defense':mission1Mode?'mission-1':evacuationMode?'evacuation':'battle';$('evac-status').hidden=!evacuationMode;$('casualty-hud').hidden=!evacuationMode;$('scene-select').onchange=e=>{const url=new URL(location.href);if(['evacuation','mission-1','city-liberation','wave-defense','testing','convoy','city-test'].includes(e.target.value))url.searchParams.set('scene',e.target.value);else url.searchParams.set('scene','battle');location.href=url.href;};
 
 if(liberationMode){
  viewer.classList.add('is-liberation');
