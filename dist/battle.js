@@ -856,7 +856,7 @@ function readKageModel(){
  return 'cyber';
 }
 function loadKageArmor(variant){
- const asset=variant==='cyber'?'kage-cyber.glb?v=443':variant==='frog'?'kage-frog.glb?v=390':'kage-armored.glb?v=390';
+ const asset=variant==='cyber'?'kage-cyber.glb?v=444':variant==='frog'?'kage-frog.glb?v=390':'kage-armored.glb?v=390';
  return new GLTFLoader().loadAsync('city-assets/licensed-characters/'+asset);
 }
 function setupKageModelPicker(classic,initial){

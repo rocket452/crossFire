@@ -184,22 +184,22 @@ def limbs():
         loft([(.56, .106, -.006, .066, .064), (.72, .098, -.004, .075, .07), (.86, .09, -.004, .084, .078),
               (.975, .084, 0, .08, .07)], ['armor dark', 'armor dark', 'armor dark'], joint('Thigh'), side=side, facets=8)
         # Flared boots: light-grey cuff below the knee, dark lower boot, light toe cap.
-        loft([(.08, .14, .02, .19, .21), (.20, .14, .01, .186, .2), (.32, .137, 0, .172, .18), (.36, .135, 0, .168, .172),
-              (.48, .128, 0, .15, .152), (.58, .12, -.004, .13, .13), (.64, .112, -.006, .1, .1)],
+        loft([(.08, .136, .01, .13, .14), (.20, .135, .004, .125, .134), (.32, .132, 0, .116, .122), (.36, .13, 0, .113, .116),
+              (.48, .124, 0, .1, .1), (.58, .116, -.004, .086, .086), (.64, .11, -.006, .072, .072)],
              ['armor dark', 'armor dark', 'armor mid', 'armor light', 'armor light', 'armor light'], joint('Calf'),
              side=side, facets=8)
-        side_plate([(-.06, .34), (-.025, .34), (.05, .12), (.015, .12)], .335, 'glow red', 'armor dark', prefix + 'Calf', side)
+        side_plate([(-.045, .34), (-.015, .34), (.04, .12), (.01, .12)], .262, 'glow red', 'armor dark', prefix + 'Calf', side)
         # Foot: light-grey sloped toe cap and a dark sole.
-        loft([(.0, .14, .085, .175, .22), (.065, .14, .1, .175, .22), (.13, .14, .07, .15, .16)],
+        loft([(.0, .137, .05, .12, .16), (.055, .137, .065, .12, .16), (.11, .137, .045, .105, .12)],
              ['armor light', 'armor light'], lambda v: blend(v.z, .1, .22, prefix + 'Foot', prefix + 'Toe0'), side=side, facets=8)
-        block((side * .14, .012, .08), (.33, .024, .42), 'armor dark', lambda v: blend(v.z, .1, .22, prefix + 'Foot', prefix + 'Toe0'))
+        block((side * .137, .01, .05), (.23, .02, .31), 'armor dark', lambda v: blend(v.z, .1, .22, prefix + 'Foot', prefix + 'Toe0'))
         # Arms: dark round shoulder, thin upper arm, large light-grey forearm bracer, dark hand.
-        tube((side * .17, 1.43, 0), (side * .24, 1.43, 0), .072, .072, 'armor dark', joint('UpperArm'), facets=8)
+        tube((side * .17, 1.43, 0), (side * .24, 1.43, 0), .062, .062, 'armor dark', joint('UpperArm'), facets=8)
         loft([(.24, .01, 1.425, .045, .045), (.42, .01, 1.422, .045, .044), (.50, .01, 1.42, .042, .042)],
              ['armor dark', 'armor dark'], lambda v: blend(abs(v.x), .45, .50, prefix + 'UpperArm', prefix + 'Forearm'),
              axis='x', side=side, facets=6)
-        loft([(.50, .012, 1.42, .062, .06), (.54, .012, 1.422, .088, .084), (.69, .012, 1.424, .092, .088),
-              (.72, .012, 1.424, .07, .066)], ['armor light', 'armor light', 'armor mid'], joint('Forearm'), axis='x', side=side, facets=8)
+        loft([(.50, .012, 1.42, .052, .05), (.54, .012, 1.422, .068, .065), (.69, .012, 1.424, .072, .068),
+              (.72, .012, 1.424, .056, .054)], ['armor light', 'armor light', 'armor mid'], joint('Forearm'), axis='x', side=side, facets=8)
         loft([(.70, .012, 1.424, .05, .045), (.76, .013, 1.426, .055, .042)], ['joint black'],
              lambda v: blend(abs(v.x), .705, .755, prefix + 'Forearm', prefix + 'Hand'), axis='x', side=side, facets=6)
         block((side * .80, 1.43, .012), (.075, .11, .095), 'armor dark', joint('Hand'), axis=(side, 0, 0))
@@ -211,7 +211,7 @@ def limbs():
 
 
 def helmet():
-    scaled(head_parts, (0, 1.53, 0), 1.42)
+    scaled(head_parts, (0, 1.53, 0), 1.12)
 
 
 def head_parts():
