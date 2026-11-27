@@ -43,3 +43,40 @@ for(const fps of [30,60,120]){
  power.amount=11;assert(!ability.start(power,false));
 }
 console.log('PASS Circuit Breaker timing at 30/60/120 Hz, charge, blocked starts, world-space flank, moving ring, armor, damage, expiration and reset.');
+
+const {RunnerStorm,VOLT_STORM}=await import('../dist/runner-storm.js');
+const scene=new Scene(),units=[],detonations=[];
+const circuit=new CircuitBreaker(scene,{hit:()=>true,detonate:point=>detonations.push(point)});
+function target(x,y,immune=false){
+ const root=new Group();root.position.set(x,y,0);
+ const unit={kind:'robot',alive:true,entity:{root},health:20000,immune,
+  shapes:[{center:root.position.clone(),half:new Vector3(.5,.5,.5)}]};
+ units.push(unit);return unit;
+}
+const apply=(hit,damage)=>{
+ if(hit.unit.immune)return 0;
+ hit.unit.health-=damage;
+ return damage;
+};
+const storm=new RunnerStorm({getUnits:()=>units,getSections:()=>[],
+ onHit:(hit,power)=>circuit.strike(hit,power,apply)});
+const origin=new Vector3(),caster=new Vector3(1,0,0);
+const ground=target(0,1),drone=target(0,24),outside=target(20,1),armor=target(2,2,true),plain=target(0,3),expired=target(0,4);
+function mark(unit){circuit.register({unit,point:unit.entity.root.position},caster);}
+mark(expired);circuit.step(1,null,caster);
+for(const unit of [ground,drone,outside,armor])mark(unit);
+const energy=new RunnerEnergy();energy.amount=100;
+assert(storm.callStrike(origin,energy));
+assert(!circuit.primed(ground,caster));
+circuit.step(3,null,caster);storm.update(3);
+assert.equal(ground.health,20000-3*VOLT_STORM.strikeDamage);
+assert.equal(drone.health,ground.health);
+assert.equal(plain.health,20000-VOLT_STORM.strikeDamage);
+assert.equal(expired.health,plain.health);
+assert.equal(outside.health,20000);assert(circuit.marked(outside));
+assert.equal(armor.health,20000);assert(circuit.marked(armor));
+assert.equal(detonations.length,2);
+storm.strikeNow(origin);
+assert.equal(ground.health,20000-4*VOLT_STORM.strikeDamage);
+assert.equal(detonations.length,2);
+console.log('PASS Sky Strike detonates two marked targets in its vertical column from any angle, leaves armor and outside marks, and ignores expired marks.');

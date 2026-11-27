@@ -68,7 +68,7 @@ import {WalkerBeamImpact} from './walker-beam-impact.js?v=392';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=393';
 import {VioletHero} from './violet-hero.js?v=428';
-import {Speedster} from './speedster.js?v=437';
+import {Speedster} from './speedster.js?v=438';
 import {RobotMissiles,WALKER_SALVO_SIZE,WALKER_MISSILE_BLAST_RADIUS,WALKER_MISSILE_UNIT_BLAST_RADIUS} from './robot-missiles.js?v=424';
 import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';
 import {PortalHero} from './portal-hero.js?v=397';
@@ -639,7 +639,28 @@ function weldingBeamHit(hit,power,kind='welding'){
 function voltGroundTarget(from,direction){
  const c=VOLT_STORM,far=from.clone().addScaledVector(direction,c.strikeRange),terrain=traceTerrain(from,far),flat=traceImpact(from,far,{sections:[],ground:true,radius:0}),ground=terrain&&(!flat||terrain.t<flat.t)?terrain:flat,p=ground?new THREE.Vector3().copy(ground.point):new THREE.Vector3(runner.motion.position.x+Math.sin(runner.yaw)*25,0,runner.motion.position.z+Math.cos(runner.yaw)*25);p.y=terrainHeight(p.x,p.z)+.1;const b=runner.motion.bounds;if(p.x<b.minX+1||p.x>b.maxX-1||p.z<b.minZ+1||p.z>b.maxZ-1)return null;if(traceImpact(from,p,{sections:physics.chunks,ground:false})||traceImpact(p.clone().add(new THREE.Vector3(0,.2,0)),p.clone().add(new THREE.Vector3(0,4,0)),{sections:physics.chunks,ground:false,radius:.3}))return null;return p;
 }
-function voltStormHit(hit,power,kind){if(hit.section&&(kind==='ball-lightning-contact'||kind==='sky-strike')){const section=hit.section;if(section.state!=='intact'||section.collisionDisabled||section.hp<=0)return 0;const before=section.hp;physics.damageChunk(section,power,{source:kind==='sky-strike'?'volt-rush':'volt-orb'});if(section.hp<=0)physics.queueDetach(section,hit.point,power*.14,true);if(kind==='ball-lightning-contact')physics.checkSupports(section.building);return before-section.hp;}if(hit.unit?.kind!=='robot'||!hit.unit.alive)return 0;const damage=damageRobotHit(hit,power,kind,true);if(damage>0){emitParticle('spark',new THREE.Vector3().copy(hit.point),kind==='sky-strike'?20:6,kind==='sky-strike'?1.3:.7);}return damage;}
+function voltStormHit(hit,power,kind){
+ const skyStrike=kind==='sky-strike';
+ if(hit.section&&(skyStrike||kind==='ball-lightning-contact')){
+  const section=hit.section;
+  if(section.state!=='intact'||section.collisionDisabled||section.hp<=0)return 0;
+  const before=section.hp;
+  physics.damageChunk(section,power,{source:skyStrike?'volt-rush':'volt-orb'});
+  if(section.hp<=0)physics.queueDetach(section,hit.point,power*.14,true);
+  if(!skyStrike)physics.checkSupports(section.building);
+  return before-section.hp;
+ }
+ if(hit.unit?.kind!=='robot'||!hit.unit.alive)return 0;
+ const damage=skyStrike
+  ?runner.circuit.strike(hit,power,(contact,amount)=>{
+   const before=droneEngineHealth(contact);
+   const dealt=damageRobotHit(contact,amount,kind,true);
+   return Math.max(dealt,(before-droneEngineHealth(contact))||0);
+  })
+  :damageRobotHit(hit,power,kind,true);
+ if(damage>0)emitParticle('spark',new THREE.Vector3().copy(hit.point),skyStrike?20:6,skyStrike?1.3:.7);
+ return damage;
+}
 
 function defenseChain(hit,power,alreadyHit=[]){
  if(!defenseMode||!missionRaiders?.upgrades.has('chain')||hit.unit?.kind!=='robot')return null;

@@ -49,9 +49,19 @@ export class CircuitBreaker {
   const side=position.clone().sub(unit.entity.root.position).setY(0);
   return side.lengthSq()>1e-8?side.normalize():null;
  }
+ marked(unit){
+  return !!unit?.alive&&(this.marks.get(unit)?.until??0)>this.time;
+ }
+ strike(hit,power,applyDamage){
+  if(!this.marked(hit.unit))return applyDamage(hit,power);
+  const dealt=applyDamage(hit,power*(1+this.config.bonusDamage));
+  if(dealt>0)this.consume(hit);
+  return dealt;
+ }
  primed(unit,position){
-  const mark=this.marks.get(unit),side=mark&&this.side(unit,position);
-  return !!side&&unit.alive&&mark.until>this.time&&
+  if(!this.marked(unit))return false;
+  const mark=this.marks.get(unit),side=this.side(unit,position);
+  return !!side&&
    side.dot(mark.side)<=Math.cos(this.config.angleDegrees*Math.PI/180)+1e-8;
  }
  updateRing(unit,ring){
