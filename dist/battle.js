@@ -68,7 +68,7 @@ import {WalkerBeamImpact} from './walker-beam-impact.js?v=392';
 import {EnergyBeamEffect} from './energy-beam.js?v=runner-6';
 import {BeamCombat} from './beam-combat.js?v=393';
 import {VioletHero} from './violet-hero.js?v=428';
-import {Speedster} from './speedster.js?v=453';
+import {Speedster} from './speedster.js?v=464';
 import {RobotMissiles,WALKER_SALVO_SIZE,WALKER_MISSILE_BLAST_RADIUS,WALKER_MISSILE_UNIT_BLAST_RADIUS} from './robot-missiles.js?v=424';
 import {MissileExplosions} from './missile-explosions.js?v=neon-missiles-318';
 import {PortalHero} from './portal-hero.js?v=397';
@@ -133,7 +133,7 @@ mesh(unitBox,groundMat,convoyMode?(convoyConfig.map.bounds.minX+convoyConfig.map
 const roadLanes=testingMode?COMBAT_ARENA.roadLanes:[-24,0,24],roadLength=testingMode?COMBAT_ARENA.roadLength:110;const roads=[];for(const a of roadLanes){roads.push({p:[a,.015,0],s:[11,.035,roadLength]},{p:[0,.02,a],s:[roadLength,.035,11]});}instanced(unitBox,asphalt,roads);
 const paint=[];for(const a of roadLanes)for(let t=testingMode?-111:-51;t<(testingMode?112:52);t+=5){if(roadLanes.some(c=>Math.abs(c-t)<7))continue;paint.push({p:[a,.055,t],s:[.13,.025,2.3]},{p:[t,.055,a],s:[2.3,.025,.13]});}for(const x of roadLanes)for(const z of roadLanes)for(let j=-3;j<=3;j++){paint.push({p:[x+j*.8,.06,z+7],s:[.35,.025,2.1]},{p:[x+j*.8,.06,z-7],s:[.35,.025,2.1]},{p:[x+7,.065,z+j*.8],s:[2.1,.025,.35]},{p:[x-7,.065,z+j*.8],s:[2.1,.025,.35]});}instanced(unitBox,roadPaint,paint);
 let seed=57;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
-let droneImpactShake=0;
+let droneImpactShake=0,hitStop=0;
 let loaded=false,paused=false,speed=1,simTime=0,frameClock=0,view='overview',slowSeconds=0;let kit={},layout,physics,soldierCrowd,soldierParts,soldierMotion,humanoidModel,pilot,unitDamage,robot,beamEffect,beamCombat,hero,runner,robotMissiles,arsenal,portalHero,walkerSniper,solara,eyeBeams,mochi,ninja,prism,axo,ember,lux;let projectileSequence=0;let playerMissiles=0,playerHits=0,playerBuildingHits=0,playerUnitHits=0;let lastPlayerDamage=null;const buildingRecords=new Map(),chunkBatches={},tanks=[],helicopters=[],troops=[],projectiles=[],particles=[],tracers=[];let impactLog=[],shotsFired=0;const weaponImpacts={shell:0,rocket:0,pulse:0,beam:0,electric:0,plasma:0};
 let rosterPause=false;
 const soloRoster=testingMode||mission1Mode;
@@ -936,7 +936,8 @@ const female=humanoid;physics=new DestructionWorld({maxDynamic:innerWidth<700?11
   if(dealt&&hit.unit.alive&&![robot,argus,bastionTest()?.boss,testingArena?.ronin].includes(enemy))enemy.stun?.(seconds);
   return dealt;
  },onThunderImpact:(point,connected)=>{
-  droneImpactShake=Math.max(droneImpactShake,connected?.56:.18);
+  // A connected Thunder Punch freezes the world for a beat (hit-stop) and kicks the camera hard.
+  droneImpactShake=Math.max(droneImpactShake,connected?1:.25);if(connected)hitStop=Math.max(hitStop,.085);
   if(connected)emitParticle('spark',new THREE.Vector3().copy(point),20,1.3);
  },onCircuitHit:(hit,power)=>{
   const before=droneEngineHealth(hit);
@@ -1050,7 +1051,7 @@ function minimapSnapshot(){
 }
 function updateHeroMinimap(dt){const player=loaded?controlledHero():null,alert=loaded&&(evacuationReinforcement?.root.visible||(districtMode&&activeRaiders()?.waveAlerts().length)||evacuation?.spawnWarning?.active);if(!player&&!alert){minimap.update(dt,null);return;}camera.getWorldDirection(v3);const yaw=Math.hypot(v3.x,v3.z)>.0001?Math.atan2(v3.x,v3.z):minimap.heading;minimap.update(dt,{position:player?.root.position||evacuation?.landing||robot.root.position,yaw});}
 function resize(){const w=viewport.clientWidth,h=viewport.clientHeight;renderer.setPixelRatio(viewportPixelRatio(w,h,renderPixelRatio));renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}new ResizeObserver(resize).observe(viewport);resize();inputMode.subscribe(mode=>{$('camera-hint').innerHTML=mode==='touch'?'DRAG TO ORBIT <b>·</b> PINCH TO ZOOM <b>·</b> TWO FINGERS TO PAN':'WASD MOVE <b>·</b> Q/E HEIGHT <b>·</b> DRAG TO ORBIT <b>·</b> SCROLL TO ZOOM';});
-let previous=performance.now(),fpsStart=previous,frames=0;function animate(now){requestAnimationFrame(animate);enemyDamageFlash.beginDashFrame();const elapsed=Math.min((now-previous)/1000,.25);previous=now;const dt=Math.min(elapsed,.075);if(loaded&&!paused&&(!liberationMode||openingTitle?.active||controlledHero()&&!missionRaiders?.upgradePending)&&!missionRaiders?.ended&&(!evacuationBriefing?.pending||openingTitle?.active)){const step=dt*speed;if(evacuationCinematic?.active){evacuationCinematic.update(dt);evacuationReinforcement.update(dt);updateEffects(dt);}else{simTime+=step;updateCombat(step);if(!evacuationCinematic?.active){physics.step(step);for(const c of physics.dynamic)syncChunk(c);robot.syncWrecks();argus?.syncWrecks();activeRaiders()?.syncWrecks();for(const h of helicopters)if(h.wreck){h.root.position.set(h.wreck.position.x,h.wreck.position.y,h.wreck.position.z);h.root.quaternion.set(h.wreck.quaternion.x,h.wreck.quaternion.y,h.wreck.quaternion.z,h.wreck.quaternion.w);}refreshUnitShapes();updateEffects(step);}}}if(missionRaiders?.phase==='lost'&&physics.falling.size){physics.stepReleasedDebris(dt);updateEffects(dt);}if(convoy)convoyResults.update(convoy);if(openingTitle?.active)openingTitle.update(elapsed);updateRelayFlash(elapsed);updateCamera(elapsed);updateRelayIntro();updateHeroMinimap(elapsed);pilot?.updateMarkers();updateActorSilhouettes();if(ninja?.active&&view==='ninja'&&!missionRaiders?.ended){
+let previous=performance.now(),fpsStart=previous,frames=0;function animate(now){requestAnimationFrame(animate);enemyDamageFlash.beginDashFrame();const elapsed=Math.min((now-previous)/1000,.25);previous=now;const dt=Math.min(elapsed,.075);if(loaded&&!paused&&(!liberationMode||openingTitle?.active||controlledHero()&&!missionRaiders?.upgradePending)&&!missionRaiders?.ended&&(!evacuationBriefing?.pending||openingTitle?.active)){const step=dt*speed*(hitStop>0?.05:1);hitStop=Math.max(0,hitStop-elapsed);if(evacuationCinematic?.active){evacuationCinematic.update(dt);evacuationReinforcement.update(dt);updateEffects(dt);}else{simTime+=step;updateCombat(step);if(!evacuationCinematic?.active){physics.step(step);for(const c of physics.dynamic)syncChunk(c);robot.syncWrecks();argus?.syncWrecks();activeRaiders()?.syncWrecks();for(const h of helicopters)if(h.wreck){h.root.position.set(h.wreck.position.x,h.wreck.position.y,h.wreck.position.z);h.root.quaternion.set(h.wreck.quaternion.x,h.wreck.quaternion.y,h.wreck.quaternion.z,h.wreck.quaternion.w);}refreshUnitShapes();updateEffects(step);}}}if(missionRaiders?.phase==='lost'&&physics.falling.size){physics.stepReleasedDebris(dt);updateEffects(dt);}if(convoy)convoyResults.update(convoy);if(openingTitle?.active)openingTitle.update(elapsed);updateRelayFlash(elapsed);updateCamera(elapsed);updateRelayIntro();updateHeroMinimap(elapsed);pilot?.updateMarkers();updateActorSilhouettes();if(ninja?.active&&view==='ninja'&&!missionRaiders?.ended){
  enemyDamageFlash.paintDashTargets(unitDamage.units.filter(unit=>
   !ninja.motion.dash?.hitUnits.has(unit)&&kageDashCanFinish(unit,ninja.shuriken.crosscutTarget===unit?ninja.shurikenConfig.arrival.damage*ninja.shurikenConfig.arrival.backstabMultiplier:NINJA.dashDamage,ninja.shuriken.crosscutTarget===unit)
  ),now/1000);

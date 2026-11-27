@@ -1,4 +1,5 @@
 import {ThunderPunch,THUNDER_PUNCH} from './thunder-punch.js?v=453';
+import {ThunderPunchFX} from './thunder-punch-fx.js?v=464';
 import {CircuitBreaker,CIRCUIT_BREAKER} from './circuit-breaker.js?v=453';
 import {VOLT_CRITICAL_MASS_ENABLED,VOLT_OVERLOAD_ENABLED,VOLT_RESCUE_DASH_ENABLED} from './hero-ability-config.js?v=434';
 import {pitchHeroBoom,heroViewDirection} from './hero-camera.js?v=395';
@@ -33,11 +34,11 @@ export class Speedster {
   for(const p of spec.parts){const src=model.scene.getObjectByName(p.name);if(!src?.isMesh)throw Error('Missing runner mesh '+p.name);const pivot=new THREE.Vector3(...p.pivot),geometry=src.geometry.clone().applyMatrix4(src.matrixWorld);geometry.translate(-pivot.x,-pivot.y,-pivot.z);const material=src.material.clone();if(['sigil','eyes'].includes(p.name)){material.emissive=new THREE.Color('#5ceaff');material.emissiveIntensity=3;}const mesh=new THREE.Mesh(geometry,material);mesh.castShadow=true;mesh.receiveShadow=true;if(characterModel&&(characterModel.scene.userData.character?.preserveMaterials||!['eyes','sigil'].includes(p.name)))mesh.visible=false;const node=new THREE.Group();node.add(mesh);const parent=p.parent?this.nodes[p.parent]:this.root,parentPivot=p.parent?new THREE.Vector3(...spec.parts.find(q=>q.name===p.parent).pivot):new THREE.Vector3();node.position.copy(pivot).sub(parentPivot);parent.add(node);this.nodes[p.name]=node;}
   this.character=characterModel?new HumanoidCharacter(characterModel,{variant:'volt',height:spec.height}):null;if(this.character)this.root.add(this.character.root);
   this.hurt=new HeroHurt(this.character,this.root);this.preferences={sensitivity:1,aimAssist:true,sound:true};try{const saved=JSON.parse(localStorage.getItem('crossfire-runner-controls')||'null');if(saved){if(Number.isFinite(saved.sensitivity))this.preferences.sensitivity=THREE.MathUtils.clamp(saved.sensitivity,.5,2);for(const key of ['aimAssist','sound'])if(typeof saved[key]==='boolean')this.preferences[key]=saved[key];}}catch{}this.settingsOpen=false;this.touchAim=matchMedia('(pointer:coarse)').matches;this.assistedAim=null;this.feedback=new RunnerFeedback(scene);
-  this.heading=new RunnerHeading();this.animator=new RunnerAnimator(this.root,this.nodes);this.lookPose=new RunnerLookPose();this.ai=new RunnerAI();this.motion=new RunnerMotion();this.fx=new RunnerElectric(scene);this.welder=new RunnerWelder(scene);this.charge=new RunnerCharge();this.playerBeam=new RunnerBeam();this.energy=new RunnerEnergy();this.thunder=new ThunderPunch(scene);this.onThunderHit=onThunderHit;this.onThunderImpact=onThunderImpact;this.circuit=new CircuitBreaker(scene,{
+  this.heading=new RunnerHeading();this.animator=new RunnerAnimator(this.root,this.nodes);this.lookPose=new RunnerLookPose();this.ai=new RunnerAI();this.motion=new RunnerMotion();this.fx=new RunnerElectric(scene);this.welder=new RunnerWelder(scene);this.charge=new RunnerCharge();this.playerBeam=new RunnerBeam();this.energy=new RunnerEnergy();this.thunder=new ThunderPunch(scene);this.thunderFX=new ThunderPunchFX(scene);this.onThunderHit=onThunderHit;this.onThunderImpact=onThunderImpact;this.circuit=new CircuitBreaker(scene,{
    hit:onCircuitHit,detonate:point=>{onCircuitDetonate?.(point);this.feedback.electricalCue(this.preferences.sound,1500,190,.11);}
   });this.energyReadySeconds=0;this.dash=new RunnerDash({getUnits,getSections,getThreats,traceThreat,onMoveUnit,onPhaseUnit,onEvent,onEnemyHit:(hit,power)=>{const result=onDashHit(hit,power)||{};this.damage+=result.damage||0;this.lastHit='robot';return result;},onRescue:event=>this.feedback.rescue(event,{visible:this.active,sound:this.preferences.sound})});this.stormFX=new RunnerStormFX(scene,camera);this.storm=new RunnerStorm({getUnits,getSections:getStormSections||getSections,onStrikeBuildings:onStormStrikeBuildings,onHit:(hit,power,kind)=>{const damage=onStormHit(hit,power,kind)||0;this.damage+=damage;return damage;},onEvent:e=>{if(e==='blocked')this.feedback.message('ORB LAUNCH BLOCKED · CHARGE REFUNDED');else if(e==='strike')this.stormFX.sky.sound(this.preferences.sound?this.feedback.audio:null);else this.feedback.electricalCue(this.preferences.sound,1600,700,.03);},groundHeight:terrainHeight});this.massFX=new CriticalMassFX(scene);this.critical=new CriticalMass({onBurst:p=>this.releaseMass(p),onOverload:()=>this.overloadMass()});this.dashPending=false;this.charging=false;this.active=false;this.keys=new Set();this.stick={x:0,y:0};this.boost=false;this.heldFire=false;this.mouseFire=false;this.jumpPending=false;this.pulse=0;this.yaw=Math.PI;this.pitch=HERO_CAMERA.defaultPitch;this.wallYaw=0;this.cameraUp=new THREE.Vector3(0,1,0);this.bodyUp=new THREE.Vector3(0,1,0);this.bodyForward=new THREE.Vector3(0,0,-1);this.cameraDirection=new THREE.Vector3();this.hud=document.getElementById('runner-hud');this.viewer=document.querySelector('.viewer');this.damageClock=0;this.damage=0;this.ticks=0;this.eyeHits=0;this.eyeHitSeconds=0;this.viewer.classList.remove('runner-eye-hit');this.lastHit=null;this.time=0;this.reset();this.bindInput();
  }
- reset(){if(this.active)this.exit();this.hurt.reset();this.circuit.reset();this.thunder.reset();this.storm.reset();this.stormFX.clear();this.critical.reset();this.massFX.clear();this.charge.reset();this.playerBeam.reset();this.welder.reset();this.weldSoundAt=0;this.stunCooldown=0;this.stunFlash=0;this.stunPending=false;this.stunShots=0;this.stunTarget=null;this.energy.reset();this.energyReadySeconds=0;this.dash.reset();this.feedback.reset();this.motion.reset();this.animator.reset();this.lookPose.reset();this.character?.reset();this.ai.reset();this.yaw=this.motion.yaw;this.pitch=HERO_CAMERA.defaultPitch;this.wallYaw=0;this.boost=false;document.getElementById('runner-boost')?.classList.remove('active');document.getElementById('runner-boost')?.setAttribute('aria-pressed','false');this.damageClock=0;this.damage=0;this.ticks=0;this.eyeHits=0;this.eyeHitSeconds=0;this.viewer.classList.remove('runner-eye-hit');this.lastHit=null;this.time=0;this.firing=false;this.fx.clear();this.clearInput();this.bodyUp.set(0,1,0);this.cameraUp.set(0,1,0);this.pose(0);}
+ reset(){if(this.active)this.exit();this.hurt.reset();this.circuit.reset();this.thunder.reset();this.thunderFX?.reset();this.storm.reset();this.stormFX.clear();this.critical.reset();this.massFX.clear();this.charge.reset();this.playerBeam.reset();this.welder.reset();this.weldSoundAt=0;this.stunCooldown=0;this.stunFlash=0;this.stunPending=false;this.stunShots=0;this.stunTarget=null;this.energy.reset();this.energyReadySeconds=0;this.dash.reset();this.feedback.reset();this.motion.reset();this.animator.reset();this.lookPose.reset();this.character?.reset();this.ai.reset();this.yaw=this.motion.yaw;this.pitch=HERO_CAMERA.defaultPitch;this.wallYaw=0;this.boost=false;document.getElementById('runner-boost')?.classList.remove('active');document.getElementById('runner-boost')?.setAttribute('aria-pressed','false');this.damageClock=0;this.damage=0;this.ticks=0;this.eyeHits=0;this.eyeHitSeconds=0;this.viewer.classList.remove('runner-eye-hit');this.lastHit=null;this.time=0;this.firing=false;this.fx.clear();this.clearInput();this.bodyUp.set(0,1,0);this.cameraUp.set(0,1,0);this.pose(0);}
  bindInput(){
   for(const [ability,enabled] of Object.entries({mass:VOLT_CRITICAL_MASS_ENABLED,stun:VOLT_OVERLOAD_ENABLED,dash:VOLT_RESCUE_DASH_ENABLED})){
    document.querySelectorAll('[data-volt-ability="'+ability+'"]').forEach(node=>{node.hidden=!enabled;});
@@ -139,7 +140,7 @@ export class Speedster {
   let input=this.active&&!dialog?{forward:this.stick.y+(k.has('w')||k.has('arrowup')?1:0)-(k.has('s')||k.has('arrowdown')?1:0),strafe:-this.stick.x-(k.has('d')||k.has('arrowright')?1:0)+(k.has('a')||k.has('arrowleft')?1:0),boost:this.boost||k.has('shift'),jump:this.jumpPending}:{};
   if(this.thunderPending){
    if(this.active&&!dialog&&!this.circuit.active&&!this.dash.active&&!this.critical.charging&&this.stunFlash<=0&&!this.thunder.active){
-    if(this.thunder.start(this.energy))this.liberation?.cast('thunder-punch',THUNDER_PUNCH.damage);
+    if(this.thunder.start(this.energy)){this.liberation?.cast('thunder-punch',THUNDER_PUNCH.damage);this.thunderFX.charge(this.fistPosition());}
     else this.feedback.message('THUNDER PUNCH NEEDS '+THUNDER_PUNCH.cost+' CHARGE');
    }
    this.thunderPending=false;
@@ -206,6 +207,7 @@ export class Speedster {
    this.thunder.step(dt,()=>this.fireThunderPunch());
    if(this.thunder.active&&!this.firing&&!this.welder.active)this.poseThunderPunch();
   }
+  this.thunderFX.update(dt,{fist:this.thunder.active?this.fistPosition():null,recovering:this.thunder.active&&!this.thunder.striking});
   this.fx.update(dt,time,{position:this.root.position,normal:this.bodyUp,speed:this.motion.speed,beam,carryTrails:this.dash.trails,dashing,energy:this.energy.amount/100,wave:{active:!!this.dash.active,direction:this.dash.active?.direction,carried:this.dash.active?this.dash.active.actors.length-1:0},phaseEvents:this.dash.takeEffects()});this.feedback.update(dt,{active:this.active,camera:this.camera,aim:this.assistedAim});
  }
 
@@ -221,14 +223,17 @@ export class Speedster {
   const hit=this.traceAim(from,end,{...options,radius:c.radius});
   this.thunder.release(from,hit?.point||end,direction);
   this.thunderAim=direction;
+  let detonates=false;
   if(hit?.unit?.kind==='robot'){
-   const detonates=this.circuit.primed(hit.unit,this.root.position);
+   detonates=this.circuit.primed(hit.unit,this.root.position);
    const damage=c.damage*(detonates?1+this.circuit.config.bonusDamage:1);
    if(this.onThunderHit(hit,damage,c.stagger)&&detonates)this.circuit.consume(hit);
   }
+  this.thunderFX.impact(hit?.point||end,direction,{connected:!!hit,detonated:detonates,unit:hit?.unit,groundY:this.motion.mode==='air'?null:this.root.position.y});
   this.onThunderImpact?.(hit?.point||end,!!hit);
   this.feedback.thunder(this.preferences.sound,!!hit);
  }
+ fistPosition(){return this.character?.hand('R')??this.massOrigin();}
  poseThunderPunch(){
   const character=this.character;
   const c=THUNDER_PUNCH,striking=this.thunder.striking;
