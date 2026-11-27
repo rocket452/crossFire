@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {CircuitBreakerFX} from './circuit-breaker-fx.js?v=445';
+import {CircuitBreakerFX} from './circuit-breaker-fx.js?v=447';
 
 export const CIRCUIT_BREAKER=Object.freeze({
  key:'e',cost:12,shots:3,duration:.3,range:52,damage:55,markSeconds:4,angleDegrees:90,bonusDamage:2
