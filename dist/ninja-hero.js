@@ -71,9 +71,10 @@ export class NinjaHero {
    this.character.root.removeFromParent();
   }
   if(!next){
-   this.character=new HumanoidCharacter(model,{variant:'ninja',height:2.25});
+   // Proportions sit 20% of the way from the original Kage (2.25m, 1.30x wide) toward Volt Rush (2.59m, 1x).
+   this.character=new HumanoidCharacter(model,{variant:'ninja',height:2.318});
    this.character.root.position.y=-1.1;
-   if(this.character.nodes.B_KageScarf)this.character.root.scale.set(1.30,1,1.30);
+   if(this.character.nodes.B_KageScarf)this.character.root.scale.set(1.24,1,1.24);
    this.buildArt();
    this.hurt=new HeroHurt(this.character,this.character.root);
    next={character:this.character,hurt:this.hurt,scarf:this.scarf,heldStar:this.heldStar,blade:this.blade};
