@@ -18,5 +18,10 @@ const base=process.env.QA_URL||'http://127.0.0.1:8765/';
    assert.equal(await p.locator('dialog.evac-briefing[open]').count(),0,'no briefing loop in City Battle');
    assert.deepEqual(errors,[]);console.log('PASS',start||'(default)','→ exit →',new URL(p.url()).search);await p.close();
   }
+  // Volt's briefing card lists the current ability keys.
+  const p=await b.newPage({viewport:{width:1280,height:800}});await p.goto(base);
+  await p.locator('dialog.evac-briefing[open] [data-next]').click({timeout:90000});await p.locator('dialog.evac-briefing[open] [data-hero="volt"]').click();
+  const controls=await p.locator('dialog.evac-briefing[open] .evac-briefing-controls').innerText();
+  assert.match(controls,/Thunder Punch\s+C · 25 charge/);assert.match(controls,/Circuit Breaker\s+E · Flank/);console.log('PASS Volt briefing keys: Thunder Punch C, Circuit Breaker E');await p.close();
  }finally{await b.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
