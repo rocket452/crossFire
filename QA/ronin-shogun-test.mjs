@@ -8,8 +8,8 @@ const make=()=>{const hero={alive:true,shapes:[{center:new T.Vector3(0,1.5,50)}]
 const {ActorSilhouettes}=await import('../dist/actor-silhouettes.js');
 const {readRoninModel,saveRoninModel,setupRoninModelChoice}=await import('../dist/ronin-model-choice.js');
 const saved=new Map(),storage={getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)};
-assert.equal(readRoninModel(storage),'shogun');saveRoninModel('original',storage);assert.equal(readRoninModel(storage),'original');saveRoninModel('shogun',storage);assert.equal(readRoninModel(storage),'shogun');
-const broken={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}};assert.equal(readRoninModel(broken),'shogun');saveRoninModel('original',broken);
+assert.equal(readRoninModel(storage),'original','original Ronin is the default');saveRoninModel('shogun',storage);assert.equal(readRoninModel(storage),'shogun');saveRoninModel('original',storage);assert.equal(readRoninModel(storage),'original');
+const broken={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}};assert.equal(readRoninModel(broken),'original');saveRoninModel('original',broken);
 const choice=make(),handlers={},select={value:'',addEventListener:(k,fn)=>handlers[k]=fn};setupRoninModelChoice(select,()=>choice);select.value='original';handlers.change();assert(!choice.model.shogun.enabled);select.value='shogun';handlers.change();assert(choice.model.shogun.enabled);
 const silhouettes=new ActorSilhouettes();silhouettes.update([choice],null,new Set(),0);const overlays=silhouettes.enemies.filter(e=>e.source.isSkinnedMesh);assert.equal(overlays.length,choice.model.shogun.meshes.length);for(const e of overlays){assert(e.overlay.isSkinnedMesh);assert.equal(e.overlay.skeleton,e.source.skeleton);assert(e.overlay.bindMatrix.equals(e.source.bindMatrix));}
 function bounds(r){r.root.updateWorldMatrix(true,true);const box=new T.Box3(),v=new T.Vector3();for(const m of r.model.shogun.meshes){m.skeleton.update();for(let i=0;i<m.geometry.attributes.position.count;i++){m.getVertexPosition(i,v).applyMatrix4(m.matrixWorld);assert(v.toArray().every(Number.isFinite));box.expandByPoint(v);}}return box;}
