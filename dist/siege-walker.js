@@ -11,6 +11,9 @@ const SNIPER_BARREL_BASE=1.9;
 const SNIPER_MOUNT_OFFSET=1;
 const SNIPER_YAW_LIMIT=THREE.MathUtils.degToRad(62);
 const SNIPER_HEAD_CLEARANCE=.08;
+// Whole sniper cannon (receiver, barrel, hit boxes and muzzle) scaled about its shoulder pivot: 30% smaller.
+const SNIPER_SCALE=.7;
+const SNIPER_PARK_POSES=[[1.25,1],[1.25,1.35],[1.45,1.6],[.7,1.5],[1.5,.6],[-.5,1.3],[1.55,1.95]];
 
 const BOX_FACES=[
  [0,1,3,2],[4,6,7,5],[0,4,5,1],[2,3,7,6],[0,2,6,4],[1,5,7,3]
@@ -30,6 +33,7 @@ function shrinkSniperReceiver(geometry){
  geometry.translate(0,-SNIPER_BARREL_Y,0);
  geometry.scale(.73,.73,.72);
  geometry.translate(0,SNIPER_BARREL_Y,0);
+ geometry.scale(SNIPER_SCALE,SNIPER_SCALE,SNIPER_SCALE);
 }
 const SNIPER_MUZZLE_Z=8.85;
 
@@ -37,12 +41,13 @@ function addSniperBarrel(receiver,cyberpunk){
  const steel=new THREE.MeshStandardMaterial({color:cyberpunk?0x566381:0x5b6269,metalness:.65,roughness:.42});
  const jacket=new THREE.MeshStandardMaterial({color:cyberpunk?0x292b49:0x262b30,metalness:.5,roughness:.52});
  const bore=new THREE.MeshStandardMaterial({color:0x0d1018,roughness:1,side:THREE.BackSide});
+ const barrel=new THREE.Group();barrel.name='Sniper barrel assembly';barrel.scale.setScalar(SNIPER_SCALE);receiver.add(barrel);
  const attach=(name,geometry,material,z)=>{
   const part=new THREE.Mesh(geometry,material);
   part.name=name;
   part.position.set(0,SNIPER_BARREL_Y,z);
   part.castShadow=part.receiveShadow=true;
-  receiver.add(part);
+  barrel.add(part);
  };
  const tube=(name,frontRadius,backRadius,back,front,material,open=false)=>{
   const geometry=new THREE.CylinderGeometry(frontRadius,backRadius,front-back,8,1,open).rotateX(Math.PI/2);
@@ -121,8 +126,8 @@ export class SiegeWalker {
    socket.position.set(mount.x,mount.y+.05,mount.z);
    this.meshes.chest.add(arm,socket);
    this.sniperBarrelBox={
-    center:new THREE.Vector3(0,SNIPER_BARREL_Y,(SNIPER_BARREL_BASE+SNIPER_MUZZLE_Z)/2),
-    size:new THREE.Vector3(1.74,1.74,SNIPER_MUZZLE_Z-SNIPER_BARREL_BASE)
+    center:new THREE.Vector3(0,SNIPER_BARREL_Y,(SNIPER_BARREL_BASE+SNIPER_MUZZLE_Z)/2).multiplyScalar(SNIPER_SCALE),
+    size:new THREE.Vector3(1.74,1.74,SNIPER_MUZZLE_Z-SNIPER_BARREL_BASE).multiplyScalar(SNIPER_SCALE)
    };
   }
   this.detachedParts=new Set();
@@ -288,7 +293,8 @@ export class SiegeWalker {
   const node=this.nodes.plasma_cannon;
   if(target)this.plasmaAim={...target};
   node.parent.updateWorldMatrix(true,false);
-  const muzzleOffset=new THREE.Vector3(0,SNIPER_BARREL_Y,SNIPER_MUZZLE_Z+.03);
+  // Shots leave 3 cm in front of the (scaled) muzzle face.
+  const muzzleOffset=new THREE.Vector3(0,SNIPER_BARREL_Y*SNIPER_SCALE,SNIPER_MUZZLE_Z*SNIPER_SCALE+.03);
   if(!target)return {position:node.localToWorld(muzzleOffset)};
   const pivot=node.getWorldPosition(new THREE.Vector3());
   const to=new THREE.Vector3().copy(target).sub(pivot);
@@ -331,8 +337,9 @@ export class SiegeWalker {
   if(!clear(neutral)){
    neutral.identity();
    if(!clear(neutral)){
-    // Park the muzzle outboard if the moving head blocks the forward rest pose.
-    neutral.setFromEuler(new THREE.Euler(1.25,1,0,'YXZ'));
+    // Park the muzzle outboard if the moving head blocks the forward rest pose: the first outboard pose
+    // that really clears the head (the smaller cannon sits closer in, so one fixed pose is not enough).
+    for(const [pitch,yaw] of SNIPER_PARK_POSES){neutral.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));if(clear(neutral))break;}
    }
   }
   const fitted=neutral.clone();
