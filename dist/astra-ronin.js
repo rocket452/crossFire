@@ -1,6 +1,6 @@
-import {RoninFlight} from './astra-ronin-flight.js?v=421';
+import {RoninFlight} from './astra-ronin-flight.js?v=474';
 import * as THREE from './vendor/three.module.js';
-import {Mireguard} from './mireguard.js?v=421';
+import {Mireguard} from './mireguard.js?v=474';
 import {AstraRoninModel} from './astra-ronin-model.js?v=472';
 import {RoninWaves} from './astra-ronin-waves.js?v=471';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-pairs-260';
@@ -14,7 +14,10 @@ export const RONIN={height:15,health:2400,headHealth:999999,segmentHealth:999999
  waveCount:5,waveSpacing:9,waveWidth:4,waveHeight:14,waveStart:6,waveFan:220,waveSpeed:30,waveTravel:80,waveDamage:24,waveBuildingDamage:16};
 const V=()=>new THREE.Vector3();
 export class AstraRonin extends Mireguard{
- constructor(scene,damage,options){super(scene,damage,{...options,config:{...RONIN,...options.config}});this.root.clear();this.model=new AstraRoninModel(this.root,this.config,options.shogunModel);this.waves=new RoninWaves(scene,this.config);this.parts=this.model.parts;this.flightController=new RoninFlight(this);this.type='ronin';this.onBuildingStrike=options.onBuildingStrike||(()=>{});this.root.name='Astra Ronin · sword duelist';this.reset();}
+ // options.arena ({movementBounds, dashBounds}) and options.navigationNodes let a mode other than Combat Testing host him;
+ // options.hunter (City Liberation mini-boss) makes him always track the hero and fly in over buildings to reach them.
+ constructor(scene,damage,options){super(scene,damage,{...options,config:{...RONIN,...options.config}});this.arena=options.arena||null;this.hunter=!!options.hunter;this.root.clear();this.model=new AstraRoninModel(this.root,this.config,options.shogunModel);this.waves=new RoninWaves(scene,this.config);this.parts=this.model.parts;this.flightController=new RoninFlight(this);this.type='ronin';this.onBuildingStrike=options.onBuildingStrike||(()=>{});this.root.name='Astra Ronin · sword duelist';this.reset();}
+ sensesHero(unit){return this.hunter||super.sensesHero(unit);}
  disposeWreck(w){super.disposeWreck(w);w.group.traverse(o=>{if(o.isMesh&&o.geometry.userData.shogunWreck)o.geometry.dispose();});}
  setModelVariant(value){this.model.shogun?.select(value);return this.model.shogun?.mode||'original';}
  spawnWreck(node){if(!this.model.shogun?.enabled)return super.spawnWreck(node);const count=this.wrecks.length,snapshot=this.model.shogun.wreck(node.name);super.spawnWreck(snapshot);snapshot.removeFromParent();if(this.wrecks.length===count)snapshot.traverse(o=>{if(o.isMesh)o.geometry.dispose();});}
@@ -41,7 +44,7 @@ export class AstraRonin extends Mireguard{
   else if(old?.unit===unit&&dt>0){const delta=p.clone().sub(old.point).setY(0);if(delta.length()<=this.config.dashTrackedSpeed*dt*2)v.copy(delta).multiplyScalar(1/dt);}
   v.clampLength(0,this.config.dashTrackedSpeed);this.dashTracking={unit,point:p,velocity:v};
  }
- planDash(remaining){const c=this.config,b=COMBAT_ARENA.dashBounds,start=this.root.position.clone(),velocity=this.dashTracking?.velocity||V();let aim=this.lastSeen.clone(),time=0;
+ planDash(remaining){const c=this.config,b=this.arena?.dashBounds||COMBAT_ARENA.dashBounds,start=this.root.position.clone(),velocity=this.dashTracking?.velocity||V();let aim=this.lastSeen.clone(),time=0;
   for(let i=0;i<3;i++){time=Math.min(c.dashLeadMaxTime,remaining+Math.max(0,aim.distanceTo(start)-c.dashStandOff)/c.dashSpeed+c.swordSwing*.25);const lead=velocity.clone().multiplyScalar(time*c.dashLeadFactor).clampLength(0,c.dashLeadMaxDistance);aim.copy(this.lastSeen).add(lead);}
   aim.y=start.y;aim.x=THREE.MathUtils.clamp(aim.x,b.minX,b.maxX);aim.z=THREE.MathUtils.clamp(aim.z,b.minZ,b.maxZ);
   const direction=aim.clone().sub(start).setY(0),distance=direction.length();if(distance<.001)direction.set(0,0,1).applyQuaternion(this.root.quaternion);else direction.normalize();

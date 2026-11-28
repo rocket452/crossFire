@@ -189,3 +189,13 @@ The first cyberpunk pass was only a recolour with random circuit traces, and it 
 - the shield flash, sheath charge, scarf stream and underglow fade.
 
 All Ronin node suites and the desktop/touch dash and guard browser suites pass.
+
+## City Liberation mini-boss revision 474
+
+The Astra Ronin is the Stage 2 mini-boss of City Liberation's first district, at 5:15. It is the same `AstraRonin` class, constructed with these options:
+- `arena:{movementBounds,dashBounds}` keeps flight, landing and dashes inside the district (`escortMovementBounds(8)`).
+- `navigationNodes` uses the district street grid.
+- `hunter:true` means he always senses the hero, and his flight ignores line of sight, so he takes off and crosses the city over the buildings.
+- `config` sets 2,600 health and damage scaled for 120 HP heroes (sword 16, overhead 24, dash 22, wave 12).
+
+Combat Testing still uses `COMBAT_ARENA` bounds, line-of-sight flight and the full `RONIN` tuning.

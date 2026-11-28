@@ -22,11 +22,18 @@ export class LiberationBuild {
   this.hp=Math.max(0,this.hp-power+absorb);return true;
  }
  reward(drone,elite=false){
-  this.kills++;this.credits+=elite?20:drone?6:4;this.xp+=drone?10:7;
-  while(this.xp>=this.threshold){this.xp-=this.threshold;this.level++;this.rewards.push('level');}
+  this.kills++;this.credits+=elite?20:drone?6:4;this.xp+=elite?24:drone?10:7;
+  // Stage 1 holds the first level-up until its elite falls: the bar fills and waits.
+  if(this.levelHold)this.xp=Math.min(this.xp,this.threshold-.01);
+  while(!this.levelHold&&this.xp>=this.threshold){this.xp-=this.threshold;this.level++;this.rewards.push('level');}
   const heal=this.value('Field Medic');
   if(heal){this.shield=Math.min(60,this.shield+Math.max(0,this.hp+heal-this.maxHP));this.shieldUntil=this.time+8;this.hp=Math.min(this.maxHP,this.hp+heal);}
  }
+ // First power-up: released by the Stage 1 elite, a guaranteed pick-one-of-three hero upgrade.
+ releaseFirstPowerUp(){this.levelHold=false;this.level++;this.xp=0;this.rewards.push('level');
+  this.headline={title:'First power-up',detail:'The elite is down. Pick one of three upgrades to start your build.'};}
+ // Mini-boss: bonus credits and another pick-one-of-three hero upgrade.
+ miniBossReward(){this.headline={title:'Mini-boss defeated',detail:'Astra Ronin is down. Earned 40 credits. Pick an upgrade to shape your build.'};this.credits+=40;this.xp+=20;this.rewards.push('level');while(this.xp>=this.threshold){this.xp-=this.threshold;this.level++;this.rewards.push('level');}}
  bossReward(final=false){
   this.credits+=60;this.cards=[];this.refreshes=0;this.rollShop();
   if(final)this.rewards=[];else this.rewards.unshift('boss');
@@ -56,7 +63,7 @@ export class LiberationBuild {
  }
  choose(id){
   const card=this.cards.find(c=>c.id===id);if(!card)return false;
-  this.grant(card);this.cards=[];this.rewards.shift();return true;
+  this.grant(card);this.cards=[];this.rewards.shift();this.headline=null;return true;
  }
  rollShop(){
   this.stock=this.draw(ITEMS.filter(c=>!(this.hero==='volt'&&c.id==='Phantom Engine')&&!(this.hero==='ninja'&&c.id==='Excess Charge')),5)

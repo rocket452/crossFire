@@ -2,6 +2,32 @@
 
 Select City Liberation from the scene dropdown and deploy Volt Rush, Kage, or Luxmancer. Defeat the Siege Walker in the first district and Bastion in the second. The squad director keeps spawning ordinary enemies, Bruisers and drones, from street entrances during both battles.
 
+## District 1 stages (revision 474)
+
+District 1 runs ten minutes of district time in two stages. `LIBERATION_STAGES` in `city-liberation.js` holds the tuning.
+
+**Stage 1 — Build your foundation (0:00–5:00)**
+1. **Small enemy introduction.** Packs `B`, `BD`, `BB` arrive every 15 s, with at most 5 enemies alive. Kills earn credits and XP. The first level-up is held: the XP bar fills and waits.
+2. **First elite (1:25).** An *Elite Bruiser* enters from across the district. It is 1.45× larger and gold-lit, with 5× health (1,225). Kage's dash takes only 12% of its health. Basic spawns pause until it falls, and it is never recycled as a straggler.
+3. **First power-up.** Killing the elite releases a guaranteed pick-one-of-three hero evolution ("First power-up"). It also pays 20 credits and 24 XP.
+4. **Enemy surge.** Right after the pick, 12 basic enemies (`BBB`, `BDB`, `BBD`) arrive every 1.6 s, with up to 14 alive. After that, regular packs run until 5:00.
+
+**Stage 2 — Build your identity (5:00–10:00)**
+1. **Mini-boss (5:15).** The **Astra Ronin** enters at the far side of the district. In hunter mode he always tracks the hero and flies in over buildings. His health is 2,600, shown on the boss bar as "ASTRA RONIN · MINI-BOSS". His damage is scaled for 120 HP heroes:
+
+   | Attack | Damage |
+   |---|---|
+   | Sword | 16 |
+   | Overhead | 24 |
+   | Dash | 22 |
+   | Wave | 12 |
+
+   His waves and heavy sword still damage buildings. Hero abilities target him through `nearby()`. A light trickle of `B`/`D` packs continues during the duel, with at most 3 alive.
+2. **Mini-boss defeated.** The kill pays 40 credits and 20 XP, plus a guaranteed pick-one-of-three ("Mini-boss defeated"). Regular packs then resume.
+3. **Siege Walker (10:00).** The Walker never enters while the Ronin lives.
+
+Each beat shows a short centre-screen banner and a stage objective in the HUD title. District 2 (Bastion) is unchanged.
+
 Reinforcements enter on the opposite side of the district from the hero:
 - **Spawn points:** street-edge entrances that lie across the district centre from the hero. Edges that are only just past the centre are excluded: an edge must reach at least 35% of the deepest far-side edge's depth. If the hero stands within 12 m of the centre, any edge counts and the farthest come first.
 - **Variety:** successive packs step around that far side, so they arrive from different streets.
@@ -32,7 +58,7 @@ The complete card definitions, descriptions, prices, rarity and stacking formula
 
 ## Initial balance and implementation limits
 
-The Walker enters at 7:05 of district combat time. Bastion arrives 8:10 into the second district. Boss fights, menu time and travel make actual run length variable. Enemy pressure follows district time and squad caps. Hero damage output never adjusts enemy health. A scripted run with one kill opportunity every eight seconds reached its first evolution at 33 seconds and level 6 by five minutes.
+The Walker enters at 10:00 of district combat time, after the Astra Ronin mini-boss. Bastion arrives 8:10 into the second district. Boss fights, menu time and travel make actual run length variable. Enemy pressure follows district time and squad caps. Hero damage output never adjusts enemy health. A scripted run with one kill opportunity every eight seconds reached its first power-up at 89 seconds (just after the elite) and level 5 by five minutes.
 
 Generated effects have a five-generation ancestry limit, a 160 generated-hit budget per simulation update, 64 homing projectiles, 24 persistent fields, and at most seven satellite orbs beside the original orb. A generated effect cannot re-enter its own ancestry. Repeated Luxmancer shots use the regular projectile controller. Echoed melee and sustained beams use a single spectral sweep. Echoed dashes leave the player in place. Stored kunai copies and fragments home toward visible targets. Miniature suns and satellite orbs use pooled lightweight visuals. Closed Circuit tests the enclosed horizontal polygon. The model does not simulate electrical conduction through terrain.
 
@@ -40,6 +66,7 @@ Generated effects have a five-generation ancestry limit, a 160 generated-hit bud
 
 - `node QA/liberation-synergy-test.mjs` exercises the three combined builds, resource feedback, relic triggers, recursion limits and boss damage routes for two loadouts per hero.
 - `node QA/city-liberation-test.mjs` uses the actual enemy pools, drone physics, district director and Walker components to cover spawns, pacing, menus, boss transitions and reset.
+- `node QA/city-liberation-stages-test.mjs` plays District 1's stages: introduction cap and held level-up, elite size/health/tint/spawn pause, first power-up, surge size, Stage 2, the Ronin flying in from 165 m, scaled Ronin damage, trickle cap, the Walker waiting for the Ronin, the mini-boss reward and reset.
 - `node QA/luxmancer-test.mjs` covers native casts, Solar Blink, sustained inputs, repeated locks and Communion reserves.
 - `node QA/liberation-browser.cjs` selects each hero in Chromium, opens the run inventory and depot, buys, refreshes and chooses an evolution. Serve the game locally and set `GAME_URL` if the server is elsewhere than port 8234.
 - Wave Defense, kunai, Laser Star, Ball Lightning and boss suites remain independent regression checks.

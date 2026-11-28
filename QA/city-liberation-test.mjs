@@ -27,7 +27,7 @@ for(const heroId of ['volt','ninja','lux']){
  const xp=build.xp;build.credits=300;const card=build.stock[0].card;
  assert(build.buy(card.id));assert(!build.buy(card.id));assert.equal(build.xp,xp);
  assert(build.refresh());assert.equal(build.refreshPrice,15);assert.equal(build.stock.length,5);
- build.bossReward();assert.equal(build.refreshPrice,10);assert(build.draft().every(c=>RELICS.includes(c)));
+ build.bossReward();assert.equal(build.refreshPrice,10);assert(build.draft().every(c=>RELICS.some(r=>r.id===c.id)),"boss rewards draft relics");
 }
 registerHooks({resolve(name,ctx,next){return name==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(name,ctx);}});
 const {GLTFLoader}=await import('../dist/vendor/GLTFLoader.js');
@@ -66,23 +66,25 @@ let t=0;
 function tick(seconds){for(let i=0;i<Math.round(seconds*30);i++){run.update(1/30,t+=1/30);physics.step(1/30);run.syncWrecks();}}
 tick(10);
 const first=run.members.filter(a=>a.spawned);
-assert.equal(first.length,2);assert(!walker.root.visible);
+assert.equal(first.length,1,'Stage 1 opens with a single Bruiser');assert(!walker.root.visible);assert.equal(run.beat,'intro');
 assert(first.every(actor=>onEdge(actor.spawnPosition)&&actor.spawnPosition.distanceTo(hero.root.position)-actor.root.position.distanceTo(hero.root.position)>25),'packs cross town at a travel pace');
 while(!firstAttackAt&&t<40){tick(1);for(const actor of first)if(actor.shots)firstAttackAt=t;}
 assert(firstAttackAt,'first pack has opened fire within forty seconds');
 const kill=a=>damage.hurt(a.combatUnit,1e6,a.root.position,'hull');
-first.forEach(kill);tick(.1);assert.equal(run.build.kills,2);assert(!run.upgradePending);
-tick(8);const active=run.actors.filter(a=>a.combatUnit?.alive);
+first.forEach(kill);tick(.1);assert.equal(run.build.kills,1);assert(!run.upgradePending);
+let active=[];for(let i=0;i<20&&!active.some(a=>run.flightDrones.includes(a));i++){tick(1);active=run.actors.filter(a=>a.combatUnit?.alive);}
 assert(active.some(a=>run.flightDrones.includes(a)));
 const drone=active.find(a=>run.flightDrones.includes(a));
 assert(onEdge(drone.anchor)&&drone.options.ingress,'the drone starts on a perimeter and has a route into the district');
 const hp=drone.combatUnit.health;const engine=drone.combatUnit.shapes.find(s=>s.part==='front-left');
 damage.hurt(drone.combatUnit,200,engine.center,engine.part);assert.equal(drone.combatUnit.health,hp);
-tick(.1);assert.equal(run.build.kills,3);tick(1);assert.equal(run.build.kills,3);
+tick(.1);assert.equal(run.build.kills,2);tick(1);assert.equal(run.build.kills,2);
 while(run.upgradePending){run.build.draft();run.build.choose(run.build.cards[0].id);}
 const ground=run.members.find(a=>a.combatUnit?.alive);
 ground.root.position.copy(hero.root.position).x+=4;ground.sync();
-while(!run.upgradePending)run.build.reward(false);
+// The first level-up is held for the Stage 1 elite: the bar fills and waits.
+for(let i=0;i<30;i++)run.build.reward(false);assert(!run.upgradePending&&run.build.level===1&&run.build.xp<run.build.threshold);
+run.build.releaseFirstPowerUp();assert(run.upgradePending);
 const frozen=run.elapsed;tick(1);assert.equal(run.elapsed,frozen);
 function pick(){while(run.upgradePending){run.build.draft();run.build.choose(run.build.cards[0].id);}}
 pick();run.stageTime=DISTRICTS[0].seconds;tick(.1);assert.equal(arsenal,1);assert(walker.root.visible);assert.equal(walker.root.position.z,edges.maxZ);assert(walker.spawnOrigin.z<edges.maxZ);
@@ -111,6 +113,6 @@ for(let seconds=1;seconds<=300;seconds++){
   for(const m of walker.weapons.modules)damage.hurt(walker.combatUnit,1e6,walker.root.position,m.part);
  }
 }
-assert(firstDraftAt<=120);assert(run.build.level>=6);assert.equal(run.stage,0);
+assert(firstDraftAt>=85&&firstDraftAt<=120,'first power-up follows the elite');assert(run.build.level>=5);assert.equal(run.stage,0);
 console.log('Five-minute script:',{firstDraftAt,level:run.build.level,kills:run.build.kills,upgrades:[...run.build.ranks.values()].reduce((n,u)=>n+u.rank,0)});
 console.log('City Liberation passed: far-side edge spawns, weak points, district and relic progression, pause, win, loss, replay and five-minute pacing.');

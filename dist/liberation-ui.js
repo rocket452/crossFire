@@ -1,12 +1,16 @@
 import * as THREE from './vendor/three.module.js';
 
 import {cloneSkinned} from './humanoid-character.js?v=435';
+const BANNER_SECONDS=3.2;
 export class LiberationUI {
  constructor(viewer,scene,{release,resume,restart}){
   Object.assign(this,{viewer,scene,release,resume,restart});
   this.hud=document.createElement('div');this.hud.className='liberation-hud';
   this.hud.innerHTML='<b></b><span></span><meter aria-label="Hero health" min="0"></meter>';
   viewer.append(this.hud);
+  // Stage beats (elite, power-up, surge, mini-boss) are called out in a short centre-screen banner.
+  this.banner=document.createElement('div');this.banner.className='liberation-banner';this.banner.hidden=true;
+  this.banner.setAttribute('role','status');this.banner.innerHTML='<strong></strong><span></span>';viewer.append(this.banner);this.bannerLife=0;
   const geometry=new THREE.RingGeometry(.965,1,48);
   this.rings=Array.from({length:12},()=>{
    const mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({side:THREE.DoubleSide,transparent:true,depthWrite:false,toneMapped:false}));
@@ -70,7 +74,7 @@ export class LiberationUI {
  reset(){
   if(this.ghostMesh){this.scene.remove(this.ghostMesh);this.ghostMesh.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.dispose();});this.ghostMaterial.dispose();this.ghostMesh=null;this.ghostMotion=null;}
   this.run=null;this.access.hidden=true;this.depot.visible=false;for(const obj of [...this.entities,...this.lines])obj.visible=false;
-  this.dialog?.remove();this.dialog=null;this.hud.hidden=true;this.ringIndex=0;
+  this.dialog?.remove();this.dialog=null;this.hud.hidden=true;this.ringIndex=0;this.banner.hidden=true;this.bannerLife=0;
   for(const mesh of this.rings)mesh.visible=false;
  }
  ring(point,radius,color){
@@ -83,7 +87,12 @@ export class LiberationUI {
   mesh.scale.setScalar(mesh.userData.radius*(.18+.82*fraction));mesh.material.opacity=.85*(1-fraction);
   if(fraction>=1)mesh.visible=false;
  }
+ announce(title,subtitle=''){
+  this.banner.firstChild.textContent=title;this.banner.lastChild.textContent=subtitle;
+  this.banner.hidden=false;this.bannerLife=BANNER_SECONDS;this.banner.style.opacity=1;
+ }
  step(dt){
+  if(this.bannerLife>0){this.bannerLife-=dt;this.banner.style.opacity=Math.min(1,this.bannerLife/.6);if(this.bannerLife<=0)this.banner.hidden=true;}
   const ghost=this.ghostMotion;
   if(ghost){ghost.age+=dt;const t=Math.min(1,ghost.age/ghost.life);this.ghostMesh.position.lerpVectors(ghost.from,ghost.to,t);this.ghostMaterial.opacity=.55*(1-t);
    if(t>=1){this.ghostMesh.visible=false;this.ghostMotion=null;}}
@@ -117,16 +126,16 @@ export class LiberationUI {
  sync(run){
   const b=run.build;
   this.hud.hidden=false;
-  const countdown=Math.max(0,Math.ceil(run.district.seconds-run.stageTime));
-  const objective=run.phase==='cleared'?'Bastion defeated':run.phase==='boss'?'Defeat '+run.district.boss:run.district.boss+' in '+Math.floor(countdown/60)+':'+String(countdown%60).padStart(2,'0');
+  const objective=run.objective();
   const title='District '+(run.stage+1)+' / 2 · '+objective;
   const status=Math.ceil(b.hp)+' HP'+(b.shield?' +'+Math.ceil(b.shield)+' shield':'')+' · Lv '+b.level+' · '+Math.floor(b.xp)+'/'+b.threshold+' XP · '+b.credits+' credits';
   if(this.hud.firstChild.textContent!==title)this.hud.firstChild.textContent=title;
   if(this.hud.children[1].textContent!==status)this.hud.children[1].textContent=status;
   const meter=this.hud.lastChild;if(meter.max!==b.maxHP)meter.max=b.maxHP;if(meter.value!==b.hp)meter.value=b.hp;
   const boss=document.querySelector('.boss-health-hud');
-  boss.hidden=run.phase!=='boss'||run.stage===1&&!run.options.bastionActive();
-  if(!boss.hidden&&run.stage===0)boss.querySelector('b').textContent='SIEGE WALKER · WEAPONS';
+  boss.hidden=!run.miniBossActive&&(run.phase!=='boss'||run.stage===1&&!run.options.bastionActive());
+  const label=run.miniBossActive?'ASTRA RONIN · MINI-BOSS':run.stage===0?'SIEGE WALKER · WEAPONS':null;
+  if(!boss.hidden&&label&&boss.querySelector('b').textContent!==label)boss.querySelector('b').textContent=label;
   const distance=Math.round(run.hero.root.position.distanceTo(this.depot.position));
   this.shopButton.textContent=distance<=10?'Open supply depot · B':'◆ Depot · '+distance+' m';
   this.shopButton.disabled=distance>10;this.access.hidden=run.ended;
@@ -162,8 +171,9 @@ export class LiberationUI {
   }else if(run.upgradePending){
    const cards=b.draft();if(!cards.length)return this.sync(run);
    if(this.dialog?.dataset.revision===String(b.revision))return;
-   this.panel(b.rewards[0]==='boss'?'District liberated':'Level '+b.level,
-    b.rewards[0]==='boss'?'Choose a relic. Earned 60 credits. The depot has new stock.':'Choose an ability evolution for this run.');
+   const note=b.rewards[0]==='level'?b.headline:null;
+   this.panel(b.rewards[0]==='boss'?'District liberated':note?note.title+' · Level '+b.level:'Level '+b.level,
+    b.rewards[0]==='boss'?'Choose a relic. Earned 60 credits. The depot has new stock.':note?note.detail:'Choose an ability evolution for this run.');
    this.dialog.dataset.revision=b.revision;
    for(const u of cards){
     const btn=this.button(this.dialog.querySelector('.liberation-cards'),'',()=>{if(b.choose(u.id)){this.ring(run.hero.root.position,4,'#8dffe9');this.sync(run);}});

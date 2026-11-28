@@ -26,3 +26,9 @@
 .liberation-cards [data-rarity=legendary] small{color:#ffcf75}
 .liberation-cards button:disabled{opacity:.6}
 .liberation-inventory{font-size:.8rem;line-height:1.55;margin-block:10px;max-height:20vh;overflow:auto}
+.liberation-banner{position:absolute;z-index:8;top:31%;left:50%;transform:translateX(-50%);display:grid;gap:4px;justify-items:center;pointer-events:none;
+ padding:10px 22px;color:#fff6dc;background:linear-gradient(90deg,#0c1622d0,#1a1430f0,#0c1622d0);border-block:1px solid #ffb02099;text-align:center;
+ font:700 1.35rem/1.1 system-ui,sans-serif;letter-spacing:.14em;text-shadow:0 0 12px #ff3fb0a0;white-space:nowrap}
+.liberation-banner[hidden]{display:none}
+.liberation-banner span{font:500 .82rem/1.2 system-ui,sans-serif;letter-spacing:.04em;color:#c9efff;text-shadow:none}
+@media(max-width:650px){.liberation-banner{top:27%;font-size:1.05rem;max-width:calc(100% - 32px);white-space:normal}}

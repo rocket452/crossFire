@@ -126,7 +126,7 @@ function fixture({heroes=[heroUnit('volt',0,14)],position={x:0,y:.1,z:-6},isPath
 
 // ---- City Liberation no longer fields Sentinels (they remain a Combat Testing enemy) ------------------
 {
- const {DISTRICTS}=await import('../dist/city-liberation.js?v=470');
+ const {DISTRICTS}=await import('../dist/city-liberation.js?v=474');
  assert(DISTRICTS.every(d=>d.packs.every(p=>/^[BD]+$/.test(p))),'City Liberation packs use only Bruisers and drones');
  const source=fs.readFileSync(new URL('../dist/city-liberation.js',import.meta.url),'utf8');
  assert(!/assault-sentinel|AssaultSentinel/.test(source),'City Liberation does not build a Sentinel pool');
