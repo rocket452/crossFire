@@ -7,8 +7,8 @@ import {EvacuationNavigation} from './evacuation-navigation.js?v=evacuation-57';
 import {escortMovementBounds} from './evac-approach.js?v=315';
 
 export const DISTRICTS=[
- {seconds:425,gap:16,cap:8,packs:['BB','BD','BS','BBD','SD'],boss:'Siege Walker'},
- {seconds:490,gap:12,cap:15,packs:['BDD','BBS','BBBD','SSD','BBDD'],boss:'Bastion'}
+ {seconds:425,gap:16,cap:8,packs:['BS','BD','SD','SBB','SBD'],boss:'Siege Walker'},
+ {seconds:490,gap:12,cap:15,packs:['SBB','SDD','BSS','SBBD','SSDD'],boss:'Bastion'}
 ];
 const position=p=>new THREE.Vector3().copy(p);
 const streetStep=24;
@@ -23,7 +23,8 @@ const walkerHomeZ=48;
 // Kage's dash takes this share of a Bruiser's or drone's max health here (bosses keep the full hit).
 export const LIBERATION_KAGE_DASH_FRACTION=.5;
 // Assault Sentinels ('S' in pack patterns) come from this pool alongside Bruisers ('B') and drones ('D').
-export const LIBERATION_SENTINELS=5;
+// Roughly a third of each district's ground and air spawns are Sentinels; district 1 opens with one.
+export const LIBERATION_SENTINELS=7;
 
 
 export class CityLiberation extends MissionEnemyWaves {

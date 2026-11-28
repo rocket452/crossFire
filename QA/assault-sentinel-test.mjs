@@ -129,7 +129,7 @@ function fixture({heroes=[heroUnit('volt',0,14)],position={x:0,y:.1,z:-6},isPath
 const spider=new URL('../dist/city-assets/licensed-robots/breaker-spider.glb',import.meta.url);
 if(!fs.existsSync(spider))console.log('SKIP City Liberation integration (private SpiderBot asset missing)');
 else{
- const {CityLiberation,DISTRICTS,LIBERATION_SENTINELS}=await import('../dist/city-liberation.js?v=466');
+ const {CityLiberation,DISTRICTS,LIBERATION_SENTINELS}=await import('../dist/city-liberation.js?v=468');
  const {SiegeWalker}=await import('../dist/siege-walker.js');const {spec,gltfModel}=await import('./walker-fixture.mjs');
  const {NinjaMotion}=await import('../dist/ninja-motion.js');const {GLTFLoader}=await import('../dist/vendor/GLTFLoader.js');
  const bytes=fs.readFileSync(spider);const spiderModel=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
@@ -143,6 +143,8 @@ else{
   bruiser:{spiderModel,visible:()=>true,isPathClear:()=>true,trace:()=>null},drone:{physics:null,visible:()=>true,trace:()=>null,roof:()=>null,redirect:()=>null,audio:()=>null,particle(){},burst(){},onWreck(){},onRemoveSmoke(){},cameraImpact(){},onRoundHit(){}}});
  assert.equal(run.sentinels.length,LIBERATION_SENTINELS);assert(run.sentinels.every(s=>run.members.includes(s)&&!run.bruiserPool.includes(s)),'Sentinels join the members, not the Bruiser pool');
  assert(DISTRICTS.every(d=>d.packs.some(p=>p.includes('S'))),'both districts field Sentinels');
+ const share=d=>{const all=d.packs.join('');return (all.split('S').length-1)/all.length;};
+ assert(DISTRICTS.every(d=>share(d)>=.3),'Sentinels are about a third of each district: '+DISTRICTS.map(share));assert(DISTRICTS[0].packs[0].includes('S'),'district 1 opens with a Sentinel');
  run.start('ninja',hero);run.pack=DISTRICTS[0].packs.indexOf('BS');run.spawnPack();
  const s=run.sentinels.find(a=>a.spawned);const b=run.bruiserPool.filter(a=>a.spawned);
  assert(s&&b.length===1,'a BS pack spawns one Bruiser and one Sentinel');
