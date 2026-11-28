@@ -82,6 +82,20 @@ pose('GUARD',{shield:[1,0,0],frameP:[0,-.95,.05],frameR:[.08,.45,0],torso:[.12,.
  [R]:[.25,.6,.55],[RF]:[-1.1,0,0],[RW]:[0,.2,0],sword:[.2,.2,0],[L]:[-1.35,.2,.15],[LF]:[-.55,0,.6],wings:[.4,.1,0],
  feet:{left:[-1.15,1.45],right:[1.2,-1.15]}});
 
+// ---- wave slash: a level forehand sweep peels off one row of plasma waves, a backhand sweep the next.
+pose('WAVE_COIL',{shield:[.8,.6,0],frameP:[0,-1.05,-.25],frameR:[.06,.5,-.04],torso:[.05,.8,-.08],head:[-.05,-.9,0],
+ [R]:[.3,.95,.75],[RF]:[-.3,0,0],[RW]:[0,.25,0],sword:[1.05,.3,0],[L]:[-1.2,-.3,-.1],[LF]:[-1,0,.35],wings:[.6,.2,0],
+ feet:{left:[-1.2,1.35],right:[1.2,-1.2]}});
+pose('WAVE_CUT',{shield:[.35,.3,0],frameP:[0,-1.15,.35],frameR:[.1,-.55,.04],torso:[.14,-.75,.08],head:[-.08,.7,0],
+ [R]:[-1.45,-1.05,-.15],[RF]:[-.08,0,0],[RW]:[0,-.3,0],sword:[.8,-.2,0],[L]:[-.25,.4,-.8],[LF]:[-.55,0,0],wings:[.85,.35,0],
+ feet:{left:[-1.2,1.35],right:[1.2,-1.2]}});
+pose('WAVE_BACK',{shield:[.35,.3,0],frameP:[0,-1.1,.2],frameR:[.08,-.65,.04],torso:[.1,-.85,.06],head:[-.06,.8,0],
+ [R]:[-1.3,-1.6,-.45],[RF]:[-1.05,0,0],[RW]:[0,-.35,0],sword:[.85,-.55,0],[L]:[-.3,.4,-.75],[LF]:[-.6,0,0],wings:[.8,.3,0],
+ feet:{left:[-1.2,1.35],right:[1.2,-1.2]}});
+pose('WAVE_CUT2',{shield:[.6,.45,0],frameP:[0,-1.15,.4],frameR:[.1,.5,-.04],torso:[.14,.7,-.08],head:[-.08,-.7,0],
+ [R]:[-1.35,.75,1.1],[RF]:[-.1,0,0],[RW]:[0,.3,0],sword:[.8,.25,0],[L]:[-1.1,-.2,-.2],[LF]:[-.95,0,.3],wings:[.9,.4,0],
+ feet:{left:[-1.2,1.35],right:[1.2,-1.2]}});
+
 // ---- defeat: staggered by the final hit, drop to the knees, topple forward.
 pose('DEATH_HIT',{shield:[.2,0,0],frameP:[0,-.55,-.55],frameR:[-.22,.3,.12],torso:[-.38,.45,.16],head:[-.45,.35,0],
  [R]:[-.55,.6,1.35],[RF]:[-.25,0,0],sword:[1.2,.2,0],[L]:[-.2,-.3,-1.05],[LF]:[-.4,0,0],wings:[.7,.3,0]});
@@ -117,5 +131,8 @@ export function track(keys,time,out){
 }
 // Sword timelines keyed to the controller's windup/swing/recovery seconds (W, S, Rc).
 export function sweepKeys(W,S,Rc){const P=POSES;return[[0,READY],[W*.28,P.SWEEP_GATHER,'out'],[W*.86,P.SWEEP_COIL,'inout'],[W,P.SWEEP_COIL,'smooth'],[W+S*.42,P.SWEEP_CUT,'in'],[W+S,P.SWEEP_END,'out'],[W+S+.14,P.SWEEP_FOLLOW,'out'],[W+S+Rc*.48,P.SWEEP_FOLLOW,'linear'],[W+S+Rc,READY,'inout']];}
+// Wave slash timeline keyed to the controller's windup, swing and volley interval; each sweep spans the release.
+export function waveKeys(c){const W=c.waveWindup,S=c.waveSwing,I=c.waveVolleyInterval,R=c.waveRecovery,P=POSES;
+ return[[0,READY],[W*.3,P.SWEEP_GATHER,'out'],[W*.86,P.WAVE_COIL,'inout'],[W,P.WAVE_COIL],[W+S,P.WAVE_CUT,'smooth'],[W+I-.1,P.WAVE_BACK,'inout'],[W+I,P.WAVE_BACK],[W+I+S,P.WAVE_CUT2,'smooth'],[W+I+S+R*.45,P.WAVE_CUT2],[W+I+S+R,READY,'inout']];}
 export const DEATH_KEYS=[[0,READY],[.18,POSES.DEATH_HIT,'out'],[.55,POSES.DEATH_KNEEL,'inout'],[1,POSES.DEATH_FALL,'in']];
 export function overheadKeys(W,S,Rc){const P=POSES;return[[0,READY],[W*.25,P.OVER_GATHER,'out'],[W*.88,P.OVER_RAISE,'inout'],[W,P.OVER_RAISE,'smooth'],[W+S*.45,P.OVER_CUT,'in'],[W+S,P.OVER_END,'snap'],[W+S+Rc*.5,P.OVER_END,'linear'],[W+S+Rc,READY,'inout']];}

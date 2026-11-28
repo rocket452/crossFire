@@ -147,3 +147,29 @@ The stiff pose-to-pose lerps are replaced by a spring-driven rig with mecha-anim
 - hit recoil, the kneeling defeat, and reset.
 
 All existing Ronin node suites pass. The desktop/touch dash and guard browser suites pass. The pose and flight browser suites fail identically on the unchanged baseline in this public checkout, because the private Shogun GLB returns 404. Phone performance remains unmeasured.
+
+## Cyberpunk makeover and wave slash revision 471
+
+**Makeover.** The same silhouette with a new finish.
+- **Plates:** gunmetal armour (with cyan traces) and black-chrome edge plates (with magenta traces). The dark frames carry faint cyan traces.
+- **Circuit traces:** pulsing neon traces etched by a small shader patch (`dist/astra-ronin-neon.js`). It runs in each mesh's node-local space, with no extra meshes or textures.
+- **Trim and blade:** the former gold trim (crest, chest vents, shield bar, hilt rings) is now neon magenta and stutters occasionally like an old sign. The blade's cutting edge is a magenta plasma strip that charges and flares during the wave slash, and the sword smear is magenta.
+- **Unchanged:** cyan energy cells, eyes and thrusters. The budget stays 6,618 triangles and 129 meshes.
+
+**Wave slash.**
+- **When he uses it:** ranged engagements alternate, dash combo first, then wave slash. The wave turn is used when the hero is 14–66 m away; beyond that he dashes and keeps the turn. With the wave slash up next, he holds his ground at 18–66 m instead of closing to sword reach.
+- **Telegraph:** during a 0.9 s windup (aim locks at 0.62 s), five magenta ground lanes with marching chevrons show the paths of the first row and the gaps between them. The row is centred on the hero's position at lock.
+- **Release:** a level forehand sweep peels off five vertical plasma waves in sequence (sword side to shield side, 0.05 s apart): 4 m wide, 14 m tall, 9 m apart, so each gap is 5 m. A backhand sweep 0.62 s later releases four more, centred exactly in the first row's gaps. Its lanes appear as the first row leaves. A hero must sidestep into a gap, then step back once the first row passes.
+- **Travel:** waves run at 30 m/s for up to 80 m, fanning slightly so the outer gaps widen with distance. Each wave leaves a burning scorch trail.
+- **Damage:** a wave hits a hero at most once, for 24 damage, using a swept front test. Dash-phased heroes pass through. A wave that meets a building stops there (lanes are pre-trimmed with `isPathClear`), strikes it for 16 damage through the Ronin building-damage path, and bursts.
+- **Cancel and cleanup:** stun cancels the windup without releasing anything. Death dissipates waves in flight, and reset clears them.
+- **Code:** effects live in `dist/astra-ronin-waves.js`: three instanced additive meshes (blades, trails, lanes), so at most three draw calls. The choreography is in the pose timeline (`WAVE_COIL`, `WAVE_CUT`, `WAVE_BACK`, `WAVE_CUT2`).
+
+**Tests.** `QA/astra-ronin-wave-test.mjs` covers:
+- dash/wave alternation, the five-lane telegraph with hero-sized gaps, and the second row filling the first row's gaps;
+- sweep release order and 5 + 4 waves at 30/60/120 Hz;
+- one hit in the centre lane, second-row coverage of a single sidestep, and a clean two-step dodge;
+- fan spread, dash phasing, building stops and strikes;
+- stun, death and reset.
+
+All earlier Ronin suites pass. Desktop/touch dash and guard browser suites pass.

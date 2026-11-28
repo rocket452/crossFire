@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {CHANNELS,READY,POSES,EASE,blend,track,sweepKeys,overheadKeys,DEATH_KEYS} from './astra-ronin-poses.js?v=468';
+import {CHANNELS,READY,POSES,EASE,blend,track,sweepKeys,overheadKeys,waveKeys,DEATH_KEYS} from './astra-ronin-poses.js?v=471';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z),clamp=THREE.MathUtils.clamp,smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
 const RIBBON=22,TRAIL_LIFE=.17;
 // Mecha weight comes from damped springs on every channel: [angular frequency, damping ratio].
@@ -29,7 +29,7 @@ export class RoninAnimation{
   this.areaImpact=new THREE.Mesh(new THREE.RingGeometry(.94,1,64),new THREE.MeshBasicMaterial({color:'#9cfaff',transparent:true,opacity:.9,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));
   for(const mesh of[this.areaFill,this.areaRim,this.areaImpact]){mesh.rotation.x=-Math.PI/2;mesh.name='Ronin predicted sword strike area';mesh.frustumCulled=false;model.root.add(mesh);}
   this.streaks=Array.from({length:3},(_,i)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(.045,.045,1),new THREE.MeshBasicMaterial({color:'#83efff',transparent:true,opacity:.45,depthWrite:false}));mesh.position.set((i-1)*.9,2+i*.65,-2.5);model.root.add(mesh);return mesh;});
-  const c=model.config;this.sweepKeys=sweepKeys(c.swordWindup,c.swordSwing,c.swordRecovery);this.overheadKeys=overheadKeys(c.swordWindup,c.swordSwing,c.swordRecovery);
+  const c=model.config;this.sweepKeys=sweepKeys(c.swordWindup,c.swordSwing,c.swordRecovery);this.overheadKeys=overheadKeys(c.swordWindup,c.swordSwing,c.swordRecovery);this.waveKeys=c.waveWindup?waveKeys(c):null;
   this.springs=Object.fromEntries(CHANNELS.map(id=>[id,new Spring()]));this.legSprings={left:new Spring(),right:new Spring()};this.legPitch={left:new Spring(),right:new Spring()};
   this.target={};this.reset();}
  reset(){this.m.propulsion?.clear();this.feet=[];this.phase=.25;this.lastPosition=null;this.lastYaw=null;this.yawRate=0;this.moveBlend=0;this.history.length=0;this.ribbon.visible=false;this.attackWasActive=false;this.glide=false;
@@ -70,6 +70,8 @@ export class RoninAnimation{
    else if(stage==='dash'){blend(T,POSES.DASH_RUN,1,T);snap=.7;lock=.4;T.frameR[2]+=Math.sin(time*13)*.025;}
    else if(stage==='slash'){blend(POSES.DASH_RUN,POSES.DASH_SLASH,EASE.out(clamp(clock/(S*.8),0,1)),T);snap=1;lock=.4;}
    else track([[0,POSES.DASH_SLASH],[Rd*.18,POSES.DASH_SKID,'out'],[Rd*.55,POSES.DASH_SKID],[Rd,READY,'inout']],clock,T);
+  }else if(attack&&e.waveAttack&&this.waveKeys){const t=e.waveClock||0,W=c.waveWindup,S=c.waveSwing,I=c.waveVolleyInterval;track(this.waveKeys,t,T);
+   snap=t>=W-.06&&t<W+S+.1||t>=W+I-.06&&t<W+I+S+.1?1:0;tremble=t<W?clamp((t-W*.55)/(W*.45),0,1):0;
   }else if(attack){const W=c.swordWindup,S=c.swordSwing,age=e.swordAge||0;track(e.overhead?this.overheadKeys:this.sweepKeys,age,T);
    snap=age>=W-.06&&age<W+S+.16?1:0;tremble=age<W?clamp((age-W*.7)/(W*.3),0,1):0;
    const hit=W+S*.5;if(this.prev.swordAge<hit&&age>=hit){this.kick('frameP',1,e.overhead?-4.5:-2.5);this.kick('torso',0,e.overhead?3:1.5);}
@@ -103,6 +105,8 @@ export class RoninAnimation{
   this.articulateSegments(e);this.followArmor();root.updateWorldMatrix(true,true);
   this.orientShield(x.shield,smooth(guarding));m.updateShieldVisual(e);
   m.energy.emissiveIntensity=dash&&stage==='windup'?2+Math.pow(clock/(e.dashWindupDuration||c.dashWindup),2)*(2+Math.sin(time*35)):attack&&(e.swordAge||0)<c.swordWindup?1.8+Math.pow((e.swordAge||0)/c.swordWindup,2)*(1.5+Math.sin(time*30)*.8):flight?2.1:1.7;
+  // Neon traces pulse with time; the magenta trim stutters now and then like an old sign.
+  m.neonTime.value=time;const stutter=Math.sin(time*.73)*Math.sin(time*1.91);m.neon.emissiveIntensity=2.6*(stutter>.93?.3+.7*(Math.sin(time*57)>0):1);
   m.propulsion.update(dt,time,e);
   this.warning.visible=dash&&stage==='windup'&&!stunned;
   const area=e.dashArea;
@@ -111,14 +115,17 @@ export class RoninAnimation{
   this.warning.material.opacity=.14+.1*(.5+.5*Math.sin(time*18));
   this.updateDashArea(e,time);
   for(const [i,streak]of this.streaks.entries()){streak.visible=(dash&&stage==='dash'||flight&&flight.phase==='cruise')&&!stunned;streak.scale.z=3+i;}
-  const W=c.swordWindup,S=c.swordSwing,age=e.swordAge||0,active=attack&&(dash?stage==='slash'||stage==='recovery'&&clock<.06:age>=W-.02&&age<W+S+.1)&&!stunned;
+  const W=c.swordWindup,S=c.swordSwing,age=e.swordAge||0,wt=e.waveClock||0,ww=c.waveWindup,wi=c.waveVolleyInterval,ws=c.waveSwing;
+  const active=attack&&(dash?stage==='slash'||stage==='recovery'&&clock<.06:e.waveAttack?wt>=ww-.02&&wt<ww+ws+.08||wt>=ww+wi-.02&&wt<ww+wi+ws+.08:age>=W-.02&&age<W+S+.1)&&!stunned;
+  // The plasma edge charges through the wave windup and flares on each release.
+  m.plasma.emissiveIntensity=e.waveAttack&&attack?(wt<ww?3.2+5*Math.pow(wt/ww,2)*(1+.25*Math.sin(time*40)):active?8:3.6):3.2;
   this.updateRibbon(dt,active,e);this.attackWasActive=attack;
-  Object.assign(this.prev,{flinch:e.flinch||0,blocked:e.blockedHits||0,stage:dash?stage:null,flying:!!flight,swordAge:attack&&!dash?age:0});
+  Object.assign(this.prev,{flinch:e.flinch||0,blocked:e.blockedHits||0,stage:dash?stage:null,flying:!!flight,swordAge:attack&&!dash&&!e.waveAttack?age:0});
  }
  updateRibbon(dt,active,e){const m=this.m,root=m.root;
   if(active){const tip=root.worldToLocal(m.tip.getWorldPosition(V()));this.history.unshift({base:root.worldToLocal(m.bladeBase.getWorldPosition(V())).lerp(tip,.38),tip,age:0});}
   for(const h of this.history)h.age+=dt;this.history=this.history.filter(h=>h.age<TRAIL_LIFE).slice(0,RIBBON+1);
-  let index=0;const cyan=[.45,.95,1];
+  let index=0;const cyan=[1,.32,.88];
   for(let i=1;i<this.history.length;i++){const a=this.history[i-1],b=this.history[i],fa=Math.max(0,1-a.age/TRAIL_LIFE)*(1-(i-1)/RIBBON),fb=Math.max(0,1-b.age/TRAIL_LIFE)*(1-i/RIBBON);
    // The band starts partway up the blade and its inner edge dims: a crescent along the cutting edge.
    for(const [v,f]of[[a.base,fa*.25],[a.tip,fa],[b.tip,fb],[a.base,fa*.25],[b.tip,fb],[b.base,fb*.25]]){this.vertices[index]=v.x;this.vertices[index+1]=v.y;this.vertices[index+2]=v.z;this.colors[index]=cyan[0]*f;this.colors[index+1]=cyan[1]*f;this.colors[index+2]=cyan[2]*f;index+=3;}}

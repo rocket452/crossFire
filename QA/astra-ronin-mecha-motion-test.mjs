@@ -5,7 +5,7 @@ import * as THREE from '../dist/vendor/three.module.js';
 import {AstraRoninModel} from '../dist/astra-ronin-model.js';
 import {AstraRonin,RONIN} from '../dist/astra-ronin.js';
 import {UnitDamage} from '../dist/combat-collision.js';
-import {POSES,CHANNELS} from '../dist/astra-ronin-poses.js?v=468';
+import {POSES,CHANNELS} from '../dist/astra-ronin-poses.js?v=471';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 for(const pose of Object.values(POSES))for(const c of CHANNELS)assert(pose[c]?.length===3&&pose[c].every(Number.isFinite),'complete pose channel '+c);
 

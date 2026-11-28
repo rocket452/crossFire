@@ -2,18 +2,22 @@ import {RoninShogun} from './ronin-shogun.js?v=310';
 import {RoninPropulsion} from './astra-ronin-propulsion.js?v=468';
 import * as THREE from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {RoninAnimation} from './astra-ronin-animation.js?v=468';
+import {RoninAnimation} from './astra-ronin-animation.js?v=471';
+import {neonCircuit,cloneNeon,NEON_TIME} from './astra-ronin-neon.js?v=471';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
-// Original hard-surface design. Armor is batched per material per articulated joint.
+// Original hard-surface design with a cyberpunk finish. Armor is batched per material per articulated joint.
 export class AstraRoninModel {
  constructor(root,config,shogunAsset=null){
   Object.assign(this,{root,config,parts:{},hitParts:[],repairs:[]});
-  this.armor=new THREE.MeshStandardMaterial({color:'#dce9ef',metalness:.48,roughness:.38});
-  this.edge=new THREE.MeshStandardMaterial({color:'#284e79',metalness:.65,roughness:.4});
-  this.dark=new THREE.MeshStandardMaterial({color:'#111e2b',metalness:.65,roughness:.55});
-  this.metal=new THREE.MeshStandardMaterial({color:'#8eacb6',metalness:.8,roughness:.3});
-  this.gold=new THREE.MeshStandardMaterial({color:'#e4ab50',metalness:.6,roughness:.35});
-  this.energy=new THREE.MeshStandardMaterial({color:'#a5faff',emissive:'#20c7ef',emissiveIntensity:1.7,roughness:.3});
+  // Cyberpunk finish: gunmetal and black-chrome plates etched with neon circuit traces, neon magenta trim
+  // (formerly gold), cyan energy cells and a magenta plasma cutting edge on the blade.
+  this.armor=neonCircuit(new THREE.MeshStandardMaterial({color:'#737b8c',metalness:.5,roughness:.3}),{color:'#2ae6ff',strength:1.25,scale:2.2});
+  this.edge=neonCircuit(new THREE.MeshStandardMaterial({color:'#2a2735',metalness:.55,roughness:.32}),{color:'#ff2bd6',strength:1.6,scale:2.6});
+  this.dark=neonCircuit(new THREE.MeshStandardMaterial({color:'#15161d',metalness:.55,roughness:.45}),{color:'#2ae6ff',strength:.45,scale:3});
+  this.metal=new THREE.MeshStandardMaterial({color:'#c4cdda',metalness:.96,roughness:.16});
+  this.gold=new THREE.MeshStandardMaterial({color:'#ff63dc',emissive:'#ff1fbf',emissiveIntensity:2.6,metalness:.2,roughness:.3});this.neon=this.gold;
+  this.energy=new THREE.MeshStandardMaterial({color:'#bffcff',emissive:'#22e6ff',emissiveIntensity:1.7,roughness:.3});
+  this.plasma=new THREE.MeshStandardMaterial({color:'#ffe3f8',emissive:'#ff2bd6',emissiveIntensity:3.2,roughness:.25});this.neonTime=NEON_TIME;
   const unit=new THREE.Shape();unit.moveTo(-.43,-.43);unit.lineTo(.43,-.43);unit.lineTo(.43,.43);unit.lineTo(-.43,.43);unit.closePath();
   this.box=new THREE.ExtrudeGeometry(unit,{depth:.86,bevelEnabled:true,bevelThickness:.07,bevelSize:.07,bevelSegments:1,steps:1});this.box.translate(0,0,-.43);
   this.axle=new THREE.CylinderGeometry(.5,.5,1,10);this.axle.rotateZ(Math.PI/2);
@@ -81,7 +85,7 @@ export class AstraRoninModel {
   this.sword=n('sword',this.parts['right-hand'],[0,-.22,.05]);b(this.sword,[0,0,.18],[.25,.25,1.05],this.dark);for(let i=0;i<4;i++)b(this.sword,[0,0,-.15+i*.18],[.29,.29,.06],this.gold);plate(this.sword,[0,0,.75],[1.25,.32,.3],wing,this.edge);
   // Broad faceted blade, angled tip, bright continuous cutting edge.
   const blade=this.plate(this.sword,[0,0,3.45],[.75,5.4,.16],[[-.45,-.5],[.4,-.5],[.45,.28],[0,.5],[-.4,.32]],this.metal);blade.rotation.x=Math.PI/2;
-  const edge=this.plate(this.sword,[.26,0,3.45],[.12,5.25,.19],[[-.5,-.5],[.5,-.5],[.5,.32],[-.5,.5]],this.energy);edge.rotation.x=Math.PI/2;
+  const edge=this.plate(this.sword,[.26,0,3.45],[.12,5.25,.19],[[-.5,-.5],[.5,-.5],[.5,.32],[-.5,.5]],this.plasma);edge.rotation.x=Math.PI/2;
   this.tip=n('tip',this.sword,[0,0,6.15]);this.bladeBase=n('blade-base',this.sword,[0,0,1]);this.rifle=this.sword;this.muzzle=this.tip;
   this.flash=new THREE.Mesh(new THREE.IcosahedronGeometry(.12,0),this.energy);this.tip.add(this.flash);this.flash.visible=false;
   // Athletic humanoid proportions: longer load-bearing legs, lighter upper body.
@@ -102,7 +106,7 @@ export class AstraRoninModel {
    for(const h of this.hitParts){if(h.id===side+'-upper-arm'||h.id===side+'-lower-arm'){h.center[0]*=.8;h.center[2]*=.8;h.size[0]*=.8;h.size[2]*=.8;}if(h.id===side+'-upper-leg'||h.id===side+'-lower-leg'){const factor=h.id.includes('upper')?upper:lower;h.center[1]*=factor;h.size[1]*=factor;}}
   }
   const hull=this.hitParts.find(h=>h.id==='torso');hull.center=hull.center.map((v,i)=>v*[.8,.83,.82][i]);hull.size=hull.size.map((v,i)=>v*[.8,.83,.82][i]);
-  this.batch();const shieldClones=new Map();this.shieldMaterials=[];shield.traverse(o=>{if(!o.isMesh)return;const source=o.material;if(!shieldClones.has(source)){const material=source.clone();shieldClones.set(source,material);this.shieldMaterials.push({material,emissive:material.emissive.clone(),intensity:material.emissiveIntensity});}o.material=shieldClones.get(source);});this.bind=new Map();for(const p of Object.values(this.parts))this.bind.set(p,{p:p.position.clone(),q:p.quaternion.clone()});root.scale.setScalar(config.height/9.6);
+  this.batch();const shieldClones=new Map();this.shieldMaterials=[];shield.traverse(o=>{if(!o.isMesh)return;const source=o.material;if(!shieldClones.has(source)){const material=cloneNeon(source);shieldClones.set(source,material);this.shieldMaterials.push({material,emissive:material.emissive.clone(),intensity:material.emissiveIntensity});}o.material=shieldClones.get(source);});this.bind=new Map();for(const p of Object.values(this.parts))this.bind.set(p,{p:p.position.clone(),q:p.quaternion.clone()});root.scale.setScalar(config.height/9.6);
   this.propulsion=new RoninPropulsion(this);this.jets=this.propulsion.layers;this.animation=new RoninAnimation(this);if(shogunAsset)this.shogun=new RoninShogun(this,shogunAsset);this.reset();
  }
  updateShieldVisual(actor){const flash=Math.max(0,actor.guardFlash||0)/(this.config.guardFlashDuration||.18);for(const s of this.shieldMaterials||[]){s.material.emissive.copy(s.emissive);s.material.emissiveIntensity=s.intensity;if(flash>0){s.material.emissive.set('#238cff');s.material.emissiveIntensity=3.5*flash;}}}
