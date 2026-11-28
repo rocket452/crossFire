@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=477';
 import {HeroEvolutionCombat} from './liberation-evolutions.js?v=439';
 import {LiberationBuild} from './liberation-build.js?v=476';
 import {AstraRonin} from './astra-ronin.js?v=474';

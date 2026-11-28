@@ -1,4 +1,4 @@
-import {CombatDrone} from './combat-drone.js?v=421';
+import {CombatDrone} from './combat-drone.js?v=477';
 import {COMBAT_DRONE} from './combat-drone-config.js?v=397';
 import {AstraRonin} from './astra-ronin.js?v=474';
 import {Mireguard} from './mireguard.js?v=474';

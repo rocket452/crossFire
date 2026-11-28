@@ -38,7 +38,7 @@ import {PrismwingHero,PRISMWING} from './prismwing-hero.js?v=rainbow-full-solara
 import {BuildingSmoke} from './building-smoke.js?v=building-smoke-155';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=argus-sustained-205';
 import {EnemySeparation} from './enemy-separation.js?v=465';
-import {CombatTesting} from './combat-testing.js?v=476';
+import {CombatTesting} from './combat-testing.js?v=477';
 import {ActorSilhouettes} from './actor-silhouettes.js?v=475';
 import {RAIDER_COMBAT} from './evac-raider.js?v=421';
 import {targetedCivilianGroups} from './civilian-targeting.js?v=415';
@@ -50,8 +50,8 @@ import {HeroMinimap} from './hero-minimap.js?v=427';
 import {inputMode} from './input-mode.js?v=device-controls-59';
 import {projectileSilhouette} from './projectile-silhouette.js?v=charged-shuriken-130';
 import {EVAC_ROCKET} from './defense-rocket.js?v=427';
-import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,WAVE_DEFENSE_HIGHWAYS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=451';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
+import {WaveDefense,DEFENSE_UPGRADES,RELAY,RELAY_INTRO,WAVE_DEFENSE_HERO_START,WAVE_DEFENSE_BOUNDS,WAVE_DEFENSE_HIGHWAYS,waveDefenseBuildings,waveDefenseRoads} from './wave-defense.js?v=477';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=477';
 import {EvacRaiderWaves} from './evac-raider-waves.js?v=421';
 import {ESCORT_APPROACH,escortMovementBounds,addEscortApproach} from './evac-approach.js?v=393';
 import {MochiHero,MOCHI} from './mochi-hero.js?v=overall-performance-238';
@@ -90,7 +90,7 @@ const evacuationMode=(new URLSearchParams(location.search).get('scene')||'city-l
 const convoyMode=(new URLSearchParams(location.search).get('scene')||'city-liberation')==='convoy';let convoy=null,convoyHUD=null,argus=null,convoyResults=null,resultsPause=false;
 const convoyConfig=convoyMode?await fetch('convoy-config.json?v=argus-sustained-205').then(r=>{if(!r.ok)throw Error('Convoy config unavailable');return r.json();}):null;
 const liberationMode=(new URLSearchParams(location.search).get('scene')||'city-liberation')==='city-liberation';
-const {CityLiberation}=liberationMode?await import('./city-liberation.js?v=476'):{};
+const {CityLiberation}=liberationMode?await import('./city-liberation.js?v=477'):{};
 const {LiberationUI}=liberationMode?await import('./liberation-ui.js?v=476'):{};
 const defenseMode=(new URLSearchParams(location.search).get('scene')||'city-liberation')==='wave-defense';
 const mission1Mode=liberationMode||defenseMode||(new URLSearchParams(location.search).get('scene')||'city-liberation')==='mission-1';

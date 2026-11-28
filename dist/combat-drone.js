@@ -155,6 +155,9 @@ export class CombatDrone {
   engine.node.visible=false;engine.exhaust.visible=false;engine.stub.visible=true;
   chunk.children[engine.node.children.indexOf(engine.exhaust)].visible=false;
   chunk.children[engine.node.children.indexOf(engine.plume)].visible=false;
+  // The clone also copied the engine's through-cover silhouette overlays. Debris is not an enemy and nothing
+  // would ever hide those copies, so the falling engine showed through buildings: drop them.
+  const overlays=[];chunk.traverse(o=>{if(o.userData.actorSilhouette)overlays.push(o);});for(const o of overlays)o.removeFromParent();
   this.fragment(chunk,point,rotation,this.config.engineSize,95);
   this.options.burst(point,.62,true);
   this.options.particle('spark',point,22,1);

@@ -1,7 +1,7 @@
 import {VOLT_RESCUE_DASH_ENABLED} from './hero-ability-config.js?v=434';
 import {LUX_UPGRADES} from './lux-solar.js?v=451';
 import * as THREE from './vendor/three.module.js';
-import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
+import {MissionEnemyWaves} from './mission-enemy-waves.js?v=477';
 import {EVACUATION_LANDING as center} from './evacuation-config.js?v=compact-evac-237';
 import {MISSION1_HERO_START} from './evac-city-map.js?v=mission-spawn-326';
 import {ESCORT_APPROACH} from './evac-approach.js?v=compact-evac-237';
