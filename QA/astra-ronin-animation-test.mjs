@@ -4,7 +4,8 @@ import {AstraRoninModel} from '../dist/astra-ronin-model.js';
 import {RONIN} from '../dist/astra-ronin.js';
 const root=new THREE.Group(),model=new AstraRoninModel(root,RONIN),e={config:RONIN,moving:false,swordState:false,swordAge:0};
 model.animate(1/60,0,e);
-assert(model.stats().triangles<8000);assert(model.stats().meshes<130);
+// Budget covers the cyber-ronin finish: neon piping, hard-light shield, plasma sheath and scarf.
+assert(model.stats().triangles<10000);assert(model.stats().meshes<160);
 for(const side of ['left','right']){
  assert.equal(model.parts[side+'-hand'].parent,model.parts[side+'-wrist']);
  assert.equal(model.parts[side+'-foot'].parent,model.parts[side+'-ankle']);

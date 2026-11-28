@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {CHANNELS,READY,POSES,EASE,blend,track,sweepKeys,overheadKeys,waveKeys,DEATH_KEYS} from './astra-ronin-poses.js?v=471';
+import {CHANNELS,READY,POSES,EASE,blend,track,sweepKeys,overheadKeys,waveKeys,DEATH_KEYS} from './astra-ronin-poses.js?v=472';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z),clamp=THREE.MathUtils.clamp,smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
 const RIBBON=22,TRAIL_LIFE=.17;
 // Mecha weight comes from damped springs on every channel: [angular frequency, damping ratio].
@@ -104,9 +104,12 @@ export class RoninAnimation{
   root.updateWorldMatrix(true,true);
   this.articulateSegments(e);this.followArmor();root.updateWorldMatrix(true,true);
   this.orientShield(x.shield,smooth(guarding));m.updateShieldVisual(e);
-  m.energy.emissiveIntensity=dash&&stage==='windup'?2+Math.pow(clock/(e.dashWindupDuration||c.dashWindup),2)*(2+Math.sin(time*35)):attack&&(e.swordAge||0)<c.swordWindup?1.8+Math.pow((e.swordAge||0)/c.swordWindup,2)*(1.5+Math.sin(time*30)*.8):flight?2.1:1.7;
+  m.energy.emissiveIntensity=dash&&stage==='windup'?2.8+Math.pow(clock/(e.dashWindupDuration||c.dashWindup),2)*(2.4+Math.sin(time*35)):attack&&!e.waveAttack&&(e.swordAge||0)<c.swordWindup?2.6+Math.pow((e.swordAge||0)/c.swordWindup,2)*(2+Math.sin(time*30)*.8):flight?3.2:2.6;
   // Neon traces pulse with time; the magenta trim stutters now and then like an old sign.
-  m.neonTime.value=time;const stutter=Math.sin(time*.73)*Math.sin(time*1.91);m.neon.emissiveIntensity=2.6*(stutter>.93?.3+.7*(Math.sin(time*57)>0):1);
+  m.cyberTime.value=time;const stutter=Math.sin(time*.73)*Math.sin(time*1.91);m.neon.emissiveIntensity=3.4*(stutter>.93?.3+.7*(Math.sin(time*57)>0):1);
+  // Scarf streams out behind as the body moves fast (boost, flight, lunges) and swings with turns.
+  const speed=dt>0?traveled/dt:0,streaming=flight||dash&&stage==='dash'?1:clamp((speed-6)/22,0,1);this.stream=THREE.MathUtils.damp(this.stream||0,streaming,streaming>(this.stream||0)?6:2.2,dt);
+  m.underglow.material.uniforms.uPower.value=THREE.MathUtils.damp(m.underglow.material.uniforms.uPower.value,flight||e.dead?0:1,flight?10:3,dt);const scarf=m.scarf.userData.scarf;scarf.uStream.value=this.stream;scarf.uSway.value.set(THREE.MathUtils.damp(scarf.uSway.value.x,clamp(-this.yawRate*.5,-1.2,1.2),4,dt),THREE.MathUtils.damp(scarf.uSway.value.y,clamp(-(x.frameP[2]-READY.frameP[2])*1.5,-1,1),4,dt));
   m.propulsion.update(dt,time,e);
   this.warning.visible=dash&&stage==='windup'&&!stunned;
   const area=e.dashArea;
@@ -118,7 +121,10 @@ export class RoninAnimation{
   const W=c.swordWindup,S=c.swordSwing,age=e.swordAge||0,wt=e.waveClock||0,ww=c.waveWindup,wi=c.waveVolleyInterval,ws=c.waveSwing;
   const active=attack&&(dash?stage==='slash'||stage==='recovery'&&clock<.06:e.waveAttack?wt>=ww-.02&&wt<ww+ws+.08||wt>=ww+wi-.02&&wt<ww+wi+ws+.08:age>=W-.02&&age<W+S+.1)&&!stunned;
   // The plasma edge charges through the wave windup and flares on each release.
-  m.plasma.emissiveIntensity=e.waveAttack&&attack?(wt<ww?3.2+5*Math.pow(wt/ww,2)*(1+.25*Math.sin(time*40)):active?8:3.6):3.2;
+  m.plasma.emissiveIntensity=e.waveAttack&&attack?(wt<ww?4.2+5*Math.pow(wt/ww,2)*(1+.25*Math.sin(time*40)):active?9:4.6):active?7:4.2;
+  // Plasma sheath breathes at rest, builds through every windup and blazes through the cut.
+  const charge=attack?(dash?(stage==='windup'?clock/(e.dashWindupDuration||c.dashWindup):1):e.waveAttack?Math.min(1,wt/ww):Math.min(1,age/W)):0;
+  m.sheath.uniforms.uPower.value=THREE.MathUtils.damp(m.sheath.uniforms.uPower.value,stunned?.1:active?2.4:.38+charge*charge*1.5+Math.sin(time*2.1)*.06,active?30:8,dt);
   this.updateRibbon(dt,active,e);this.attackWasActive=attack;
   Object.assign(this.prev,{flinch:e.flinch||0,blocked:e.blockedHits||0,stage:dash?stage:null,flying:!!flight,swordAge:attack&&!dash&&!e.waveAttack?age:0});
  }
@@ -166,7 +172,7 @@ export class RoninAnimation{
   for(const [node,bind]of m.bind){node.position.copy(bind.p);node.quaternion.copy(bind.q);}
   const T=track(DEATH_KEYS,t,this.target),x={};for(const id of CHANNELS){const [w,z]=TUNE[id];x[id]=this.springs[id].step(T[id],dt,w*1.2,z);}
   this.applyChannels(x,0);root.updateWorldMatrix(true,true);if(this.glide){this.glide=false;this.plantFeet();}this.updateFeet(dt,false,T.feet,.3,true);
-  this.articulateSegments();this.followArmor();root.updateWorldMatrix(true,true);this.orientShield(x.shield);m.energy.emissiveIntensity=1.7*(1-t);m.propulsion.clear();}
+  this.articulateSegments();this.followArmor();root.updateWorldMatrix(true,true);this.orientShield(x.shield);m.energy.emissiveIntensity=2.6*(1-t);m.neon.emissiveIntensity=3.4*(1-t)*(Math.sin(t*90)>-.3?1:.2);m.sheath.uniforms.uPower.value=.4*(1-t);m.propulsion.clear();}
  plantFeet(){const m=this.m,root=m.root;root.updateWorldMatrix(true,true);const ground=root.localToWorld(V(0,.37,0)).y;
   this.feet=['left','right'].map(side=>{const point=m.parts[side+'-foot'].getWorldPosition(V());point.y=ground;return this.footState(point);});}
  footState(point){return{anchor:point.clone(),point:point.clone(),from:point.clone(),to:point.clone(),swing:false,step:null,settle:0,pitch:0,contact:point.clone(),solvedContact:point.clone()};}

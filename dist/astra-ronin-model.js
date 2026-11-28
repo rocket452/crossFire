@@ -2,26 +2,31 @@ import {RoninShogun} from './ronin-shogun.js?v=310';
 import {RoninPropulsion} from './astra-ronin-propulsion.js?v=468';
 import * as THREE from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {RoninAnimation} from './astra-ronin-animation.js?v=471';
-import {neonCircuit,cloneNeon,NEON_TIME} from './astra-ronin-neon.js?v=471';
+import {RoninAnimation} from './astra-ronin-animation.js?v=472';
+import {neonRim,cloneCyber,hazardMaterial,underglowMaterial,holoShieldMaterial,plasmaSheathMaterial,scarfMaterial,scarfGeometry,outlineRing,CYBER_TIME} from './astra-ronin-cyber.js?v=472';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
-// Original hard-surface design with a cyberpunk finish. Armor is batched per material per articulated joint.
+// Original hard-surface design with a cyber-ronin finish. Armor is batched per material per articulated joint.
 export class AstraRoninModel {
  constructor(root,config,shogunAsset=null){
   Object.assign(this,{root,config,parts:{},hitParts:[],repairs:[]});
-  // Cyberpunk finish: gunmetal and black-chrome plates etched with neon circuit traces, neon magenta trim
-  // (formerly gold), cyan energy cells and a magenta plasma cutting edge on the blade.
-  this.armor=neonCircuit(new THREE.MeshStandardMaterial({color:'#737b8c',metalness:.5,roughness:.3}),{color:'#2ae6ff',strength:1.25,scale:2.2});
-  this.edge=neonCircuit(new THREE.MeshStandardMaterial({color:'#2a2735',metalness:.55,roughness:.32}),{color:'#ff2bd6',strength:1.6,scale:2.6});
-  this.dark=neonCircuit(new THREE.MeshStandardMaterial({color:'#15161d',metalness:.55,roughness:.45}),{color:'#2ae6ff',strength:.45,scale:3});
-  this.metal=new THREE.MeshStandardMaterial({color:'#c4cdda',metalness:.96,roughness:.16});
-  this.gold=new THREE.MeshStandardMaterial({color:'#ff63dc',emissive:'#ff1fbf',emissiveIntensity:2.6,metalness:.2,roughness:.3});this.neon=this.gold;
-  this.energy=new THREE.MeshStandardMaterial({color:'#bffcff',emissive:'#22e6ff',emissiveIntensity:1.7,roughness:.3});
-  this.plasma=new THREE.MeshStandardMaterial({color:'#ffe3f8',emissive:'#ff2bd6',emissiveIntensity:3.2,roughness:.25});this.neonTime=NEON_TIME;
+  // Cyber-ronin finish: matte black main plates, satin gunmetal secondaries and a black frame, all catching a
+  // cyan/magenta neon rim from the city. Neon piping (magenta tubes, cyan cells) is HDR so the city bloom
+  // makes it glow. The blade is dark steel with a plasma edge and sheath; the shield face is hard light.
+  this.armor=neonRim(new THREE.MeshStandardMaterial({color:'#1c1e26',metalness:.35,roughness:.48}),{strength:.34,power:3.2});
+  this.edge=neonRim(new THREE.MeshStandardMaterial({color:'#59616f',metalness:.7,roughness:.3}),{strength:.22,power:3.4});
+  this.dark=neonRim(new THREE.MeshStandardMaterial({color:'#0c0d12',metalness:.5,roughness:.6}),{strength:.14,power:3.4});
+  this.metal=new THREE.MeshStandardMaterial({color:'#b9c3d2',metalness:1,roughness:.15});
+  this.steel=new THREE.MeshStandardMaterial({color:'#2b2f39',metalness:.92,roughness:.2});
+  this.gold=new THREE.MeshStandardMaterial({color:'#ff8ae8',emissive:'#ff1fcf',emissiveIntensity:3.4,metalness:.1,roughness:.35});this.neon=this.gold;
+  this.energy=new THREE.MeshStandardMaterial({color:'#c8fbff',emissive:'#19e3ff',emissiveIntensity:2.6,roughness:.3});
+  this.plasma=new THREE.MeshStandardMaterial({color:'#fff0fb',emissive:'#ff2bd6',emissiveIntensity:4.2,roughness:.25});
+  // Piping tubes glow below the accents so the plates still read as armour under the bloom.
+  this.pipeMagenta=new THREE.MeshStandardMaterial({color:'#ff7ae6',emissive:'#ff1fcf',emissiveIntensity:1.9,roughness:.4});this.pipeCyan=new THREE.MeshStandardMaterial({color:'#b8f8ff',emissive:'#19e3ff',emissiveIntensity:1.7,roughness:.4});
+  this.hazard=hazardMaterial();this.holo=holoShieldMaterial();this.sheath=plasmaSheathMaterial();this.scarf=scarfMaterial();this.cyberTime=CYBER_TIME;this.rings=[];
   const unit=new THREE.Shape();unit.moveTo(-.43,-.43);unit.lineTo(.43,-.43);unit.lineTo(.43,.43);unit.lineTo(-.43,.43);unit.closePath();
   this.box=new THREE.ExtrudeGeometry(unit,{depth:.86,bevelEnabled:true,bevelThickness:.07,bevelSize:.07,bevelSegments:1,steps:1});this.box.translate(0,0,-.43);
   this.axle=new THREE.CylinderGeometry(.5,.5,1,10);this.axle.rotateZ(Math.PI/2);
-  const n=(id,p,pos)=>this.node(id,p,pos),b=(p,pos,size,m=this.armor)=>this.block(p,pos,size,m),plate=(p,pos,size,outline,m=this.armor)=>this.plate(p,pos,size,outline,m),hit=(id,node,center,size)=>this.hitParts.push({id,node,center,size});
+  const n=(id,p,pos)=>this.node(id,p,pos),b=(p,pos,size,m=this.armor)=>this.block(p,pos,size,m),plate=(p,pos,size,outline,m=this.armor,pipe=null)=>this.plate(p,pos,size,outline,m,pipe),M='magenta',Cy='cyan',hit=(id,node,center,size)=>this.hitParts.push({id,node,center,size});
   const tapered=[[-.5,.5],[.5,.5],[.4,-.28],[.2,-.5],[-.2,-.5],[-.4,-.28]],wing=[[-.5,-.4],[-.5,.3],[.25,.5],[.65,.05],[.4,-.35]],shieldOutline=[[-.4,.5],[.4,.5],[.5,.25],[.25,-.35],[0,-.6],[-.25,-.35],[-.5,.25]];
   this.frame=n('frame',root,[0,4.45,0]);
   const hips=n('hips',this.frame,[0,-.05,0]);b(hips,[0,0,0],[1.65,.7,1.15],this.dark);plate(hips,[0,-.18,.7],[.7,.9,.3],tapered,this.edge);
@@ -30,7 +35,7 @@ export class AstraRoninModel {
   for(let i=0;i<3;i++)b(torso,[0,-1.05+i*.23,.12],[1.45+i*.14,.18,1.12],i===0?this.metal:this.edge);
   plate(torso,[0,.25,.87],[.8,1.3,.35],tapered,this.edge);plate(torso,[0,.3,1.09],[.32,.55,.08],tapered,this.energy);
   for(const s of[-1,1]){
-   const chest=plate(torso,[s*.88,.3,.7],[1.5,1.4,.8],tapered);chest.rotation.z=-s*.17;chest.rotation.y=s*.15;
+   const chest=plate(torso,[s*.88,.3,.7],[1.5,1.4,.8],tapered,this.armor,M);chest.rotation.z=-s*.17;chest.rotation.y=s*.15;
    b(torso,[s*.85,.22,1.13],[.68,.55,.12],this.dark);for(let i=0;i<3;i++)b(torso,[s*.85,.06+i*.16,1.22],[.57,.07,.1],this.gold);
    b(torso,[s*.85,.82,.55],[1.1,.14,.5],this.edge);
    const side=plate(torso,[s*1.36,-.55,.05],[.46,.7,1.2],tapered,this.edge);side.rotation.z=s*.15;
@@ -42,20 +47,24 @@ export class AstraRoninModel {
   const head=n('head',neck,[0,.67,.02]);plate(head,[0,0,0],[1.2,1.2,1.1],[[-.5,-.28],[-.5,.15],[-.3,.5],[.3,.5],[.5,.15],[.5,-.28],[.25,-.5],[-.25,-.5]]);
   plate(head,[0,-.08,.63],[1,.53,.12],[[-.5,.4],[.5,.4],[.35,-.5],[-.35,-.5]],this.dark);
   for(const s of[-1,1]){
-   const eye=plate(head,[s*.24,.02,.73],[.38,.13,.06],[[-.5,.5],[.5,.3],[.35,-.5],[-.5,-.2]],this.energy);eye.rotation.z=s*.16;
    const cheek=plate(head,[s*.48,-.35,.48],[.3,.7,.5],tapered);cheek.rotation.z=-s*.13;
    const crown=plate(head,[s*.53,.76,.18],[.32,1.45,.14],[[-.5,-.5],[.5,-.5],[.1,.5],[-.2,.25]],this.gold);crown.rotation.z=-s*.65;
    b(head,[s*.64,-.04,-.02],[.24,.64,.65],this.edge);b(head,[s*.77,.12,.05],[.06,.23,.22],this.energy);
   }
+  // One wide visor slit across the face.
+  plate(head,[0,.03,.73],[.92,.13,.07],[[-.5,.15],[-.4,.5],[.4,.5],[.5,.15],[.42,-.5],[-.42,-.5]],this.energy);
   plate(head,[0,-.34,.74],[.45,.62,.35],tapered);plate(head,[0,-.59,.68],[.27,.25,.2],tapered,this.edge);b(head,[0,.58,.03],[.24,.25,.65],this.edge);b(head,[0,.58,.39],[.17,.13,.05],this.energy);
   hit('head',head,[0,0,.1],[1.5,1.4,1.4]);
+  // Tattered techwear scarf: two tails knotted behind the neck, bent by the animation in the vertex shader.
+  this.scarfMesh=new THREE.Mesh(scarfGeometry(),this.scarf);this.scarfMesh.name='Ronin scarf';this.scarfMesh.position.set(0,1.02,-.7);this.scarfMesh.frustumCulled=false;this.scarfMesh.receiveShadow=true;torso.add(this.scarfMesh);
+  b(torso,[0,1.02,-.58],[.7,.3,.32],this.gold);
   const pack=n('backpack',torso,[0,.12,-1.05]);b(pack,[0,0,0],[1.8,1.7,.8],this.edge);this.jets=[];
   for(const s of[-1,1]){
-   const pod=n((s<0?'left':'right')+'-thruster',pack,[s*.9,-.1,-.35]);b(pod,[0,0,0],[.65,1.8,.9],this.dark);plate(pod,[0,.35,-.35],[.7,1.35,.45],tapered);b(pod,[0,-.7,-.5],[.55,.55,.2],this.metal);b(pod,[0,-.7,-.64],[.34,.34,.08],this.energy);
+   const pod=n((s<0?'left':'right')+'-thruster',pack,[s*.9,-.1,-.35]);b(pod,[0,0,0],[.65,1.8,.9],this.dark);plate(pod,[0,.35,-.35],[.7,1.35,.45],tapered,this.armor,Cy);b(pod,[0,-.7,-.5],[.55,.55,.2],this.metal);b(pod,[0,-.7,-.64],[.34,.34,.08],this.energy);
    // Wing binders hinge at the pack shoulders: folded fins at rest, flared for boost and flight.
    const wing=n((s<0?'left':'right')+'-wing',pack,[s*.8,.45,-.35]);
-   const fin=plate(wing,[s*.5,.78,0],[.85,3.6,.18],tapered,this.armor);fin.rotation.z=-s*.4;
-   for(const [x,y,len,width,tilt]of[[1.25,.08,3.25,.62,1],[1.1,-.75,2.7,.52,1.48]]){const feather=plate(wing,[s*x,y,0],[width,len,.14],tapered,this.armor);feather.rotation.z=-s*tilt;}
+   const fin=plate(wing,[s*.5,.78,0],[.85,3.6,.18],tapered,this.armor,M);fin.rotation.z=-s*.4;
+   for(const [x,y,len,width,tilt]of[[1.25,.08,3.25,.62,1],[1.1,-.75,2.7,.52,1.48]]){const feather=plate(wing,[s*x,y,0],[width,len,.14],tapered,this.edge);feather.rotation.z=-s*tilt;}
 
   }
   for(const [side,s] of[['left',-1],['right',1]]){
@@ -63,29 +72,35 @@ export class AstraRoninModel {
    // Exposed armature with independently twisting upper-arm plates and a clear elbow gap.
    b(arm,[0,-.73,0],[.36,1.15,.4],this.dark);b(arm,[s*.23,-.72,-.18],[.09,1.05,.12],this.metal);
    const bicep=n(side+'-bicep',arm,[0,-.45,0]);plate(bicep,[0,0,.08],[.85,.63,.7],tapered,this.edge);plate(bicep,[0,-.65,.08],[.7,.48,.6],tapered);b(bicep,[0,-.32,.39],[.42,.09,.1],this.metal);
-   const shoulder=n(side+'-shoulder',arm,[s*.04,.2,0]);shoulder.scale.set(.72,.8,.8);const cap=plate(shoulder,[s*.25,.2,0],[1.85,.95,1.65],wing.map(([x,y])=>[x*s,y]));cap.rotation.z=s*.12;plate(shoulder,[s*.52,-.27,.05],[1.5,.55,1.5],wing.map(([x,y])=>[x*s,y]),this.edge);const fin=plate(shoulder,[s*.85,.65,-.25],[.5,1.05,.5],tapered);fin.rotation.z=-s*.9;b(shoulder,[0,.32,.87],[.63,.13,.08],this.energy);
+   const shoulder=n(side+'-shoulder',arm,[s*.04,.2,0]);shoulder.scale.set(.72,.8,.8);const cap=plate(shoulder,[s*.25,.2,0],[1.85,.95,1.65],wing.map(([x,y])=>[x*s,y]),this.armor,M);cap.rotation.z=s*.12;plate(shoulder,[s*.52,-.27,.05],[1.5,.55,1.5],wing.map(([x,y])=>[x*s,y]),this.hazard);const fin=plate(shoulder,[s*.85,.65,-.25],[.5,1.05,.5],tapered);fin.rotation.z=-s*.9;b(shoulder,[0,.32,.87],[.63,.13,.08],this.energy);
    const fore=n(side+'-lower-arm',arm,[0,-1.45,0]);this.block(fore,[0,0,0],[.75,.48,.48],this.dark,this.axle);this.block(fore,[s*.39,0,0],[.12,.4,.4],this.metal,this.axle);
    const elbow=n(side+'-elbow-guard',fore,[0,0,.1]);plate(elbow,[0,.02,.25],[.64,.48,.28],tapered,this.edge);
    b(fore,[0,-.77,0],[.38,1.15,.42],this.dark);
-   const shell=n(side+'-forearm-shell',fore,[0,-.45,0]);plate(shell,[0,0,.12],[1.04,.62,1.02],tapered);plate(shell,[0,-.66,.1],[.84,.48,.85],tapered);plate(shell,[0,-.12,.65],[.5,.42,.11],tapered,this.edge);b(shell,[0,-.38,.55],[.56,.09,.08],this.metal);
+   const shell=n(side+'-forearm-shell',fore,[0,-.45,0]);plate(shell,[0,0,.12],[1.04,.62,1.02],tapered,this.armor,Cy);plate(shell,[0,-.66,.1],[.84,.48,.85],tapered);plate(shell,[0,-.12,.65],[.5,.42,.11],tapered,this.hazard);b(shell,[0,-.38,.55],[.56,.09,.08],this.metal);
    const wrist=n(side+'-wrist',fore,[0,-1.55,0]);b(wrist,[0,.07,0],[.47,.27,.47],this.metal);b(wrist,[0,-.1,0],[.53,.12,.53],this.edge);
    const hand=n(side+'-hand',wrist,[0,0,0]);b(hand,[0,-.22,0],[.6,.38,.6],this.dark);for(let k=0;k<4;k++)b(hand,[(k-1.5)*.14,-.25,.32],[.11,.28,.15],this.metal);b(hand,[-s*.33,-.15,.12],[.17,.31,.23],this.edge);
    const leg=n(side+'-upper-leg',this.frame,[s*.82,-.05,0]);this.block(leg,[0,0,0],[.8,.65,.65],this.metal,this.axle);b(leg,[0,-1,0],[.5,1.65,.55],this.dark);b(leg,[s*.32,-1,-.2],[.1,1.5,.13],this.metal);
    const thigh=n(side+'-thigh-armor',leg,[0,0,0]);plate(thigh,[0,-.55,.13],[1.05,.82,1.03],tapered);plate(thigh,[0,-1.42,.14],[.88,.6,.9],tapered,this.edge);b(thigh,[0,-.65,.69],[.48,.12,.08],this.edge);b(thigh,[0,-1.03,.43],[.54,.12,.14],this.metal);
    const shin=n(side+'-lower-leg',leg,[0,-2.05,0]);this.block(shin,[0,0,0],[.85,.55,.55],this.dark,this.axle);this.block(shin,[s*.44,0,0],[.12,.42,.42],this.metal,this.axle);
-   const knee=n(side+'-knee-guard',shin,[0,0,.35]);plate(knee,[0,-.02,.3],[1,.7,.4],tapered,this.edge);b(knee,[0,.08,.53],[.37,.12,.07],this.energy);
+   const knee=n(side+'-knee-guard',shin,[0,0,.35]);plate(knee,[0,-.02,.3],[1,.7,.4],tapered,this.hazard,Cy);b(knee,[0,.08,.53],[.37,.12,.07],this.energy);
    b(shin,[0,-1.02,0],[.5,1.55,.6],this.dark);for(const x of[-.34,.34])b(shin,[x,-1.03,-.22],[.1,1.45,.13],this.metal);
-   plate(shin,[0,-.68,.25],[1.02,.72,.92],tapered);plate(shin,[0,-.68,.76],[.4,.45,.12],tapered,this.edge);b(shin,[0,-1.12,.4],[.62,.1,.2],this.metal);
+   plate(shin,[0,-.68,.25],[1.02,.72,.92],tapered,this.armor,Cy);plate(shin,[0,-.68,.76],[.4,.45,.12],tapered,this.edge);b(shin,[0,-1.12,.4],[.62,.1,.2],this.metal);
    const cuff=n(side+'-shin-cuff',shin,[0,-1.55,.12]);plate(cuff,[0,0,.13],[.9,.6,.88],tapered);b(cuff,[0,0,.63],[.32,.1,.06],this.energy);
    const ankle=n(side+'-ankle',shin,[0,-2.1,0]);this.block(ankle,[0,0,0],[.66,.44,.44],this.metal,this.axle);b(ankle,[0,-.02,-.22],[.6,.32,.2],this.dark);
    const foot=n(side+'-foot',ankle,[0,0,0]);plate(foot,[0,-.16,.35],[1.05,.43,1.8],tapered,this.edge);b(foot,[0,-.03,.65],[.85,.24,.8]);b(foot,[0,-.28,.35],[1.1,.16,1.9],this.dark);this.block(foot,[0,-.31,.22],[.27,.08,.27],this.metal,new THREE.CylinderGeometry(1,1,1,10));this.block(foot,[0,-.355,.22],[.19,.012,.19],this.dark,new THREE.CylinderGeometry(1,1,1,10));const toe=n(side+'-toe',foot,[0,-.02,1.08]);b(toe,[0,0,.2],[.95,.35,.55]);
    hit(side+'-upper-arm',arm,[s*.12,-.4,0],[1.4,2,1.45]);hit(side+'-lower-arm',fore,[0,-.7,.1],[1.1,1.9,1.3]);hit(side+'-upper-leg',leg,[0,-1,0],[1.2,2.2,1.4]);hit(side+'-lower-leg',shin,[0,-1,.3],[1.3,2.9,2.3]);
   }
-  const shield=n('shield',this.parts['left-lower-arm'],[-.9,-.65,.25]);shield.scale.set(1.5,1.35,1);shield.rotation.y=-1.15;plate(shield,[0,0,0],[1.75,3,.4],shieldOutline,this.edge);plate(shield,[0,.05,.24],[1.4,2.6,.16],shieldOutline);plate(shield,[0,.1,.35],[.38,2.1,.1],shieldOutline,this.edge);b(shield,[0,.35,.43],[.12,.7,.06],this.energy);b(shield,[0,.8,.42],[.75,.1,.07],this.gold);
+  const shield=n('shield',this.parts['left-lower-arm'],[-.9,-.65,.25]);shield.scale.set(1.5,1.35,1);shield.rotation.y=-1.15;plate(shield,[0,0,0],[1.75,3,.4],shieldOutline,this.armor,Cy);plate(shield,[0,.05,.2],[1.5,2.7,.12],shieldOutline,this.dark);b(shield,[0,.35,.43],[.12,.7,.06],this.energy);b(shield,[0,.35,.44],[.34,.34,.07],this.gold).rotation.z=Math.PI/4;
+  // Hard-light face: a flat hex-grid panel just proud of the frame.
+  {const face=new THREE.Shape();shieldOutline.forEach(([x,y],i)=>i?face.lineTo(x*1.32,y*2.4):face.moveTo(x*1.32,y*2.4));face.closePath();const g=new THREE.ShapeGeometry(face);const uv=g.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)/1.32+.5,uv.getY(i)/2.4/1.1+.55);
+   this.holoFace=new THREE.Mesh(g,this.holo);this.holoFace.name='Ronin hard-light shield';this.holoFace.position.set(0,.05,.3);this.holoFace.renderOrder=2;shield.add(this.holoFace);}
   this.sword=n('sword',this.parts['right-hand'],[0,-.22,.05]);b(this.sword,[0,0,.18],[.25,.25,1.05],this.dark);for(let i=0;i<4;i++)b(this.sword,[0,0,-.15+i*.18],[.29,.29,.06],this.gold);plate(this.sword,[0,0,.75],[1.25,.32,.3],wing,this.edge);
   // Broad faceted blade, angled tip, bright continuous cutting edge.
-  const blade=this.plate(this.sword,[0,0,3.45],[.75,5.4,.16],[[-.45,-.5],[.4,-.5],[.45,.28],[0,.5],[-.4,.32]],this.metal);blade.rotation.x=Math.PI/2;
+  const blade=this.plate(this.sword,[0,0,3.45],[.75,5.4,.16],[[-.45,-.5],[.4,-.5],[.45,.28],[0,.5],[-.4,.32]],this.steel);blade.rotation.x=Math.PI/2;
   const edge=this.plate(this.sword,[.26,0,3.45],[.12,5.25,.19],[[-.5,-.5],[.5,-.5],[.5,.32],[-.5,.5]],this.plasma);edge.rotation.x=Math.PI/2;
+  // Plasma sheath: two crossed additive planes hugging the blade, so it reads from every angle.
+  {const flat=new THREE.PlaneGeometry(1.15,5.75);flat.rotateX(Math.PI/2);const cross=new THREE.PlaneGeometry(1.15,5.75);cross.rotateX(Math.PI/2);cross.rotateZ(Math.PI/2);cross.scale(.45,1,1);
+   this.sheathMesh=new THREE.Mesh(mergeGeometries([flat,cross]),this.sheath);this.sheathMesh.name='Ronin plasma sheath';this.sheathMesh.position.set(.06,0,3.42);this.sheathMesh.renderOrder=2;this.sheath.userData.mesh=this.sheathMesh;this.sword.add(this.sheathMesh);}
   this.tip=n('tip',this.sword,[0,0,6.15]);this.bladeBase=n('blade-base',this.sword,[0,0,1]);this.rifle=this.sword;this.muzzle=this.tip;
   this.flash=new THREE.Mesh(new THREE.IcosahedronGeometry(.12,0),this.energy);this.tip.add(this.flash);this.flash.visible=false;
   // Athletic humanoid proportions: longer load-bearing legs, lighter upper body.
@@ -106,14 +121,17 @@ export class AstraRoninModel {
    for(const h of this.hitParts){if(h.id===side+'-upper-arm'||h.id===side+'-lower-arm'){h.center[0]*=.8;h.center[2]*=.8;h.size[0]*=.8;h.size[2]*=.8;}if(h.id===side+'-upper-leg'||h.id===side+'-lower-leg'){const factor=h.id.includes('upper')?upper:lower;h.center[1]*=factor;h.size[1]*=factor;}}
   }
   const hull=this.hitParts.find(h=>h.id==='torso');hull.center=hull.center.map((v,i)=>v*[.8,.83,.82][i]);hull.size=hull.size.map((v,i)=>v*[.8,.83,.82][i]);
-  this.batch();const shieldClones=new Map();this.shieldMaterials=[];shield.traverse(o=>{if(!o.isMesh)return;const source=o.material;if(!shieldClones.has(source)){const material=cloneNeon(source);shieldClones.set(source,material);this.shieldMaterials.push({material,emissive:material.emissive.clone(),intensity:material.emissiveIntensity});}o.material=shieldClones.get(source);});this.bind=new Map();for(const p of Object.values(this.parts))this.bind.set(p,{p:p.position.clone(),q:p.quaternion.clone()});root.scale.setScalar(config.height/9.6);
+  this.batch();const shieldClones=new Map();this.shieldMaterials=[];shield.traverse(o=>{if(!o.isMesh||o===this.holoFace)return;const source=o.material;if(!shieldClones.has(source)){const material=cloneCyber(source);shieldClones.set(source,material);this.shieldMaterials.push({material,emissive:material.emissive.clone(),intensity:material.emissiveIntensity});}o.material=shieldClones.get(source);});this.bind=new Map();for(const p of Object.values(this.parts))this.bind.set(p,{p:p.position.clone(),q:p.quaternion.clone()});root.scale.setScalar(config.height/9.6);
+  // Underglow pool on the street beneath him; the animation fades it while he is airborne.
+  this.underglow=new THREE.Mesh(new THREE.CircleGeometry(4.2,48),underglowMaterial());this.underglow.name='Ronin underglow';this.underglow.rotation.x=-Math.PI/2;this.underglow.position.y=.04;this.underglow.renderOrder=1;root.add(this.underglow);
   this.propulsion=new RoninPropulsion(this);this.jets=this.propulsion.layers;this.animation=new RoninAnimation(this);if(shogunAsset)this.shogun=new RoninShogun(this,shogunAsset);this.reset();
  }
- updateShieldVisual(actor){const flash=Math.max(0,actor.guardFlash||0)/(this.config.guardFlashDuration||.18);for(const s of this.shieldMaterials||[]){s.material.emissive.copy(s.emissive);s.material.emissiveIntensity=s.intensity;if(flash>0){s.material.emissive.set('#238cff');s.material.emissiveIntensity=3.5*flash;}}}
+ updateShieldVisual(actor){const flash=Math.max(0,actor.guardFlash||0)/(this.config.guardFlashDuration||.18);if(this.holo)this.holo.uniforms.uFlash.value=flash;for(const s of this.shieldMaterials||[]){s.material.emissive.copy(s.emissive);s.material.emissiveIntensity=s.intensity;if(flash>0){s.material.emissive.set('#238cff');s.material.emissiveIntensity=3.5*flash;}}}
  node(id,parent,position){const g=new THREE.Group();g.name=id;g.position.set(...position);parent.add(g);this.parts[id]=g;return g;}
  block(parent,position,size,material=this.armor,geometry=this.box){const m=new THREE.Mesh(geometry,material);m.position.set(...position);m.scale.set(...size);m.castShadow=m.receiveShadow=true;parent.add(m);return m;}
- plate(parent,position,size,outline,material=this.armor){const shape=new THREE.Shape();outline.forEach(([x,y],i)=>i?shape.lineTo(x,y):shape.moveTo(x,y));shape.closePath();const g=new THREE.ExtrudeGeometry(shape,{depth:.86,bevelEnabled:true,bevelThickness:.04,bevelSize:.035,bevelSegments:1,steps:1});g.translate(0,0,-.43);return this.block(parent,position,size,material,g);}
- batch(){const dynamic=new Set([...this.jets,this.flash]);for(const node of Object.values(this.parts)){const groups=new Map();for(const m of node.children){if(!m.isMesh||dynamic.has(m))continue;if(!groups.has(m.material))groups.set(m.material,[]);groups.get(m.material).push(m);}for(const [material,meshes]of groups){if(meshes.length<2)continue;const inputs=meshes.map(m=>{m.updateMatrix();return(m.geometry.index?m.geometry.toNonIndexed():m.geometry.clone()).applyMatrix4(m.matrix);});const geometry=mergeGeometries(inputs);inputs.forEach(g=>g.dispose());meshes.forEach(m=>node.remove(m));const mesh=new THREE.Mesh(geometry,material);mesh.castShadow=mesh.receiveShadow=true;node.add(mesh);}}}
+ plate(parent,position,size,outline,material=this.armor,pipe=null){const shape=new THREE.Shape();outline.forEach(([x,y],i)=>i?shape.lineTo(x,y):shape.moveTo(x,y));shape.closePath();const g=new THREE.ExtrudeGeometry(shape,{depth:.86,bevelEnabled:true,bevelThickness:.04,bevelSize:.035,bevelSegments:1,steps:1});g.translate(0,0,-.43);const mesh=this.block(parent,position,size,material,g);if(pipe)this.rings.push({mesh,outline,pipe});return mesh;}
+ pipe(){const materials={magenta:this.pipeMagenta,cyan:this.pipeCyan};for(const {mesh,outline,pipe}of this.rings){const ring=new THREE.Mesh(outlineRing(outline,{inner:.93}),materials[pipe]);ring.position.copy(mesh.position);ring.quaternion.copy(mesh.quaternion);ring.scale.copy(mesh.scale);mesh.parent.add(ring);}this.rings=[];}
+ batch(){this.pipe();const dynamic=new Set([...this.jets,this.flash,this.holoFace,this.sheathMesh,this.scarfMesh].filter(Boolean));for(const node of Object.values(this.parts)){const groups=new Map();for(const m of node.children){if(!m.isMesh||dynamic.has(m))continue;if(!groups.has(m.material))groups.set(m.material,[]);groups.get(m.material).push(m);}for(const [material,meshes]of groups){if(meshes.length<2)continue;const inputs=meshes.map(m=>{m.updateMatrix();return(m.geometry.index?m.geometry.toNonIndexed():m.geometry.clone()).applyMatrix4(m.matrix);});const geometry=mergeGeometries(inputs);inputs.forEach(g=>g.dispose());meshes.forEach(m=>node.remove(m));const mesh=new THREE.Mesh(geometry,material);mesh.castShadow=mesh.receiveShadow=true;node.add(mesh);}}}
  reset(){for(const [p,b]of this.bind){p.position.copy(b.p);p.quaternion.copy(b.q);p.visible=true;}this.flash.visible=false;this.updateShieldVisual({});this.animation?.reset();this.shogun?.sync();}
  visible(node){while(node&&node!==this.root){if(!node.visible)return false;node=node.parent;}return true;}
  shapes(limbs){this.root.updateWorldMatrix(true,true);return this.hitParts.filter(p=>this.visible(p.node)&&(!limbs[p.id]||limbs[p.id].health>0)).map(p=>({part:p.id,center:p.node.localToWorld(V(...p.center)),half:{x:p.size[0]*this.root.scale.x/2,y:p.size[1]*this.root.scale.x/2,z:p.size[2]*this.root.scale.x/2},rotation:p.node.getWorldQuaternion(new THREE.Quaternion())}));}

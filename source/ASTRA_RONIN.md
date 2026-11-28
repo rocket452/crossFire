@@ -148,13 +148,9 @@ The stiff pose-to-pose lerps are replaced by a spring-driven rig with mecha-anim
 
 All existing Ronin node suites pass. The desktop/touch dash and guard browser suites pass. The pose and flight browser suites fail identically on the unchanged baseline in this public checkout, because the private Shogun GLB returns 404. Phone performance remains unmeasured.
 
-## Cyberpunk makeover and wave slash revision 471
+## Wave slash revision 471
 
-**Makeover.** The same silhouette with a new finish.
-- **Plates:** gunmetal armour (with cyan traces) and black-chrome edge plates (with magenta traces). The dark frames carry faint cyan traces.
-- **Circuit traces:** pulsing neon traces etched by a small shader patch (`dist/astra-ronin-neon.js`). It runs in each mesh's node-local space, with no extra meshes or textures.
-- **Trim and blade:** the former gold trim (crest, chest vents, shield bar, hilt rings) is now neon magenta and stutters occasionally like an old sign. The blade's cutting edge is a magenta plasma strip that charges and flares during the wave slash, and the sword smear is magenta.
-- **Unchanged:** cyan energy cells, eyes and thrusters. The budget stays 6,618 triangles and 129 meshes.
+**Makeover.** The first circuit-trace finish was replaced in revision 472; see below.
 
 **Wave slash.**
 - **When he uses it:** ranged engagements alternate, dash combo first, then wave slash. The wave turn is used when the hero is 14–66 m away; beyond that he dashes and keeps the turn. With the wave slash up next, he holds his ground at 18–66 m instead of closing to sword reach.
@@ -173,3 +169,23 @@ All existing Ronin node suites pass. The desktop/touch dash and guard browser su
 - stun, death and reset.
 
 All earlier Ronin suites pass. Desktop/touch dash and guard browser suites pass.
+
+## Cyber-ronin redesign revision 472
+
+The first cyberpunk pass was only a recolour with random circuit traces, and it was rejected. Revision 472 redesigns the finish around the city's real HDR neon bloom (`asset-city-lighting.js`). Emissive values above about 1.5 glow on screen. The pieces are built in `dist/astra-ronin-cyber.js`:
+- **Armour:** matte black main plates, satin gunmetal secondaries and a black frame. A subtle dual-tone neon rim light (cyan from one side, magenta from the other) is kept below the bloom threshold so the plates still read as armour.
+- **Neon piping:** HDR tubes that follow the actual outlines of selected plates. Magenta on the chest, shoulder caps and wing fins; cyan on the forearms, knees, shins, backpack pods and shield frame. Thirteen piped plates in all, built as wrap-around outline frames after the proportions are reshaped, then merged per joint and material.
+- **Accents:** neon magenta crest, chest vents, sigil and scarf knot. A single cyan visor slit replaces the two eyes. Yellow/black hazard stripes on the shoulder skirts, forearm plates and knee guards come from a tiny data texture, so the model still builds in Node.
+- **Hard-light shield:** a hex-lattice face with rolling scanlines and flicker inside the black frame, with a magenta diamond sigil on a cyan bar. It flashes with the existing block feedback; shield blocking still uses the unchanged hit shape.
+- **Energy katana:** a dark steel blade with a magenta plasma edge and a crossed-plane additive plasma sheath. The sheath breathes at rest, charges through every windup (melee, dash and wave) and blazes through the cut.
+- **Scarf:** a tattered crimson techwear scarf with cyan-lit edges, knotted behind the neck. Its two tails are bent in the vertex shader: they hang and twist at rest, stream out behind during boosts, flight and fast lunges, and swing with turns. It casts no shadow and adds no hit shapes.
+- **Underglow:** a magenta pool with a cyan ring on the street beneath him, fading out while he flies.
+
+**Budget:** 7,439 triangles and 149 meshes, up from 6,618 and 129. The animation and propulsion budget checks now allow <10,000 triangles and <160 meshes for this finish. Phone performance remains unmeasured.
+
+`QA/astra-ronin-cyber-test.mjs` covers:
+- the dressing pieces and their attachment;
+- piping coverage, bloom-level neon and matte black armour with the rim light;
+- the shield flash, sheath charge, scarf stream and underglow fade.
+
+All Ronin node suites and the desktop/touch dash and guard browser suites pass.
