@@ -7,3 +7,11 @@ The multiplier applies to total height above the hero's feet, including the trac
 Follow distances, FOV, smoothing and obstacle/terrain clearance are unchanged. Collisions can shorten camera placement where necessary; wall clearance remains in place. Free observation, CPU follow views and cinematic cameras are separate.
 
 Browser verification checked both heroes on desktop and emulated touch, exact unobstructed heights, screen projection of the body center, default view direction, Volt's wall elevation and ability to aim upward. Screenshots were inspected. No movement or combat tuning changed.
+
+## Over-the-shoulder camera — revision 480
+
+With the centred framing, the screen centre (the crosshair) passed through Kage's and Volt's own bodies at every pitch from the default view (−0.44) down to steep downward angles, so the hero covered whatever was being aimed at. At the player's choice, `lateralOffset` is now −1.1 m: the camera sits over the right shoulder and the hero is framed just left of the crosshair (about −0.13 in normalised screen x at the default pitch).
+
+Aiming is unchanged. Both heroes trace from the camera through the crosshair and fire at the point it hits, so shots still land where the crosshair points.
+
+A centre-ray sweep over the whole pitch range (−1.2 to 1.3, real models in City Liberation) now finds no pitch at which either hero covers the crosshair. Luxmancer's separate framing already keeps it low on screen; it is covered only when looking straight up at its upper limit.

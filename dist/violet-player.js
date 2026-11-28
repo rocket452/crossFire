@@ -1,4 +1,4 @@
-import {HERO_CAMERA} from './hero-camera-config.js?v=centered-camera-274';
+import {HERO_CAMERA} from './hero-camera-config.js?v=shoulder-camera-480';
 import {Vector3,MathUtils} from './vendor/three.module.js';
 import {ManualHeroControls} from './manual-hero-controls.js?v=395';
 import {SHIELD_FORWARD_OFFSET} from './shield-shake.js?v=arsenal-12';
