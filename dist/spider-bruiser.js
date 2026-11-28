@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import {EvacRaider,RAIDER_COMBAT} from './evac-raider.js?v=421';
-import {SpiderRobotModel} from './spider-robot-model.js?v=wreck-occlusion-273';
+import {SpiderRobotModel} from './spider-robot-model.js?v=478';
 const angle=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 export const BRUISER_RANGE=Object.freeze({heroRange:RAIDER_COMBAT.heroRange*2.4,weaponRange:330,rocketRange:55});
 // The next burst winds up during the last half-second of this firing gap.
