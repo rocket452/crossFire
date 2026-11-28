@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {SpatialChunkBatch} from './spatial-chunk-batch.js?v=overall-performance-238';
+import {SpatialChunkBatch} from './spatial-chunk-batch.js?v=475';
 import {makeRelayAsset} from './relay-design.js?v=347';
 import {ASSET_CITY} from './asset-city-config.js?v=311';
 

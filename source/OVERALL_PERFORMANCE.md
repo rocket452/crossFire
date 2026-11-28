@@ -133,3 +133,53 @@ The harness waits for the fullscreen canvas resize before sampling.
 Physical phone FPS, GPU timings and thermal behavior remain unmeasured.
 Large simultaneous destruction still costs CPU physics time; this pass retains
 the existing active-body budget and destruction behavior.
+
+# Rendering pass — revision 475
+
+Profiling City Liberation in Chromium showed a GPU-bound frame: about 91% of the sampled CPU time was native
+time waiting on the GPU, and game JavaScript was small. A surge frame submitted 1,111 draw calls and 420k
+triangles. The shadow pass alone drew 253k triangles, 208k of them the complete city. Every lit pixel also
+evaluated 13 point lights, 10 of which were idle effect lights at intensity 0.
+
+## Runtime changes
+
+- **Effect light pool** (`effect-light-pool.js`): hero, beam, Bastion and explosion point lights are hidden and
+  their 2 brightest active ones (intensity, distance to camera) are copied onto 2 always-visible proxy lights
+  each frame. Effect code still drives its own light. Shaders now evaluate 5 point lights in City Liberation
+  instead of 13, and the count never changes, so effects starting or stopping cannot trigger shader recompiles.
+  A third simultaneous effect light (rare) is dropped by priority.
+- **No canvas MSAA under NeonBloom:** cyberpunk-city scenes render the world into the bloom float target, so
+  the multisampled canvas only received the final compose pass. The renderer is now created without `antialias`
+  when float targets are available; other scenes keep MSAA.
+- **Hidden top-level groups skip matrix updates** (`scene-matrix-update.js`): about 5,000 of 5,341 objects are
+  in hidden groups at the start of a run (pooled drones/Bruisers, inactive heroes, the Ronin, Bastion, the
+  Walker). Such groups are flagged and recomputed on the first update after they are shown. Hidden objects
+  inside visible groups update as before.
+- **Camera-following sun shadow** (`shadow-focus.js`, district scenes): the 404 m shadow box became a 240 m box
+  centred 66 m ahead of the camera and texel-snapped in light space. Shadow texels went from 0.39 m to 0.23 m.
+  `SpatialChunkBatch` packs only the districts inside the light's frustum into a shadow caster. The City
+  Liberation district (about 220 m) mostly fits the box, so it usually keeps the complete batch ("direct").
+  Larger maps get the culling.
+- **Silhouette overlays** for rigid meshes are frustum-culled like their source, so off-screen enemies submit no
+  overlay draws. Skinned and instanced overlays are unchanged.
+
+## Measurements
+
+Chromium with SwiftShader at 715 × 378, frozen City Liberation surge frame (10 enemies), each variant toggled
+in the same page:
+
+| Variant | FPS | `renderer.render` JS per frame |
+| --- | ---: | ---: |
+| Revision 475 | 7.07 | 6.42 ms |
+| Point lights unpooled (15 visible) | 7.09 | 6.86 ms |
+| Full scene matrix update | 6.51 | 8.83 ms |
+
+- **Scene matrix update** (frozen surge frame): 0.98 ms to 0.41 ms.
+- **Canvas MSAA off under bloom:** baseline 6.45 to 6.72 FPS (separate runs). The no-bloom fallback, which draws
+  to the canvas, went from 5.65 to 6.8 FPS.
+- **Not measurable in SwiftShader:**
+  - Fewer point lights per pixel: no FPS change in the software rasterizer.
+  - Sharper shadows from the smaller box: a quality gain, not a speed gain.
+
+  Both are expected to matter more on mobile GPUs; phone frame times have not been measured. Run-to-run FPS
+  variation in this environment is about ±8%.
