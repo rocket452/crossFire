@@ -1,13 +1,14 @@
 import * as THREE from './vendor/three.module.js';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {HeroEvolutionCombat} from './liberation-evolutions.js?v=439';
-import {LiberationBuild} from './liberation-build.js?v=439';
+import {LiberationBuild} from './liberation-build.js?v=465';
+import {AssaultSentinel,SentinelFX} from './assault-sentinel.js?v=465';
 import {EvacuationNavigation} from './evacuation-navigation.js?v=evacuation-57';
 import {escortMovementBounds} from './evac-approach.js?v=315';
 
 export const DISTRICTS=[
- {seconds:425,gap:16,cap:8,packs:['BB','BD','BBD'],boss:'Siege Walker'},
- {seconds:490,gap:12,cap:15,packs:['BDD','BBBD','BBDD'],boss:'Bastion'}
+ {seconds:425,gap:16,cap:8,packs:['BB','BD','BS','BBD','SD'],boss:'Siege Walker'},
+ {seconds:490,gap:12,cap:15,packs:['BDD','BBS','BBBD','SSD','BBDD'],boss:'Bastion'}
 ];
 const position=p=>new THREE.Vector3().copy(p);
 const streetStep=24;
@@ -21,12 +22,23 @@ const streetZ=streetAxis(entryBounds.minZ,entryBounds.maxZ);
 const walkerHomeZ=48;
 // Kage's dash takes this share of a Bruiser's or drone's max health here (bosses keep the full hit).
 export const LIBERATION_KAGE_DASH_FRACTION=.5;
+// Assault Sentinels ('S' in pack patterns) come from this pool alongside Bruisers ('B') and drones ('D').
+export const LIBERATION_SENTINELS=5;
 
 
 export class CityLiberation extends MissionEnemyWaves {
  constructor(scene,damage,options){
   super(scene,damage,{...options,formationSize:8});
   this.options=options;this.damage=damage;
+  // Sentinels join the squad's member list, so they share its update, reset, targeting, bolt effects,
+  // separation and silhouettes; Bruiser spawns still draw only from the Bruiser pool.
+  this.bruiserPool=[...this.members];this.sentinelFX=new SentinelFX(scene);
+  this.sentinels=Array.from({length:LIBERATION_SENTINELS},(_,i)=>new AssaultSentinel(scene,damage,{
+   ...options.bruiser,id:'evac-raider-sentinel-'+i,getTargets:options.getTargets,energyEffects:this.bruisers.energyEffects,fx:this.sentinelFX,
+   sound:options.sound,onSlam:options.onSentinelSlam,blockers:()=>this.members,initialCooldown:1.6+i*.3,
+   onEvent:message=>{if(!message.includes('deployed'))options.onEvent?.(message);}
+  }));
+  this.members.push(...this.sentinels);
   this.actors=[...this.members,...this.flightDrones];
   this.navigation=new EvacuationNavigation({isClear:(a,b)=>options.bruiser.isPathClear(
    new THREE.Vector3(a.x,.12,a.z),new THREE.Vector3(b.x,.12,b.z)
@@ -42,7 +54,7 @@ export class CityLiberation extends MissionEnemyWaves {
   this.hero=null;this.build=null;this.retired=new Map();
   const walker=this.options.walker;
   walker.dead=true;walker.root.visible=false;walker.combatUnit.alive=false;walker.combatUnit.shapes=[];
-  this.nextScan=0;this.stragglers=new Map();this.options.ui.reset();
+  this.nextScan=0;this.stragglers=new Map();this.options.ui.reset();this.sentinelFX?.reset();
  }
  start(id,hero){
   this.hero=hero;this.build=new LiberationBuild(id);this.phase='streets';
@@ -105,7 +117,7 @@ export class CityLiberation extends MissionEnemyWaves {
   for(const actor of this.actors){
    const u=actor.combatUnit;
    if(!u||!actor.spawned||this.retired.has(actor)||(!actor.dead&&u.alive))continue;
-   this.retired.set(actor,this.elapsed);const hp=this.build.hp,shield=this.build.shield;this.build.reward(this.flightDrones.includes(actor));
+   this.retired.set(actor,this.elapsed);const hp=this.build.hp,shield=this.build.shield;this.build.reward(this.flightDrones.includes(actor),false,actor.type==='sentinel'?'sentinel':null);
    if(this.build.hp>hp)this.combat.events.emit('heal',{amount:this.build.hp-hp});
    if(this.build.shield>shield)this.combat.events.emit('shieldGained',{amount:this.build.shield-shield});
 
@@ -183,7 +195,7 @@ export class CityLiberation extends MissionEnemyWaves {
   streets.sort((a,b)=>a.distanceToSquared(origin)-b.distanceToSquared(origin));
   for(const type of pattern){
    if(slots<=0)break;
-   const air=type==='D',pool=air?this.flightDrones:this.members;
+   const air=type==='D',pool=air?this.flightDrones:type==='S'?this.sentinels:this.bruiserPool;
    const actor=pool.find(a=>!a.spawned)||pool.find(a=>this.elapsed-(this.retired.get(a)??Infinity)>6&&(!air||a.mode==='wreck'));
    if(!actor)continue;
    let p=streets.shift(),approach;
@@ -231,7 +243,7 @@ export class CityLiberation extends MissionEnemyWaves {
    this.options.ui.sync(this);return;
   }
   const b=this.build;b.tick(dt);this.combat.step(dt);
-  this.bruisers.update(dt,time);
+  this.bruisers.update(dt,time);this.sentinelFX.update(dt);
   const targets=this.getTargets();
   for(const actor of this.flightDrones)if(actor.spawned)actor.update(dt,targets);
   if(this.ended)return;

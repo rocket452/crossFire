@@ -240,10 +240,12 @@ export class KageAttacks {
 }
 
 // Check what a single dash contact can finish without mutating health or armour.
-export function kageDashCanFinish(unit,power,crosscut=false){
+export function kageDashCanFinish(unit,power,crosscut=false,from=null){
  if(!unit.alive||unit.kind!=='robot'||unit.dashPhased||unit.hidden||unit.health<=0)return false;
  const enemy=unit.entity;
  const damage=crosscut?power:kageHitPower({unit},power,'ninja-dash');
+ // Assault Sentinel: what the dash meets depends on Kage's approach (plates, flank or the rear core).
+ if(enemy.type==='sentinel')return damage*enemy.finishMultiplier(from)>=unit.health;
  return unit.shapes.some(({part})=>{
   if(enemy.weapons){
    const weapon=enemy.weapons.forPart(part);
