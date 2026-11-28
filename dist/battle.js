@@ -87,7 +87,7 @@ const evacuationMode=(new URLSearchParams(location.search).get('scene')||'city-l
 const convoyMode=(new URLSearchParams(location.search).get('scene')||'city-liberation')==='convoy';let convoy=null,convoyHUD=null,argus=null,convoyResults=null,resultsPause=false;
 const convoyConfig=convoyMode?await fetch('convoy-config.json?v=argus-sustained-205').then(r=>{if(!r.ok)throw Error('Convoy config unavailable');return r.json();}):null;
 const liberationMode=(new URLSearchParams(location.search).get('scene')||'city-liberation')==='city-liberation';
-const {CityLiberation}=liberationMode?await import('./city-liberation.js?v=468'):{};
+const {CityLiberation}=liberationMode?await import('./city-liberation.js?v=470'):{};
 const {LiberationUI}=liberationMode?await import('./liberation-ui.js?v=435'):{};
 const defenseMode=(new URLSearchParams(location.search).get('scene')||'city-liberation')==='wave-defense';
 const mission1Mode=liberationMode||defenseMode||(new URLSearchParams(location.search).get('scene')||'city-liberation')==='mission-1';
@@ -966,8 +966,8 @@ if(districtMode){
    restart:()=>resetDistrict()
   }):null;
   missionRaiders=new WaveController(scene,unitDamage,{
-   buildings:layout.buildings,bruiser:bruiserOptions,drone:droneCombatOptions(),getTargets:raiderHeroTargets,onEvent:feed,onSentinelSlam:sentinelSlamShake,
-   ui,sound:(a,b)=>runner.feedback.electricalCue(runner.preferences.sound,a,b,.024),applyHit:(hit,power,kind)=>damageRobotHit(hit,power,kind,true),
+   buildings:layout.buildings,bruiser:bruiserOptions,drone:droneCombatOptions(),getTargets:raiderHeroTargets,onEvent:feed,
+   ui,applyHit:(hit,power,kind)=>damageRobotHit(hit,power,kind,true),
    bossUnits:()=>[robot.combatUnit,evacuationReinforcement?.adapter.boss.combatUnit].filter(Boolean),
    get storage(){return window.localStorage;},bastionActive:()=>!!evacuationReinforcement?.adapter.enabled,
    openStreet:p=>!traceImpact({x:p.x,y:.3,z:p.z},{x:p.x,y:24,z:p.z},{sections:physics.chunks,ground:false,radius:3}),

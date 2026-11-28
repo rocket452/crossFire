@@ -1,6 +1,16 @@
 # City Liberation (ROR)
 
-Select City Liberation from the scene dropdown and deploy Volt Rush, Kage, or Luxmancer. Defeat the Siege Walker in the first district and Bastion in the second. The squad director keeps spawning ordinary enemies from street entrances during both battles.
+Select City Liberation from the scene dropdown and deploy Volt Rush, Kage, or Luxmancer. Defeat the Siege Walker in the first district and Bastion in the second. The squad director keeps spawning ordinary enemies, Bruisers and drones, from street entrances during both battles.
+
+Reinforcements enter on the opposite side of the district from the hero:
+- **Spawn points:** street-edge entrances that lie across the district centre from the hero. Edges that are only just past the centre are excluded: an edge must reach at least 35% of the deepest far-side edge's depth. If the hero stands within 12 m of the centre, any edge counts and the farthest come first.
+- **Variety:** successive packs step around that far side, so they arrive from different streets.
+- **Travel pace:** ground units cross town at 7 m/s and slow to their normal combat walk within about 50–85 m of the hero.
+- **Recycling:** a far unit (over 100 m away and at least 30 s old) is recycled only after 10 unseen seconds in which it closes less than 8 m. Units that are still approaching are left alone.
+
+From the hero start at (0, 96), packs enter 165–213 m away. In a measured run they open fire about 26 s into the district.
+
+Assault Sentinels are no longer part of City Liberation; they remain available in Combat Testing.
 
 ## Progression and economy
 

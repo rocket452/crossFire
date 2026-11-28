@@ -57,16 +57,19 @@ const edges=escortMovementBounds(8);
 const onEdge=p=>[edges.minX,edges.maxX].includes(p.x)||[edges.minZ,edges.maxZ].includes(p.z);
 const initialSpots=run.streetSpawns();
 assert(initialSpots.length>4&&initialSpots.every(onEdge));
-assert(initialSpots.some(p=>p.x===edges.minX)&&initialSpots.some(p=>p.x===edges.maxX));
-assert(initialSpots.some(p=>p.z===edges.minZ)&&initialSpots.some(p=>p.z===edges.maxZ));
+// Reinforcements enter across the district centre from the hero, from several far streets.
+const centre={x:(edges.minX+edges.maxX)/2,z:(edges.minZ+edges.maxZ)/2},away={x:hero.root.position.x-centre.x,z:hero.root.position.z-centre.z};
+assert(initialSpots.every(p=>(p.x-centre.x)*away.x+(p.z-centre.z)*away.z<0),'spawn on the opposite side of the map');
+assert(Math.min(...initialSpots.map(p=>p.distanceTo(hero.root.position)))>100,'far-side entry');
+assert(initialSpots.some(p=>p.x===edges.minX)&&initialSpots.some(p=>p.z===edges.minZ),'several far streets');
 let t=0;
 function tick(seconds){for(let i=0;i<Math.round(seconds*30);i++){run.update(1/30,t+=1/30);physics.step(1/30);run.syncWrecks();}}
 tick(10);
 const first=run.members.filter(a=>a.spawned);
 assert.equal(first.length,2);assert(!walker.root.visible);
-assert(first.every(actor=>onEdge(actor.spawnPosition)&&actor.root.position.distanceTo(hero.root.position)<actor.spawnPosition.distanceTo(hero.root.position)));
-for(const actor of first)if(actor.shots)firstAttackAt=t;
-assert(firstAttackAt,'first pack has opened fire by ten seconds');
+assert(first.every(actor=>onEdge(actor.spawnPosition)&&actor.spawnPosition.distanceTo(hero.root.position)-actor.root.position.distanceTo(hero.root.position)>25),'packs cross town at a travel pace');
+while(!firstAttackAt&&t<40){tick(1);for(const actor of first)if(actor.shots)firstAttackAt=t;}
+assert(firstAttackAt,'first pack has opened fire within forty seconds');
 const kill=a=>damage.hurt(a.combatUnit,1e6,a.root.position,'hull');
 first.forEach(kill);tick(.1);assert.equal(run.build.kills,2);assert(!run.upgradePending);
 tick(8);const active=run.actors.filter(a=>a.combatUnit?.alive);
@@ -110,4 +113,4 @@ for(let seconds=1;seconds<=300;seconds++){
 }
 assert(firstDraftAt<=120);assert(run.build.level>=6);assert.equal(run.stage,0);
 console.log('Five-minute script:',{firstDraftAt,level:run.build.level,kills:run.build.kills,upgrades:[...run.build.ranks.values()].reduce((n,u)=>n+u.rank,0)});
-console.log('City Liberation passed: edge spawns, weak points, district and relic progression, pause, win, loss, replay and five-minute pacing.');
+console.log('City Liberation passed: far-side edge spawns, weak points, district and relic progression, pause, win, loss, replay and five-minute pacing.');

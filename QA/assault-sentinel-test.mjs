@@ -1,6 +1,5 @@
 // Assault Sentinel: model, directional armour, core exposure, attacks, death, multiples, navigation and
-// City Liberation integration (the last part needs the private SpiderBot runtime asset, like the other
-// City Liberation tests, and is skipped when it is missing).
+// a check that City Liberation does not field Sentinels.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {registerHooks} from 'node:module';
@@ -125,36 +124,12 @@ function fixture({heroes=[heroUnit('volt',0,14)],position={x:0,y:.1,z:-6},isPath
  console.log('PASS 3 Sentinels keep',Math.min(...gaps).toFixed(1),'m apart and all fire; detoured',g.s.stats.detours,'times around a wall');
 }
 
-// ---- City Liberation integration ------------------------------------------------------------------------
-const spider=new URL('../dist/city-assets/licensed-robots/breaker-spider.glb',import.meta.url);
-if(!fs.existsSync(spider))console.log('SKIP City Liberation integration (private SpiderBot asset missing)');
-else{
- const {CityLiberation,DISTRICTS,LIBERATION_SENTINELS}=await import('../dist/city-liberation.js?v=468');
- const {SiegeWalker}=await import('../dist/siege-walker.js');const {spec,gltfModel}=await import('./walker-fixture.mjs');
- const {NinjaMotion}=await import('../dist/ninja-motion.js');const {GLTFLoader}=await import('../dist/vendor/GLTFLoader.js');
- const bytes=fs.readFileSync(spider);const spiderModel=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
- const scene=new T.Scene(),hero={root:new T.Group(),motion:new NinjaMotion()};hero.root.position.set(0,.08,96);
- const unit={id:'kage',kind:'hero',alive:true,entity:hero,shapes:[{center:new T.Vector3(0,1.1,96),half:{x:.6,y:1,z:.6}}]};
- const walker=new SiegeWalker(scene,gltfModel,spec,{weaponHealthMultiplier:10,onEffect(){},onDebris:()=>null,onRemoveDebris(){}});
- let run;const damage=new UnitDamage(u=>{if(u===walker.combatUnit)walker.destroy();else run.disable(u);});damage.add('siege-walker','robot',walker,walker.weapons.maxHealth);
- const sounds=[];
- run=new CityLiberation(scene,damage,{walker,ui:{reset(){},sync(){}},buildings:[],visible:()=>true,openStreet:()=>true,getTargets:()=>[unit],sound:(a,b)=>sounds.push([a,b]),
-  onEvent(){},ring(){},arc(){},startArsenal(){},finalBossDefeated:()=>false,
-  bruiser:{spiderModel,visible:()=>true,isPathClear:()=>true,trace:()=>null},drone:{physics:null,visible:()=>true,trace:()=>null,roof:()=>null,redirect:()=>null,audio:()=>null,particle(){},burst(){},onWreck(){},onRemoveSmoke(){},cameraImpact(){},onRoundHit(){}}});
- assert.equal(run.sentinels.length,LIBERATION_SENTINELS);assert(run.sentinels.every(s=>run.members.includes(s)&&!run.bruiserPool.includes(s)),'Sentinels join the members, not the Bruiser pool');
- assert(DISTRICTS.every(d=>d.packs.some(p=>p.includes('S'))),'both districts field Sentinels');
- const share=d=>{const all=d.packs.join('');return (all.split('S').length-1)/all.length;};
- assert(DISTRICTS.every(d=>share(d)>=.3),'Sentinels are about a third of each district: '+DISTRICTS.map(share));assert(DISTRICTS[0].packs[0].includes('S'),'district 1 opens with a Sentinel');
- run.start('ninja',hero);run.pack=DISTRICTS[0].packs.indexOf('BS');run.spawnPack();
- const s=run.sentinels.find(a=>a.spawned);const b=run.bruiserPool.filter(a=>a.spawned);
- assert(s&&b.length===1,'a BS pack spawns one Bruiser and one Sentinel');
- assert.equal(s.combatUnit.maxHealth,Math.ceil(C.health*.7),'district 1 health scaling');assert.equal(s.combatUnit.kageDashFraction,.5,'City Liberation Kage dash rule');
- assert.equal(run.getTarget()?.combatUnit?.alive,true);
- damage.hurt(s.combatUnit,10,s.torsoCenter().clone().add(new T.Vector3(Math.sin(s.torsoYaw())*2,0,Math.cos(s.torsoYaw())*2)),'armor');assert(sounds.length>0,'armour ping uses the game sound cue');
- const before={kills:run.build.kills,credits:run.build.credits,xp:run.build.xp,level:run.build.level};
- damage.hurt(s.combatUnit,1e6,s.torsoCenter(),'hull');assert(s.dead);run.collect();
- assert.equal(run.build.kills,before.kills+1);assert.equal(run.build.credits,before.credits+6);
- assert(run.build.xp+run.build.level*1000>before.xp+before.level*1000,'Sentinel kills give XP');
- run.reset();assert(run.sentinels.every(a=>!a.spawned&&!a.combatUnit),'reset returns Sentinels to the pool');
- console.log('PASS City Liberation: pool of',LIBERATION_SENTINELS,'in members, BS pack spawn,',s.combatUnit?.maxHealth??Math.ceil(C.health*.7),'HP in district 1, dash fraction, sound, kill reward, reset');
+// ---- City Liberation no longer fields Sentinels (they remain a Combat Testing enemy) ------------------
+{
+ const {DISTRICTS}=await import('../dist/city-liberation.js?v=470');
+ assert(DISTRICTS.every(d=>d.packs.every(p=>/^[BD]+$/.test(p))),'City Liberation packs use only Bruisers and drones');
+ const source=fs.readFileSync(new URL('../dist/city-liberation.js',import.meta.url),'utf8');
+ assert(!/assault-sentinel|AssaultSentinel/.test(source),'City Liberation does not build a Sentinel pool');
+ console.log('PASS City Liberation packs are Bruisers and drones only; Sentinels stay in Combat Testing');
 }
+

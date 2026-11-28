@@ -21,10 +21,8 @@ export class LiberationBuild {
   const absorb=Math.min(power,this.shield);this.shield-=absorb;
   this.hp=Math.max(0,this.hp-power+absorb);return true;
  }
- reward(drone,elite=false,kind=null){
-  // Assault Sentinels are tougher basic enemies: drone-level credits, a little more XP.
-  const sentinel=kind==='sentinel';
-  this.kills++;this.credits+=elite?20:drone||sentinel?6:4;this.xp+=sentinel?12:drone?10:7;
+ reward(drone,elite=false){
+  this.kills++;this.credits+=elite?20:drone?6:4;this.xp+=drone?10:7;
   while(this.xp>=this.threshold){this.xp-=this.threshold;this.level++;this.rewards.push('level');}
   const heal=this.value('Field Medic');
   if(heal){this.shield=Math.min(60,this.shield+Math.max(0,this.hp+heal-this.maxHP));this.shieldUntil=this.time+8;this.hp=Math.min(this.maxHP,this.hp+heal);}

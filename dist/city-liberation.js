@@ -1,14 +1,13 @@
 import * as THREE from './vendor/three.module.js';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {HeroEvolutionCombat} from './liberation-evolutions.js?v=439';
-import {LiberationBuild} from './liberation-build.js?v=465';
-import {AssaultSentinel,SentinelFX} from './assault-sentinel.js?v=466';
+import {LiberationBuild} from './liberation-build.js?v=470';
 import {EvacuationNavigation} from './evacuation-navigation.js?v=evacuation-57';
 import {escortMovementBounds} from './evac-approach.js?v=315';
 
 export const DISTRICTS=[
- {seconds:425,gap:16,cap:8,packs:['BS','BD','SD','SBB','SBD'],boss:'Siege Walker'},
- {seconds:490,gap:12,cap:15,packs:['SBB','SDD','BSS','SBBD','SSDD'],boss:'Bastion'}
+ {seconds:425,gap:16,cap:8,packs:['BB','BD','BBD'],boss:'Siege Walker'},
+ {seconds:490,gap:12,cap:15,packs:['BDD','BBBD','BBDD'],boss:'Bastion'}
 ];
 const position=p=>new THREE.Vector3().copy(p);
 const streetStep=24;
@@ -22,24 +21,20 @@ const streetZ=streetAxis(entryBounds.minZ,entryBounds.maxZ);
 const walkerHomeZ=48;
 // Kage's dash takes this share of a Bruiser's or drone's max health here (bosses keep the full hit).
 export const LIBERATION_KAGE_DASH_FRACTION=.5;
-// Assault Sentinels ('S' in pack patterns) come from this pool alongside Bruisers ('B') and drones ('D').
-// Roughly a third of each district's ground and air spawns are Sentinels; district 1 opens with one.
-export const LIBERATION_SENTINELS=7;
+// Hero this close to the district centre: every edge counts as the far side, deepest by distance.
+// Spawn edges must lie at least this share of the deepest edge's distance past the centre; packs step
+// round the far side by FAR_SIDE_STRIDE edges so consecutive packs arrive from different streets.
+const FAR_SIDE_CENTRE=12,FAR_SIDE_DEPTH=.35,FAR_SIDE_STRIDE=3;
+// Ground reinforcements cross town at a travel pace, easing to their combat walk inside the engagement band.
+export const LIBERATION_APPROACH=Object.freeze({travelSpeed:7,engage:50,blend:35});
+// A far straggler is recycled only after ten unseen seconds without closing this many metres.
+const STRAGGLER_PROGRESS=8;
 
 
 export class CityLiberation extends MissionEnemyWaves {
  constructor(scene,damage,options){
   super(scene,damage,{...options,formationSize:8});
   this.options=options;this.damage=damage;
-  // Sentinels join the squad's member list, so they share its update, reset, targeting, bolt effects,
-  // separation and silhouettes; Bruiser spawns still draw only from the Bruiser pool.
-  this.bruiserPool=[...this.members];this.sentinelFX=new SentinelFX(scene);
-  this.sentinels=Array.from({length:LIBERATION_SENTINELS},(_,i)=>new AssaultSentinel(scene,damage,{
-   ...options.bruiser,id:'evac-raider-sentinel-'+i,getTargets:options.getTargets,energyEffects:this.bruisers.energyEffects,fx:this.sentinelFX,
-   sound:options.sound,onSlam:options.onSentinelSlam,blockers:()=>this.members,initialCooldown:1.6+i*.3,
-   onEvent:message=>{if(!message.includes('deployed'))options.onEvent?.(message);}
-  }));
-  this.members.push(...this.sentinels);
   this.actors=[...this.members,...this.flightDrones];
   this.navigation=new EvacuationNavigation({isClear:(a,b)=>options.bruiser.isPathClear(
    new THREE.Vector3(a.x,.12,a.z),new THREE.Vector3(b.x,.12,b.z)
@@ -55,7 +50,7 @@ export class CityLiberation extends MissionEnemyWaves {
   this.hero=null;this.build=null;this.retired=new Map();
   const walker=this.options.walker;
   walker.dead=true;walker.root.visible=false;walker.combatUnit.alive=false;walker.combatUnit.shapes=[];
-  this.nextScan=0;this.stragglers=new Map();this.options.ui.reset();this.sentinelFX?.reset();
+  this.nextScan=0;this.stragglers=new Map();this.options.ui.reset();
  }
  start(id,hero){
   this.hero=hero;this.build=new LiberationBuild(id);this.phase='streets';
@@ -118,14 +113,17 @@ export class CityLiberation extends MissionEnemyWaves {
   for(const actor of this.actors){
    const u=actor.combatUnit;
    if(!u||!actor.spawned||this.retired.has(actor)||(!actor.dead&&u.alive))continue;
-   this.retired.set(actor,this.elapsed);const hp=this.build.hp,shield=this.build.shield;this.build.reward(this.flightDrones.includes(actor),false,actor.type==='sentinel'?'sentinel':null);
+   this.retired.set(actor,this.elapsed);const hp=this.build.hp,shield=this.build.shield;this.build.reward(this.flightDrones.includes(actor));
    if(this.build.hp>hp)this.combat.events.emit('heal',{amount:this.build.hp-hp});
    if(this.build.shield>shield)this.combat.events.emit('shieldGained',{amount:this.build.shield-shield});
 
   }
  }
+ // Reinforcements enter on the opposite side of the district: street edges across the map centre from
+ // the hero, so every pack crosses the city to reach them. Successive packs sweep around that far side.
  streetSpawns(){
   const {minX,maxX,minZ,maxZ}=entryBounds,hero=this.hero.root.position;
+  const cx=(minX+maxX)/2,cz=(minZ+maxZ)/2,hx=hero.x-cx,hz=hero.z-cz,offCentre=Math.hypot(hx,hz);
   const edgePoints=[
    ...streetX.flatMap(x=>[[x,minZ],[x,maxZ]]),
    ...streetZ.flatMap(z=>[[minX,z],[maxX,z]])
@@ -139,10 +137,15 @@ export class CityLiberation extends MissionEnemyWaves {
    if(this.actors.some(actor=>actor.spawned&&!actor.dead&&Math.hypot(
     x-actor.root.position.x,z-actor.root.position.z
    )<7))continue;
-   const clear=this.options.visible(new THREE.Vector3(x,2,z),hero.clone().add(new THREE.Vector3(0,1,0)));
-   spots.push({point,score:distance+(clear?0:30)});
+   // How far past the centre this edge lies, measured away from the hero (any direction at the centre).
+   const across=offCentre>FAR_SIDE_CENTRE?-((x-cx)*hx+(z-cz)*hz)/offCentre:distance;
+   spots.push({point,across,bearing:Math.atan2(x-cx,z-cz)});
   }
-  return spots.sort((a,b)=>a.score-b.score).map(spot=>spot.point);
+  const deepest=Math.max(0,...spots.map(spot=>spot.across));
+  const far=spots.filter(spot=>spot.across>0&&spot.across>=deepest*FAR_SIDE_DEPTH).sort((a,b)=>a.bearing-b.bearing);
+  if(!far.length)return [];
+  const first=far.splice(this.pack*FAR_SIDE_STRIDE%far.length,1)[0];
+  return [first,...far].map(spot=>spot.point);
  }
  groundApproach(actor,start,rally){
   this.navigation.landing=rally;
@@ -171,16 +174,27 @@ export class CityLiberation extends MissionEnemyWaves {
   return new THREE.Vector3(rally.x,height,rally.z);
  }
  recycleStragglers(){
-  // Unseen packs left across town should not consume all reinforcement slots.
+  // Unseen packs left across town should not consume all reinforcement slots. Units still closing on the
+  // hero are left alone: only one that has made no headway for a while is recycled.
   for(const actor of this.actors){
-   if(!actor.spawned||actor.dead||(actor.age??actor.clock)<30||actor.root.position.distanceToSquared(this.hero.root.position)<100**2){
+   const distance=actor.root.position.distanceTo(this.hero.root.position);
+   if(!actor.spawned||actor.dead||(actor.age??actor.clock)<30||distance<100){
     this.stragglers.delete(actor);continue;
    }
-   const since=this.stragglers.get(actor);
-   if(since===undefined)this.stragglers.set(actor,this.elapsed);
-   else if(this.elapsed-since>=10&&!this.options.visible(actor.root.position,this.hero.root.position)){
+   const record=this.stragglers.get(actor);
+   if(!record||distance<record.best-STRAGGLER_PROGRESS)this.stragglers.set(actor,{since:this.elapsed,best:distance});
+   else if(this.elapsed-record.since>=10&&!this.options.visible(actor.root.position,this.hero.root.position)){
     actor.reset();this.stragglers.delete(actor);
    }
+  }
+ }
+ paceApproach(){
+  const {travelSpeed,engage,blend}=LIBERATION_APPROACH,hero=this.hero.root.position;
+  for(const actor of this.members){
+   if(!actor.spawned||actor.dead)continue;
+   actor.walkSpeed??=actor.moveSpeed;
+   const far=THREE.MathUtils.clamp((Math.hypot(actor.root.position.x-hero.x,actor.root.position.z-hero.z)-engage)/blend,0,1);
+   actor.moveSpeed=actor.walkSpeed+(Math.max(actor.walkSpeed,travelSpeed)-actor.walkSpeed)*far;
   }
  }
  spawnPack(){
@@ -196,7 +210,7 @@ export class CityLiberation extends MissionEnemyWaves {
   streets.sort((a,b)=>a.distanceToSquared(origin)-b.distanceToSquared(origin));
   for(const type of pattern){
    if(slots<=0)break;
-   const air=type==='D',pool=air?this.flightDrones:type==='S'?this.sentinels:this.bruiserPool;
+   const air=type==='D',pool=air?this.flightDrones:this.members;
    const actor=pool.find(a=>!a.spawned)||pool.find(a=>this.elapsed-(this.retired.get(a)??Infinity)>6&&(!air||a.mode==='wreck'));
    if(!actor)continue;
    let p=streets.shift(),approach;
@@ -244,7 +258,7 @@ export class CityLiberation extends MissionEnemyWaves {
    this.options.ui.sync(this);return;
   }
   const b=this.build;b.tick(dt);this.combat.step(dt);
-  this.bruisers.update(dt,time);this.sentinelFX.update(dt);
+  this.paceApproach();this.bruisers.update(dt,time);
   const targets=this.getTargets();
   for(const actor of this.flightDrones)if(actor.spawned)actor.update(dt,targets);
   if(this.ended)return;
