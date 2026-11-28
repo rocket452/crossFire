@@ -173,3 +173,16 @@ script, then regenerate `kage-frog.glb` with `source/build_kage_frog.py`.
 ## Luxmancer
 
 Generate the solar armor with `blender -b --python-exit-code 1 --python source/build_luxmancer.py -- /private/humanoid.glb /private/luxmancer.glb`. The game loads `dist/city-assets/licensed-characters/luxmancer.glb` from the private build. The model uses the shared skeleton and animation clips. Validate it with `node QA/luxmancer-test.mjs`.
+
+## Uploaded quadruped robot: Skitter
+
+- **Source:** the user supplied `low_poly_robot_3d_model_by_niko.blend` and `.fbx`. They were kept in private storage outside the repository (in this environment, `/home/user/private-assets/niko-quadbot/`). The originals also remain in the user's upload store.
+- **Contents:** ten meshes skinned to a 54-bone armature, 48,866 triangles, no materials, and two empty actions.
+- **Converter:** `source/convert_niko_quadbot.py` decimates each part with weight-preserving collapse (7,515 triangles), names the parts, normalises the leg span to 1 and exports a skinned GLB without animation, plus a manifest. Run it with auto-execution disabled:
+
+```sh
+blender --factory-startup --disable-autoexec -b /private/low_poly_robot_by_niko.blend --python source/convert_niko_quadbot.py -- /private/runtime --ratio 0.14
+```
+
+- **Runtime files:** copy `niko-quadbot.glb` and `niko-quadbot.json` into the ignored `dist/city-assets/licensed-robots/` for local QA, and force-add them only on `site-licensed-assets`. This adds two files to the private/public runtime difference. Never push the source files or the generated GLB to public GitHub.
+- **Tests:** `node QA/skitter-test.mjs` needs this runtime file. See `source/SKITTER.md`.
