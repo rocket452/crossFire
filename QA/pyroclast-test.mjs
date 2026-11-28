@@ -5,7 +5,7 @@ const root=new URL('../dist/',import.meta.url).href;
 const T=await import(root+'vendor/three.module.js');
 const {UnitDamage}=await import(root+'combat-collision.js');
 const {PYROCLAST}=await import(root+'pyroclast-config.js?v=461');
-const {Pyroclast}=await import(root+'pyroclast.js?v=461');
+const {Pyroclast}=await import(root+'pyroclast.js?v=476');
 
 function fixture({protectedHero=false,dt=1/60}={}){
  const scene=new T.Scene(),events=[],impacts=[],deaths=[];let pyro;

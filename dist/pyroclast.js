@@ -11,6 +11,7 @@ const ease=t=>t*t*(3-2*t);
 
 // Flying flame supervillain for Combat Testing. Registers one damage unit with head/torso/leg
 // shapes, cycles three attacks and hurts heroes through their existing receiveEyeHit reaction.
+const ARENA_BOUNDS=Object.freeze({minX:-105,maxX:105,minZ:-105,maxZ:105});
 export class Pyroclast {
  constructor(scene,damage,options={},config=PYROCLAST){
   Object.assign(this,{scene,damage,options,config,id:'evac-raider-pyroclast',type:'pyroclast',evac:true});
@@ -93,7 +94,8 @@ export class Pyroclast {
    const c=this.heroPosition(u);if(c.distanceTo(point)>radius+.6)continue;
    const h=u.entity;if(!h||h.isDamageProtected?.())continue;
    if(key){const id=key+':'+u.id,next=this.hitClock.get(id)||0;if(this.time<next)continue;this.hitClock.set(id,this.time+interval);}
-   if(h.receiveEyeHit?.(point,power)===false)continue;hits++;this.stats.heroHits++;
+   // options.heroPowerScale turns attack power into hero damage where heroes have hit points (City Liberation).
+   if(h.receiveEyeHit?.(point,power*(this.options.heroPowerScale??1))===false)continue;hits++;this.stats.heroHits++;
    const away=c.clone().sub(point).setY(0);if(away.lengthSq()<1e-4)away.set(Math.random()-.5,0,Math.random()-.5);
    away.normalize().multiplyScalar(knock);away.y=lift;(h.motion?.body||h.motion)?.applyKnockback?.(away,{duration:.5,drag:1.6});
   }
@@ -224,7 +226,7 @@ export class Pyroclast {
   const altitude=meteor?f.meteorAltitude:THREE.MathUtils.lerp(f.minAltitude,f.maxAltitude,.5+.5*Math.sin(this.time*.37+1));
   this.goalClock-=dt;if(!holding&&(this.goalClock<=0||!this.goalSpot)){this.goalSpot=this.chooseSpot(center);this.goalClock=1.4;}
   const spot=this.goalSpot||center;this.goal.set(spot.x,(spot.ground??this.ground(center.x,center.z))+altitude,spot.z);
-  this.goal.x=THREE.MathUtils.clamp(this.goal.x,-105,105);this.goal.z=THREE.MathUtils.clamp(this.goal.z,-105,105);
+  const b=this.config.bounds||ARENA_BOUNDS;this.goal.x=THREE.MathUtils.clamp(this.goal.x,b.minX,b.maxX);this.goal.z=THREE.MathUtils.clamp(this.goal.z,b.minZ,b.maxZ);
   const want=this.goal.clone().sub(p);const dist=want.length();
   want.setLength(Math.min(f.maxSpeed*(holding?.35:1),dist*1.2));if(stunned)want.set(0,-1.5,0);
   const dv=want.sub(this.velocity),step=f.acceleration*dt;if(dv.length()>step)dv.setLength(step);this.velocity.add(dv);

@@ -33,7 +33,7 @@ export class LiberationBuild {
  releaseFirstPowerUp(){this.levelHold=false;this.level++;this.xp=0;this.rewards.push('level');
   this.headline={title:'First power-up',detail:'The elite is down. Pick one of three upgrades to start your build.'};}
  // Mini-boss: bonus credits and another pick-one-of-three hero upgrade.
- miniBossReward(){this.headline={title:'Mini-boss defeated',detail:'Astra Ronin is down. Earned 40 credits. Pick an upgrade to shape your build.'};this.credits+=40;this.xp+=20;this.rewards.push('level');while(this.xp>=this.threshold){this.xp-=this.threshold;this.level++;this.rewards.push('level');}}
+ miniBossReward(name='The mini-boss'){this.headline={title:'Mini-boss defeated',detail:name+' is down. Earned 40 credits. Pick an upgrade to shape your build.'};this.credits+=40;this.xp+=20;this.rewards.push('level');while(this.xp>=this.threshold){this.xp-=this.threshold;this.level++;this.rewards.push('level');}}
  bossReward(final=false){
   this.credits+=60;this.cards=[];this.refreshes=0;this.rollShop();
   if(final)this.rewards=[];else this.rewards.unshift('boss');

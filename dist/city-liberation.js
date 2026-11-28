@@ -1,8 +1,10 @@
 import * as THREE from './vendor/three.module.js';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {HeroEvolutionCombat} from './liberation-evolutions.js?v=439';
-import {LiberationBuild} from './liberation-build.js?v=474';
+import {LiberationBuild} from './liberation-build.js?v=476';
 import {AstraRonin} from './astra-ronin.js?v=474';
+import {Pyroclast} from './pyroclast.js?v=476';
+import {PYROCLAST} from './pyroclast-config.js?v=461';
 import {EvacuationNavigation} from './evacuation-navigation.js?v=evacuation-57';
 import {escortMovementBounds} from './evac-approach.js?v=315';
 
@@ -28,19 +30,25 @@ export const LIBERATION_KAGE_DASH_FRACTION=.5;
 const FAR_SIDE_CENTRE=12,FAR_SIDE_DEPTH=.35,FAR_SIDE_STRIDE=3;
 // Ground reinforcements cross town at a travel pace, easing to their combat walk inside the engagement band.
 export const LIBERATION_APPROACH=Object.freeze({travelSpeed:7,engage:50,blend:35});
+// Ground enemies sense a hero this close in any direction (not only ahead of them), and while approaching they
+// re-plan their street route toward the hero's current position when the hero has moved this far from their goal.
+export const LIBERATION_AWARENESS=Object.freeze({radius:70,replanSeconds:2.5,drift:24});
 // A far straggler is recycled only after ten unseen seconds without closing this many metres.
 const STRAGGLER_PROGRESS=8;
 // District 1 plays as two stages (district seconds). Stage 1, Build your foundation: a small introduction,
-// the first elite, the first power-up, then an enemy surge. Stage 2, Build your identity: the Astra Ronin
-// mini-boss and a second power-up, more streets, then the Siege Walker (never while the Ronin lives).
+// the first elite, the first power-up, then an enemy surge. Stage 2, Build your identity: a mini-boss, picked at
+// random between the Astra Ronin and Pyroclast, a second power-up, more streets, then the Siege Walker (never
+// while the mini-boss lives).
 export const LIBERATION_STAGES=Object.freeze({
  stage2:300,
  intro:{gap:15,cap:5,packs:['B','BD','BB']},
  elite:{at:85,health:5,scale:1.45,kageDashFraction:.12,tint:'#ffb020'},
  surge:{count:12,gap:1.6,cap:14,packs:['BBB','BDB','BBD','BBB'],until:75},
- miniboss:{at:315,trickle:{gap:24,cap:3,packs:['B','D']}},
+ miniboss:{at:315,kinds:['ronin','pyroclast'],trickle:{gap:24,cap:3,packs:['B','D']}},
  // Mini-boss tuning for City Liberation's 120 HP heroes (Combat Testing keeps the full RONIN values).
- ronin:{health:2600,swordDamage:16,overheadDamage:24,dashDamage:22,waveDamage:12,initialDelay:2.5,guardInitialDelay:6,flightStartRange:90}
+ ronin:{health:2600,swordDamage:16,overheadDamage:24,dashDamage:22,waveDamage:12,initialDelay:2.5,guardInitialDelay:6,flightStartRange:90},
+ // Pyroclast: fireball 14, tornado 14 per tick, meteor 14 (finale 28) after heroPowerScale.
+ pyroclast:{health:2600,heroPowerScale:14,openingDelay:3}
 });
 const clock=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 
@@ -54,10 +62,20 @@ export class CityLiberation extends MissionEnemyWaves {
    new THREE.Vector3(a.x,.12,a.z),new THREE.Vector3(b.x,.12,b.z)
   )});
   this.navigation.nodes=streetX.flatMap(x=>streetZ.map(z=>new THREE.Vector3(x,.12,z)));
-  // Stage 2 mini-boss: the Astra Ronin, bounded to the district and navigating its street grid.
+  for(const actor of this.members){
+   const senses=actor.sensesHero.bind(actor);
+   actor.sensesHero=unit=>senses(unit)||!!unit.shapes?.[0]&&actor.root.position.distanceTo(unit.shapes[0].center)<=LIBERATION_AWARENESS.radius;
+  }
+  // Stage 2 mini-bosses. The Astra Ronin is bounded to the district and navigates its street grid.
   this.ronin=new AstraRonin(scene,damage,{...options.bruiser,id:'liberation-astra-ronin',hunter:true,config:LIBERATION_STAGES.ronin,getTargets:options.getTargets,
    getBuildings:()=>options.buildings||[],onBuildingStrike:options.onRoninBuildingStrike,isMireguardPathClear:options.roninPathClear,energyEffects:this.bruisers.energyEffects,
    arena:{movementBounds:entryBounds,dashBounds:entryBounds},navigationNodes:streetX.flatMap(x=>streetZ.map(z=>({x,z}))),onEvent:()=>{}});
+  // Pyroclast flies over the district, kept inside its bounds; meteors and tornadoes land on the real rooftops/streets.
+  const P=LIBERATION_STAGES.pyroclast;
+  this.pyroclast=new Pyroclast(scene,damage,{getTargets:options.getTargets,trace:options.bruiser.trace,visible:options.visible,rainLanding:options.pyroclastGround,
+   onImpact:options.onPyroclastImpact,onDeath:options.bruiser.onDeath,onEvent:()=>{},heroPowerScale:P.heroPowerScale},
+   {...PYROCLAST,health:P.health,openingDelay:P.openingDelay,bounds:entryBounds});
+  this.miniBosses={ronin:{actor:this.ronin,name:'Astra Ronin'},pyroclast:{actor:this.pyroclast,name:'Pyroclast'}};
   this.reset();
  }
  reset(){
@@ -69,7 +87,7 @@ export class CityLiberation extends MissionEnemyWaves {
   const walker=this.options.walker;
   walker.dead=true;walker.root.visible=false;walker.combatUnit.alive=false;walker.combatUnit.shapes=[];
   this.nextScan=0;this.stragglers=new Map();this.options.ui.reset();
-  this.beat='intro';this.beatTime=0;this.elite=null;this.surgeLeft=0;this.surgeStart=0;this.roninDown=false;this.ronin?.reset();
+  this.beat='intro';this.beatTime=0;this.elite=null;this.surgeLeft=0;this.surgeStart=0;this.miniBossKind=null;this.miniBossDown=false;this.ronin?.reset();this.pyroclast?.reset();
   for(const actor of this.bruiserPoolActors())this.setElite(actor,false);
  }
  start(id,hero){
@@ -97,7 +115,7 @@ export class CityLiberation extends MissionEnemyWaves {
  attackPower(hit,power,kind){return this.combat?.before(hit,power,kind)??power;}
  onHit(hit,amount){this.combat?.after(hit,amount);}
  nearby(origin,radius,exclude){
-  const units=[...this.actors.map(a=>a.combatUnit),...(this.options.bossUnits?.()||[]),this.ronin?.spawned?this.ronin.combatUnit:null];
+  const units=[...this.actors.map(a=>a.combatUnit),...(this.options.bossUnits?.()||[]),this.miniBoss?.spawned?this.miniBoss.combatUnit:null];
   const hits=[];
   for(const unit of new Set(units)){
    if(!unit?.alive||unit.entity===exclude||unit.hidden||unit.entity.dead)continue;
@@ -168,21 +186,37 @@ export class CityLiberation extends MissionEnemyWaves {
   const first=far.splice(this.pack*FAR_SIDE_STRIDE%far.length,1)[0];
   return [first,...far].map(spot=>spot.point);
  }
+ // Open street node nearest a point (open-street traces are cached for a second).
+ rallyNear(point){
+  if(!this.openNodes||this.elapsed>=this.openNodesAt){this.openNodes=this.navigation.nodes.filter(p=>this.options.openStreet(p));this.openNodesAt=this.elapsed+1;}
+  let best=null,d=Infinity;for(const p of this.openNodes){const q=p.distanceToSquared(point);if(q<d){d=q;best=p;}}return best;
+ }
  groundApproach(actor,start,rally){
   this.navigation.landing=rally;
   const path=this.navigation.route(start);
   if(!path)return null;
-  const route=path.map(([x,z])=>new THREE.Vector3(x,.12,z));
-  let next=0;
-  return ()=>{
+  let route=path.map(([x,z])=>new THREE.Vector3(x,.12,z)),next=0,goal=rally,replanAt=this.elapsed+LIBERATION_AWARENESS.replanSeconds;
+  const objective=()=>{
    const target=actor.target?.shapes[0]?.center;
    if(target){
     const feet=new THREE.Vector3(target.x,.12,target.z);
     if(this.navigation.isClear(actor.root.position,feet))return feet;
    }
+   // Gravitate toward the hero: follow them across the district instead of holding the old rally point.
+   const hero=this.hero?.root.position;
+   if(hero&&this.elapsed>=replanAt){
+    replanAt=this.elapsed+LIBERATION_AWARENESS.replanSeconds;
+    if(goal.distanceTo(hero)>LIBERATION_AWARENESS.drift){
+     const fresh=this.rallyNear(hero);
+     if(fresh&&fresh!==goal){this.navigation.landing=fresh;const p=this.navigation.route(actor.root.position);
+      if(p){route=p.map(([x,z])=>new THREE.Vector3(x,.12,z));next=0;goal=fresh;objective.replans++;}}
+    }
+   }
    while(next<route.length&&actor.root.position.distanceToSquared(route[next])<=2.25)next++;
-   return route[next]||rally;
+   return route[next]||goal;
   };
+  objective.replans=0;objective.goal=()=>goal;
+  return objective;
  }
  droneIngress(start,rally,altitude){
   const dx=rally.x-start.x,dz=rally.z-start.z,distanceSquared=dx*dx+dz*dz;
@@ -268,12 +302,22 @@ export class CityLiberation extends MissionEnemyWaves {
  // ---- stage director ------------------------------------------------------------------------------
  setBeat(beat){this.beat=beat;this.beatTime=0;}
  announce(title,subtitle){this.options.ui.announce?.(title,subtitle);this.onEvent(subtitle?title+' — '+subtitle:title);}
- get miniBossActive(){return this.beat==='miniboss'&&this.ronin.spawned&&!this.roninDown;}
+ // The mini-boss actor of this run (null until Stage 2 picks one).
+ get miniBoss(){return this.miniBossKind?this.miniBosses[this.miniBossKind].actor:null;}
+ get miniBossName(){return this.miniBossKind?this.miniBosses[this.miniBossKind].name:'';}
+ get miniBossActive(){return this.beat==='miniboss'&&!!this.miniBoss?.spawned&&!this.miniBossDown;}
+ // Compatibility with the first mini-boss checks.
+ get roninDown(){return this.miniBossKind==='ronin'&&this.miniBossDown;}
+ chooseMiniBoss(){const kinds=LIBERATION_STAGES.miniboss.kinds;return kinds[Math.floor(Math.random()*kinds.length)%kinds.length];}
  firstPowerUp(){this.build.releaseFirstPowerUp();this.setBeat('power-up');this.announce('FIRST POWER-UP','Choose one of three upgrades');}
  spawnElite(){this.setBeat('elite');const n=this.spawnPack({packs:['E'],cap:99});if(!n){this.beat='intro';return;}this.announce('ELITE INBOUND','Elite Bruiser');}
  startSurge(){const S=LIBERATION_STAGES.surge;this.setBeat('surge');this.surgeLeft=S.count;this.surgeStart=this.stageTime;this.nextPack=this.elapsed+1;this.announce('ENEMY SURGE','Test your new power against the crowd');}
- spawnRonin(){const r=this.ronin,spot=this.streetSpawns()[0]||new THREE.Vector3(entryBounds.minX+12,.1,entryBounds.minZ+12);
-  r.spawnPosition={x:spot.x,y:.1,z:spot.z};r.reset();r.spawn();this.setBeat('miniboss');this.announce('MINI-BOSS','Astra Ronin');}
+ spawnMiniBoss(kind=this.chooseMiniBoss()){this.miniBossKind=kind;this.miniBossDown=false;
+  const spot=this.streetSpawns()[0]||new THREE.Vector3(entryBounds.minX+12,.1,entryBounds.minZ+12);
+  if(kind==='ronin'){const r=this.ronin;r.spawnPosition={x:spot.x,y:.1,z:spot.z};r.reset();r.spawn();}
+  else this.pyroclast.spawn({x:spot.x,y:(this.options.pyroclastGround?.(spot.x,spot.z)?.y??0)+18,z:spot.z});
+  this.setBeat('miniboss');this.announce('MINI-BOSS',this.miniBossName);}
+ spawnRonin(){this.spawnMiniBoss('ronin');}
  // Which reinforcements flow during the current beat (null: none).
  spawnPlan(){const d=this.district,S=LIBERATION_STAGES;
   if(this.stage>0||this.phase==='boss')return{packs:d.packs,cap:d.cap,gap:d.gap*(this.phase==='boss'?1.8:1)-Math.min(3,this.stageTime/45)};
@@ -290,8 +334,8 @@ export class CityLiberation extends MissionEnemyWaves {
   else if(this.beat==='power-up'&&!this.upgradePending)this.startSurge();
   else if(this.beat==='surge'&&(this.surgeLeft<=0&&this.actors.filter(a=>a.combatUnit?.alive).length<=3||t-this.surgeStart>=S.surge.until))this.setBeat('hold');
   else if(this.beat==='hold'&&t>=S.stage2){this.setBeat('stage2');this.announce('STAGE 2','Build your identity');}
-  else if(this.beat==='stage2'&&t>=S.miniboss.at)this.spawnRonin();
-  else if(this.beat==='miniboss'&&this.roninDown){this.build.miniBossReward();this.setBeat('identity');this.announce('MINI-BOSS DEFEATED','Choose another upgrade');}
+  else if(this.beat==='stage2'&&t>=S.miniboss.at)this.spawnMiniBoss();
+  else if(this.beat==='miniboss'&&this.miniBossDown){this.build.miniBossReward(this.miniBossName);this.setBeat('identity');this.announce('MINI-BOSS DEFEATED','Choose another upgrade');}
  }
  objective(){const S=LIBERATION_STAGES,t=this.stageTime,left=s=>clock(Math.max(0,Math.ceil(s-t)));
   if(this.phase==='cleared')return 'Bastion defeated';if(this.phase==='boss')return 'Defeat '+this.district.boss;
@@ -303,10 +347,10 @@ export class CityLiberation extends MissionEnemyWaves {
    case 'surge':return 'Stage 1 · Enemy surge';
    case 'hold':return 'Stage 1 · Stage 2 in '+left(S.stage2);
    case 'stage2':return 'Stage 2 · Build your identity · Mini-boss in '+left(S.miniboss.at);
-   case 'miniboss':return 'Stage 2 · Defeat the Astra Ronin';
+   case 'miniboss':return 'Stage 2 · Defeat '+(this.miniBossKind==='ronin'?'the ':'')+this.miniBossName;
    default:return 'Stage 2 · '+this.district.boss+' in '+left(this.district.seconds);
   }}
- disable(unit){if(this.ronin&&unit===this.ronin.combatUnit){this.ronin.destroy();this.roninDown=true;return true;}return super.disable(unit);}
+ disable(unit){const boss=this.miniBoss;if(boss&&unit===boss.combatUnit){boss.destroy();this.miniBossDown=true;return true;}return super.disable(unit);}
  syncWrecks(){super.syncWrecks();this.ronin?.syncWrecks();}
  boss(){
   this.phase='boss';
@@ -327,7 +371,7 @@ export class CityLiberation extends MissionEnemyWaves {
    this.options.ui.sync(this);return;
   }
   const b=this.build;b.tick(dt);this.combat.step(dt);
-  this.paceApproach();this.bruisers.update(dt,time);if(this.ronin.spawned){this.ronin.update(dt,time);if(this.ronin.combatUnit&&!this.ronin.combatUnit.alive)this.roninDown=true;}
+  this.paceApproach();this.bruisers.update(dt,time);const boss=this.miniBoss;if(boss?.spawned){boss.update(dt,time);if(boss.combatUnit&&!boss.combatUnit.alive)this.miniBossDown=true;}
   const targets=this.getTargets();
   for(const actor of this.flightDrones)if(actor.spawned)actor.update(dt,targets);
   if(this.ended)return;
@@ -337,7 +381,7 @@ export class CityLiberation extends MissionEnemyWaves {
    origin.z=Math.max(walkerHomeZ,origin.z-dt*4);
   }
   if(this.stage===0&&this.phase==='streets')this.updateStages(dt);
-  if(this.phase==='streets'&&this.stageTime>=this.district.seconds&&(this.stage>0||!this.ronin.spawned||this.roninDown))this.boss();
+  if(this.phase==='streets'&&this.stageTime>=this.district.seconds&&(this.stage>0||!this.miniBoss?.spawned||this.miniBossDown))this.boss();
   if(this.phase==='boss'&&(this.stage===0?this.options.walker.dead:this.options.finalBossDefeated())){
    b.bossReward(this.stage===1);
    if(this.stage===1){

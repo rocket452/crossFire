@@ -43,6 +43,8 @@ run=new CityLiberation(scene,damage,{
   particle(){},burst(){},onWreck(){},onRemoveSmoke(){},cameraImpact(){},onRoundHit(){}}
 });
 run.start('ninja',hero);
+run.chooseMiniBoss=()=>'ronin';
+const pyroHits=[];hero.receiveEyeHit=(point,power)=>{pyroHits.push(power);};
 let t=0,maxAlive=0,entered=0;
 const spawn=run.spawnPack.bind(run);run.spawnPack=plan=>{const n=spawn(plan);entered+=n;return n;};
 const alive=()=>run.actors.filter(a=>a.combatUnit?.alive&&!a.dead);
@@ -93,7 +95,7 @@ tick(1);assert.equal(run.beat,'stage2');assert.equal(banners.at(-1),'STAGE 2');a
 assert(run.objective().startsWith('Stage 2'));
 while(run.stageTime<S.miniboss.at-.5){tick(1);pick();}
 for(const a of alive())kill(a);tick(1);pick();
-assert.equal(run.beat,'miniboss');assert(run.miniBossActive);assert.equal(banners.at(-1),'MINI-BOSS');
+assert.equal(run.beat,'miniboss');assert(run.miniBossActive);assert.equal(banners.at(-1),'MINI-BOSS');assert.equal(run.miniBossName,'Astra Ronin');assert.equal(run.miniBoss,run.ronin);
 const ronin=run.ronin,r=ronin.combatUnit;
 assert.equal(r.maxHealth,S.ronin.health);assert.equal(ronin.config.swordDamage,S.ronin.swordDamage);assert.equal(ronin.config.waveDamage,S.ronin.waveDamage);
 const start=ronin.root.position.distanceTo(hero.root.position);assert(start>90,'enters from across the district: '+start.toFixed(1));
@@ -124,4 +126,41 @@ tick(ronin.config.collapseDuration+1);assert(!ronin.root.visible,'Ronin collapse
 run.reset();assert(!run.ronin.spawned&&!run.ronin.root.visible&&!run.miniBossActive);
 assert(run.members.every(a=>!a.elite&&a.root.scale.x===1));
 run.start('volt',{...hero,dash:{dashes:0,cooldown:0},energy:{}});assert.equal(run.beat,'intro');assert(run.build.levelHold);assert(!run.ronin.spawned);
-console.log('PASS City Liberation stages:',JSON.stringify({introPeak:maxAlive,surge:surgeCount,surgePeak,roninStart:+start.toFixed(1),roninNear:+near.toFixed(1),roninHits:roninHits.map(h=>h.power),trickle,banners}));
+
+// ---- The other mini-boss: Pyroclast, picked at random in play (forced here).
+assert.deepEqual(S.miniboss.kinds,['ronin','pyroclast']);
+{const seen=new Set();const real=Math.random;for(let i=0;i<40;i++)seen.add(CityLiberation.prototype.chooseMiniBoss.call(run));assert.deepEqual([...seen].sort(),['pyroclast','ronin'],'both mini-bosses can be chosen');}
+run.reset();run.start('ninja',hero);run.chooseMiniBoss=()=>'pyroclast';run.build.levelHold=false;
+run.setBeat('stage2');run.stageTime=S.miniboss.at-.2;tick(.5);
+assert.equal(run.beat,'miniboss');assert(run.miniBossActive);assert.equal(run.miniBossName,'Pyroclast');assert.equal(run.miniBoss,run.pyroclast);assert(!run.ronin.spawned);
+const pyro=run.pyroclast;assert.equal(pyro.combatUnit.maxHealth,S.pyroclast.health);assert(run.objective().includes('Pyroclast'));
+assert(run.nearby(pyro.aimPoint(),12).some(h=>h.unit===pyro.combatUnit),'targetable by hero abilities');
+pyroHits.length=0;let pyroMax=0,inside=true;
+tick(45,()=>{const p=pyro.root.position;inside&&=p.x>=-158&&p.x<=62&&p.z>=-62&&p.z<=158;pyroMax=Math.max(pyroMax,alive().length);});
+assert(inside,'Pyroclast stays over the district');assert(pyroMax<=S.miniboss.trickle.cap);
+assert(pyroHits.length>=1,'Pyroclast attacks the hero: '+pyroHits.length);assert(pyroHits.every(p=>p>=S.pyroclast.heroPowerScale&&p<=2*S.pyroclast.heroPowerScale),'scaled hero damage '+pyroHits);
+run.stageTime=DISTRICTS[0].seconds+1;tick(.5);run.build.rewards.length=0;assert.equal(run.phase,'streets','Walker waits for Pyroclast');
+const credits2=run.build.credits;damage.hurt(pyro.combatUnit,1e6,pyro.aimPoint(),'torso');tick(.1);
+assert(run.miniBossDown&&!run.miniBossActive&&!run.roninDown);assert.equal(run.beat,'identity');assert.equal(run.build.headline.title,'Mini-boss defeated');assert(run.build.headline.detail.startsWith('Pyroclast'));assert(run.build.credits>=credits2+40);
+pick();tick(.2);assert.equal(run.phase,'boss');
+run.reset();assert(!run.pyroclast.spawned&&!run.pyroclast.root.visible&&run.miniBoss===null);
+
+// ---- Awareness: ground enemies follow the hero across the district and sense them from behind.
+{const {LIBERATION_AWARENESS:A}=await import('../dist/city-liberation.js');
+ const moveHero=p=>{hero.root.position.copy(p);heroUnit.shapes[0].center.copy(p).add(new THREE.Vector3(0,1,0));};
+ moveHero(new THREE.Vector3(0,.08,96));run.start('ninja',hero);run.build.levelHold=false;run.setBeat('surge');run.surgeLeft=8;run.nextPack=0;
+ tick(14,pick);
+ const ground=()=>run.members.filter(a=>a.combatUnit?.alive&&!a.dead);assert(ground().length>=4,'surge arrived: '+ground().length);
+ const far=run.rallyNear(new THREE.Vector3(-140,0,-50));moveHero(new THREE.Vector3(far.x,.08,far.z));
+ const mean=()=>{const g=ground();return g.reduce((t,a)=>t+Math.hypot(a.root.position.x-far.x,a.root.position.z-far.z),0)/g.length;};
+ const before=mean();run.setBeat('hold');tick(30,()=>{pick();});const after=mean();
+ const replans=ground().reduce((n,a)=>n+(a.objective?.replans||0),0),goals=ground().map(a=>a.objective?.goal?.()).filter(Boolean);
+ assert(replans>=1,'routes re-planned toward the moved hero: '+replans);
+ assert(ground().every(a=>Math.hypot(a.root.position.x-far.x,a.root.position.z-far.z)<40||Math.hypot(a.objective.goal().x-far.x,a.objective.goal().z-far.z)<A.drift+1),'every unit is at the hero or routed to them');
+ assert(after<before-40,'enemies gravitate toward the hero: '+before.toFixed(0)+' m -> '+after.toFixed(0)+' m');
+ const b=ground()[0];b.root.rotation.y=Math.atan2(far.x-b.root.position.x,far.z-b.root.position.z)+Math.PI;b.root.updateMatrixWorld(true);
+ const behind=b.root.position.clone().add(new THREE.Vector3(0,1,0));heroUnit.shapes[0].center.copy(b.root.position).add(new THREE.Vector3(Math.sin(b.root.rotation.y)*-20,1,Math.cos(b.root.rotation.y)*-20));
+ assert(b.sensesHero(heroUnit),'senses a hero 20 m behind it');
+ console.log('Awareness:',JSON.stringify({before:+before.toFixed(1),after:+after.toFixed(1),replans}));
+ run.reset();moveHero(new THREE.Vector3(0,.08,96));}
+console.log('PASS City Liberation stages:',JSON.stringify({pyroclastHits:pyroHits.slice(0,6),introPeak:maxAlive,surge:surgeCount,surgePeak,roninStart:+start.toFixed(1),roninNear:+near.toFixed(1),roninHits:roninHits.map(h=>h.power),trickle,banners}));

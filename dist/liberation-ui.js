@@ -2,6 +2,7 @@ import * as THREE from './vendor/three.module.js';
 
 import {cloneSkinned} from './humanoid-character.js?v=435';
 const BANNER_SECONDS=3.2;
+export const roundClock=seconds=>{const s=Math.max(0,Math.floor(seconds)),h=Math.floor(s/3600),m=Math.floor(s/60)%60,r=String(s%60).padStart(2,'0');return h?h+':'+String(m).padStart(2,'0')+':'+r:m+':'+r;};
 export class LiberationUI {
  constructor(viewer,scene,{release,resume,restart}){
   Object.assign(this,{viewer,scene,release,resume,restart});
@@ -128,13 +129,14 @@ export class LiberationUI {
   this.hud.hidden=false;
   const objective=run.objective();
   const title='District '+(run.stage+1)+' / 2 · '+objective;
-  const status=Math.ceil(b.hp)+' HP'+(b.shield?' +'+Math.ceil(b.shield)+' shield':'')+' · Lv '+b.level+' · '+Math.floor(b.xp)+'/'+b.threshold+' XP · '+b.credits+' credits';
+  // Round clock: combat time of this run (it stops while upgrade menus are open, like the game).
+  const status='⏱ '+roundClock(run.elapsed)+' · '+Math.ceil(b.hp)+' HP'+(b.shield?' +'+Math.ceil(b.shield)+' shield':'')+' · Lv '+b.level+' · '+Math.floor(b.xp)+'/'+b.threshold+' XP · '+b.credits+' credits';
   if(this.hud.firstChild.textContent!==title)this.hud.firstChild.textContent=title;
   if(this.hud.children[1].textContent!==status)this.hud.children[1].textContent=status;
   const meter=this.hud.lastChild;if(meter.max!==b.maxHP)meter.max=b.maxHP;if(meter.value!==b.hp)meter.value=b.hp;
   const boss=document.querySelector('.boss-health-hud');
   boss.hidden=!run.miniBossActive&&(run.phase!=='boss'||run.stage===1&&!run.options.bastionActive());
-  const label=run.miniBossActive?'ASTRA RONIN · MINI-BOSS':run.stage===0?'SIEGE WALKER · WEAPONS':null;
+  const label=run.miniBossActive?run.miniBossName.toUpperCase()+' · MINI-BOSS':run.stage===0?'SIEGE WALKER · WEAPONS':null;
   if(!boss.hidden&&label&&boss.querySelector('b').textContent!==label)boss.querySelector('b').textContent=label;
   const distance=Math.round(run.hero.root.position.distanceTo(this.depot.position));
   this.shopButton.textContent=distance<=10?'Open supply depot · B':'◆ Depot · '+distance+' m';
@@ -142,7 +144,7 @@ export class LiberationUI {
   if(run.ended){
    if(this.dialog?.dataset.result)return;
    this.panel(run.phase==='won'?'City liberated':'Hero down',
-    b.kills+' robots defeated · Level '+b.level+' · '+b.credits+' credits · '+Math.floor(run.elapsed/60)+'m '+Math.floor(run.elapsed%60)+'s');
+    b.kills+' robots defeated · Level '+b.level+' · '+b.credits+' credits · round time '+roundClock(run.elapsed));
    this.dialog.dataset.result='true';
 
    this.dialog.querySelector('.liberation-cards').textContent=[...b.ranks.values()].map(e=>e.upgrade.name+' ×'+e.rank).join(' · ');

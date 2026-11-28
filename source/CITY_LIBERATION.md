@@ -13,7 +13,9 @@ District 1 runs ten minutes of district time in two stages. `LIBERATION_STAGES` 
 4. **Enemy surge.** Right after the pick, 12 basic enemies (`BBB`, `BDB`, `BBD`) arrive every 1.6 s, with up to 14 alive. After that, regular packs run until 5:00.
 
 **Stage 2 — Build your identity (5:00–10:00)**
-1. **Mini-boss (5:15).** The **Astra Ronin** enters at the far side of the district. In hunter mode he always tracks the hero and flies in over buildings. His health is 2,600, shown on the boss bar as "ASTRA RONIN · MINI-BOSS". His damage is scaled for 120 HP heroes:
+1. **Mini-boss (5:15).** At random, either the **Astra Ronin** or **Pyroclast** (revision 476).
+   - **Pyroclast:** flies in from the far side of the district, kept inside its bounds. It has 2,600 health. Hero damage is its attack power ×14: fireballs, tornado ticks and meteors deal 14, the meteor finale 28. Its meteors and tornadoes land on the real rooftops and streets.
+   - **Astra Ronin:** enters at the far side of the district. In hunter mode he always tracks the hero and flies in over buildings. His health is 2,600, shown on the boss bar as "ASTRA RONIN · MINI-BOSS". His damage is scaled for 120 HP heroes:
 
    | Attack | Damage |
    |---|---|
@@ -24,9 +26,13 @@ District 1 runs ten minutes of district time in two stages. `LIBERATION_STAGES` 
 
    His waves and heavy sword still damage buildings. Hero abilities target him through `nearby()`. A light trickle of `B`/`D` packs continues during the duel, with at most 3 alive.
 2. **Mini-boss defeated.** The kill pays 40 credits and 20 XP, plus a guaranteed pick-one-of-three ("Mini-boss defeated"). Regular packs then resume.
-3. **Siege Walker (10:00).** The Walker never enters while the Ronin lives.
+3. **Siege Walker (10:00).** The Walker never enters while the mini-boss lives.
 
 Each beat shows a short centre-screen banner and a stage objective in the HUD title. District 2 (Bastion) is unchanged.
+
+**Round timer (revision 476):** the HUD status line starts with the round's play time (⏱ m:ss). It counts combat time, so it stops while upgrade menus are open. The end-of-run panel repeats it.
+
+**Enemy awareness (revision 476):** ground enemies sense a hero within 70 m in any direction, not only ahead of them. While approaching, every 2.5 s they re-plan their street route toward the hero's current position if the hero has moved more than 24 m from their goal. Drones already chase the nearest hero after their ingress. In the stage test, after the hero teleports across the district, the mean enemy distance falls from 80 m to 15 m in 30 s.
 
 Reinforcements enter on the opposite side of the district from the hero:
 - **Spawn points:** street-edge entrances that lie across the district centre from the hero. Edges that are only just past the centre are excluded: an edge must reach at least 35% of the deepest far-side edge's depth. If the hero stands within 12 m of the centre, any edge counts and the farthest come first.
