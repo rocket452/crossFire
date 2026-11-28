@@ -2,7 +2,7 @@
 
 Run with Blender 4.x, auto-execution disabled:
   blender --factory-startup --disable-autoexec -b /private/low_poly_robot_by_niko.blend \
-    --python source/convert_niko_quadbot.py -- /private/runtime [--ratio 0.14]
+    --python source/convert_niko_quadbot.py -- /private/runtime [--ratio 0.06]
 
 The source has ten meshes skinned to a 54-bone armature (body root, four three-segment legs that each end
 in a four-finger claw, leg pistons, an upright bone per foot and a top bone), no materials and no usable
@@ -16,7 +16,7 @@ from mathutils import Vector
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 out_dir = args[0] if args else '.'
-ratio = float(args[args.index('--ratio') + 1]) if '--ratio' in args else 0.14
+ratio = float(args[args.index('--ratio') + 1]) if '--ratio' in args else 0.06
 os.makedirs(out_dir, exist_ok=True)
 
 arm = next(o for o in bpy.data.objects if o.type == 'ARMATURE')

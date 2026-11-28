@@ -178,10 +178,10 @@ Generate the solar armor with `blender -b --python-exit-code 1 --python source/b
 
 - **Source:** the user supplied `low_poly_robot_3d_model_by_niko.blend` and `.fbx`. They were kept in private storage outside the repository (in this environment, `/home/user/private-assets/niko-quadbot/`). The originals also remain in the user's upload store.
 - **Contents:** ten meshes skinned to a 54-bone armature, 48,866 triangles, no materials, and two empty actions.
-- **Converter:** `source/convert_niko_quadbot.py` decimates each part with weight-preserving collapse (7,515 triangles), names the parts, normalises the leg span to 1 and exports a skinned GLB without animation, plus a manifest. Run it with auto-execution disabled:
+- **Converter:** `source/convert_niko_quadbot.py` decimates each part with weight-preserving collapse (3,710 triangles at the default ratio 0.06), names the parts, normalises the leg span to 1 and exports a skinned GLB without animation, plus a manifest. Run it with auto-execution disabled:
 
 ```sh
-blender --factory-startup --disable-autoexec -b /private/low_poly_robot_by_niko.blend --python source/convert_niko_quadbot.py -- /private/runtime --ratio 0.14
+blender --factory-startup --disable-autoexec -b /private/low_poly_robot_by_niko.blend --python source/convert_niko_quadbot.py -- /private/runtime --ratio 0.06
 ```
 
 - **Runtime files:** copy `niko-quadbot.glb` and `niko-quadbot.json` into the ignored `dist/city-assets/licensed-robots/` for local QA, and force-add them only on `site-licensed-assets`. This adds two files to the private/public runtime difference. Never push the source files or the generated GLB to public GitHub.

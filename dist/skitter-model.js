@@ -48,7 +48,10 @@ export class SkitterModel{
  constructor(gltf,span){
   this.span=span;this.root=new THREE.Group();this.root.name='Skitter model';
   this.rig=cloneSkinned(gltf.scene);this.rig.scale.setScalar(span);this.root.add(this.rig);
-  this.materials=materials();this.meshes=[];
+  this.materials=materials();
+  // Faceted low-poly look: every lit armour material is flat shaded.
+  for(const m of Object.values(this.materials))if(m.isMeshStandardMaterial)m.flatShading=true;
+  this.meshes=[];
   this.rig.traverse(o=>{if(!o.isSkinnedMesh)return;o.material=this.materials[o.name.replace('niko_','')]||this.materials.shell;o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;this.meshes.push(o);});
   const bone=name=>{let found=null;this.rig.traverse(o=>{if(o.isBone&&o.name===name)found=o;});if(!found)throw Error('Skitter rig is missing '+name);return found;};
   this.body=bone('Bone');this.turret=bone('Bone053');this.bones=[];this.rig.traverse(o=>{if(o.isBone)this.bones.push(o);});

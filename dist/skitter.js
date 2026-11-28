@@ -1,8 +1,8 @@
 import * as THREE from './vendor/three.module.js';
 import {EvacRaider} from './evac-raider.js?v=421';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-pairs-260';
-import {SKITTER} from './skitter-config.js?v=473';
-import {SkitterModel} from './skitter-model.js?v=473';
+import {SKITTER} from './skitter-config.js?v=479';
+import {SkitterModel} from './skitter-model.js?v=479';
 // Skitter: a four-legged melee hunter on the user-supplied quadruped robot. It always moves on a surface,
 // either the street, a building wall or a roof. Heroes standing on a roof are reached by climbing the nearest
 // wall face and mantling over the edge; a building in the way is climbed over; from a roof it leaps after a
@@ -201,7 +201,9 @@ export class Skitter extends EvacRaider{
  animate(dt,time,curl=0){const m=this.model,c=this.config,root=this.root,span=c.span,air=!!this.air;root.updateMatrixWorld(true);
   // A raised, arched stance: body lifted, feet drawn in, so the knees bow up spider-fashion.
   const speed=this.velocity.length(),moving=speed>.5&&!air,t=this.clock;let lift=.55,pitch=0,roll=0,yaw=0,frontLift=0,frontReach=0,claws=[.1,.1,.1,.1],spread=.93;
-  this.bob+=dt*speed*.9;lift+=moving?Math.abs(Math.sin(this.bob*3))*.12:Math.sin(time*2.2)*.03;
+  // Gait timing (SKITTER.gait): stride grows with speed, the cycle period follows from it.
+  const G=c.gait;this.gaitSpeed=THREE.MathUtils.damp(this.gaitSpeed||0,moving?speed:0,8,dt);const gs=this.gaitSpeed,stride=Math.min(G.strideMax,G.strideBase+G.stridePerSpeed*gs),period=clamp(stride/Math.max(gs,.01),G.periodMin,G.periodMax),duty=THREE.MathUtils.lerp(G.dutyWalk,G.dutyRun,clamp(gs/G.runSpeed,0,1)),sway=clamp(gs/G.runSpeed,0,1);
+  lift+=moving?G.bob*sway*(.5-.5*Math.cos(4*Math.PI*(this.phase||0))):Math.sin(time*2.2)*.03;roll+=moving?G.roll*sway*Math.sin(2*Math.PI*(this.phase||0)):0;
   // Strike: rear up with the front claws raised and open, then slam them forward and snap them shut.
   if(this.mode==='strike'){const s=c.strike;if(t<s.windup){const k=smooth(t/s.windup);pitch=-.55*k;lift=.55+.35*k;frontLift=2.3*k;frontReach=.2*k;claws=[.9*k,.1,.1,.9*k];}
    else if(t<s.windup+s.active){const k=smooth((t-s.windup)/s.active);pitch=-.55+.95*k;lift=.9-.5*k;frontLift=2.3*(1-k);frontReach=.2+1.4*k;claws=[.9-1.3*k,.1,.1,.9-1.3*k];}
@@ -213,15 +215,22 @@ export class Skitter extends EvacRaider{
   if(curl>0){lift=.55-curl*.95;roll=curl*.25;pitch=curl*.15;claws=claws.map(()=>-.4*curl);}
   if(this.stunRemaining>0){lift=.05;roll=Math.sin(time*18)*.05;}
   // Feet: planted in world space, re-stepping in diagonal pairs when they trail too far from their ideal.
-  const ideal=m.legs.map(leg=>{const local=m.footLocal(leg,spread);if(leg.front){local.z+=frontReach;local.y=frontLift;}if(moving)local.add(root.worldToLocal(root.position.clone().add(this.velocity.clone().multiplyScalar(.12))).multiplyScalar(1));return root.localToWorld(local);});
+  const ideal=m.legs.map(leg=>{const local=m.footLocal(leg,spread);if(leg.front){local.z+=frontReach;local.y=frontLift;}return root.localToWorld(local);});
   if(!this.feet||curl===0&&this.feetSurface!==this.surface.kind){this.feet=this.feet?this.feet.map((f,i)=>({...f,from:f.anchor.clone(),to:ideal[i].clone(),step:0,stepping:true})):ideal.map(p=>({anchor:p.clone(),from:p.clone(),to:p.clone(),step:1,stepping:false}));this.feetSurface=this.surface.kind;}
-  const threshold=.14*span,up=V(0,1,0).applyQuaternion(root.quaternion);
+  // Phase-based diagonal trot: one diagonal pair stays planted for a share of the cycle, feet land ahead of
+  // their rest spot by half the stance travel and are world-fixed while planted (also on walls and roofs).
+  const threshold=G.settle*span,up=V(0,1,0).applyQuaternion(root.quaternion),special=i=>air||curl>0||this.mode==='strike'&&m.legs[i].front&&t<c.strike.windup+c.strike.active||this.mode==='mantle';
+  const unsettled=this.feet.some((f,i)=>!special(i)&&(f.stepping||f.anchor.distanceTo(ideal[i])>threshold));
+  if(moving||unsettled)this.phase=((this.phase||0)+dt/period)%1;
+  const lead=moving?this.velocity.clone().multiplyScalar(duty*period*.5):V(),swingShare=1-duty,height=Math.min(G.liftMax,G.liftBase+G.liftPerSpeed*gs)*span;
   for(const [i,f]of this.feet.entries()){
-   if(air||curl>0||this.mode==='strike'&&m.legs[i].front&&t<c.strike.windup+c.strike.active||this.mode==='mantle'){f.anchor.copy(ideal[i]);f.stepping=false;continue;}
-   if(!f.stepping&&f.anchor.distanceTo(ideal[i])>threshold&&(i%2===this.stepPair||f.anchor.distanceTo(ideal[i])>threshold*2.2)){f.stepping=true;f.step=0;f.from.copy(f.anchor);}
-   if(f.stepping){f.to.copy(ideal[i]);f.step+=dt/clamp(.42/Math.max(speed,1),.09,.2);const k=smooth(f.step);f.anchor.lerpVectors(f.from,f.to,k).addScaledVector(up,Math.sin(Math.min(1,f.step)*Math.PI)*.45);if(f.step>=1){f.stepping=false;f.anchor.copy(f.to);}}
+   if(special(i)){f.anchor.copy(ideal[i]);f.stepping=false;continue;}
+   const local=((this.phase||0)+(i%2?.5:0))%1,to=ideal[i].clone().add(lead);
+   if(local<swingShare&&(moving||unsettled)){
+    if(!f.stepping){f.stepping=true;f.step=0;f.from.copy(f.anchor);}
+    const u=local/swingShare,k=smooth(u);f.step=u;f.to.copy(to);f.anchor.lerpVectors(f.from,to,k).addScaledVector(up,Math.sin(u*Math.PI)*height);
+   }else if(f.stepping){f.stepping=false;f.anchor.copy(to);}
   }
-  if(!this.feet.some(f=>f.stepping))this.stepPair=1-this.stepPair;
   m.pose({feet:this.feet.map(f=>f.anchor),bodyOffset:[0,lift,0],bodyTilt:[pitch,yaw,roll],lookAt:this.lookAt,claws,curl});
   m.clawFlare.value=this.mode==='strike'||this.mode==='pounce'||this.mode==='pounce-air'?1.8:.25;m.glow.material.uniforms.uPower.value=this.dead?Math.max(0,1-this.deathAge):1;
  }

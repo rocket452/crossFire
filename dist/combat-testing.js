@@ -10,7 +10,7 @@ import {SpiderBruiser} from './spider-bruiser.js?v=478';
 import {RaiderEnergyEffects} from './raider-energy-effects.js?v=hazard-red-355';
 import {Pyroclast} from './pyroclast.js?v=476';
 import {AssaultSentinel,SentinelFX} from './assault-sentinel.js?v=466';
-import {Skitter} from './skitter.js?v=473';
+import {Skitter} from './skitter.js?v=479';
 // Reuses the live drone, projectile, damage and wreck systems; no mission spawning.
 export class CombatTesting {
  constructor(scene,damage,{getHeroes,readConfig,bastionConfig,...options}){

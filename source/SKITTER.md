@@ -40,7 +40,7 @@ Cyberpunk finish, assigned per converted part:
 - **Claws:** dark steel with fingertips that glow hot magenta and flare during strikes and pounces.
 - **Underglow:** a magenta pool that follows the surface it stands on, including walls.
 
-Runtime model: 7,515 triangles (decimated from 48,866), 11 skinned meshes and 55 bones; each Skitter is its own skinned clone.
+Runtime model: 3,710 triangles (decimated from 48,866 at ratio 0.06; revision 478, previously 7,515), 11 skinned meshes and 55 bones, with flat-shaded armour for a faceted low-poly look. Each Skitter is its own skinned clone.
 
 ## Tests
 
@@ -56,3 +56,13 @@ Runtime model: 7,515 triangles (decimated from 48,866), 11 skinned meshes and 55
 - pack spacing and head-shot damage.
 
 Visual QA used the real Combat Testing city: a three-Skitter pack chasing, scaling a 40 m tower to a rooftop hero, and attacking on the roof. Phone performance has not been measured.
+
+## Trot — revision 478
+
+The feet used to re-step whenever they trailed 0.73 m behind, with 0.09–0.2 s swings. That meant 20 steps a second at the 9.5 m/s chase speed (10 at 3 m/s), with a body bob unrelated to the steps. `SKITTER.gait` now drives a phase-based diagonal trot:
+- **Stride:** 1 m + 0.3 m per m/s, up to 3.4 m, with a 0.32–0.9 s cycle.
+- **Stance:** each diagonal pair is planted for 60% of the cycle at a walk and 50% from 8 m/s. One pair is always down.
+- **Placement and lift:** feet land ahead by half the stance travel and stay fixed while planted, on the ground, walls and roofs. Swing lift scales with speed.
+- **Body:** the bob and roll follow the step phase.
+
+Strikes, pounces, leaps, mantles, wall stuns and the death curl keep their own foot handling. Measured: 11 steps/s at 9.5 m/s (was 20) and 6 at 3 m/s (was 10), never more than two feet in the air, maximum foot lag 0.98 m.

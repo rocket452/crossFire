@@ -12,6 +12,8 @@ export const SKITTER=Object.freeze({
  strike:{range:3.3,hit:3.9,cone:.3,windup:.4,active:.14,recover:.5,cooldown:.75,damage:16,knock:6,lift:2.5,lunge:1.1},
  pounce:{min:6.5,max:13,windup:.55,height:3,speed:18,radius:2.3,damage:22,knock:9,lift:3.5,recover:.6,cooldown:3.4,lead:.55},
  firstStrike:.6,
+ // Trot (metres of stride, seconds; liftBase/liftPerSpeed/settle are fractions of span).
+ gait:{strideBase:1,stridePerSpeed:.3,strideMax:3.4,periodMin:.32,periodMax:.9,dutyWalk:.6,dutyRun:.5,runSpeed:8,liftBase:.05,liftPerSpeed:.006,liftMax:.11,bob:.08,roll:.05,settle:.06},
  stunScale:1,flinch:.16,
  dying:1.1,fade:2.4
 });
