@@ -121,3 +121,29 @@ The user-supplied SHOGUN model has 3,792 triangles including its katana/scabbard
 `ronin-shogun.js` owns skin binding/selection and freezes actual deformed vertices into conventional wreck meshes on death. Those temporary geometries are released during wreck cleanup. Actor silhouettes now use SkinnedMesh overlays for skinned enemies so through-building silhouettes follow the real pose. No special projectile visibility is introduced.
 
 `QA/ronin-shogun-test.mjs` checks weighted deformation and all three dashes at 30/60/120Hz, twenty appearance round-trips with unchanged HP/position/attack state, saved preference, blocked-storage fallback, selector events, live skinned silhouettes, six finite physical wreck groups, and reset. All original Ronin melee/animation/dash/guard/flight/propulsion/building-damage tests pass. Offline Blender renders of actual runtime-deformed ready, slash, guard and flight poses were inspected. Browser testing was unavailable in this session; phone performance remains unmeasured.
+
+## Mecha motion rig revision 469
+
+The stiff pose-to-pose lerps are replaced by a spring-driven rig with mecha-anime choreography (Gundam Wing-style weight and flourish, still Ronin's own design). Key poses and timelines live in `dist/astra-ronin-poses.js`; `dist/astra-ronin-animation.js` layers idle/walk, action timelines and impulses, then filters every channel through damped springs (heavy pelvis, quick weapon chain, lagging head and wings). During strikes the weapon chain stiffens so the blade's peak speed lands on the gameplay hit frame; gameplay timings, damage, hit shapes and AI are unchanged.
+
+- **Ready stance:** knees loaded, shield side leading, blade low; breathing and weight shifts. The head locks on to the target while the body coils.
+- **Sweep:** a diagonal kesa-giri. The Ronin steps into a lunge, coils the blade high on the sword side and holds a trembling charge. It then cuts down through the front and holds a low zanshin before settling.
+- **Overhead:** the Ronin rises with the blade hanging behind the crown, then crashes down into a deep lunge with a pelvis impulse at the hit.
+- **Dash combo:** an iai coil with the blade trailing low and wings flared. The boost glide is forward-pitched with the legs trailing. Each slash sweeps over the top, and the recovery is a skid with a raised-blade flourish.
+- **Flight:** a tucked takeoff, then a forward-pitched cruise that banks with turn rate, legs trailing and wings open. Touchdown loads the pelvis.
+- **Guard:** a braced lunge with the shield squared and the blade cocked for the counter; blocked hits shove the shield arm.
+- **Shield mount:** a per-pose `shield` channel turns the shield on its forearm mount toward the body's front. A raised guard squares it fully, as before.
+- **Footwork:** stance feet step one at a time (heel/toe roll, footfall impulse) into each action's stance, with no sliding between poses. Glide legs use sprung local targets, and landing re-plants them.
+- **Reactions:** hit recoil, stun slump with jitter, and a defeat that staggers, drops to the knees with the blade planted, then tips forward.
+- **Model:** the backpack fins became articulated wing binders: a white fin plus two feathers per side, folded back along the pack at rest and fanned open for dashes and flight. The backpack pods vector with the body, and the back exhaust follows each pod's nozzle axis. Budget: 6,618 triangles and 129 meshes, still inside the <8,000/<130 checks.
+- **Sword smear:** a 22-segment vertex-coloured band starting partway up the blade, fading along the trail.
+
+`QA/astra-ronin-mecha-motion-test.mjs` covers:
+- complete pose channels;
+- the crouched ready stance with a squared shield;
+- sweep peak blade speed inside the swing window;
+- the lunge step and the overhead arc;
+- wing fold and flare, cruise pitch and touchdown compression;
+- hit recoil, the kneeling defeat, and reset.
+
+All existing Ronin node suites pass. The desktop/touch dash and guard browser suites pass. The pose and flight browser suites fail identically on the unchanged baseline in this public checkout, because the private Shogun GLB returns 404. Phone performance remains unmeasured.

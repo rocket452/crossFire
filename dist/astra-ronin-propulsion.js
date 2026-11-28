@@ -1,7 +1,8 @@
 import * as THREE from './vendor/three.module.js';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z),Y=V(0,1,0);
 export const RONIN_PROPULSION=Object.freeze({particles:64,emitPerSecond:28,particleLife:.32,backLength:5.8,footLength:4.4,backWidth:.44,footWidth:.32});
-// Four actual rig mounts, three instanced flame layers and one bounded exhaust pool.
+// Four actual rig mounts, three instanced flame layers and one bounded exhaust pool. Back flames leave
+// along each vectoring pod's nozzle axis, so the animation rig aims them.
 export class RoninPropulsion{
  constructor(model){this.model=model;this.root=new THREE.Group();this.root.name='Ronin rocket propulsion';model.root.add(this.root);this.dummy=new THREE.Object3D();this.engines=[];this.particles=[];this.sequence=0;
   const cone=new THREE.ConeGeometry(1,1,8,1,true);cone.translate(0,.5,0);
@@ -18,7 +19,7 @@ export class RoninPropulsion{
    if(!active||e.kind==='foot'&&!flight){e.clock=0;continue;}
    const cruising=flight?.phase==='cruise',boost=flight?.phase==='takeoff'?1.25:cruising?1.05+.25*Math.min(1,flight.speed/38):flight?.phase==='landing'?.72:.9;
    const hover=actor.stunRemaining>0?.65:1,flicker=1+Math.sin(time*43+i*2.4)*.09+Math.sin(time*71+i)*.035,power=boost*hover;
-   const position=e.node.localToWorld(e.offset.clone()),direction=e.kind==='foot'?V(0,-1,cruising?-.2:0).normalize().applyQuaternion(e.node.getWorldQuaternion(new THREE.Quaternion())):V(0,cruising||dash?-.35:-1,cruising||dash?-1:-.2).normalize().applyQuaternion(frame);
+   const position=e.node.localToWorld(e.offset.clone()),direction=e.kind==='foot'?V(0,-1,cruising?-.2:0).normalize().applyQuaternion(e.node.getWorldQuaternion(new THREE.Quaternion())):V(0,-1,-.25).normalize().applyQuaternion(e.node.getWorldQuaternion(new THREE.Quaternion()));
    const length=(e.kind==='foot'?c.footLength:c.backLength)*power*flicker,width=(e.kind==='foot'?c.footWidth:c.backWidth)*(1+.12*Math.sin(time*31+i));
    const local=root.worldToLocal(position.clone()),localDirection=direction.clone().applyQuaternion(frame.clone().invert());
    for(const [j,mesh]of this.layers.entries()){const lengthScale=[1,.8,.45][j],widthScale=[1.65,1,.44][j];this.dummy.position.copy(local);this.dummy.quaternion.setFromUnitVectors(Y,localDirection);this.dummy.scale.set(width*widthScale/root.scale.x,length*lengthScale/root.scale.y,width*widthScale/root.scale.z);this.dummy.updateMatrix();mesh.setMatrixAt(count,this.dummy.matrix);}

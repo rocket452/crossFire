@@ -1,6 +1,6 @@
 import {CombatDrone} from './combat-drone.js?v=421';
 import {COMBAT_DRONE} from './combat-drone-config.js?v=397';
-import {AstraRonin} from './astra-ronin.js?v=421';
+import {AstraRonin} from './astra-ronin.js?v=469';
 import {Mireguard} from './mireguard.js?v=421';
 import {COMBAT_ARENA} from './combat-arena-config.js?v=mireguard-pairs-260';
 import {BastionTesting} from './bastion-testing.js?v=432';

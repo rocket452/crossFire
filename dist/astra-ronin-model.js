@@ -1,8 +1,8 @@
 import {RoninShogun} from './ronin-shogun.js?v=310';
-import {RoninPropulsion} from './astra-ronin-propulsion.js?v=306';
+import {RoninPropulsion} from './astra-ronin-propulsion.js?v=468';
 import * as THREE from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {RoninAnimation} from './astra-ronin-animation.js?v=306';
+import {RoninAnimation} from './astra-ronin-animation.js?v=468';
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 // Original hard-surface design. Armor is batched per material per articulated joint.
 export class AstraRoninModel {
@@ -48,7 +48,10 @@ export class AstraRoninModel {
   const pack=n('backpack',torso,[0,.12,-1.05]);b(pack,[0,0,0],[1.8,1.7,.8],this.edge);this.jets=[];
   for(const s of[-1,1]){
    const pod=n((s<0?'left':'right')+'-thruster',pack,[s*.9,-.1,-.35]);b(pod,[0,0,0],[.65,1.8,.9],this.dark);plate(pod,[0,.35,-.35],[.7,1.35,.45],tapered);b(pod,[0,-.7,-.5],[.55,.55,.2],this.metal);b(pod,[0,-.7,-.64],[.34,.34,.08],this.energy);
-   const fin=plate(pack,[s*1.2,.85,-.25],[.7,2.6,.18],tapered,this.edge);fin.rotation.z=-s*.38;fin.rotation.x=-.25;
+   // Wing binders hinge at the pack shoulders: folded fins at rest, flared for boost and flight.
+   const wing=n((s<0?'left':'right')+'-wing',pack,[s*.8,.45,-.35]);
+   const fin=plate(wing,[s*.5,.78,0],[.85,3.6,.18],tapered,this.armor);fin.rotation.z=-s*.4;
+   for(const [x,y,len,width,tilt]of[[1.25,.08,3.25,.62,1],[1.1,-.75,2.7,.52,1.48]]){const feather=plate(wing,[s*x,y,0],[width,len,.14],tapered,this.armor);feather.rotation.z=-s*tilt;}
 
   }
   for(const [side,s] of[['left',-1],['right',1]]){
