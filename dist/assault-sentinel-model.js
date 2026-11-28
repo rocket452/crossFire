@@ -1,4 +1,5 @@
 import * as THREE from './vendor/three.module.js';
+import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 
 // Low-poly Assault Sentinel after the concept sheet: two independent tread assemblies, a forward-leaning
 // armoured torso turret, a low helmeted head with a glowing hex eye, heavy pauldrons, short arms ending in
@@ -30,6 +31,22 @@ class TreadLoop {
   this.mesh.instanceMatrix.needsUpdate=true;
  }
  advance(distance){if(!distance)return;this.offset+=distance;this.place();}
+}
+
+// Collapse each pivot's static child meshes into one mesh per material (~75 → ~30 draw calls a robot).
+function mergeStatic(root,keep){
+ const parents=[];root.traverse(o=>{if(o.children.some(c=>c.isMesh))parents.push(o);});
+ for(const parent of parents){
+  const groups=new Map();
+  for(const m of parent.children){if(!m.isMesh||m.isInstancedMesh||keep.has(m)||m.children.length)continue;if(!groups.has(m.material))groups.set(m.material,[]);groups.get(m.material).push(m);}
+  for(const [material,list] of groups){
+   if(list.length<2)continue;
+   const geoms=list.map(m=>{m.updateMatrix();const g=m.geometry.index?m.geometry.toNonIndexed():m.geometry.clone();g.applyMatrix4(m.matrix);for(const k of Object.keys(g.attributes))if(!['position','normal','uv'].includes(k))g.deleteAttribute(k);g.clearGroups();return g;});
+   const merged=mergeGeometries(geoms,false);if(!merged)continue;
+   const mesh=new THREE.Mesh(merged,material);mesh.castShadow=list.some(m=>m.castShadow);mesh.receiveShadow=true;parent.add(mesh);
+   for(const m of list)parent.remove(m);for(const g of geoms)g.dispose();
+  }
+ }
 }
 
 export function buildSentinelModel(height=2.7){
@@ -112,6 +129,7 @@ export function buildSentinelModel(height=2.7){
  const core=hex(.33,.1,M.core,reactor,[0,0,-.2],[Math.PI/2,0,0]);core.castShadow=false;parts.core=core;
  for(const a of [0,2.094,4.189])add(reactor,box(.07,.33,.04),M.dark,[Math.sin(a)*.15,Math.cos(a)*.15,-.27],[0,0,-a]);
  add(reactor,new THREE.TorusGeometry(.38,.025,4,6),M.trim,[0,0,-.21],[0,0,Math.PI/6]).castShadow=false;
+ mergeStatic(root,new Set([parts.eye,parts.core]));
  root.traverse(o=>{if(o.isMesh)o.frustumCulled=false;});
  return {root,parts,treads,materials:M,scale:S};
 }

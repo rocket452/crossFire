@@ -2,7 +2,7 @@ import * as THREE from './vendor/three.module.js';
 import {EvacRaider} from './evac-raider.js?v=421';
 import {LightningKit,WHITE} from './lightning-kit.js?v=451';
 import {ASSAULT_SENTINEL} from './assault-sentinel-config.js?v=465';
-import {buildSentinelModel} from './assault-sentinel-model.js?v=465';
+import {buildSentinelModel} from './assault-sentinel-model.js?v=466';
 
 const delta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 const limit=(v,n)=>Math.max(-n,Math.min(n,v));

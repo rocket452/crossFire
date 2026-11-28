@@ -8,8 +8,8 @@ import * as T from '../dist/vendor/three.module.js';
 import {UnitDamage} from '../dist/combat-collision.js';
 import {ASSAULT_SENTINEL as C} from '../dist/assault-sentinel-config.js';
 registerHooks({resolve(name,ctx,next){return name==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(name,ctx);}});
-const {AssaultSentinel}=await import('../dist/assault-sentinel.js?v=465');
-const {buildSentinelModel}=await import('../dist/assault-sentinel-model.js?v=465');
+const {AssaultSentinel}=await import('../dist/assault-sentinel.js?v=466');
+const {buildSentinelModel}=await import('../dist/assault-sentinel-model.js?v=466');
 const {kageDashCanFinish,kageHitPower}=await import('../dist/kage-attacks.js?v=465');
 let seed=0x51e7;Math.random=()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/2**32;};
 
@@ -129,7 +129,7 @@ function fixture({heroes=[heroUnit('volt',0,14)],position={x:0,y:.1,z:-6},isPath
 const spider=new URL('../dist/city-assets/licensed-robots/breaker-spider.glb',import.meta.url);
 if(!fs.existsSync(spider))console.log('SKIP City Liberation integration (private SpiderBot asset missing)');
 else{
- const {CityLiberation,DISTRICTS,LIBERATION_SENTINELS}=await import('../dist/city-liberation.js?v=465');
+ const {CityLiberation,DISTRICTS,LIBERATION_SENTINELS}=await import('../dist/city-liberation.js?v=466');
  const {SiegeWalker}=await import('../dist/siege-walker.js');const {spec,gltfModel}=await import('./walker-fixture.mjs');
  const {NinjaMotion}=await import('../dist/ninja-motion.js');const {GLTFLoader}=await import('../dist/vendor/GLTFLoader.js');
  const bytes=fs.readFileSync(spider);const spiderModel=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');

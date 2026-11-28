@@ -2,7 +2,7 @@ import * as THREE from './vendor/three.module.js';
 import {MissionEnemyWaves} from './mission-enemy-waves.js?v=421';
 import {HeroEvolutionCombat} from './liberation-evolutions.js?v=439';
 import {LiberationBuild} from './liberation-build.js?v=465';
-import {AssaultSentinel,SentinelFX} from './assault-sentinel.js?v=465';
+import {AssaultSentinel,SentinelFX} from './assault-sentinel.js?v=466';
 import {EvacuationNavigation} from './evacuation-navigation.js?v=evacuation-57';
 import {escortMovementBounds} from './evac-approach.js?v=315';
 
